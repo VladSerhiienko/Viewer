@@ -31,3 +31,4 @@
 *.out
 *.app
 /third_party/SDL2-2.0.7
+/build_windows_x86-64

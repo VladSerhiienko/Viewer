@@ -89,11 +89,7 @@ cd build_windows_x86-64
 cd ../../
 
 cd ..
-cmake -Bbuild_windows_x86-64 "-H."
-cd build_windows_x86-64
-& 'C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe' Viewer.sln /target:ALL_BUILD /p:Configuration=Debug
-& 'C:\Program Files (x86)\MSBuild\14.0\Bin\MSBuild.exe' Viewer.sln /target:ALL_BUILD /p:Configuration=Release
-cd ../../
+cmake -G "Visual Studio 14 2015 Win64" -Bbuild_windows_x86-64 "-H."
 
 
 ```
