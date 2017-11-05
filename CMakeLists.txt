@@ -78,7 +78,8 @@ if (UNIX)
         ${CMAKE_SOURCE_DIR}/third_party/SDL2-2.0.7/build_linux_x86-64/libSDL2.a
         $ENV{VK_SDK_PATH}/../source/shaderc/src/build_linux_x86-64/libshaderc/libshaderc_combined.a
         ${CMAKE_SOURCE_DIR}/third_party/flatbuffers/build_linux_x86-64/libflatbuffers.a
-        ${CMAKE_SOURCE_DIR}/third_party/zlib/build_linux_x86-64/libz.a
+        ${CMAKE_SOURCE_DIR}/third_party/EASTL/build_linux_x86-64/libEASTL.a
+        ${CMAKE_SOURCE_DIR}/third_party/EASTL/build_linux_x86-64/test/packages/EAStdC/libEAStdC.a
         dl
     )
 elseif(WIN32)

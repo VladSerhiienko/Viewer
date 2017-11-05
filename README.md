@@ -24,20 +24,23 @@ unzip SDL2-2.0.7.zip
 cd SDL2-2.0.7
 cmake -Bbuild_linux_x86-64 -H.
 make -C build_linux_x86-64
+cd ..
 
-cd ../flatbuffers
+cd flatbuffers
 git checkout master
 git pull origin master
 cmake -Bbuild_linux_x86-64 -H.
 make -C build_linux_x86-64
 cd ..
 
-cd ../EASTL
+cd EASTL
 git checkout master
 git pull origin master
-cmake -Bbuild_windows_x86-64 -H. -DEASTL_BUILD_TESTS:BOOL=TRUE
+cmake -Bbuild_linux_x86-64 -H. -DEASTL_BUILD_TESTS:BOOL=TRUE
+make -C build_linux_x86-64
+cd ..
 
-cd ../../
+cd ..
 cmake -Bbuild_linux_x86-64 -H.
 make -C build_linux_x86-64
 
