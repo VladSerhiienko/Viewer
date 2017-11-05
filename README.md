@@ -1,10 +1,9 @@
 # Viewer
+[FbxPipeline](https://github.com/VladSerhiienko/FbxPipeline) accompaning project.
 
+## How to build (Linux, bash + cmake + make):
 
-
-## How to build (Ubuntu):
-
-###Bash
+### Bash
 ```
 cd <vulkan directory>/source/shaderc
 python update_shaderc_sources.py
@@ -46,9 +45,9 @@ make -C build_linux_x86-64
 
 ```
 
-## How to build (Windows): 
+## How to build (Windows, PS + cmake + MSBuild): 
 
-###PowerShell:
+### PowerShell:
 ```
 cd <vulkan directory>/shaderc
 cmake -G "Visual Studio 14 2015 Win64" -Bbuild_windows_x86-64 -H. -DSHADERC_SKIP_TESTS:BOOL=TRUE -DSHADERC_ENABLE_SHARED_CRT:BOOL=TRUE
