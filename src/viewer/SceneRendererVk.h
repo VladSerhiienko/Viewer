@@ -34,8 +34,8 @@ namespace apemode {
             float                      scale[ 2 ]  = {};             /* Required */
             uint32_t                   FrameIndex  = 0;              /* Required */
             VkCommandBuffer            pCmdBuffer  = VK_NULL_HANDLE; /* Required */
-            apemodem::mat4             ViewMatrix;                   /* Required */
-            apemodem::mat4             ProjMatrix;                   /* Required */
+            XMFLOAT4X4             ViewMatrix;                   /* Required */
+            XMFLOAT4X4             ProjMatrix;                   /* Required */
         };
 
         bool Reset( const Scene* pScene, uint32_t FrameIndex ) override;

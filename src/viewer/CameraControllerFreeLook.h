@@ -66,7 +66,7 @@ namespace apemode {
             auto toPosLen  = XMVector3Length( toPosNorm );
             toPosNorm /= toPosLen;
 
-            auto ll = apemodem::LatLongFromVec( toPosNorm );
+            auto ll = LatLongFromVec( toPosNorm );
 
             auto consume = orbitCurr * _amount;
             orbitCurr -= consume;

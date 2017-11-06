@@ -75,22 +75,22 @@ namespace apemode {
          * @note Contributes node world matrix.
          * @return Node local matrix.
          **/
-        inline apemodem::mat4 CalculateLocalMatrix( ) const {
+        inline XMFLOAT4X4 CalculateLocalMatrix( ) const {
             return DirectX::XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &translation ) ) *
                    DirectX::XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &rotationOffset ) ) *
                    DirectX::XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &rotationPivot ) );
 
-            // return apemodem::mat4::FromTranslationVector( translation ) *
-            //        apemodem::mat4::FromTranslationVector( rotationOffset ) *
-            //        apemodem::mat4::FromTranslationVector( rotationPivot ) *
+            // return XMFLOAT4X4::FromTranslationVector( translation ) *
+            //        XMFLOAT4X4::FromTranslationVector( rotationOffset ) *
+            //        XMFLOAT4X4::FromTranslationVector( rotationPivot ) *
             //        apemodem::quat::FromEulerAngles( preRotation ).ToMatrix4( ) *
             //        apemodem::quat::FromEulerAngles( rotation ).ToMatrix4( ) *
             //        apemodem::quat::FromEulerAngles( postRotation ).ToMatrix4( ) *
-            //        apemodem::mat4::FromTranslationVector( -rotationPivot ) *
-            //        apemodem::mat4::FromTranslationVector( scalingOffset ) *
-            //        apemodem::mat4::FromTranslationVector( scalingPivot ) *
-            //        apemodem::mat4::FromScaleVector( scaling ) *
-            //        apemodem::mat4::FromTranslationVector( -scalingPivot );
+            //        XMFLOAT4X4::FromTranslationVector( -rotationPivot ) *
+            //        XMFLOAT4X4::FromTranslationVector( scalingOffset ) *
+            //        XMFLOAT4X4::FromTranslationVector( scalingPivot ) *
+            //        XMFLOAT4X4::FromScaleVector( scaling ) *
+            //        XMFLOAT4X4::FromTranslationVector( -scalingPivot );
         }
 
         /**
@@ -100,14 +100,14 @@ namespace apemode {
          *       it contributes to node world transform.
          * @return Node geometric transform.
          **/
-        inline apemodem::mat4 CalculateGeometricMatrix( ) const {
+        inline XMFLOAT4X4 CalculateGeometricMatrix( ) const {
             return DirectX::XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &geometricTranslation ) ) *
                    DirectX::XMMatrixRotationRollPitchYawFromVector( DirectX::XMLoadFloat3( &geometricRotation ) ) *
                    DirectX::XMMatrixScalingFromVector( DirectX::XMLoadFloat3( &geometricScaling ) );
 
-            // return apemodem::mat4::FromTranslationVector( geometricTranslation ) *
+            // return XMFLOAT4X4::FromTranslationVector( geometricTranslation ) *
             //        apemodem::quat::FromEulerAngles( geometricRotation ).ToMatrix4( ) *
-            //        apemodem::mat4::FromScaleVector( geometricScaling );
+            //        XMFLOAT4X4::FromScaleVector( geometricScaling );
         }
     };
 
@@ -140,10 +140,10 @@ namespace apemode {
         // Transform matrices storage.
         //
 
-        std::vector< apemodem::mat4 > worldMatrices;
-        std::vector< apemodem::mat4 > localMatrices;
-        std::vector< apemodem::mat4 > geometricMatrices;
-        std::vector< apemodem::mat4 > hierarchicalMatrices;
+        std::vector< XMFLOAT4X4 > worldMatrices;
+        std::vector< XMFLOAT4X4 > localMatrices;
+        std::vector< XMFLOAT4X4 > geometricMatrices;
+        std::vector< XMFLOAT4X4 > hierarchicalMatrices;
 
         void *deviceAsset;
 

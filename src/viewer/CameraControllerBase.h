@@ -12,7 +12,7 @@ namespace apemode {
         virtual void Dolly( XMFLOAT3 _dzxy ) { }
         virtual void Update( float _dt ) { }
 
-        virtual apemodem::XMMATRIX ViewMatrix( ) {
+        virtual XMMATRIX ViewMatrix( ) {
             return XMMatrixLookAtLH( XMLoadFloat3( &Position ), XMLoadFloat3( &Target ), g_XMIdentityR1.v );
         }
 

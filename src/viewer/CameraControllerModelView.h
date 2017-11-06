@@ -59,10 +59,10 @@ namespace apemode {
             auto toPosLen  = XMVector3Length( toPosNorm );
             toPosNorm /= toPosLen;
 
-            auto ll = apemodem::LatLongFromVec( toPosNorm ) + consume * XMVectorSet( 1, -1, 0, 0 );
+            auto ll = LatLongFromVec( toPosNorm ) + consume * XMVectorSet( 1, -1, 0, 0 );
             ll = XMVectorSetY( ll, std::min( 0.98f, std::max( 0.02f, XMVectorGetY( ll ) ) ) );
 
-            auto tmp  = apemodem::VecFromLatLong( ll );
+            auto tmp  = VecFromLatLong( ll );
             auto diff = ( tmp - toPosNorm ) * toPosLen;
 
             position += diff;

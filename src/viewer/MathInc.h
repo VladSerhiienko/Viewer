@@ -4,12 +4,12 @@
 #include <Inc/DirectXMath.h>
 #include <algorithm>
 
-namespace apemodem {
+namespace apemodexm {
     using namespace DirectX;
-    using vec2 = DirectX::XMFLOAT2;
-    using vec3 = DirectX::XMFLOAT3;
-    using vec4 = DirectX::XMFLOAT4;
-    using mat4 = DirectX::XMFLOAT4X4;
+    using float2 = DirectX::XMFLOAT2;
+    using float3 = DirectX::XMFLOAT3;
+    using float4 = DirectX::XMFLOAT4;
+    using float4x4 = DirectX::XMFLOAT4X4;
     
     static const float kPi               = 3.1415926535897932f;
     static const float kSmallNumber      = 1.e-8f;
@@ -23,7 +23,7 @@ namespace apemodem {
     static const float k90               = kPiDiv2;
     static const float k180              = kPi;
 
-    inline vec2 LatLongFromVec( const vec3& _vec ) {
+    inline float2 LatLongFromVec( const float3& _vec ) {
         const float phi   = atan2f( _vec.x, _vec.z );
         const float theta = acosf( _vec.y );
 
@@ -37,7 +37,7 @@ namespace apemodem {
         return XMLoadFloat2( &latLon );
     }
 
-    inline vec3 VecFromLatLong( vec2 _uv ) {
+    inline float3 VecFromLatLong( float2 _uv ) {
         const float phi   = _uv.x * 2.0f * kPi;
         const float theta = _uv.y * kPi;
 
@@ -70,11 +70,11 @@ namespace apemodem {
         return fabsf( A - B ) <= ErrorTolerance;
     }
 
-    inline bool IsNearlyEqual( vec2 const A, vec2 const B, const float ErrorTolerance = kSmallNumber ) {
+    inline bool IsNearlyEqual( float2 const A, float2 const B, const float ErrorTolerance = kSmallNumber ) {
         return fabsf( A.x - B.x ) <= ErrorTolerance && fabsf( A.y - B.y ) <= ErrorTolerance;
     }
 
-    inline bool IsNearlyEqual( vec3 const A, vec3 const B, const float ErrorTolerance = kSmallNumber ) {
+    inline bool IsNearlyEqual( float3 const A, float3 const B, const float ErrorTolerance = kSmallNumber ) {
         return fabsf( A.x - B.x ) <= ErrorTolerance && fabsf( A.y - B.y ) <= ErrorTolerance && fabsf( A.z - B.z ) <= ErrorTolerance;
     }
 
@@ -82,15 +82,15 @@ namespace apemodem {
         return fabsf( Value ) <= ErrorTolerance;
     }
 
-    inline bool IsNearlyZero( vec2 const Value, float ErrorTolerance = kSmallNumber ) {
+    inline bool IsNearlyZero( float2 const Value, float ErrorTolerance = kSmallNumber ) {
         return fabsf( Value.x ) <= ErrorTolerance && fabsf( Value.y ) <= ErrorTolerance;
     }
 
-    inline bool IsNearlyZero( vec3 const Value, float ErrorTolerance = kSmallNumber ) {
+    inline bool IsNearlyZero( float3 const Value, float ErrorTolerance = kSmallNumber ) {
         return fabsf( Value.x ) <= ErrorTolerance && fabsf( Value.y ) <= ErrorTolerance && fabsf( Value.z ) <= ErrorTolerance;
     }
 }
 
 namespace apemode {
-    using namespace apemodem;
+    using namespace apemodexm;
 }

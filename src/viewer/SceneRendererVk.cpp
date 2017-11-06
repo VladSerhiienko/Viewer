@@ -30,9 +30,9 @@ namespace apemodevk {
     };
 
     struct FrameUniformBuffer {
-        apemodem::mat4 worldMatrix;
-        apemodem::mat4 viewMatrix;
-        apemodem::mat4 projectionMatrix;
+        XMFLOAT4X4 worldMatrix;
+        XMFLOAT4X4 viewMatrix;
+        XMFLOAT4X4 projectionMatrix;
         XMFLOAT4 color;
         XMFLOAT4 positionOffset;
         XMFLOAT4 positionScale;
