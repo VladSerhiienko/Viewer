@@ -11,7 +11,7 @@ namespace apemode {
 
         MouseKeyboardCameraControllerInput( )
             : DeltaPosition( 0.0f, 0.0f )
-            , PrevPosition( apemodem::kMaxFloat, apemodem::kMaxFloat ) {
+            , PrevPosition( apemodexm::kMaxFloat, apemodexm::kMaxFloat ) {
             DollyDelta = {0.0f, 0.0f, 0.0f};
             OrbitDelta = {0.0f, 0.0f};
         }
@@ -21,7 +21,7 @@ namespace apemode {
                                    _input.Analogs[ kAnalogInput_MouseY ],
                                    _input.Analogs[ kAnalogInput_MouseScroll ]};
 
-            if ( PrevPosition.x == apemodem::kMaxFloat ) {
+            if ( PrevPosition.x == apemodexm::kMaxFloat ) {
                 PrevPosition.x = mxyz.x;
                 PrevPosition.y = mxyz.y;
             }

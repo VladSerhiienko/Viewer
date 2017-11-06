@@ -83,9 +83,9 @@ namespace apemode {
             // return XMFLOAT4X4::FromTranslationVector( translation ) *
             //        XMFLOAT4X4::FromTranslationVector( rotationOffset ) *
             //        XMFLOAT4X4::FromTranslationVector( rotationPivot ) *
-            //        apemodem::quat::FromEulerAngles( preRotation ).ToMatrix4( ) *
-            //        apemodem::quat::FromEulerAngles( rotation ).ToMatrix4( ) *
-            //        apemodem::quat::FromEulerAngles( postRotation ).ToMatrix4( ) *
+            //        apemodexm::quat::FromEulerAngles( preRotation ).ToMatrix4( ) *
+            //        apemodexm::quat::FromEulerAngles( rotation ).ToMatrix4( ) *
+            //        apemodexm::quat::FromEulerAngles( postRotation ).ToMatrix4( ) *
             //        XMFLOAT4X4::FromTranslationVector( -rotationPivot ) *
             //        XMFLOAT4X4::FromTranslationVector( scalingOffset ) *
             //        XMFLOAT4X4::FromTranslationVector( scalingPivot ) *
@@ -106,7 +106,7 @@ namespace apemode {
                    DirectX::XMMatrixScalingFromVector( DirectX::XMLoadFloat3( &geometricScaling ) );
 
             // return XMFLOAT4X4::FromTranslationVector( geometricTranslation ) *
-            //        apemodem::quat::FromEulerAngles( geometricRotation ).ToMatrix4( ) *
+            //        apemodexm::quat::FromEulerAngles( geometricRotation ).ToMatrix4( ) *
             //        XMFLOAT4X4::FromScaleVector( geometricScaling );
         }
     };
@@ -368,9 +368,9 @@ namespace apemode {
                         scene->materials.emplace_back( );
                         auto &material = scene->materials.back( );
 
-                        material.albedo.x = apemodem::RandomInRange< float >( 0, 1 );
-                        material.albedo.y = apemodem::RandomInRange< float >( 0, 1 );
-                        material.albedo.z = apemodem::RandomInRange< float >( 0, 1 );
+                        material.albedo.x = apemodexm::RandomInRange< float >( 0, 1 );
+                        material.albedo.y = apemodexm::RandomInRange< float >( 0, 1 );
+                        material.albedo.z = apemodexm::RandomInRange< float >( 0, 1 );
                         material.albedo.w = 1;
                     }
                 }

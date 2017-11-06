@@ -120,7 +120,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             const uint32_t indicesByteSize  = (uint32_t) meshFb->indices( )->size( );
 
             const uint32_t storageAlignment = (uint32_t) pNode->AdapterProps.limits.minStorageBufferOffsetAlignment;
-            const uint32_t verticesStorageSize = apemodem::AlignedOffset( verticesByteSize, storageAlignment );
+            const uint32_t verticesStorageSize = apemodexm::AlignedOffset( verticesByteSize, storageAlignment );
             const uint32_t totalMeshSize = verticesStorageSize + indicesByteSize;
 
             pMeshDeviceAsset->IndexOffset = verticesStorageSize;

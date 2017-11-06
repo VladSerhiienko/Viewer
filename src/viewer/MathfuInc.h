@@ -15,7 +15,7 @@
 #include <mathfu/vector.h>
 #include <mathfu/glsl_mappings.h>
 
-namespace apemodem {
+namespace apemodexm {
 
     using namespace mathfu;
 
@@ -232,8 +232,8 @@ namespace apemodem {
         t0 = t0 * t4 + c[ 6 ];
         t3 = t0 * t3;
 
-        t3 = yAbsBigger ? ( 0.5f * apemodem::kPi ) - t3 : t3;
-        t3 = ( X < 0.0f ) ? apemodem::kPi - t3 : t3;
+        t3 = yAbsBigger ? ( 0.5f * apemodexm::kPi ) - t3 : t3;
+        t3 = ( X < 0.0f ) ? apemodexm::kPi - t3 : t3;
         t3 = ( Y < 0.0f ) ? -t3 : t3;
 
         return t3;

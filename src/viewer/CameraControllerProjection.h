@@ -16,10 +16,10 @@ namespace apemode {
         }
 
         inline XMMATRIX ProjMatrix( float _fieldOfViewYDegs, float _width, float _height, float _nearZ, float _farZ ) {
-            const float fovRads      = apemodem::DegreesToRadians< float >( _fieldOfViewYDegs );
+            const float fovRads      = apemodexm::DegreesToRadians< float >( _fieldOfViewYDegs );
             const float aspectWOverH = _width / _height;
 
-            return ProjBiasMatrix( ) * apemodem::XMMatrixPerspectiveFovLH( fovRads, aspectWOverH, _nearZ, _farZ );
+            return ProjBiasMatrix( ) * apemodexm::XMMatrixPerspectiveFovLH( fovRads, aspectWOverH, _nearZ, _farZ );
         }
     };
 }

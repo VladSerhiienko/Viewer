@@ -772,8 +772,8 @@
 //        skyboxRenderParams.InvViewMatrix  = InvView;
 //        skyboxRenderParams.InvProjMatrix  = InvProj;
 //        skyboxRenderParams.ProjBiasMatrix = appContent->CamProjController.ProjBiasMatrix( );
-//        skyboxRenderParams.FieldOfView    = apemodem::DegreesToRadians( 67 );
-//        skyboxRenderParams.FieldOfView    = apemodem::DegreesToRadians( 67 );
+//        skyboxRenderParams.FieldOfView    = apemodexm::DegreesToRadians( 67 );
+//        skyboxRenderParams.FieldOfView    = apemodexm::DegreesToRadians( 67 );
 //
 //        appContent->pSkyboxRenderer->Render( appContent->pSkybox, &skyboxRenderParams );
 //

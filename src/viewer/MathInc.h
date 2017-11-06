@@ -89,6 +89,10 @@ namespace apemodexm {
     inline bool IsNearlyZero( float3 const Value, float ErrorTolerance = kSmallNumber ) {
         return fabsf( Value.x ) <= ErrorTolerance && fabsf( Value.y ) <= ErrorTolerance && fabsf( Value.z ) <= ErrorTolerance;
     }
+    
+    inline uint32_t AlignedOffset( uint32_t offset, uint32_t alignment ) {
+        return alignment * ( offset / alignment + static_cast< uint32_t >( !!( offset % alignment ) ) );
+    }
 }
 
 namespace apemode {
