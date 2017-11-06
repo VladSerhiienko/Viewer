@@ -16,3 +16,6 @@
 [submodule "third_party/EASTL"]
 	path = third_party/EASTL
 	url = git@github.com:electronicarts/EASTL.git
+[submodule "third_party/FbxPipeline"]
+	path = third_party/FbxPipeline
+	url = git@github.com:VladSerhiienko/FbxPipeline.git

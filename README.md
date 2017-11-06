@@ -39,6 +39,33 @@ cmake -Bbuild_linux_x86-64 -H. -DEASTL_BUILD_TESTS:BOOL=TRUE
 make -C build_linux_x86-64
 cd ..
 
+cd FbxPipeline
+git submodule init
+git submodule update --recursive
+
+cd ThirdParty
+
+cd mathfu
+git submodule init
+git submodule update --recursive
+cd ..
+
+cd flatbuffers
+git checkout master
+git pull origin master
+cmake -Bbuild_linux_x86-64 -H.
+make -C build_linux_x86-64
+cd ..
+
+cd ..
+mkdir -p FbxPipeline/generated
+ThirdParty/flatbuffers/build_linux_x86-64/flatc -o FbxPipeline/generated -c FbxPipeline/schemes/scene.fbs --gen-mutable
+ThirdParty/flatbuffers/build_linux_x86-64/flatc -o FbxPipeline/generated -s FbxPipeline/schemes/scene.fbs --gen-mutable
+
+cmake -Bbuild_linux_x86-64 -H.
+make -C build_linux_x86-64
+cd ..
+
 cd ..
 cmake -Bbuild_linux_x86-64 -H.
 make -C build_linux_x86-64
