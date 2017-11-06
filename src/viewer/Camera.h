@@ -1,6 +1,6 @@
 #pragma once
 
-#include <MathfuInc.h>
+#include <MathInc.h>
 
 namespace apemode {
 

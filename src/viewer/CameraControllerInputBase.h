@@ -1,7 +1,7 @@
 #pragma once
 
 #include <Input.h>
-#include <MathfuInc.h>
+#include <MathInc.h>
 
 namespace apemode {
 

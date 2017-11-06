@@ -1,7 +1,6 @@
 #pragma once
 
-#include <DirectXMath.h>
-using DirectXMath;
+#include <MathInc.h>
 
 namespace apemode {
 
@@ -13,8 +12,8 @@ namespace apemode {
         virtual void Dolly( apemodem::vec3 _dzxy ) { }
         virtual void Update( float _dt ) { }
 
-        virtual apemodem::mat4 ViewMatrix( ) {
-            return apemodem::mat4::LookAt( Target, Position, {0, 1, 0}, apemodem::kHandness );
+        virtual apemodem::XMMATRIX ViewMatrix( ) {
+            return XMMatrixLookAtLH( XMLoadFloat3( &Position ), XMLoadFloat3( &Target ), g_XMIdentityR1.v );
         }
 
     };

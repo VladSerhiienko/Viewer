@@ -25,56 +25,89 @@ namespace apemode {
         }
 
         void Orbit( apemodem::vec2 _dxdy ) override {
-            OrbitCurr += _dxdy;
+            // OrbitCurr += _dxdy;
+            XMStoreFloat2( &OrbitCurr, XMLoadFloat2( &OrbitCurr ) + XMLoadFloat2( &_dxdy ) );
         }
 
         void Dolly( apemodem::vec3 _dxyz ) override {
-            float toTargetLen;
-            const apemodem::vec3 toTargetNorm = apemodem::NormalizedSafeAndLength( TargetDst - PositionDst, toTargetLen );
-            const apemodem::vec3 right = apemodem::vec3::CrossProduct( {0.0f, 1.0f, 0.0f}, toTargetNorm ); /* Already normalized */
-            const apemodem::vec3 up = apemodem::vec3::CrossProduct( toTargetNorm, right ); /* Already normalized */
+            auto targetDst   = XMLoadFloat3( &TargetDst );
+            auto positionDst = XMLoadFloat3( &PositionDst );
 
-            float deltaZ = toTargetLen * _dxyz.z;
-            TargetDst += toTargetNorm * deltaZ;
-            PositionDst += toTargetNorm * deltaZ;
+            auto toTargetNorm = targetDst - positionDst;
+            auto toTargetLen  = XMVector3Length( toTargetNorm );
+            toTargetNorm /= toTargetLen;
 
-            float deltaX = toTargetLen * _dxyz.x;
-            TargetDst += right * deltaX;
-            PositionDst += right * deltaX;
+            auto right = XMVector3Cross( g_XMIdentityR1, toTargetNorm );
+            auto up    = XMVector3Cross( toTargetNorm, right );
 
-            float deltaY = toTargetLen * _dxyz.y;
-            TargetDst += up * deltaY;
-            PositionDst += up * deltaY;
+            auto delta = XMLoadFloat3( &_dxyz ) * toTargetLen;
+
+            auto forwardDelta = toTargetNorm * XMVectorGetZ( delta );
+            auto rightDelta   = right * XMVectorGetX( delta );
+            auto upDelta      = up * XMVectorGetY( delta );
+
+            targetDst += forwardDelta;
+            targetDst += rightDelta;
+            targetDst += upDelta;
+
+            positionDst += forwardDelta;
+            positionDst += rightDelta;
+            positionDst += upDelta;
+
+            XMStoreFloat3( &TargetDst, targetDst );
+            XMStoreFloat3( &PositionDst, positionDst );
         }
 
         void ConsumeOrbit( float _amount ) {
-            float toPosLen;
-            const apemodem::vec3 toPosNorm = apemodem::NormalizedSafeAndLength( Position - Target, toPosLen );
-            apemodem::vec2 ll = apemodem::LatLongFromVec( toPosNorm );
+            auto orbitCurr   = XMLoadFloat3( &OrbitCurr );
+            auto targetDst   = XMLoadFloat3( &TargetDst );
+            auto positionDst = XMLoadFloat3( &PositionDst );
 
-            apemodem::vec2 consume = OrbitCurr * _amount;
-            OrbitCurr -= consume;
+            auto toPosNorm = targetDst - positionDst;
+            auto toPosLen  = XMVector3Length( toPosNorm );
+            toPosNorm /= toPosLen;
 
-            consume.y *= ( ll.y < 0.02 && consume.y < 0 ) || ( ll.y > 0.98 && consume.y > 0 ) ? 0 : -1;
+            auto ll = apemodem::LatLongFromVec( toPosNorm );
+
+            auto consume = orbitCurr * _amount;
+            orbitCurr -= consume;
+
+            // consume.y *= ( ll.y < 0.02 && consume.y < 0 ) || ( ll.y > 0.98 && consume.y > 0 ) ? 0 : -1;
+            auto lon = XMVectorGetY( ll );
+            auto oy  = XMVectorGetY( consume );
+            oy *= ( lon < 0.02 && oy < 0 ) || ( lon > 0.98 && oy > 0 ) ? 0 : -1;
+            consume = XMVectorSetY( consume, oy );
             ll += consume;
 
-            const apemodem::vec3 tmp  = apemodem::VecFromLatLong( ll );
-            apemodem::vec3 diff = ( tmp - toPosNorm ) * toPosLen;
+            auto backward = apemode::VecFromLatLong( ll );
+            auto diff     = ( backward - toPosNorm ) * toPosLen;
 
-            Target += diff;
-            TargetDst += diff;
+            auto target = XMLoadFloat3( &Target );
+            target += diff;
+            targetDst += diff;
 
-            const apemodem::vec3 dstDiff = apemodem::NormalizedSafe( TargetDst - PositionDst );
-            TargetDst = PositionDst + dstDiff * ( ZRange.y - ZRange.x ) * 0.1f;
+            auto diffDst = XMVector3Normalize( targetDst - positionDst );
+            targetDst    = positionDst + diffDst * ( ZRange.y - ZRange.x ) * 0.1f;
+
+            XMStoreFloat3( &Target, target );
+            XMStoreFloat3( &TargetDst, targetDst );
+            XMStoreFloat3( &PositionDst, positionDst );
         }
 
         void Update( float _dt ) override {
-            const float amount = std::min( _dt / 0.1f, 1.0f );
+            const float amount = std::min< float >( _dt / 0.1f, 1.0f );
 
             ConsumeOrbit( amount );
+            auto target      = XMLoadFloat3( &Target );
+            auto targetDst   = XMLoadFloat3( &TargetDst );
+            auto position    = XMLoadFloat3( &Position );
+            auto positionDst = XMLoadFloat3( &PositionDst );
 
-            Target   = apemodem::Lerp( Target, TargetDst, amount );
-            Position = apemodem::Lerp( Position, PositionDst, amount );
+            target   = XMVectorLerp( target, targetDst, amount );
+            position = XMVectorLerp( position, positionDst, amount );
+
+            XMStoreFloat3( &Target, target );
+            XMStoreFloat3( &Position, position );
         }
 
     };
