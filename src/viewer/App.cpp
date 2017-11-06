@@ -895,6 +895,8 @@
 #include <AppSurfaceSdlVk.h>
 #include <Swapchain.Vulkan.h>
 #include <SamplerManagerVk.h>
+#include <CameraControllerFreeLook.h>
+#include <CameraControllerModelView.h>
 
 #define kMaxFrames 3
 

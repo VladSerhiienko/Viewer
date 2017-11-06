@@ -11,7 +11,7 @@ namespace apemode {
 namespace apemode {
 
     struct SceneMaterial {
-        apemodem::vec4 albedo;
+        XMFLOAT4 albedo;
         void *       deviceAsset;
     };
 
@@ -24,10 +24,10 @@ namespace apemode {
     struct SceneMesh {
         void *                         deviceAsset;
         std::vector< SceneMeshSubset > subsets;
-        apemodem::vec3                   positionOffset;
-        apemodem::vec3                   positionScale;
-        apemodem::vec2                   texcoordOffset;
-        apemodem::vec2                   texcoordScale;
+        XMFLOAT3                   positionOffset;
+        XMFLOAT3                   positionScale;
+        XMFLOAT2                   texcoordOffset;
+        XMFLOAT2                   texcoordScale;
     };
 
     /**
@@ -35,18 +35,18 @@ namespace apemode {
      * and calculates local and geometric matrices.
      **/
     struct SceneNodeTransform {
-        apemodem::vec3 translation;
-        apemodem::vec3 rotationOffset;
-        apemodem::vec3 rotationPivot;
-        apemodem::vec3 preRotation;
-        apemodem::vec3 postRotation;
-        apemodem::vec3 rotation;
-        apemodem::vec3 scalingOffset;
-        apemodem::vec3 scalingPivot;
-        apemodem::vec3 scaling;
-        apemodem::vec3 geometricTranslation;
-        apemodem::vec3 geometricRotation;
-        apemodem::vec3 geometricScaling;
+        XMFLOAT3 translation;
+        XMFLOAT3 rotationOffset;
+        XMFLOAT3 rotationPivot;
+        XMFLOAT3 preRotation;
+        XMFLOAT3 postRotation;
+        XMFLOAT3 rotation;
+        XMFLOAT3 scalingOffset;
+        XMFLOAT3 scalingPivot;
+        XMFLOAT3 scaling;
+        XMFLOAT3 geometricTranslation;
+        XMFLOAT3 geometricRotation;
+        XMFLOAT3 geometricScaling;
 
         /**
          * Checks for nans and zero scales.

@@ -6,29 +6,33 @@ namespace apemode {
 
     /* Adapts the input for the camera */
     struct MouseKeyboardCameraControllerInput : CameraControllerInputBase {
-        apemodem::vec2 DeltaPosition;
-        apemodem::vec2 PrevPosition;
+        XMFLOAT2 DeltaPosition;
+        XMFLOAT2 PrevPosition;
 
-        MouseKeyboardCameraControllerInput( ) : DeltaPosition( 0.0f )
-                                              , PrevPosition( apemodem::kMaxFloat ) {
+        MouseKeyboardCameraControllerInput( )
+            : DeltaPosition( 0.0f, 0.0f )
+            , PrevPosition( apemodem::kMaxFloat, apemodem::kMaxFloat ) {
             DollyDelta = {0.0f, 0.0f, 0.0f};
             OrbitDelta = {0.0f, 0.0f};
         }
 
-        void Update( float _dt, apemode::Input const& _input, apemodem::vec2 _widthHeight ) override {
-            apemodem::vec3 mxyz = {_input.Analogs[ kAnalogInput_MouseX ],
+        void Update( float _dt, apemode::Input const& _input, XMFLOAT2 _widthHeight ) override {
+            XMFLOAT3 mxyz = {_input.Analogs[ kAnalogInput_MouseX ],
                                    _input.Analogs[ kAnalogInput_MouseY ],
                                    _input.Analogs[ kAnalogInput_MouseScroll ]};
 
             if ( PrevPosition.x == apemodem::kMaxFloat ) {
-                PrevPosition = mxyz.xy( );
+                PrevPosition.x = mxyz.x;
+                PrevPosition.y = mxyz.y;
             }
 
-            DeltaPosition = ( mxyz.xy( ) - PrevPosition ) / _widthHeight;
-            PrevPosition  = mxyz.xy( );
+            DeltaPosition.x = ( mxyz.x - PrevPosition.x ) / _widthHeight.x;
+            DeltaPosition.y = ( mxyz.y - PrevPosition.y ) / _widthHeight.y;
+            PrevPosition.x  = mxyz.x;
+            PrevPosition.y  = mxyz.y;
 
             // Delta orbit.
-            OrbitDelta = _input.Buttons[ 0 ][ kDigitalInput_Mouse0 ] ? DeltaPosition : apemodem::vec2{0, 0};
+            OrbitDelta = _input.Buttons[ 0 ][ kDigitalInput_Mouse0 ] ? DeltaPosition : XMFLOAT2{0, 0};
 
             // Delta dolly.
             DollyDelta = {0, 0, 0};

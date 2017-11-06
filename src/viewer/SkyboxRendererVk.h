@@ -7,6 +7,7 @@
 #include <ImageLoaderVk.h>
 
 namespace apemodevk {
+    using namespace DirectX;
 
     class Skybox {
     public:
@@ -34,11 +35,11 @@ namespace apemodevk {
             apemodevk::GraphicsDevice* pNode       = nullptr;       /* Required */
             float                      FieldOfView = 0;             /* Required */
             uint32_t                   FrameIndex  = 0;             /* Required */
-            apemodem::vec2             Dims;                        /* Required */
-            apemodem::vec2             Scale;                       /* Required */
-            apemodem::mat4             InvViewMatrix;               /* Required */
-            apemodem::mat4             InvProjMatrix;               /* Required */
-            apemodem::mat4             ProjBiasMatrix;                  /* Required */
+            XMFLOAT2                   Dims;                        /* Required */
+            XMFLOAT2                   Scale;                       /* Required */
+            XMFLOAT4X4                 InvViewMatrix;               /* Required */
+            XMFLOAT4X4                 InvProjMatrix;               /* Required */
+            XMFLOAT4X4                 ProjBiasMatrix;              /* Required */
             VkCommandBuffer            pCmdBuffer = VK_NULL_HANDLE; /* Required */
         };
 

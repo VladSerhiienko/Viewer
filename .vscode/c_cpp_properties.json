@@ -28,7 +28,20 @@
             "includePath": [
                 "/usr/include",
                 "/usr/local/include",
-                "${workspaceRoot}"
+                "${workspaceRoot}",
+                "${workspaceRoot}/third_party/DirectXMath",
+                "${workspaceRoot}/src/missing_clang",
+                "${workspaceRoot}/src/viewer",
+                "/home/user/vulkan/VulkanSDK/1.0.61.1/x86_64/include",
+                "/home/user/vulkan/VulkanSDK/1.0.61.1/source/shaderc/src/libshaderc/include",
+                "${workspaceRoot}/src/viewer/vk",
+                "/usr/lib/llvm-3.6/lib/clang/3.6.2/include",
+                "/usr/include/c++/6",
+                "/usr/include/x86_64-linux-gnu/c++/6",
+                "${workspaceRoot}/third_party/SDL2-2.0.7/include",
+                "${workspaceRoot}/third_party/cxxopts/include",
+                "${workspaceRoot}/third_party/flatbuffers/include",
+                "${workspaceRoot}/third_party/spdlog/include"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",

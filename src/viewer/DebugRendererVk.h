@@ -13,10 +13,10 @@ namespace apemode {
         };
 
         struct FrameUniformBuffer {
-            apemodem::mat4 worldMatrix;
-            apemodem::mat4 viewMatrix;
-            apemodem::mat4 projectionMatrix;
-            apemodem::vec4 color;
+            XMFLOAT4X4 worldMatrix;
+            XMFLOAT4X4 viewMatrix;
+            XMFLOAT4X4 projectionMatrix;
+            XMFLOAT4 color;
         };
 
         struct InitParametersVk {

@@ -9,12 +9,14 @@
 #include <ArrayUtils.h>
 #include <shaderc/shaderc.hpp>
 
+using namespace DirectX;
+
 struct FrameUniformBuffer {
-    apemodem::mat4 ProjBias;
-    apemodem::mat4 InvView;
-    apemodem::mat4 InvProj;
-    apemodem::vec4 params0;
-    apemodem::vec4 params1;
+    XMFLOAT4X4 ProjBias;
+    XMFLOAT4X4 InvView;
+    XMFLOAT4X4 InvProj;
+    XMFLOAT4 params0;
+    XMFLOAT4 params1;
 };
 
 struct SkyboxVertex {

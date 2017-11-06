@@ -5,10 +5,10 @@
 namespace apemode {
     
     struct FreeLookCameraController : CameraControllerBase {
-        apemodem::vec3 TargetDst;
-        apemodem::vec3 PositionDst;
-        apemodem::vec2 OrbitCurr;
-        apemodem::vec2 ZRange;
+        XMFLOAT3 TargetDst;
+        XMFLOAT3 PositionDst;
+        XMFLOAT2 OrbitCurr;
+        XMFLOAT2 ZRange;
 
         FreeLookCameraController( ) {
             ZRange.x = 0.1f;
@@ -24,12 +24,11 @@ namespace apemode {
             OrbitCurr   = {0, 0};
         }
 
-        void Orbit( apemodem::vec2 _dxdy ) override {
-            // OrbitCurr += _dxdy;
+        void Orbit( XMFLOAT2 _dxdy ) override {
             XMStoreFloat2( &OrbitCurr, XMLoadFloat2( &OrbitCurr ) + XMLoadFloat2( &_dxdy ) );
         }
 
-        void Dolly( apemodem::vec3 _dxyz ) override {
+        void Dolly( XMFLOAT3 _dxyz ) override {
             auto targetDst   = XMLoadFloat3( &TargetDst );
             auto positionDst = XMLoadFloat3( &PositionDst );
 
@@ -59,10 +58,10 @@ namespace apemode {
         }
 
         void ConsumeOrbit( float _amount ) {
-            auto orbitCurr   = XMLoadFloat3( &OrbitCurr );
+            auto orbitCurr   = XMLoadFloat2( &OrbitCurr );
             auto targetDst   = XMLoadFloat3( &TargetDst );
             auto positionDst = XMLoadFloat3( &PositionDst );
-
+            
             auto toPosNorm = targetDst - positionDst;
             auto toPosLen  = XMVector3Length( toPosNorm );
             toPosNorm /= toPosLen;
@@ -71,7 +70,7 @@ namespace apemode {
 
             auto consume = orbitCurr * _amount;
             orbitCurr -= consume;
-
+            
             // consume.y *= ( ll.y < 0.02 && consume.y < 0 ) || ( ll.y > 0.98 && consume.y > 0 ) ? 0 : -1;
             auto lon = XMVectorGetY( ll );
             auto oy  = XMVectorGetY( consume );
@@ -80,15 +79,16 @@ namespace apemode {
             ll += consume;
 
             auto backward = apemode::VecFromLatLong( ll );
-            auto diff     = ( backward - toPosNorm ) * toPosLen;
+            auto diff = ( backward - toPosNorm ) * toPosLen;
 
             auto target = XMLoadFloat3( &Target );
             target += diff;
             targetDst += diff;
 
             auto diffDst = XMVector3Normalize( targetDst - positionDst );
-            targetDst    = positionDst + diffDst * ( ZRange.y - ZRange.x ) * 0.1f;
+            targetDst = positionDst + diffDst * ( ZRange.y - ZRange.x ) * 0.1f;
 
+            XMStoreFloat2( &OrbitCurr, orbitCurr );
             XMStoreFloat3( &Target, target );
             XMStoreFloat3( &TargetDst, targetDst );
             XMStoreFloat3( &PositionDst, positionDst );
@@ -98,6 +98,7 @@ namespace apemode {
             const float amount = std::min< float >( _dt / 0.1f, 1.0f );
 
             ConsumeOrbit( amount );
+
             auto target      = XMLoadFloat3( &Target );
             auto targetDst   = XMLoadFloat3( &TargetDst );
             auto position    = XMLoadFloat3( &Position );

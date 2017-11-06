@@ -10,7 +10,6 @@ namespace apemodem {
     using vec3 = DirectX::XMFLOAT3;
     using vec4 = DirectX::XMFLOAT4;
     using mat4 = DirectX::XMFLOAT4X4;
-
     
     static const float kPi               = 3.1415926535897932f;
     static const float kSmallNumber      = 1.e-8f;

@@ -16,10 +16,10 @@ namespace apemodevk {
         float normal[ 3 ];
         float tangent[ 4 ];
         float texcoords[ 2 ];
-        /*apemodem::vec3 position;
-        apemodem::vec3 normal;
-        apemodem::vec4 tangent;
-        apemodem::vec2 texcoords;*/
+        /*XMFLOAT3 position;
+        XMFLOAT3 normal;
+        XMFLOAT4 tangent;
+        XMFLOAT2 texcoords;*/
     };
 
     struct PackedVertex {
@@ -33,9 +33,9 @@ namespace apemodevk {
         apemodem::mat4 worldMatrix;
         apemodem::mat4 viewMatrix;
         apemodem::mat4 projectionMatrix;
-        apemodem::vec4 color;
-        apemodem::vec4 positionOffset;
-        apemodem::vec4 positionScale;
+        XMFLOAT4 color;
+        XMFLOAT4 positionOffset;
+        XMFLOAT4 positionScale;
     };
 
     struct SceneMeshDeviceAssetVk {
@@ -44,8 +44,8 @@ namespace apemodevk {
         uint32_t                              VertexCount = 0;
         uint32_t                              IndexOffset = 0;
         VkIndexType                           IndexType   = VK_INDEX_TYPE_UINT16;
-        apemodem::vec4                        positionOffset;
-        apemodem::vec4                        positionScale;
+        XMFLOAT4                        positionOffset;
+        XMFLOAT4                        positionScale;
     };
 }
 

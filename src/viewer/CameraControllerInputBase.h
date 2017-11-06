@@ -7,10 +7,10 @@ namespace apemode {
 
     /* Adapts the input for the camera */
     struct CameraControllerInputBase {
-        apemodem::vec3 DollyDelta;
-        apemodem::vec2 OrbitDelta;
+        XMFLOAT3 DollyDelta;
+        XMFLOAT2 OrbitDelta;
 
-        virtual void Update( float deltaSecs, apemode::Input const& _input, apemodem::vec2 _widthHeight ) {
+        virtual void Update( float deltaSecs, apemode::Input const& _input, XMFLOAT2 _widthHeight ) {
         }
     };
 } // namespace apemode
