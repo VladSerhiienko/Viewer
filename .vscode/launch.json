@@ -1,0 +1,53 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Pipeline (Run)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/third_party/FbxPipeline/build_linux_x86-64/FbxPipeline",
+            "args": [
+                "-i",
+                "/home/user/vserhiienko/models/stesla-elephant-steam-engines/source/stesla.fbx",
+                "-o",
+                "/home/user/vserhiienko/models/stesla-elephant-steam-engines/source/stesla.fbxp",
+                "-p"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/third_party/FbxPipeline/build_linux_x86-64/",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "Viewer (Run)",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceRoot}/build_linux_x86-64/Viewer",
+            "args": [
+                "--ro-path",
+                "../../etc/nav"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${workspaceRoot}/dev/dist/navi-host-singlemap/1/workspace/usr/bin",
+            "environment": [],
+            "externalConsole": true,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                }
+            ],
+            "preLaunchTask": "NaviHost (Build)"
+        }
+    ]
+}

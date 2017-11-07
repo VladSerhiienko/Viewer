@@ -45,7 +45,8 @@
         "thread": "cpp",
         "tuple": "cpp",
         "typeinfo": "cpp",
-        "utility": "cpp"
+        "utility": "cpp",
+        "hash_set": "cpp"
     },
 
     "c-cpp-flylint.clang.enable": true,
