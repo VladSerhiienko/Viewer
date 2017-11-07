@@ -1,6 +1,7 @@
 #pragma once
 
 #include <math.h>
+#include <random>
 #include <Inc/DirectXMath.h>
 #include <algorithm>
 
@@ -92,6 +93,12 @@ namespace apemodexm {
     
     inline uint32_t AlignedOffset( uint32_t offset, uint32_t alignment ) {
         return alignment * ( offset / alignment + static_cast< uint32_t >( !!( offset % alignment ) ) );
+    }
+
+    template < class T >
+    inline T RandomInRange( T min, T max ) {
+        return min + static_cast< T >( static_cast< float >( rand( ) ) * static_cast< float >( max - min ) /
+                                       static_cast< float >( RAND_MAX ) );
     }
 }
 

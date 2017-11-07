@@ -3,7 +3,18 @@
 #include <set>
 #include <regex>
 
+#if defined(__clang__) || defined(__GNUC__)
+#include <experimental/filesystem>
+namespace std {
+    namespace filesystem = std::experimental::filesystem::v1;
+}
+#else
 #include <filesystem>
+namespace std {
+    namespace filesystem = std::tr2::sys;
+}
+#endif
+
 #include <fstream>
 #include <iterator>
 
@@ -12,7 +23,7 @@
 namespace std {
     /* For Visual Studio 2015 */
     /* TODO Check for other compilers */
-    namespace filesystem = std::tr2::sys;
+    // namespace filesystem = std::tr2::sys;
 }
 
 std::string apemodeos::CurrentDirectory( ) {
@@ -35,13 +46,14 @@ bool apemodeos::FileExists( const std::string& filePath ) {
     return std::filesystem::is_regular_file( filePath );
 }
 
-std::string& apemodeos::ReplaceSlashes( std::string& path ) {
+std::string apemodeos::ReplaceSlashes( std::string path ) {
     std::replace( path.begin( ), path.end( ), '\\', '/' );
     return path;
 }
 
-std::string& apemodeos::RealPath( std::string& path ) {
-    return path = std::filesystem::canonical( path ).string( );
+std::string apemodeos::RealPath( std::string path ) {
+    return path;
+    // return std::filesystem::canonical( path ).string( );
 }
 
 std::string apemodeos::ResolveFullPath( const std::string& path ) {
@@ -97,7 +109,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
                     const auto      filePathFull  = ResolveFullPath( filePath.string( ) );
                     const auto      lastWriteTime = std::filesystem::last_write_time( filePathFull, lastWriteTimeError );
 
-                    auto& fileIt = Files.find( filePathFull );
+                    auto fileIt = Files.find( filePathFull );
                     if ( fileIt == Files.end( ) ) {
                         appState->consoleLogger->debug( "FileScanner: Added: {} ({})", filePathFull.c_str( ), lastWriteTime.time_since_epoch( ).count( ) );
                     }

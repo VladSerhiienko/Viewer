@@ -19,3 +19,9 @@
 [submodule "third_party/FbxPipeline"]
 	path = third_party/FbxPipeline
 	url = git@github.com:VladSerhiienko/FbxPipeline.git
+[submodule "third_party/gli"]
+	path = third_party/gli
+	url = git@github.com:g-truc/gli.git
+[submodule "third_party/lodepng"]
+	path = third_party/lodepng
+	url = git@github.com:lvandeve/lodepng.git

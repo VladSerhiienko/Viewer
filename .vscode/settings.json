@@ -46,7 +46,11 @@
         "tuple": "cpp",
         "typeinfo": "cpp",
         "utility": "cpp",
-        "hash_set": "cpp"
+        "hash_set": "cpp",
+        "random": "cpp",
+        "string": "cpp",
+        "iterator": "cpp",
+        "string_view": "cpp"
     },
 
     "c-cpp-flylint.clang.enable": true,

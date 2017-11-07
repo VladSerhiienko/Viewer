@@ -41,7 +41,9 @@
                 "${workspaceRoot}/third_party/SDL2-2.0.7/include",
                 "${workspaceRoot}/third_party/cxxopts/include",
                 "${workspaceRoot}/third_party/flatbuffers/include",
-                "${workspaceRoot}/third_party/spdlog/include"
+                "${workspaceRoot}/third_party/spdlog/include",
+                "${workspaceRoot}/third_party/FbxPipeline/FbxPipeline/generated",
+                "${workspaceRoot}/third_party/FbxPipeline/FbxPipeline/generated"
             ],
             "defines": [],
             "intelliSenseMode": "clang-x64",

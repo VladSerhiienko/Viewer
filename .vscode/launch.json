@@ -32,11 +32,9 @@
             "request": "launch",
             "program": "${workspaceRoot}/build_linux_x86-64/Viewer",
             "args": [
-                "--ro-path",
-                "../../etc/nav"
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceRoot}/dev/dist/navi-host-singlemap/1/workspace/usr/bin",
+            "cwd": "${workspaceRoot}/build_linux_x86-64",
             "environment": [],
             "externalConsole": true,
             "MIMode": "gdb",
@@ -46,8 +44,7 @@
                     "text": "-enable-pretty-printing",
                     "ignoreFailures": true
                 }
-            ],
-            "preLaunchTask": "NaviHost (Build)"
+            ]
         }
     ]
 }

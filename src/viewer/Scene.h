@@ -2,6 +2,9 @@
 
 #include <fbxvpch.h>
 
+#include <scene_generated.h>
+#include <MathInc.h>
+
 namespace apemode {
     void *Malloc( size_t bytes );
     void *Memalign( size_t alignment, size_t bytes );
@@ -75,10 +78,10 @@ namespace apemode {
          * @note Contributes node world matrix.
          * @return Node local matrix.
          **/
-        inline XMFLOAT4X4 CalculateLocalMatrix( ) const {
-            return DirectX::XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &translation ) ) *
-                   DirectX::XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &rotationOffset ) ) *
-                   DirectX::XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &rotationPivot ) );
+        inline XMMATRIX CalculateLocalMatrix( ) const {
+            return XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &translation ) ) *
+                   XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &rotationOffset ) ) *
+                   XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &rotationPivot ) );
 
             // return XMFLOAT4X4::FromTranslationVector( translation ) *
             //        XMFLOAT4X4::FromTranslationVector( rotationOffset ) *
@@ -100,7 +103,7 @@ namespace apemode {
          *       it contributes to node world transform.
          * @return Node geometric transform.
          **/
-        inline XMFLOAT4X4 CalculateGeometricMatrix( ) const {
+        inline XMMATRIX CalculateGeometricMatrix( ) const {
             return DirectX::XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &geometricTranslation ) ) *
                    DirectX::XMMatrixRotationRollPitchYawFromVector( DirectX::XMLoadFloat3( &geometricRotation ) ) *
                    DirectX::XMMatrixScalingFromVector( DirectX::XMLoadFloat3( &geometricScaling ) );
@@ -140,10 +143,10 @@ namespace apemode {
         // Transform matrices storage.
         //
 
-        std::vector< XMFLOAT4X4 > worldMatrices;
-        std::vector< XMFLOAT4X4 > localMatrices;
-        std::vector< XMFLOAT4X4 > geometricMatrices;
-        std::vector< XMFLOAT4X4 > hierarchicalMatrices;
+        std::vector< XMMATRIX > worldMatrices;
+        std::vector< XMMATRIX > localMatrices;
+        std::vector< XMMATRIX > geometricMatrices;
+        std::vector< XMMATRIX > hierarchicalMatrices;
 
         void *deviceAsset;
 

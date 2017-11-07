@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.4.1)
-project (Viewer)
+project (viewer)
 
 message(STATUS "CMAKE_SYSTEM_INFO_FILE = ${CMAKE_SYSTEM_INFO_FILE}")
 message(STATUS "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
@@ -28,6 +28,8 @@ set(
     ${CMAKE_SOURCE_DIR}/src/viewer/DebugRendererVk.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/SamplerManagerVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/FileTracker.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/ImageLoaderVk.cpp
 
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/BufferPools.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/CommandQueue.Vulkan.cpp
@@ -39,20 +41,36 @@ set(
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/ShaderCompiler.Vulkan.cpp
 )
 
+add_library(
+    lodepng
+    STATIC
+    ${CMAKE_SOURCE_DIR}/third_party/lodepng/lodepng.cpp
+)
+
+target_include_directories(
+    lodepng
+    PUBLIC
+    ${CMAKE_SOURCE_DIR}/third_party/lodepng
+)
+    
 add_executable(
-    Viewer
+    viewer
     ${viewer_source_files}
 )
 
 message(STATUS "VK_SDK_PATH = $ENV{VK_SDK_PATH}")
 
 target_include_directories(
-    Viewer
+    viewer
     PUBLIC
     ${CMAKE_SOURCE_DIR}/assets/
     ${CMAKE_SOURCE_DIR}/assets/fonts/
     ${CMAKE_SOURCE_DIR}/src/viewer
     ${CMAKE_SOURCE_DIR}/src/viewer/vk
+    ${CMAKE_SOURCE_DIR}/third_party/gli
+    ${CMAKE_SOURCE_DIR}/third_party/gli/external
+    ${CMAKE_SOURCE_DIR}/third_party/gli/external/glm
+    ${CMAKE_SOURCE_DIR}/third_party/lodepng
     ${CMAKE_SOURCE_DIR}/third_party/nuklear
     ${CMAKE_SOURCE_DIR}/third_party/DirectXMath
     ${CMAKE_SOURCE_DIR}/third_party/DirectXMath/Inc
@@ -61,6 +79,7 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/third_party/flatbuffers/include
     ${CMAKE_SOURCE_DIR}/third_party/SDL2-2.0.7/include
     ${CMAKE_SOURCE_DIR}/third_party/EASTL/include
+    ${CMAKE_SOURCE_DIR}/third_party/FbxPipeline/FbxPipeline/generated
     $ENV{VK_SDK_PATH}/include
     $ENV{VK_SDK_PATH}/shaderc/libshaderc/include
     $ENV{VK_SDK_PATH}/../source/shaderc/src/libshaderc/include
@@ -76,6 +95,7 @@ if (UNIX)
         Xinerama
         Xrandr
         pthread
+        stdc++fs
         ${CMAKE_SOURCE_DIR}/third_party/SDL2-2.0.7/build_linux_x86-64/libSDL2.a
         $ENV{VK_SDK_PATH}/../source/shaderc/src/build_linux_x86-64/libshaderc/libshaderc_combined.a
         ${CMAKE_SOURCE_DIR}/third_party/flatbuffers/build_linux_x86-64/libflatbuffers.a
@@ -110,6 +130,7 @@ elseif(WIN32)
 endif()
 
 target_link_libraries(
-    Viewer
+    viewer
+    lodepng
     ${third_party_libs}
 )

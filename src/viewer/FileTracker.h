@@ -11,8 +11,8 @@ namespace apemodeos {
     bool         PathExists( const std::string& InPath );
     bool         DirectoryExists( const std::string& InPath );
     bool         FileExists( const std::string& InPath );
-    std::string& ReplaceSlashes( std::string& InPath );
-    std::string& RealPath( std::string& InPath );
+    std::string ReplaceSlashes( std::string InPath );
+    std::string RealPath( std::string InPath );
     std::string  ResolveFullPath( const std::string& InPath );
 
     /**
