@@ -30,7 +30,7 @@
             "name": "Viewer (Run)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/build_linux_x86-64/Viewer",
+            "program": "${workspaceRoot}/build_linux_x86-64/viewer",
             "args": [
             ],
             "stopAtEntry": false,

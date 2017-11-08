@@ -30,6 +30,7 @@ set(
     ${CMAKE_SOURCE_DIR}/src/viewer/SamplerManagerVk.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/FileTracker.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/ImageLoaderVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/SceneRendererVk.cpp
 
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/BufferPools.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/CommandQueue.Vulkan.cpp

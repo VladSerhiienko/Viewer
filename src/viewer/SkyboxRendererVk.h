@@ -6,6 +6,10 @@
 #include <BufferPools.Vulkan.h>
 #include <ImageLoaderVk.h>
 
+#ifndef kMaxFrameCount
+#define kMaxFrameCount 3
+#endif
+
 namespace apemodevk {
     using namespace DirectX;
 
@@ -46,8 +50,6 @@ namespace apemodevk {
         void Reset( uint32_t FrameIndex );
         bool Render( Skybox* pSkybox, RenderParameters* pParams );
         void Flush( uint32_t FrameIndex );
-
-        static uint32_t const kMaxFrameCount = 3;
 
         apemodevk::GraphicsDevice*                              pNode = nullptr;
         apemodevk::TDispatchableHandle< VkDescriptorSetLayout > hDescSetLayout;

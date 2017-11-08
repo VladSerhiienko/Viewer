@@ -1,5 +1,7 @@
 #include <fbxvpch.h>
 
+#include <MathInc.h>
+
 #include <QueuePools.Vulkan.h>
 #include <BufferPools.Vulkan.h>
 #include <ShaderCompiler.Vulkan.h>
@@ -10,6 +12,8 @@
 #include <shaderc/shaderc.hpp>
 
 namespace apemodevk {
+
+    using namespace apemodexm;
 
     struct StaticVertex {
         float position[ 3 ];
@@ -33,9 +37,9 @@ namespace apemodevk {
         XMFLOAT4X4 worldMatrix;
         XMFLOAT4X4 viewMatrix;
         XMFLOAT4X4 projectionMatrix;
-        XMFLOAT4 color;
-        XMFLOAT4 positionOffset;
-        XMFLOAT4 positionScale;
+        XMFLOAT4   color;
+        XMFLOAT4   positionOffset;
+        XMFLOAT4   positionScale;
     };
 
     struct SceneMeshDeviceAssetVk {
@@ -44,8 +48,8 @@ namespace apemodevk {
         uint32_t                              VertexCount = 0;
         uint32_t                              IndexOffset = 0;
         VkIndexType                           IndexType   = VK_INDEX_TYPE_UINT16;
-        XMFLOAT4                        positionOffset;
-        XMFLOAT4                        positionScale;
+        XMFLOAT4                              positionOffset;
+        XMFLOAT4                              positionScale;
     };
 }
 
@@ -302,8 +306,8 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
                 frameData.color          = mat.albedo;
                 frameData.positionOffset = pMeshDeviceAsset->positionOffset;
                 frameData.positionScale  = pMeshDeviceAsset->positionScale;
-                frameData.worldMatrix    = pScene->worldMatrices[ node.id ];
-
+                XMStoreFloat4x4( &frameData.worldMatrix, pScene->worldMatrices[ node.id ] );
+                
                 auto suballocResult = BufferPools[ FrameIndex ].TSuballocate( frameData );
                 assert( VK_NULL_HANDLE != suballocResult.descBufferInfo.buffer );
                 suballocResult.descBufferInfo.range = sizeof( apemodevk::FrameUniformBuffer );

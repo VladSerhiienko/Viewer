@@ -13,6 +13,8 @@ namespace apemode {
     /* Scene renderer will have a simple interface to allow the best flexibility for its implementations */
     class SceneRendererBase {
     public:
+        SceneRendererBase() {}
+        virtual ~SceneRendererBase() {}
 
         /* Base structure that will contain common for all platforms scene update params */
         struct RecreateParametersBase {};

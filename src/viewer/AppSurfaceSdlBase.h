@@ -2,6 +2,23 @@
 
 #include <AppSurfaceBase.h>
 
+#ifdef __unix__
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/Xresource.h>
+#include <X11/Xlocale.h>
+#ifndef SDL_VIDEO_DRIVER_X11
+#define SDL_VIDEO_DRIVER_X11 1
+#endif
+#endif
+
+#ifdef _WIN32
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+#include <Windows.h>
+#endif
+
 #include <SDL.h>
 #include <SDL_syswm.h>
 
@@ -27,7 +44,7 @@ namespace apemode {
         uint32_t    LastHeight;
         SDL_Window* pSdlWindow;
 
-#ifdef X_PROTOCOL
+#ifdef X_PROTOCOL      
         Display* pDisplayX11;
         Window   pWindowX11;
 #endif

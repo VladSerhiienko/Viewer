@@ -67,6 +67,8 @@ namespace apemode {
         uint32_t                                         VertexBufferSize[ kMaxFrameCount ] = {0};
         uint32_t                                         IndexBufferSize[ kMaxFrameCount ]  = {0};
 
+        std::vector< uint8_t > BufferContent;
+
     public:
         virtual bool  Render( RenderParametersBase *render_params ) override;
         virtual void  DeviceDestroy( ) override;

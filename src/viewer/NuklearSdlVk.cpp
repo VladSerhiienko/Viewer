@@ -76,58 +76,55 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* p ) {
         IndexBufferSize[ FrameIndex ] = p->max_element_buffer;
     }
 
-    {
-        /* Convert from command queue into draw list and draw to screen */
-        void* vertices = nullptr;
-        void* elements = nullptr;
+    /* Convert from command queue into draw list and draw to screen */
+    void* vertices = nullptr;
+    void* elements = nullptr;
 
-        /* Load vertices/elements directly into vertex/element buffer */
-        vertices = hVertexBufferMemory[ FrameIndex ].Map( 0, VertexBufferSize[ FrameIndex ], 0 );
-        elements = hIndexBufferMemory[ FrameIndex ].Map( 0, IndexBufferSize[ FrameIndex ], 0 );
-        {
-            /* Fill convert configuration */
-            struct nk_convert_config                          config;
-            static const struct nk_draw_vertex_layout_element vertex_layout[] = {
-                {NK_VERTEX_POSITION, NK_FORMAT_FLOAT, NK_OFFSETOF( Vertex, pos )},
-                {NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT, NK_OFFSETOF( Vertex, uv )},
-                {NK_VERTEX_COLOR, NK_FORMAT_R8G8B8A8, NK_OFFSETOF( Vertex, col )},
-                {NK_VERTEX_LAYOUT_END}};
+    /* Load vertices/elements directly into vertex/element buffer */
+    vertices = hVertexBufferMemory[ FrameIndex ].Map( 0, VertexBufferSize[ FrameIndex ], 0 );
+    elements = hIndexBufferMemory[ FrameIndex ].Map( 0, IndexBufferSize[ FrameIndex ], 0 );
 
-            memset( &config, 0, sizeof( config ) );
-            config.vertex_layout        = vertex_layout;
-            config.vertex_size          = sizeof( Vertex );
-            config.vertex_alignment     = NK_ALIGNOF( Vertex );
-            config.null                 = NullTexture;
-            config.circle_segment_count = 22;
-            config.curve_segment_count  = 22;
-            config.arc_segment_count    = 22;
-            config.global_alpha         = 1.0f;
-            config.shape_AA             = p->aa;
-            config.line_AA              = p->aa;
+    /* Fill convert configuration */
+    struct nk_convert_config config;
+    static const struct nk_draw_vertex_layout_element vertex_layout[] = {
+        {NK_VERTEX_POSITION, NK_FORMAT_FLOAT, NK_OFFSETOF( Vertex, pos )},
+        {NK_VERTEX_TEXCOORD, NK_FORMAT_FLOAT, NK_OFFSETOF( Vertex, uv )},
+        {NK_VERTEX_COLOR, NK_FORMAT_R8G8B8A8, NK_OFFSETOF( Vertex, col )},
+        {NK_VERTEX_LAYOUT_END}};
 
-            /* Setup buffers to load vertices and elements */
-            nk_buffer vbuf, ebuf;
-            nk_buffer_init_fixed( &vbuf, vertices, (nk_size) p->max_vertex_buffer );
-            nk_buffer_init_fixed( &ebuf, elements, (nk_size) p->max_element_buffer );
-            nk_convert( &Context, &RenderCmds, &vbuf, &ebuf, &config );
-        }
+    memset( &config, 0, sizeof( config ) );
+    config.vertex_layout        = vertex_layout;
+    config.vertex_size          = sizeof( Vertex );
+    config.vertex_alignment     = NK_ALIGNOF( Vertex );
+    config.null                 = NullTexture;
+    config.circle_segment_count = 22;
+    config.curve_segment_count  = 22;
+    config.arc_segment_count    = 22;
+    config.global_alpha         = 1.0f;
+    config.shape_AA             = p->aa;
+    config.line_AA              = p->aa;
 
-        VkMappedMemoryRange ranges[ 2 ];
-        InitializeStruct( ranges );
+    /* Setup buffers to load vertices and elements */
+    nk_buffer vbuf, ebuf;
+    nk_buffer_init_fixed( &vbuf, vertices, (nk_size) p->max_vertex_buffer );
+    nk_buffer_init_fixed( &ebuf, elements, (nk_size) p->max_element_buffer );
+    nk_convert( &Context, &RenderCmds, &vbuf, &ebuf, &config );
 
-        ranges[ 0 ].memory = hVertexBufferMemory[ FrameIndex ];
-        ranges[ 0 ].size   = VK_WHOLE_SIZE;
+    VkMappedMemoryRange ranges[ 2 ];
+    InitializeStruct( ranges );
 
-        ranges[ 1 ].memory = hIndexBufferMemory[ FrameIndex ];
-        ranges[ 1 ].size   = VK_WHOLE_SIZE;
+    ranges[ 0 ].memory = hVertexBufferMemory[ FrameIndex ];
+    ranges[ 0 ].size   = VK_WHOLE_SIZE;
 
-        if ( VK_SUCCESS != CheckedCall( vkFlushMappedMemoryRanges( pDevice, GetArraySizeU( ranges ), ranges ) ) ) {
-            return false;
-        }
+    ranges[ 1 ].memory = hIndexBufferMemory[ FrameIndex ];
+    ranges[ 1 ].size   = VK_WHOLE_SIZE;
 
-        hVertexBufferMemory[ FrameIndex ].Unmap( );
-        hIndexBufferMemory[ FrameIndex ].Unmap( );
+    if ( VK_SUCCESS != CheckedCall( vkFlushMappedMemoryRanges( pDevice, GetArraySizeU( ranges ), ranges ) ) ) {
+        return false;
     }
+
+    hVertexBufferMemory[ FrameIndex ].Unmap( );
+    hIndexBufferMemory[ FrameIndex ].Unmap( );
 
     /* Bind pipeline and descriptor sets */
     {
@@ -192,6 +189,10 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* p ) {
 
         offset += cmd->elem_count;
     }
+
+#ifdef NK_INCLUDE_VERTEX_BUFFER_OUTPUT
+    nk_draw_list_clear( &Context.draw_list );
+#endif
 
     return true;
 }

@@ -1,10 +1,15 @@
 #pragma once
 
-#include <SceneRendererBase.h>
 #include <MathInc.h>
+
 #include <GraphicsDevice.Vulkan.h>
 #include <DescriptorPool.Vulkan.h>
 #include <BufferPools.Vulkan.h>
+#include <SceneRendererBase.h>
+
+#ifndef kMaxFrameCount
+#define kMaxFrameCount 3
+#endif
 
 namespace apemode {
     class SceneRendererVk : public SceneRendererBase {
@@ -25,24 +30,25 @@ namespace apemode {
             uint32_t                   FrameCount      = 0;              /* Required */
         };
 
-        bool Recreate( const RecreateParametersBase* pParams ) override;
-        bool UpdateScene( Scene* pScene, const SceneUpdateParametersBase* pParams ) override;
+        SceneRendererVk() {}
+        virtual ~SceneRendererVk() {}
+
+        virtual bool Recreate( const RecreateParametersBase* pParams ) override;
+        virtual bool UpdateScene( Scene* pScene, const SceneUpdateParametersBase* pParams ) override;
 
         struct SceneRenderParametersVk : SceneRenderParametersBase {
-            apemodevk::GraphicsDevice* pNode       = nullptr;        /* Required */
-            float                      dims[ 2 ]   = {};             /* Required */
-            float                      scale[ 2 ]  = {};             /* Required */
-            uint32_t                   FrameIndex  = 0;              /* Required */
-            VkCommandBuffer            pCmdBuffer  = VK_NULL_HANDLE; /* Required */
-            XMFLOAT4X4             ViewMatrix;                   /* Required */
-            XMFLOAT4X4             ProjMatrix;                   /* Required */
+            apemodevk::GraphicsDevice* pNode = nullptr;             /* Required */
+            XMFLOAT2                   dims;                        /* Required */
+            XMFLOAT2                   scale;                       /* Required */
+            uint32_t                   FrameIndex = 0;              /* Required */
+            VkCommandBuffer            pCmdBuffer = VK_NULL_HANDLE; /* Required */
+            XMFLOAT4X4                 ViewMatrix;                  /* Required */
+            XMFLOAT4X4                 ProjMatrix;                  /* Required */
         };
 
-        bool Reset( const Scene* pScene, uint32_t FrameIndex ) override;
-        bool RenderScene( const Scene* pScene, const SceneRenderParametersBase* pParams ) override;
-        bool Flush( const Scene* pScene, uint32_t FrameIndex ) override;
-
-        static uint32_t const kMaxFrameCount = 3;
+        virtual bool Reset( const Scene* pScene, uint32_t FrameIndex ) override;
+        virtual bool RenderScene( const Scene* pScene, const SceneRenderParametersBase* pParams ) override;
+        virtual bool Flush( const Scene* pScene, uint32_t FrameIndex ) override;
 
         apemodevk::GraphicsDevice*                              pNode = nullptr;
         apemodevk::TDispatchableHandle< VkDescriptorSetLayout > hDescSetLayout;

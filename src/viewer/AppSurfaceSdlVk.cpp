@@ -2,7 +2,7 @@
 
 #include <AppState.h>
 #include <AppSurfaceSdlVk.h>
-// #include <SceneRendererVk.h>
+#include <SceneRendererVk.h>
 
 apemode::AppSurfaceSdlVk::AppSurfaceSdlVk( ) {
     Impl = kAppSurfaceImpl_SdlVk;
@@ -144,5 +144,5 @@ void* apemode::AppSurfaceSdlVk::GetGraphicsHandle( ) {
 }
 
 apemode::SceneRendererBase* apemode::AppSurfaceSdlVk::CreateSceneRenderer( ) {
-    return nullptr; //new SceneRendererVk( );
+    return new apemode::SceneRendererVk( );
 }
