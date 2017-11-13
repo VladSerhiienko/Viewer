@@ -355,10 +355,10 @@ bool App::Initialize( int Args, char* ppArgs[] ) {
             return false;
         }
 
-        // if ( false == appContent->pSceneRendererBase->UpdateScene( appContent->Scenes.back( ), &updateParams ) ) {
-        //     DebugBreak( );
-        //     return false;
-        // }
+        if ( false == appContent->pSceneRendererBase->UpdateScene( appContent->Scenes.back( ), &updateParams ) ) {
+            DebugBreak( );
+            return false;
+        }
 
         appContent->pSkybox         = new apemodevk::Skybox( );
         appContent->pSkyboxRenderer = new apemodevk::SkyboxRenderer( );
@@ -771,7 +771,7 @@ void App::Update( float deltaSecs, Input const& inputState ) {
 
         appContent->pSkyboxRenderer->Reset( appContent->FrameIndex );
         appContent->pDebugRenderer->Reset( appContent->FrameIndex );
-        // appContent->pSceneRendererBase->Reset( appContent->Scenes[ 0 ], appContent->FrameIndex );
+        appContent->pSceneRendererBase->Reset( appContent->Scenes[ 0 ], appContent->FrameIndex );
 
         apemodevk::SkyboxRenderer::RenderParameters skyboxRenderParams;
         XMStoreFloat4x4( &skyboxRenderParams.InvViewMatrix, InvView );
@@ -831,7 +831,7 @@ void App::Update( float deltaSecs, Input const& inputState ) {
         sceneRenderParameters.pNode      = appSurfaceVk->pNode;
         sceneRenderParameters.ViewMatrix = frameData.viewMatrix;
         sceneRenderParameters.ProjMatrix = frameData.projectionMatrix;
-        // appContent->pSceneRendererBase->RenderScene( appContent->Scenes[ 0 ], &sceneRenderParameters );
+        appContent->pSceneRendererBase->RenderScene( appContent->Scenes[ 0 ], &sceneRenderParameters );
 
         NuklearRendererSdlVk::RenderParametersVk renderParamsNk;
         renderParamsNk.dims[ 0 ]          = (float) width;
@@ -850,7 +850,7 @@ void App::Update( float deltaSecs, Input const& inputState ) {
         vkCmdEndRenderPass( cmdBuffer );
 
         appContent->pDebugRenderer->Flush( appContent->FrameIndex );
-        // appContent->pSceneRendererBase->Flush( appContent->Scenes[0], appContent->FrameIndex );
+        appContent->pSceneRendererBase->Flush( appContent->Scenes[0], appContent->FrameIndex );
         appContent->pSkyboxRenderer->Flush( appContent->FrameIndex );
 
         VkPipelineStageFlags waitPipelineStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
