@@ -63,7 +63,7 @@ bool apemodevk::Swapchain::Recreate( VkDevice                   pInDevice,
     pDevice         = pInDevice;
     pPhysicalDevice = pInPhysicalDevice;
 
-    for ( uint32_t i = 0; i < ImgCount; ++i ) {
+    for ( uint32_t i = 0; i < kMaxImgs; ++i ) {
         hImgViews[ i ].Destroy( );
     }
 

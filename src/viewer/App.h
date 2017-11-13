@@ -8,9 +8,9 @@ namespace apemode {
         friend AppState;
         friend AppContent;
 
-        AppState *   appState;
-        AppContent * appContent;
-        float        totalSecs;
+        AppState*   appState   = nullptr;
+        AppContent* appContent = nullptr;
+        float       totalSecs  = 0.0f;
 
     public:
         App( );

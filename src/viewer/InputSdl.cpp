@@ -173,6 +173,7 @@ InputManager::~InputManager( ) {
 }
 
 bool InputManager::Initialize( ) {
+    memset( KeyMapping, 0, sizeof( KeyMapping ) );
     BuildSdlKeyMapping( KeyMapping );
     return true;
 }

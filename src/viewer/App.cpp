@@ -333,8 +333,12 @@ bool App::Initialize( int Args, char* ppArgs[] ) {
         // -i "E:\Media\Models\mech-m-6k\source\93d43cf18ad5406ba0176c9fae7d4927.fbx" -o "$(SolutionDir)assets\Mech6kv4.fbxp"
         // -i "E:\Media\Models\carambit\source\Knife.fbx" -o "$(SolutionDir)assets\Knifep.fbxp" -p
         // -i "E:\Media\Models\pontiac-firebird-formula-1974\source\carz.obj 2.zip\carz.obj\mesh.obj" -o "$(SolutionDir)assets\pontiacp.fbxp" -p
+        //  .\FbxPipeline.exe -i E:\Media\Models\1972-datsun-240k-gt\source\datsun240k.fbx -o E:\Media\Models\1972-datsun-240k-gt\source\datsun240k.fbxp -p -m .*\.png
+        //  .\FbxPipeline -i "E:\Media\Models\mech-m-6k\source\93d43cf18ad5406ba0176c9fae7d4927.fbx" -o "E:\Media\Models\mech-m-6k\source\Mech6kv4p.fbxp" -p -m .*\.png
+        appContent->Scenes.push_back( LoadSceneFromFile( "E:/Media/Models/mech-m-6k/source/Mech6kv4p.fbxp" ) );
+        //appContent->Scenes.push_back( LoadSceneFromFile( "E:/Media/Models/1972-datsun-240k-gt/source/datsun240k.fbxp" ) );
+        //appContent->Scenes.push_back( LoadSceneFromFile( "/home/user/vserhiienko/models/stesla-elephant-steam-engines/source/stesla.fbxp" ) );
 
-        appContent->Scenes.push_back( LoadSceneFromFile( "/home/user/vserhiienko/models/stesla-elephant-steam-engines/source/stesla.fbxp" ) );
         // appContent->Scenes.push_back( LoadSceneFromFile( "../../../assets/DragonMainp.fbxp" ) );
         // appContent->Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/Artoriasp.fbxp" ) );
         // appContent->Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/vanille-flirty-animation.fbxp" ) );
@@ -390,7 +394,7 @@ bool App::Initialize( int Args, char* ppArgs[] ) {
 
         //auto ddsContent = imgFileManager.ReadBinFile( "../../../assets/env/kyoto_lod.dds" );
         //auto ddsContent = imgFileManager.ReadBinFile( "../../../assets/env/PaperMill/Specular_HDR.dds" );
-        auto ddsContent = imgFileManager.ReadBinFile( "../assets/textures/Environment/Canyon/Unfiltered_HDR.dds" );
+        auto ddsContent = imgFileManager.ReadBinFile( "../../assets/textures/Environment/Canyon/Unfiltered_HDR.dds" );
         appContent->pLoadedDDS = imgLoader.LoadImageFromData( ddsContent, apemodevk::ImageLoader::eImageFileFormat_DDS, true, true ).release( );
 
         VkSamplerCreateInfo samplerCreateInfo;

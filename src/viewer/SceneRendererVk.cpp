@@ -16,14 +16,10 @@ namespace apemodevk {
     using namespace apemodexm;
 
     struct StaticVertex {
-        float position[ 3 ];
-        float normal[ 3 ];
-        float tangent[ 4 ];
-        float texcoords[ 2 ];
-        /*XMFLOAT3 position;
+        XMFLOAT3 position;
         XMFLOAT3 normal;
         XMFLOAT4 tangent;
-        XMFLOAT2 texcoords;*/
+        XMFLOAT2 texcoords;
     };
 
     struct PackedVertex {
@@ -114,10 +110,10 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             auto& mesh = pScene->meshes[ meshIndex++ ];
 
             /* Create mesh device asset if needed. */
-            auto pMeshDeviceAsset = (apemodevk::SceneMeshDeviceAssetVk*) mesh.deviceAsset;
+            auto pMeshDeviceAsset = (apemodevk::SceneMeshDeviceAssetVk*) mesh.pDeviceAsset;
             if ( nullptr == pMeshDeviceAsset ) {
                 pMeshDeviceAsset  = new apemodevk::SceneMeshDeviceAssetVk( );
-                mesh.deviceAsset = pMeshDeviceAsset;
+                mesh.pDeviceAsset = pMeshDeviceAsset;
             }
 
             const uint32_t verticesByteSize = (uint32_t) meshFb->vertices( )->size( );
@@ -299,7 +295,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
         auto& mesh = pScene->meshes[ node.meshId ];
 
-        if ( auto pMeshDeviceAsset = (const apemodevk::SceneMeshDeviceAssetVk*) mesh.deviceAsset ) {
+        if ( auto pMeshDeviceAsset = (const apemodevk::SceneMeshDeviceAssetVk*) mesh.pDeviceAsset ) {
             for (auto& subset : mesh.subsets) {
                 auto& mat = pScene->materials[ node.materialIds[ subset.materialId ] ];
 

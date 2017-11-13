@@ -15,7 +15,7 @@ namespace apemode {
 
     struct SceneMaterial {
         XMFLOAT4 albedo;
-        void *       deviceAsset;
+        void *   pDeviceAsset;
     };
 
     struct SceneMeshSubset {
@@ -25,12 +25,12 @@ namespace apemode {
     };
 
     struct SceneMesh {
-        void *                         deviceAsset;
+        void *                         pDeviceAsset;
         std::vector< SceneMeshSubset > subsets;
-        XMFLOAT3                   positionOffset;
-        XMFLOAT3                   positionScale;
-        XMFLOAT2                   texcoordOffset;
-        XMFLOAT2                   texcoordScale;
+        XMFLOAT3                       positionOffset;
+        XMFLOAT3                       positionScale;
+        XMFLOAT2                       texcoordOffset;
+        XMFLOAT2                       texcoordScale;
     };
 
     /**
@@ -79,9 +79,17 @@ namespace apemode {
          * @return Node local matrix.
          **/
         inline XMMATRIX CalculateLocalMatrix( ) const {
-            return XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &translation ) ) *
-                   XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &rotationOffset ) ) *
-                   XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &rotationPivot ) );
+            return XMMatrixTranslationFromVector( XMLoadFloat3( &translation ) ) *
+                   XMMatrixTranslationFromVector( XMLoadFloat3( &rotationOffset ) ) *
+                   XMMatrixTranslationFromVector( XMLoadFloat3( &rotationPivot ) ) *
+                   XMMatrixRotationRollPitchYawFromVector( XMLoadFloat3( &preRotation ) ) *
+                   XMMatrixRotationRollPitchYawFromVector( XMLoadFloat3( &rotation ) ) *
+                   XMMatrixRotationRollPitchYawFromVector( XMLoadFloat3( &postRotation ) ) *
+                   XMMatrixTranslationFromVector( XMVectorNegate( XMLoadFloat3( &rotationPivot ) ) ) *
+                   XMMatrixTranslationFromVector( XMLoadFloat3( &scalingOffset ) ) *
+                   XMMatrixTranslationFromVector( XMLoadFloat3( &scalingPivot ) ) *
+                   XMMatrixScalingFromVector( XMLoadFloat3( &scaling ) ) *
+                   XMMatrixTranslationFromVector( XMVectorNegate( XMLoadFloat3( &scalingPivot ) ) );
 
             // return XMFLOAT4X4::FromTranslationVector( translation ) *
             //        XMFLOAT4X4::FromTranslationVector( rotationOffset ) *
@@ -104,9 +112,9 @@ namespace apemode {
          * @return Node geometric transform.
          **/
         inline XMMATRIX CalculateGeometricMatrix( ) const {
-            return DirectX::XMMatrixTranslationFromVector( DirectX::XMLoadFloat3( &geometricTranslation ) ) *
-                   DirectX::XMMatrixRotationRollPitchYawFromVector( DirectX::XMLoadFloat3( &geometricRotation ) ) *
-                   DirectX::XMMatrixScalingFromVector( DirectX::XMLoadFloat3( &geometricScaling ) );
+            return XMMatrixTranslationFromVector( XMLoadFloat3( &geometricTranslation ) ) *
+                   XMMatrixRotationRollPitchYawFromVector( XMLoadFloat3( &geometricRotation ) ) *
+                   XMMatrixScalingFromVector( XMLoadFloat3( &geometricScaling ) );
 
             // return XMFLOAT4X4::FromTranslationVector( geometricTranslation ) *
             //        apemodexm::quat::FromEulerAngles( geometricRotation ).ToMatrix4( ) *

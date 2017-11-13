@@ -40,18 +40,18 @@ namespace apemode {
         virtual uint32_t GetHeight( ) const override;
         virtual void*    GetWindowHandle( ) override;
 
-        uint32_t    LastWidth;
-        uint32_t    LastHeight;
-        SDL_Window* pSdlWindow;
+        uint32_t    LastWidth  = 0;
+        uint32_t    LastHeight = 0;
+        SDL_Window* pSdlWindow = nullptr;
 
-#ifdef X_PROTOCOL      
-        Display* pDisplayX11;
-        Window   pWindowX11;
+#ifdef X_PROTOCOL
+        Display* pDisplayX11 = nullptr;
+        Window   pWindowX11  = nullptr;
 #endif
 
 #ifdef _WINDOWS_
-        HWND      hWnd;
-        HINSTANCE hInstance;
+        HWND      hWnd      = NULL;
+        HINSTANCE hInstance = NULL;
 #endif
     };
 }

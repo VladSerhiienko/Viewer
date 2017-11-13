@@ -114,15 +114,13 @@ elseif(WIN32)
         imm32.lib
         version.lib
         
-        debug ${CMAKE_SOURCE_DIR}/third_party/zlib/build_windows_x86-64/$(Configuration)/zlibd.lib
-        debug ${CMAKE_SOURCE_DIR}/third_party/SDL2-2.0.7/build_windows_x86-64/$(Configuration)/SDL2d.lib
+        debug ${CMAKE_SOURCE_DIR}/third_party/SDL2-2.0.7/build_windows_x86-64/$(Configuration)/SDL2-staticd.lib
         debug $ENV{VK_SDK_PATH}/shaderc/build_windows_x86-64/libshaderc/$(Configuration)/shaderc_combined.lib
         debug ${CMAKE_SOURCE_DIR}/third_party/flatbuffers/build_windows_x86-64/$(Configuration)/flatbuffers.lib
         debug ${CMAKE_SOURCE_DIR}/third_party/EASTL/build_windows_x86-64/$(Configuration)/EASTL.lib
         debug ${CMAKE_SOURCE_DIR}/third_party/EASTL/build_windows_x86-64/test/packages/EAStdC/$(Configuration)/EAStdC.lib
         
-        optimized ${CMAKE_SOURCE_DIR}/third_party/zlib/build_windows_x86-64/$(Configuration)/zlib.lib
-        optimized ${CMAKE_SOURCE_DIR}/third_party/SDL2-2.0.7/build_windows_x86-64/$(Configuration)/SDL2.lib
+        optimized ${CMAKE_SOURCE_DIR}/third_party/SDL2-2.0.7/build_windows_x86-64/$(Configuration)/SDL2-static.lib
         optimized $ENV{VK_SDK_PATH}/shaderc/build_windows_x86-64/libshaderc/$(Configuration)/shaderc_combined.lib
         optimized ${CMAKE_SOURCE_DIR}/third_party/flatbuffers/build_windows_x86-64/$(Configuration)/flatbuffers.lib
         optimized ${CMAKE_SOURCE_DIR}/third_party/EASTL/build_windows_x86-64/$(Configuration)/EASTL.lib
