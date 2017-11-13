@@ -125,6 +125,13 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
                 loadedImage->imageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
                 loadedImage->imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
 
+                switch ( loadedImage->imageViewCreateInfo.viewType ) {
+                    case VK_IMAGE_VIEW_TYPE_CUBE:
+                    case VK_IMAGE_VIEW_TYPE_CUBE_ARRAY: {
+                        loadedImage->imageCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+                    } break;
+                }
+
                 imageBufferSuballocResult = pHostBufferPool->Suballocate( texture.data( ), (uint32_t) texture.size( ) );
 
                 uint32_t bufferImageCopyIndex = 0;
