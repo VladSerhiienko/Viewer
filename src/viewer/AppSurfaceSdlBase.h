@@ -46,7 +46,7 @@ namespace apemode {
 
 #ifdef X_PROTOCOL
         Display* pDisplayX11 = nullptr;
-        Window   pWindowX11  = nullptr;
+        Window   pWindowX11;
 #endif
 
 #ifdef _WINDOWS_

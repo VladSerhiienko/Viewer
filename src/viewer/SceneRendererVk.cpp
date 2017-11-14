@@ -75,9 +75,11 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         /* Get queue from pool (only copying) */
         auto pQueuePool = pParams->pNode->GetQueuePool( );
 
-        auto acquiredQueue = pQueuePool->Acquire( false, VK_QUEUE_TRANSFER_BIT, true );
+        auto acquiredQueue = pQueuePool->Acquire( false, VK_QUEUE_GRAPHICS_BIT, false );
+        // auto acquiredQueue = pQueuePool->Acquire( false, VK_QUEUE_TRANSFER_BIT, true );
         while ( acquiredQueue.pQueue == nullptr ) {
-            acquiredQueue = pQueuePool->Acquire( false, VK_QUEUE_TRANSFER_BIT, false );
+            acquiredQueue = pQueuePool->Acquire( false, VK_QUEUE_GRAPHICS_BIT, false );
+            // acquiredQueue = pQueuePool->Acquire( false, VK_QUEUE_TRANSFER_BIT, false );
         }
 
         /* Get command buffer from pool (only copying) */
@@ -170,38 +172,42 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             VkBufferMemoryBarrier bufferMemoryBarrier[ 3 ];
             apemodevk::InitializeStruct( bufferMemoryBarrier );
 
-            bufferMemoryBarrier[ 0 ].size                = verticesSuballocResult.descBufferInfo.range;
-            bufferMemoryBarrier[ 0 ].offset              = verticesSuballocResult.descBufferInfo.offset;
-            bufferMemoryBarrier[ 0 ].buffer              = verticesSuballocResult.descBufferInfo.buffer;
-            bufferMemoryBarrier[ 0 ].srcAccessMask       = VK_ACCESS_HOST_WRITE_BIT;
-            bufferMemoryBarrier[ 0 ].dstAccessMask       = VK_ACCESS_TRANSFER_READ_BIT;
-            bufferMemoryBarrier[ 0 ].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            bufferMemoryBarrier[ 0 ].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            // bufferMemoryBarrier[ 0 ].size                = verticesSuballocResult.descBufferInfo.range;
+            // bufferMemoryBarrier[ 0 ].offset              = verticesSuballocResult.descBufferInfo.offset;
+            // bufferMemoryBarrier[ 0 ].buffer              = verticesSuballocResult.descBufferInfo.buffer;
+            // bufferMemoryBarrier[ 0 ].srcAccessMask       = VK_ACCESS_HOST_WRITE_BIT;
+            // bufferMemoryBarrier[ 0 ].dstAccessMask       = VK_ACCESS_TRANSFER_READ_BIT;
+            // bufferMemoryBarrier[ 0 ].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            // bufferMemoryBarrier[ 0 ].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
-            bufferMemoryBarrier[ 1 ].size                = indicesSuballocResult.descBufferInfo.range;
-            bufferMemoryBarrier[ 1 ].offset              = indicesSuballocResult.descBufferInfo.offset;
-            bufferMemoryBarrier[ 1 ].buffer              = indicesSuballocResult.descBufferInfo.buffer;
-            bufferMemoryBarrier[ 1 ].srcAccessMask       = VK_ACCESS_HOST_WRITE_BIT;
-            bufferMemoryBarrier[ 1 ].dstAccessMask       = VK_ACCESS_TRANSFER_READ_BIT;
-            bufferMemoryBarrier[ 1 ].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            bufferMemoryBarrier[ 1 ].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            // bufferMemoryBarrier[ 1 ].size                = indicesSuballocResult.descBufferInfo.range;
+            // bufferMemoryBarrier[ 1 ].offset              = indicesSuballocResult.descBufferInfo.offset;
+            // bufferMemoryBarrier[ 1 ].buffer              = indicesSuballocResult.descBufferInfo.buffer;
+            // bufferMemoryBarrier[ 1 ].srcAccessMask       = VK_ACCESS_HOST_WRITE_BIT;
+            // bufferMemoryBarrier[ 1 ].dstAccessMask       = VK_ACCESS_TRANSFER_READ_BIT;
+            // bufferMemoryBarrier[ 1 ].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+            // bufferMemoryBarrier[ 1 ].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
             bufferMemoryBarrier[ 2 ].size                = bufferCreateInfo.size;
             bufferMemoryBarrier[ 2 ].offset              = 0;
             bufferMemoryBarrier[ 2 ].buffer              = pMeshDeviceAsset->hBuffer;
-            bufferMemoryBarrier[ 2 ].srcAccessMask       = VK_ACCESS_SHADER_READ_BIT;
-            bufferMemoryBarrier[ 2 ].dstAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+            bufferMemoryBarrier[ 2 ].srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+            bufferMemoryBarrier[ 2 ].dstAccessMask       = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
             bufferMemoryBarrier[ 2 ].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
             bufferMemoryBarrier[ 2 ].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
             vkCmdPipelineBarrier( acquiredCmdBuffer.pCmdBuffer,
-                                  VK_PIPELINE_STAGE_HOST_BIT,
-                                  VK_PIPELINE_STAGE_HOST_BIT,
+                                  VK_PIPELINE_STAGE_TRANSFER_BIT,
+                                  VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
+                                  // VK_PIPELINE_STAGE_HOST_BIT,
+                                  // VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
                                   0,
                                   0,
                                   nullptr,
-                                  apemode::GetArraySize( bufferMemoryBarrier ),
-                                  bufferMemoryBarrier,
+                                  1,
+                                  &bufferMemoryBarrier[ 2 ],
+                                  // apemode::GetArraySize( bufferMemoryBarrier ),
+                                  // bufferMemoryBarrier,
                                   0,
                                   nullptr );
 
