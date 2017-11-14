@@ -1,4 +1,4 @@
-#include <ImageLoaderVk.h>
+#include <ImageLoader.Vulkan.h>
 
 #include <BufferPools.Vulkan.h>
 #include <QueuePools.Vulkan.h>

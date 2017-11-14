@@ -9,37 +9,64 @@ message(STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
 message(STATUS "CMAKE_BINARY_DIR = ${CMAKE_BINARY_DIR}")
 
 add_definitions("-g")
+
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
 
 set(
-    viewer_source_files
-    ${CMAKE_SOURCE_DIR}/src/viewer/App.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/AppState.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/AppMainSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/AppBase.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/AppSurfaceSdlBase.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/AppSurfaceSdlVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/InputSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/CityHash.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/StopwatchSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/NuklearSdlBase.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/NuklearSdlVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/DebugRendererVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/SamplerManagerVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/FileTracker.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/ImageLoaderVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/SceneRendererVk.cpp
+    shared_vk_source_files
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/BufferPools.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/CommandQueue.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/DescriptorPool.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/GraphicsDevice.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/GraphicsManager.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/QueuePools.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/Swapchain.Vulkan.cpp
+)
 
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk/BufferPools.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk/CommandQueue.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk/DescriptorPool.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk/GraphicsDevice.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk/GraphicsManager.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk/QueuePools.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk/Swapchain.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk/ShaderCompiler.Vulkan.cpp
+set(
+    shared_vk_ext_source_files
+    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/ShaderCompiler.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/ImageLoader.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/SamplerManager.Vulkan.cpp
+)
+
+set(
+    shared_sdl_source_files
+    ${CMAKE_SOURCE_DIR}/src/shared/sdl/AppMainSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/sdl/InputSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/sdl/StopwatchSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/sdl/AppSurfaceSdlBase.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/sdl/NuklearSdlBase.cpp
+)
+
+set(
+    shared_platform_source_files
+    # ${CMAKE_SOURCE_DIR}/src/shared/platform/FbxViewerOS.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/platform/FileTracker.cpp
+)
+
+set(
+    shared_source_files
+    # ${CMAKE_SOURCE_DIR}/src/shared/App.cpp     
+    ${CMAKE_SOURCE_DIR}/src/shared/CityHash.cpp      
+    ${CMAKE_SOURCE_DIR}/src/shared/AppBase.cpp 
+    ${CMAKE_SOURCE_DIR}/src/shared/DebugRendererVk.cpp 
+    ${CMAKE_SOURCE_DIR}/src/shared/AppState.cpp 
+    ${CMAKE_SOURCE_DIR}/src/shared/AppSurfaceSdlVk.cpp  
+    ${CMAKE_SOURCE_DIR}/src/shared/NuklearSdlVk.cpp
+)
+
+set(
+    viewer_source_files
+    ${shared_platform_source_files}
+    ${shared_sdl_source_files}
+    ${shared_vk_source_files}
+    ${shared_vk_ext_source_files}
+    ${shared_source_files}
+    ${CMAKE_SOURCE_DIR}/src/viewer/ViewerApp.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/SceneRendererVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.cpp
 )
 
 add_library(
@@ -66,8 +93,12 @@ target_include_directories(
     PUBLIC
     ${CMAKE_SOURCE_DIR}/assets/
     ${CMAKE_SOURCE_DIR}/assets/fonts/
+    ${CMAKE_SOURCE_DIR}/src/shared
+    ${CMAKE_SOURCE_DIR}/src/shared/platform
+    ${CMAKE_SOURCE_DIR}/src/shared/sdl
+    ${CMAKE_SOURCE_DIR}/src/shared/vk
+    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext
     ${CMAKE_SOURCE_DIR}/src/viewer
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk
     ${CMAKE_SOURCE_DIR}/third_party/gli
     ${CMAKE_SOURCE_DIR}/third_party/gli/external
     ${CMAKE_SOURCE_DIR}/third_party/gli/external/glm

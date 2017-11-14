@@ -1,5 +1,5 @@
 #include <CityHash.h>
-#include <SamplerManagerVk.h>
+#include <SamplerManager.Vulkan.h>
 
 bool apemodevk::SamplerManager::Recreate( apemodevk::GraphicsDevice* pInNode ) {
     pNode = pInNode;

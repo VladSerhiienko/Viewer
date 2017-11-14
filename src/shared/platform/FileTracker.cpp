@@ -67,7 +67,7 @@ std::string apemodeos::ResolveFullPath( const std::string& path ) {
 }
 
 bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool bRemoveDeletedFiles ) {
-    auto appState = apemode::AppState::GetCurrentState( );
+    auto appState = apemode::AppState::Get( );
 
     if ( storageDirectory.empty( ) )
         storageDirectory = "./";
@@ -111,7 +111,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
 
                     auto fileIt = Files.find( filePathFull );
                     if ( fileIt == Files.end( ) ) {
-                        appState->consoleLogger->debug( "FileScanner: Added: {} ({})", filePathFull.c_str( ), lastWriteTime.time_since_epoch( ).count( ) );
+                        appState->Logger->debug( "FileScanner: Added: {} ({})", filePathFull.c_str( ), lastWriteTime.time_since_epoch( ).count( ) );
                     }
 
                     auto& fileState = Files[ filePathFull ];
@@ -122,7 +122,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
                     } else {
                         /* Set to error state. */
                         fileState.CurrTime = 0;
-                        appState->consoleLogger->debug( "FileScanner: Error state: {}", filePath.string( ).c_str( ) );
+                        appState->Logger->debug( "FileScanner: Error state: {}", filePath.string( ).c_str( ) );
                     }
                 }
             }
@@ -133,7 +133,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
             /* Remove from Files. */
             for ( ; fileIt != Files.end( ); ) {
                 if ( false == FileExists( fileIt->first ) ) {
-                    appState->consoleLogger->debug( "FileScanner: Deleted: {}", fileIt->first.c_str( ) );
+                    appState->Logger->debug( "FileScanner: Deleted: {}", fileIt->first.c_str( ) );
                     fileIt = Files.erase( fileIt );
                 } else {
                     ++fileIt;
@@ -143,7 +143,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
             /* Set to deleted state. */
             for ( ; fileIt != Files.end( ); ) {
                 if ( false == FileExists( fileIt->first ) ) {
-                    appState->consoleLogger->debug( "FileScanner: Deleted state: {}", fileIt->first.c_str( ) );
+                    appState->Logger->debug( "FileScanner: Deleted state: {}", fileIt->first.c_str( ) );
                     fileIt->second.CurrTime = 0;
                     fileIt->second.PrevTime = 0;
                 }

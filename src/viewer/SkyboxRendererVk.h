@@ -4,7 +4,7 @@
 #include <GraphicsDevice.Vulkan.h>
 #include <DescriptorPool.Vulkan.h>
 #include <BufferPools.Vulkan.h>
-#include <ImageLoaderVk.h>
+#include <ImageLoader.Vulkan.h>
 
 #ifndef kMaxFrameCount
 #define kMaxFrameCount 3

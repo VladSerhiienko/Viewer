@@ -19,13 +19,13 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
 
         uint32_t graphicsManagerFlags = 0;
 
-        if (auto appState = apemode::AppState::GetCurrentState())
-            if (appState->appOptions) {
-                if ( ( *appState->appOptions )[ "renderdoc" ].count( ) )
+        if ( auto appState = apemode::AppState::Get( ) )
+            if ( appState->Options ) {
+                if ( ( *appState->Options )[ "renderdoc" ].count( ) )
                     graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_RENDERDOC_Capture;
-                if ( ( *appState->appOptions )[ "vktrace" ].count( ) )
+                if ( ( *appState->Options )[ "vktrace" ].count( ) )
                     graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_LUNARG_vktrace;
-                if ( ( *appState->appOptions )[ "vkapidump" ].count( ) )
+                if ( ( *appState->Options )[ "vkapidump" ].count( ) )
                     graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_LUNARG_api_dump;
             }
 

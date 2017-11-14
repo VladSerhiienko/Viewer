@@ -1,12 +1,15 @@
 #pragma once
 
+#pragma warning( push )
+#pragma warning( disable: 4244 )
+
 #include <cxxopts.hpp>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 
-namespace apemode {
+#pragma warning( pop )
 
-    class App;
+namespace apemode {
 
     /**
      * @class AppState
@@ -16,19 +19,22 @@ namespace apemode {
      */
     class AppState {
     public:
-        // std::shared_ptr< spdlog::logger >   msvcLogger;    /* Outputs to Visual Studio Output window */
-        std::shared_ptr< spdlog::logger >   consoleLogger; /* Prints to console */
-        std::unique_ptr< cxxopts::Options > appOptions;    /* User parameters */
+        int    Argc = 0;
+        char** Argv = nullptr;
+
+        std::shared_ptr< spdlog::logger >   Logger;  /* Prints to console and file, on Windows also prints to Output Window */
+        std::unique_ptr< cxxopts::Options > Options; /* User parameters */
 
         /**
          * @return Application state instance.
          * @note Returns null before the application creation, or after its destruction.
          */
-        static AppState* GetCurrentState( );
+        static AppState* Get( );
+        static void      OnMain( int argc, char* argv[] );
+        static void      OnExit( );
 
     private:
-        friend App;
-        AppState( );
+        AppState( int args, char* ppArgs[] );
         ~AppState( );
     };
 }
