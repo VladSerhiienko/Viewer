@@ -51,26 +51,26 @@ bool ShaderFileReader::ReadShaderTxtFile( const std::string& FilePath,
 }
 
 void ShaderFeedbackWriter::WriteFeedback( EFeedbackType                     eType,
-    const std::string&                FullFilePath,
-    const std::vector< std::string >& Macros,
-    const void*                       pContent, /* Txt or bin, @see EFeedbackType */
-    const void*                       pContentEnd ) {
-
+                                          const std::string&                FullFilePath,
+                                          const std::vector< std::string >& Macros,
+                                          const void*                       pContent, /* Txt or bin, @see EFeedbackType */
+                                          const void*                       pContentEnd ) {
+                                              
     const auto feedbackStage            = eType & eFeedbackType_CompilationStageMask;
     const auto feedbackCompilationError = eType & eFeedbackType_CompilationStatusMask;
 
     if ( eFeedbackType_CompilationStatus_Success != feedbackCompilationError ) {
-        AppState::Get()->Logger->error( "ShaderCompiler: {} / {} / {}",
-            EFeedbackTypeWithOStream( feedbackStage ),
-            EFeedbackTypeWithOStream( feedbackCompilationError ),
-            FullFilePath );
-        AppState::Get()->Logger->error( "           Msg: {}", (const char*) pContent );
+        AppState::Get( )->Logger->error( "ShaderCompiler: {} / {} / {}",
+                                         EFeedbackTypeWithOStream( feedbackStage ),
+                                         EFeedbackTypeWithOStream( feedbackCompilationError ),
+                                         FullFilePath );
+        AppState::Get( )->Logger->error( "           Msg: {}", (const char*) pContent );
         DebugBreak( );
     } else {
-        AppState::Get()->Logger->info( "ShaderCompiler: {} / {} / {}",
-            EFeedbackTypeWithOStream( feedbackStage ),
-            EFeedbackTypeWithOStream( feedbackCompilationError ),
-            FullFilePath );
+        AppState::Get( )->Logger->info( "ShaderCompiler: {} / {} / {}",
+                                        EFeedbackTypeWithOStream( feedbackStage ),
+                                        EFeedbackTypeWithOStream( feedbackCompilationError ),
+                                        FullFilePath );
         // TODO: Store compiled shader to file system
     }
 }
