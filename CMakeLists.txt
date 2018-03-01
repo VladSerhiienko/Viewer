@@ -546,7 +546,7 @@ add_dependencies(
     DirectXMath
     FbxPipeline
     eastl
-    # lodepng
+    lodepng
     gli
     sdl2
 )
@@ -610,17 +610,13 @@ elseif(WIN32)
         imm32.lib
         version.lib
         
-        debug $ENV{VK_SDK_PATH}/shaderc/${BUILD_FOLDER_SUFFIX}/libshaderc${BUILD_FOLDER_SUFFIX}/shaderc_combined.lib
-        debug ${sdl2_binary_dir}/${BUILD_FOLDER_SUFFIX}${BUILD_FOLDER_SUFFIX}/SDL2-staticd.lib
-        debug ${flatbuffers_binary_dir}/${BUILD_FOLDER_SUFFIX}${BUILD_FOLDER_SUFFIX}/flatbuffers.lib
-        debug ${eastl_binary_dir}/${BUILD_FOLDER_SUFFIX}${BUILD_FOLDER_SUFFIX}/EASTL.lib
-        debug ${eastl_binary_dir}/${BUILD_FOLDER_SUFFIX}/test/packages/EAStdC${BUILD_FOLDER_SUFFIX}/EAStdC.lib
-        
-        optimized $ENV{VK_SDK_PATH}/shaderc/${BUILD_FOLDER_SUFFIX}/libshaderc${BUILD_FOLDER_SUFFIX}/shaderc_combined.lib
-        optimized ${sdl2_binary_dir}/${BUILD_FOLDER_SUFFIX}${BUILD_FOLDER_SUFFIX}/SDL2-static.lib
-        optimized ${flatbuffers_binary_dir}/${BUILD_FOLDER_SUFFIX}${BUILD_FOLDER_SUFFIX}/flatbuffers.lib
-        optimized ${eastl_binary_dir}/${BUILD_FOLDER_SUFFIX}${BUILD_FOLDER_SUFFIX}/EASTL.lib
-        optimized ${eastl_binary_dir}/${BUILD_FOLDER_SUFFIX}/test/packages/EAStdC${BUILD_FOLDER_SUFFIX}/EAStdC.lib
+        ${shaderc_binary_dir}/libshaderc${CONFIGURATION_SUFFIX}/shaderc_combined.lib
+        ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/flatbuffers.lib
+        ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/EASTL.lib
+        ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/EAStdC.lib
+
+        debug ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2-staticd.lib
+        optimized ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2-static.lib
     )
 endif()
 
