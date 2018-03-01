@@ -1,13 +1,11 @@
 
-# Viewer
-[FbxPipeline](https://github.com/VladSerhiienko/FbxPipeline) accompaning project.
-
 ``` _    ___                       
 | |  / (_)__ _      _____  _____
 | | / / / _ \ | /| / / _ \/ ___/
 | |/ / /  __/ |/ |/ /  __/ /    
 |___/_/\___/|__/|__/\___/_/     
-```                                
+```   
+[FbxPipeline](https://github.com/VladSerhiienko/FbxPipeline) accompaning project.
 
 ## How to build (Linux, bash + cmake + make):
 
