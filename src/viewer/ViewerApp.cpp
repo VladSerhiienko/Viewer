@@ -41,10 +41,9 @@ struct EFeedbackTypeWithOStream {
     // clang-format on
 };
 
-
 bool ShaderFileReader::ReadShaderTxtFile( const std::string& FilePath,
-    std::string&       OutFileFullPath,
-    std::string&       OutFileContent ) {
+                                          std::string&       OutFileFullPath,
+                                          std::string&       OutFileContent ) {
     OutFileFullPath = apemodeos::ResolveFullPath( FilePath );
     OutFileContent  = pFileManager->ReadTxtFile( FilePath );
     return false == OutFileContent.empty( );
@@ -154,18 +153,18 @@ bool ViewerApp::Initialize(  ) {
             }
         }
 
-        if (false == DescPool.RecreateResourcesFor(*appSurface->pNode, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256 )) {
-            DebugBreak();
+        if ( false == DescPool.RecreateResourcesFor( *appSurface->pNode, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256 ) ) {
+            DebugBreak( );
             return false;
         }
 
         pNkRenderer = new NuklearRendererSdlVk();
 
-        auto queueFamilyPool = appSurface->pNode->GetQueuePool()->GetPool(appSurface->PresentQueueFamilyIds[0]);
+        auto queueFamilyPool = appSurface->pNode->GetQueuePool( )->GetPool( appSurface->PresentQueueFamilyIds[ 0 ] );
         apemodevk::AcquiredQueue acquiredQueue;
 
-        while (acquiredQueue.pQueue == nullptr) {
-            acquiredQueue = queueFamilyPool->Acquire(false);
+        while ( acquiredQueue.pQueue == nullptr ) {
+            acquiredQueue = queueFamilyPool->Acquire( false );
         }
 
         NuklearRendererSdlVk::InitParametersVk initParamsNk;

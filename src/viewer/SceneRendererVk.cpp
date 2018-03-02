@@ -363,12 +363,12 @@ bool apemode::SceneRendererVk::Recreate(const RecreateParametersBase * pParamsBa
     std::set<std::string> includedFiles;
     std::vector<uint8_t> compiledShaders[2];
 
-    if ( false == pParams->pShaderCompiler->Compile( "shaders/apemode/Scene.vert",
+    if ( false == pParams->pShaderCompiler->Compile( "../assets/shaders/apemode/Scene.vert",
                                                      {},
                                                      apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader,
                                                      includedFiles,
                                                      compiledShaders[ 0 ] ) ||
-         false == pParams->pShaderCompiler->Compile( "shaders/apemode/Scene.frag",
+         false == pParams->pShaderCompiler->Compile( "../assets/shaders/apemode/Scene.frag",
                                                      {},
                                                      apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader,
                                                      includedFiles,

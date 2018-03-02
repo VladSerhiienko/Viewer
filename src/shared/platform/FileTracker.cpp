@@ -52,18 +52,12 @@ std::string apemodeos::ReplaceSlashes( std::string path ) {
 }
 
 std::string apemodeos::RealPath( std::string path ) {
-    return path;
-    // return std::filesystem::canonical( path ).string( );
+    return std::filesystem::canonical( path ).string( );
+    // return path;
 }
 
 std::string apemodeos::ResolveFullPath( const std::string& path ) {
-    if ( std::filesystem::is_directory( path ) ) {
-        const size_t lastIndex = path.size( ) - 1;
-        if ( path[ lastIndex ] != '\\' && path[ lastIndex ] != '/' )
-            return ReplaceSlashes( RealPath( std::filesystem::absolute( path ).string( ) ) ) + "/";
-    }
-
-    return ReplaceSlashes( RealPath( std::filesystem::absolute( path ).string( ) ) );
+    return ReplaceSlashes( RealPath( std::filesystem::absolute( path ) ) );
 }
 
 bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool bRemoveDeletedFiles ) {
@@ -111,7 +105,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
 
                     auto fileIt = Files.find( filePathFull );
                     if ( fileIt == Files.end( ) ) {
-                        appState->Logger->debug( "FileScanner: Added: {} ({})", filePathFull.c_str( ), lastWriteTime.time_since_epoch( ).count( ) );
+                        appState->Logger->info( "FileScanner: Added: {} ({})", filePathFull.c_str( ), lastWriteTime.time_since_epoch( ).count( ) );
                     }
 
                     auto& fileState = Files[ filePathFull ];
@@ -122,7 +116,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
                     } else {
                         /* Set to error state. */
                         fileState.CurrTime = 0;
-                        appState->Logger->debug( "FileScanner: Error state: {}", filePath.string( ).c_str( ) );
+                        appState->Logger->info( "FileScanner: Error state: {}", filePath.string( ).c_str( ) );
                     }
                 }
             }

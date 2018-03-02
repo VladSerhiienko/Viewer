@@ -39,12 +39,12 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
     std::set< std::string > includedFiles;
     std::vector< uint8_t >  compiledShaders[ 2 ];
 
-    if ( false == pParams->pShaderCompiler->Compile( "shaders/apemode/Skyboxv2.vert",
+    if ( false == pParams->pShaderCompiler->Compile( "../assets/shaders/apemode/Skyboxv2.vert",
                                                      {},
                                                      apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader,
                                                      includedFiles,
                                                      compiledShaders[ 0 ] ) ||
-         false == pParams->pShaderCompiler->Compile( "shaders/apemode/Skybox.frag",
+         false == pParams->pShaderCompiler->Compile( "../assets/shaders/apemode/Skybox.frag",
                                                      {},
                                                      apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader,
                                                      includedFiles,
