@@ -226,7 +226,8 @@ bool ViewerApp::Initialize(  ) {
         // ./FbxPipeline -i "/home/user/vserhiienko/models/mech-m-6k/source/93d43cf18ad5406ba0176c9fae7d4927.fbx" -o "/home/user/vserhiienko/models/mech-m-6k/source/Mech6kv4p.fbx" -p -m .*\.png
         //Scenes.push_back( LoadSceneFromFile( "/home/user/vserhiienko/models/mech-m-6k/source/Mech6kv4p.fbx" ) );
 
-        Scenes.push_back( LoadSceneFromFile( "E:/Media/Models/mech-m-6k/source/Mech6kv4p.fbxp" ) );
+        Scenes.push_back( LoadSceneFromFile( "/home/user/vserhiienko/models_v2/9_mm.fbxp" ) );
+        // Scenes.push_back( LoadSceneFromFile( "E:/Media/Models/mech-m-6k/source/Mech6kv4p.fbxp" ) );
 
         //Scenes.push_back( LoadSceneFromFile( "E:/Media/Models/1972-datsun-240k-gt/source/datsun240k.fbxp" ) );
         //Scenes.push_back( LoadSceneFromFile( "/home/user/vserhiienko/models/stesla-elephant-steam-engines/source/stesla.fbxp" ) );

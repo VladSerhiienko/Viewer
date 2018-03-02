@@ -5,7 +5,7 @@
             "name": "Pipeline (Run)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/third_party/FbxPipeline/build_linux_x86-64/FbxPipeline",
+            "program": "${workspaceRoot}/third_party/FbxPipeline/build_linux_x86_64/FbxPipeline",
             "args": [
                 "-i",
                 "/home/user/vserhiienko/models/stesla-elephant-steam-engines/source/stesla.fbx",
@@ -14,7 +14,7 @@
                 "-p"
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceRoot}/third_party/FbxPipeline/build_linux_x86-64/",
+            "cwd": "${workspaceRoot}/third_party/FbxPipeline/build_linux_x86_64/",
             "environment": [],
             "externalConsole": true,
             "MIMode": "gdb",
@@ -30,11 +30,11 @@
             "name": "Viewer (Run)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/build_linux_x86-64/viewer",
+            "program": "${workspaceRoot}/build_linux_x86_64/viewer",
             "args": [
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceRoot}/build_linux_x86-64",
+            "cwd": "${workspaceRoot}/build_linux_x86_64",
             "environment": [],
             "externalConsole": true,
             "MIMode": "gdb",

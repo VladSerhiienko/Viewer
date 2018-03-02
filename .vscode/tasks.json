@@ -26,7 +26,7 @@
             "type": "shell",
             "command": "cmake",
             "args": [
-                "-H.", "-Bbuild_linux_x86-64"
+                "-H.", "-Bbuild_linux_x86_64"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -41,7 +41,7 @@
             "type": "shell",
             "command": "make",
             "options": {
-                "cwd": "${workspaceFolder}/build_linux_x86-64"
+                "cwd": "${workspaceFolder}/build_linux_x86_64"
             },
             "group": {
                 "kind": "build",
