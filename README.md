@@ -5,6 +5,10 @@
 | |/ / /  __/ |/ |/ /  __/ /    
 |___/_/\___/|__/|__/\___/_/     
 ```   
+
+[![Build status](https://ci.appveyor.com/api/projects/status/b6e2hy037a1d4bmv?svg=true)](https://ci.appveyor.com/project/VladSerhiienko/viewer)
+[![Build Status](https://travis-ci.org/VladSerhiienko/Viewer.svg?branch=master)](https://travis-ci.org/VladSerhiienko/Viewer)
+
 [FbxPipeline](https://github.com/VladSerhiienko/FbxPipeline) accompaning project.
 
 ## How to build (Linux, bash + cmake + make):
