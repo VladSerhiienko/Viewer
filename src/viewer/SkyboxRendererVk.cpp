@@ -39,12 +39,12 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
     std::set< std::string > includedFiles;
     std::vector< uint8_t >  compiledShaders[ 2 ];
 
-    if ( false == pParams->pShaderCompiler->Compile( "../assets/shaders/apemode/Skyboxv2.vert",
+    if ( false == pParams->pShaderCompiler->Compile( "shaders/Skyboxv2.vert",
                                                      {},
                                                      apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader,
                                                      includedFiles,
                                                      compiledShaders[ 0 ] ) ||
-         false == pParams->pShaderCompiler->Compile( "../assets/shaders/apemode/Skybox.frag",
+         false == pParams->pShaderCompiler->Compile( "shaders/Skybox.frag",
                                                      {},
                                                      apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader,
                                                      includedFiles,
@@ -136,7 +136,7 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
     InitializeStruct( colorBlendStateCreateInfo );
     InitializeStruct( colorBlendAttachmentState );
     InitializeStruct( depthStencilStateCreateInfo );
-    InitializeStruct( viewportStateCreateInfo ); 
+    InitializeStruct( viewportStateCreateInfo );
     InitializeStruct( multisampleStateCreateInfo );
     InitializeStruct( dynamicStateCreateInfo );
     InitializeStruct( shaderStageCreateInfo );
@@ -166,7 +166,7 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
     //
 
     inputAssemblyStateCreateInfo.topology          = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    graphicsPipelineCreateInfo.pInputAssemblyState = &inputAssemblyStateCreateInfo; 
+    graphicsPipelineCreateInfo.pInputAssemblyState = &inputAssemblyStateCreateInfo;
 
     //
 
@@ -232,7 +232,7 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
     }
 
     VkPhysicalDeviceProperties adapterProps;
-    vkGetPhysicalDeviceProperties( *pParams->pNode, &adapterProps ); 
+    vkGetPhysicalDeviceProperties( *pParams->pNode, &adapterProps );
 
     for ( uint32_t i = 0; i < pParams->FrameCount; ++i ) {
         BufferPools[ i ].Recreate( *pParams->pNode, *pParams->pNode, &adapterProps.limits, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );

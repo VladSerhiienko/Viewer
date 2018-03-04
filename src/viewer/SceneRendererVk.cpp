@@ -309,7 +309,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
                 frameData.positionOffset = pMeshDeviceAsset->positionOffset;
                 frameData.positionScale  = pMeshDeviceAsset->positionScale;
                 XMStoreFloat4x4( &frameData.worldMatrix, pScene->worldMatrices[ node.id ] );
-                
+
                 auto suballocResult = BufferPools[ FrameIndex ].TSuballocate( frameData );
                 assert( VK_NULL_HANDLE != suballocResult.descBufferInfo.buffer );
                 suballocResult.descBufferInfo.range = sizeof( apemodevk::FrameUniformBuffer );
@@ -363,12 +363,12 @@ bool apemode::SceneRendererVk::Recreate(const RecreateParametersBase * pParamsBa
     std::set<std::string> includedFiles;
     std::vector<uint8_t> compiledShaders[2];
 
-    if ( false == pParams->pShaderCompiler->Compile( "../assets/shaders/apemode/Scene.vert",
+    if ( false == pParams->pShaderCompiler->Compile( "shaders/Scene.vert",
                                                      {},
                                                      apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader,
                                                      includedFiles,
                                                      compiledShaders[ 0 ] ) ||
-         false == pParams->pShaderCompiler->Compile( "../assets/shaders/apemode/Scene.frag",
+         false == pParams->pShaderCompiler->Compile( "shaders/Scene.frag",
                                                      {},
                                                      apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader,
                                                      includedFiles,

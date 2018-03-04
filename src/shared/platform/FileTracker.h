@@ -6,14 +6,14 @@
 
 namespace apemodeos {
 
-    std::string  CurrentDirectory( );
-    std::string  GetFileName( const std::string& InPath );
-    bool         PathExists( const std::string& InPath );
-    bool         DirectoryExists( const std::string& InPath );
-    bool         FileExists( const std::string& InPath );
+    std::string CurrentDirectory( );
+    std::string GetFileName( const std::string& InPath );
+    bool        PathExists( const std::string& InPath );
+    bool        DirectoryExists( const std::string& InPath );
+    bool        FileExists( const std::string& InPath );
     std::string ReplaceSlashes( std::string InPath );
     std::string RealPath( std::string InPath );
-    std::string  ResolveFullPath( const std::string& InPath );
+    std::string ResolveFullPath( const std::string& InPath );
 
     /**
      * Scans the directory and stores full file paths.
@@ -30,7 +30,7 @@ namespace apemodeos {
         struct ScannedFile {
             uint64_t PrevTime = 0; /* Previous update time */
             uint64_t CurrTime = 0; /* Last update time */
-            
+
             inline bool Unchanged( ) const { return 0 == ( CurrTime - PrevTime ); } /* File has been changed since last frame (or was deleted). */
             inline bool Deleted( ) const { return 0 == CurrTime && 0 == PrevTime; } /* File has been deleted. */
             inline bool Changed( ) const { return 0 != ( CurrTime - PrevTime ); }   /* File has not been changed since last frame. */

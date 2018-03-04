@@ -413,7 +413,7 @@ VkDescriptorSet apemodevk::DescriptorSetPool::GetDescSet( const DescriptorSetBas
                        }
                    } );
 
-    vkUpdateDescriptorSets( pLogicalDevice, TempWrites.size( ), TempWrites.data( ), 0, nullptr );
+    vkUpdateDescriptorSets( pLogicalDevice, static_cast< uint32_t >( TempWrites.size( ) ), TempWrites.data( ), 0, nullptr );
     return descriptorSet;
 }
 

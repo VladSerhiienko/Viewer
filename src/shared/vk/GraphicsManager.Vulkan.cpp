@@ -76,7 +76,7 @@ bool apemodevk::GraphicsManager::ScanInstanceLayerProperties( uint32_t flags ) {
     for ( auto pInstanceLayer : InstanceLayers ) {
         switch ( CheckedCall( vkEnumerateInstanceExtensionProperties( pInstanceLayer, &PropCount, NULL ) ) ) {
             case VK_SUCCESS: {
-                uint32_t FirstInstanceExtension = InstanceExtensionProps.size( );
+                uint32_t FirstInstanceExtension = static_cast< uint32_t >( InstanceExtensionProps.size( ) );
                 InstanceExtensionProps.resize( InstanceExtensionProps.size( ) + PropCount );
                 CheckedCall( vkEnumerateInstanceExtensionProperties( pInstanceLayer, &PropCount, InstanceExtensionProps.data( ) + FirstInstanceExtension ) );
             } break;

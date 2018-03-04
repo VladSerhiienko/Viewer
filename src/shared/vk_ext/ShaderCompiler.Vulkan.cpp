@@ -167,11 +167,11 @@ bool apemodevk::ShaderCompiler::Compile( const std::string&                Shade
                                                      spvCompilationResult.cend( ) );
     }
 
-    size_t spvSize = (size_t) std::distance( spvCompilationResult.begin( ), spvCompilationResult.end( ) ) *
-                     sizeof( shaderc::SpvCompilationResult::element_type );
+    const size_t spvSize = (size_t) std::distance( spvCompilationResult.cbegin( ), spvCompilationResult.cend( ) ) *
+                           sizeof( shaderc::SpvCompilationResult::element_type );
 
     OutCompiledShader.resize( spvSize );
-    memcpy( OutCompiledShader.data( ), spvCompilationResult.begin( ), OutCompiledShader.size( ) );
+    memcpy( OutCompiledShader.data( ), spvCompilationResult.cbegin( ), OutCompiledShader.size( ) );
 
     return true;
 }
@@ -283,11 +283,11 @@ bool apemodevk::ShaderCompiler::Compile( const std::string&                InFil
                                                          spvCompilationResult.cend( ) );
         }
 
-        size_t spvSize = (size_t) std::distance( spvCompilationResult.begin( ), spvCompilationResult.end( ) ) *
-                         sizeof( shaderc::SpvCompilationResult::element_type );
+        const size_t spvSize = (size_t) std::distance( spvCompilationResult.cbegin( ), spvCompilationResult.cend( ) ) *
+                               sizeof( shaderc::SpvCompilationResult::element_type );
 
         OutCompiledShader.resize( spvSize );
-        memcpy( OutCompiledShader.data( ), spvCompilationResult.begin( ), OutCompiledShader.size( ) );
+        memcpy( OutCompiledShader.data( ), spvCompilationResult.cbegin( ), OutCompiledShader.size( ) );
 
         return true;
     }

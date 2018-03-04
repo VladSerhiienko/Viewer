@@ -3,28 +3,19 @@
 #include <set>
 #include <regex>
 
-#if defined(__clang__) || defined(__GNUC__)
+#if defined( __clang__ ) || defined( __GNUC__ )
 #include <experimental/filesystem>
+#else
+#include <filesystem>
+#endif
 namespace std {
     namespace filesystem = std::experimental::filesystem::v1;
 }
-#else
-#include <filesystem>
-namespace std {
-    namespace filesystem = std::tr2::sys;
-}
-#endif
 
 #include <fstream>
 #include <iterator>
 
 #include <AppState.h>
-
-namespace std {
-    /* For Visual Studio 2015 */
-    /* TODO Check for other compilers */
-    // namespace filesystem = std::tr2::sys;
-}
 
 std::string apemodeos::CurrentDirectory( ) {
     return std::filesystem::current_path( ).string( );
@@ -53,11 +44,10 @@ std::string apemodeos::ReplaceSlashes( std::string path ) {
 
 std::string apemodeos::RealPath( std::string path ) {
     return std::filesystem::canonical( path ).string( );
-    // return path;
 }
 
 std::string apemodeos::ResolveFullPath( const std::string& path ) {
-    return ReplaceSlashes( RealPath( std::filesystem::absolute( path ) ) );
+    return ReplaceSlashes( RealPath( std::filesystem::absolute( path ).string( ) ) );
 }
 
 bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool bRemoveDeletedFiles ) {

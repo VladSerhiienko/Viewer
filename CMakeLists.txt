@@ -133,7 +133,8 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/eastl"
-    CMAKE_ARGS ${default_cmake_args} -DEASTL_BUILD_TESTS:BOOL=TRUE -DEASTL_BUILD_BENCHMARK:BOOL=TRUE
+    CMAKE_ARGS ${default_cmake_args} -DEASTL_BUILD_TESTS:BOOL=TRUE
+                                     -DEASTL_BUILD_BENCHMARK:BOOL=TRUE
     TEST_COMMAND ""
     INSTALL_COMMAND ""
 )
@@ -249,7 +250,7 @@ ExternalProject_Add(
     sdl2
     URL http://www.libsdl.org/release/SDL2-2.0.7.tar.gz
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/sdl2"
-    CMAKE_ARGS -B${BUILD_FOLDER_SUFFIX} -H.
+    CMAKE_ARGS -B${BUILD_FOLDER_SUFFIX} -H. -DCMAKE_DEBUG_POSTFIX:STRING=
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
     TEST_COMMAND ""
@@ -353,7 +354,11 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/shaderc"
-    CMAKE_ARGS -B${BUILD_FOLDER_SUFFIX} -H. -DSHADERC_SKIP_TESTS:BOOL=TRUE -DSHADERC_SPIRV_TOOLS_DIR:PATH=${spirv_tools_source_dir} -DSHADERC_SPIRV_HEADERS_DIR:PATH=${spirv_headers_source_dir} -DSHADERC_GLSLANG_DIR:PATH=${glslang_source_dir}
+    CMAKE_ARGS -B${BUILD_FOLDER_SUFFIX} -H. -DSHADERC_ENABLE_SHARED_CRT:BOOL=TRUE # MD
+                                            -DSHADERC_SKIP_TESTS:BOOL=TRUE
+                                            -DSHADERC_SPIRV_TOOLS_DIR:PATH=${spirv_tools_source_dir}
+                                            -DSHADERC_SPIRV_HEADERS_DIR:PATH=${spirv_headers_source_dir}
+                                            -DSHADERC_GLSLANG_DIR:PATH=${glslang_source_dir}
     TEST_COMMAND ""
     INSTALL_COMMAND ""
 )
@@ -390,14 +395,37 @@ set(zlib_binary_dir ${BINARY_DIR})
 message(STATUS "zlib_source_dir = ${zlib_source_dir}")
 message(STATUS "zlib_binary_dir = ${zlib_binary_dir}")
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
+#
+#
+# VulkanMemoryAllocator
+#
+#
+
+ExternalProject_Add(
+    VulkanMemoryAllocator
+    GIT_REPOSITORY "git@github.com:GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git"
+    GIT_TAG "master"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    LOG_DOWNLOAD ON
+)
+
+ExternalProject_Get_Property(VulkanMemoryAllocator SOURCE_DIR)
+set(VulkanMemoryAllocator_source_dir ${SOURCE_DIR})
+message(STATUS "VulkanMemoryAllocator_source_dir = ${VulkanMemoryAllocator_source_dir}")
 
 #
 #
 # platform decisions
 #
 #
+
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
 
 if (WIN32)
     set(CONFIGURATION_SUFFIX "/$(Configuration)")
@@ -409,54 +437,6 @@ if (UNIX)
     set(CONFIGURATION_SUFFIX "")
     add_definitions("-DHAVE_PTHREAD")
     add_definitions("-g")
-endif()
-
-if (UNIX)
-
-    set(
-        vulkan_lib_platform
-        $ENV{VK_SDK_PATH}/lib/libvulkan.so
-        dl
-    )
-
-    set(
-        third_party_libs_platform
-        ${sdl2_binary_dir}/libSDL2.a
-        ${flatbuffers_binary_dir}/libflatbuffers.a
-        ${zlib_binary_dir}/libz.a
-        ${shaderc_binary_dir}/libshaderc/libshaderc_combined.a
-        X11
-        Xext
-        Xcursor
-        Xinerama
-        Xrandr
-        z
-        m
-        dl
-        pthread
-    )
-
-elseif(WIN32)
-
-    set(
-        vulkan_lib_platform
-        $ENV{VK_SDK_PATH}/lib/vulkan-1.lib
-    )
-
-    set(
-        third_party_libs_platform
-        debug ${sdl2_binary_dir}/Debug/SDL2-staticd.lib
-        debug ${sdl2_binary_dir}/Debug/SDL2maind.lib
-        debug ${shaderc_binary_dir}/libshaderc/Debug/shaderc_combined.lib
-        optimized ${sdl2_binary_dir}/Release/SDL2-staticd.lib
-        optimized ${sdl2_binary_dir}/Release/SDL2maind.lib
-        optimized ${shaderc_binary_dir}/libshaderc/Release/shaderc_combined.lib
-        opengl32.lib
-        winmm.lib
-        imm32.lib
-        version.lib
-    )
-
 endif()
 
 #
@@ -494,13 +474,13 @@ set(
 
 set(
     shared_platform_source_files
-    # ${CMAKE_SOURCE_DIR}/src/shared/platform/FbxViewerOS.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/FileTracker.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/platform/memory/MemoryManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/platform/memory/MemoryManager.h
 )
 
 set(
     shared_source_files
-    # ${CMAKE_SOURCE_DIR}/src/shared/App.cpp     
     ${CMAKE_SOURCE_DIR}/src/shared/CityHash.cpp      
     ${CMAKE_SOURCE_DIR}/src/shared/AppBase.cpp 
     ${CMAKE_SOURCE_DIR}/src/shared/DebugRendererVk.cpp 
@@ -513,7 +493,7 @@ set(
 add_custom_command(
     OUTPUT
     ${CMAKE_SOURCE_DIR}/dependencies/lodepng/lodepng.cpp
-    DEPENDS viewer
+    DEPENDS Viewer
     COMMAND ""
     )
 
@@ -529,14 +509,33 @@ set(
     ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.cpp
     ${CMAKE_SOURCE_DIR}/dependencies/lodepng/lodepng.cpp
 )
+
+file(
+    GLOB 
+    Viewer_shader_source_files
+    "${CMAKE_SOURCE_DIR}/src/shaders/*.vert"
+    "${CMAKE_SOURCE_DIR}/src/shaders/*.frag"
+    "${CMAKE_SOURCE_DIR}/src/shaders/*.tesc"
+    "${CMAKE_SOURCE_DIR}/src/shaders/*.tese"
+    "${CMAKE_SOURCE_DIR}/src/shaders/*.comp"
+    "${CMAKE_SOURCE_DIR}/src/shaders/*.geom"
+)
     
 add_executable(
-    viewer
+    Viewer
     ${viewer_source_files}
+    ${Viewer_shader_source_files}
 )
 
+source_group("Shader Sources" FILES ${Viewer_shader_source_files})
+source_group("Shared Sources" FILES ${shared_source_files})
+source_group("Shared Platform Sources" FILES ${shared_platform_source_files})
+source_group("Shared SDL2 Sources" FILES ${shared_sdl_source_files})
+source_group("Shared Vulkan Extention Sources" FILES ${shared_vk_ext_source_files})
+source_group("Shared Vulkan Sources" FILES ${shared_vk_source_files})
+
 add_dependencies(
-    viewer
+    Viewer
     cxxopts
     spdlog
     zlib
@@ -554,7 +553,7 @@ add_dependencies(
 message(STATUS "VK_SDK_PATH = $ENV{VK_SDK_PATH}")
 
 target_include_directories(
-    viewer
+    Viewer
     PUBLIC
     ${CMAKE_SOURCE_DIR}/assets/
     ${CMAKE_SOURCE_DIR}/assets/fonts/
@@ -563,12 +562,14 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/src/shared/sdl
     ${CMAKE_SOURCE_DIR}/src/shared/vk
     ${CMAKE_SOURCE_DIR}/src/shared/vk_ext
+    ${CMAKE_SOURCE_DIR}/src/shared/platform/memory
     ${CMAKE_SOURCE_DIR}/src/viewer
     ${CMAKE_SOURCE_DIR}/dependencies/gli
     ${CMAKE_SOURCE_DIR}/dependencies/gli/external
     ${CMAKE_SOURCE_DIR}/dependencies/gli/external/glm
     ${CMAKE_SOURCE_DIR}/dependencies/lodepng
     ${CMAKE_SOURCE_DIR}/dependencies/nuklear
+    ${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator/src
     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath
     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath/Inc
     ${CMAKE_SOURCE_DIR}/dependencies/cxxopts/include
@@ -610,17 +611,57 @@ elseif(WIN32)
         imm32.lib
         version.lib
         
-        ${shaderc_binary_dir}/libshaderc${CONFIGURATION_SUFFIX}/shaderc_combined.lib
-        ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/flatbuffers.lib
+        ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.lib
+        ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2main.lib
         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/EASTL.lib
+        ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/flatbuffers.lib
         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/EAStdC.lib
-
-        debug ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2-staticd.lib
-        optimized ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2-static.lib
+        ${shaderc_binary_dir}/libshaderc${CONFIGURATION_SUFFIX}/shaderc_combined.lib
     )
 endif()
 
+set( viewer_dependencies_dlls_pdbs
+     ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.dll
+     ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.pdb
+     )
+
+make_directory(${CMAKE_BINARY_DIR}/shaders/)
+make_directory(${CMAKE_BINARY_DIR}/Debug/shaders/)
+make_directory(${CMAKE_BINARY_DIR}/Release/shaders/)
+
+foreach( Viewer_shader_source_file ${Viewer_shader_source_files} )
+    add_custom_command(
+        TARGET
+        Viewer
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${Viewer_shader_source_file}
+        ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/shaders/
+    )
+endforeach()
+
+foreach( viewer_dependencies_dll_pdb ${viewer_dependencies_dlls_pdbs} )
+    add_custom_command(
+        TARGET
+        Viewer
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${viewer_dependencies_dll_pdb}
+        ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}
+    )
+endforeach()
+
 target_link_libraries(
-    viewer
+    Viewer
     ${third_party_libs}
 )
+
+set_target_properties(
+    Viewer
+    PROPERTIES
+    VS_DEBUGGER_WORKING_DIRECTORY
+    "$(OutDir)"
+)
+
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(PREDEFINED_TARGETS_FOLDER "CustomTargets")

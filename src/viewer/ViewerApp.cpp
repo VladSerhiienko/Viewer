@@ -54,7 +54,7 @@ void ShaderFeedbackWriter::WriteFeedback( EFeedbackType                     eTyp
                                           const std::vector< std::string >& Macros,
                                           const void*                       pContent, /* Txt or bin, @see EFeedbackType */
                                           const void*                       pContentEnd ) {
-                                              
+
     const auto feedbackStage            = eType & eFeedbackType_CompilationStageMask;
     const auto feedbackCompilationError = eType & eFeedbackType_CompilationStatusMask;
 

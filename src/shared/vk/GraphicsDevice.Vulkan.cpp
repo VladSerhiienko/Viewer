@@ -112,7 +112,7 @@ bool apemodevk::GraphicsDevice::ScanDeviceLayerProperties( uint32_t flags ) {
         uint32_t ExtPropCount = 0;
         eResult = vkEnumerateDeviceExtensionProperties( pPhysicalDevice, layerName, &ExtPropCount, NULL );
         if ( VK_SUCCESS == eResult && ExtPropCount ) {
-            uint32_t firstExt = DeviceExtensionProps.size( );
+            uint32_t firstExt = static_cast< uint32_t >( DeviceExtensionProps.size( ) );
             DeviceExtensionProps.resize( DeviceExtensionProps.size( ) + ExtPropCount );
             eResult = vkEnumerateDeviceExtensionProperties( pPhysicalDevice, layerName, &ExtPropCount, DeviceExtensionProps.data( ) + firstExt );
         }

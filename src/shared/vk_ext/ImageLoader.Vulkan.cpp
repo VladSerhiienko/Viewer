@@ -1,4 +1,5 @@
 #include <ImageLoader.Vulkan.h>
+#include <MemoryManager.h>
 
 #include <BufferPools.Vulkan.h>
 #include <QueuePools.Vulkan.h>
@@ -7,17 +8,9 @@
 #define LODEPNG_COMPILE_ALLOCATORS
 #endif
 
-void* lodepng_malloc( size_t size ) {
-    return malloc( size );
-}
-
-void* lodepng_realloc( void* ptr, size_t new_size ) {
-    return realloc( ptr, new_size );
-}
-
-void lodepng_free( void* ptr ) {
-    free( ptr );
-}
+#define lodepng_malloc  apemode_malloc
+#define lodepng_realloc apemode_realloc
+#define lodepng_free    apemode_free
 
 #include <lodepng.h>
 #include <lodepng_util.h>
@@ -83,7 +76,7 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
     VkImageMemoryBarrier             writeImageMemoryBarrier;
     VkImageMemoryBarrier             readImgMemoryBarrier;
     HostBufferPool::SuballocResult   imageBufferSuballocResult;
-    
+
     InitializeStruct( writeImageMemoryBarrier );
     InitializeStruct( readImgMemoryBarrier );
     InitializeStruct( loadedImage->imageCreateInfo );
@@ -374,10 +367,14 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
         /* Ensure the image memory transfer can be synchronized */
         loadedImage->queueId = acquiredQueue.queueId;
         loadedImage->queueFamilyId = acquiredQueue.queueFamilyId;
-    } 
+    }
 
     pNode->GetCommandBufferPool( )->Release( acquiredCmdBuffer );
     pNode->GetQueuePool( )->Release( acquiredQueue );
 
     return std::move( loadedImage );
 }
+
+#undef lodepng_malloc
+#undef lodepng_realloc
+#undef lodepng_free
