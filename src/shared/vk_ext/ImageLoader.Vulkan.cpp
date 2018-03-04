@@ -14,7 +14,10 @@
 
 #include <lodepng.h>
 #include <lodepng_util.h>
+
+#pragma warning(disable:4309)
 #include <gli/gli.hpp>
+#pragma warning(default:4309)
 
 /**
  * Exactly the same, no need for explicit mapping.
