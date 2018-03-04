@@ -1,0 +1,37 @@
+language: cpp
+sudo: required
+os: linux
+dist: trusty
+
+branches:
+  only:
+    - master
+
+compiler:
+  - gcc
+
+before_script:
+  - sudo apt-get install 
+
+install:
+  - sudo apt-get -qq update
+  - sudo apt-get install -y libassimp-dev libglm-dev graphviz libxcb-dri3-0 libxcb-present0 libpciaccess0 cmake libpng-dev libxcb-dri3-dev libx11-dev libx11-xcb-dev libmirclient-dev libwayland-dev libxrandr-dev
+  - wget -O vulkansdk-linux-x86_64-1.0.65.1.run https://sdk.lunarg.com/sdk/download/1.0.65.1/linux/vulkansdk-linux-x86_64-1.0.65.1.run
+  - chmod ugo+x vulkansdk-linux-x86_64-1.0.65.1.run
+  - ./vulkansdk-linux-x86_64-1.0.65.1.run
+  - export VK_SDK_PATH=$TRAVIS_BUILD_DIR/VulkanSDK/1.0.65.1/x86_64
+  - export VULKAN_SDK=$TRAVIS_BUILD_DIR/VulkanSDK/1.0.65.1/x86_64
+
+script:
+  - sed 's,git@github.com,https://github.com/,g' <CMakeLists.txt >CMakeLists.txt
+  - cmake -H. -Bbuild_linux_x86_64
+  - cd build_linux_x86_64
+  - make
+  - cd ..
+
+notifications:
+  email:
+    recipients:
+      - vlad.serhiienko@gmail.com
+    on_success: change
+    on_failure: always

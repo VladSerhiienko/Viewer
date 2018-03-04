@@ -645,7 +645,7 @@ foreach( viewer_dependencies_dll_pdb ${viewer_dependencies_dlls_pdbs} )
         TARGET
         Viewer
         POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        COMMAND ${CMAKE_COMMAND} -E copy
         ${viewer_dependencies_dll_pdb}
         ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}
     )

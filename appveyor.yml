@@ -14,7 +14,6 @@ install:
   - ps: cd installs
   - ps: Start-FileDownload "https://sdk.lunarg.com/sdk/download/1.0.65.1/windows/VulkanSDK-1.0.65.1-Installer.exe" "VulkanSDK.exe"
   - ps: Start-Process -FilePath "VulkanSDK.exe" /S -Wait
-  - ps: Tree "C:/VulkanSDK" /F
   - ps: cd ..
 
 environment:
