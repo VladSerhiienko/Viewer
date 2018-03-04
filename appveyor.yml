@@ -10,6 +10,14 @@ init:
   - git config --global core.autocrlf true
 install:
   - ps: (Get-Content CMakeLists.txt).replace("git@github.com:","https://github.com/") | Set-Content CMakeLists.txt
+  - ps: md installs
+  - ps: cd installs
+  - ps: Start-FileDownload "https://vulkan.lunarg.com/sdk/download/1.0.54.0/windows/VulkanSDK-1.0.65.1-Installer.exe" "VulkanSDK.exe"
+  - ps: Start-Process -FilePath "VulkanSDK.exe" /S -Wait
+  - ps: cd ..
+
+environment:
+  VK_SDK_PATH: "C:\\VulkanSDK\\1.0.65.1"
 before_build:
   - cmake -G "Visual Studio 15 2017 Win64" -Bbuild_windows_amd64 -H.
 build:
