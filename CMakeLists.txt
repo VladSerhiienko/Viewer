@@ -587,9 +587,8 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/sdl2/include
     ${CMAKE_SOURCE_DIR}/dependencies/EASTL/include
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
+    ${shaderc_source_dir}/libshaderc/include
     $ENV{VK_SDK_PATH}/include
-    $ENV{VK_SDK_PATH}/shaderc/libshaderc/include
-    $ENV{VK_SDK_PATH}/../source/shaderc/src/libshaderc/include
 )
 
 if (UNIX)
