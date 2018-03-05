@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.4.1)
 
 include(ExternalProject)
-project (viewer)
+project (Viewer)
 
 message(STATUS "CMAKE_SYSTEM_INFO_FILE = ${CMAKE_SYSTEM_INFO_FILE}")
 message(STATUS "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
@@ -620,36 +620,41 @@ elseif(WIN32)
     )
 endif()
 
-set( viewer_dependencies_dlls_pdbs
-     ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.dll
-     ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.pdb
-     )
-
 make_directory(${CMAKE_BINARY_DIR})
 make_directory(${CMAKE_BINARY_DIR}/shaders/)
 make_directory(${CMAKE_BINARY_DIR}/Debug/shaders/)
 make_directory(${CMAKE_BINARY_DIR}/Release/shaders/)
 
 foreach( Viewer_shader_source_file ${Viewer_shader_source_files} )
-    add_custom_command(
-        TARGET
-        Viewer
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        ${Viewer_shader_source_file}
-        ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/shaders/
-    )
+    if(EXISTS ${Viewer_shader_source_file})
+        add_custom_command(
+            TARGET
+            Viewer
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${Viewer_shader_source_file}
+            ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/shaders/
+        )
+    endif()
 endforeach()
 
+set( viewer_dependencies_dlls_pdbs
+     ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/libSDL2-2.0.so
+     ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.dll
+     ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.pdb
+     )
+
 foreach( viewer_dependencies_dll_pdb ${viewer_dependencies_dlls_pdbs} )
-    add_custom_command(
-        TARGET
-        Viewer
-        POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-        ${viewer_dependencies_dll_pdb}
-        ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}
-    )
+    if(EXISTS ${viewer_dependencies_dll_pdb})
+        add_custom_command(
+            TARGET
+            Viewer
+            POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${viewer_dependencies_dll_pdb}
+            ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}
+        )
+    endif()
 endforeach()
 
 target_link_libraries(

@@ -1,6 +1,7 @@
 
 #pragma once
 #include <new>
+#include <memory>
 
 #ifndef APEMODE_USE_MEMORY_TRACKING
 #define APEMODE_USE_MEMORY_TRACKING
@@ -101,30 +102,30 @@ namespace apemode {
     struct TNew {
         inline static void* operator new( size_t size ) {
             if ( bThreadLocal )
-                return apemode::thread_local_malloc( size );
+                return apemode::threadLocalAllocate( size );
             else
-                return apemode::malloc( size );
+                return apemode::allocate( size );
         }
 
         inline static void* operator new[]( size_t size ) {
             if ( bThreadLocal )
-                return apemode::thread_local_malloc( size );
+                return apemode::threadLocalAllocate( size );
             else
-                return apemode::malloc( size );
+                return apemode::allocate( size );
         }
 
         inline static void operator delete( void* ptr ) {
             if ( bThreadLocal )
-                apemode::thread_local_free( ptr );
+                apemode::threadLocalDeallocate( ptr );
             else
-                apemode::free( ptr );
+                apemode::deallocate( ptr );
         }
 
         inline static void operator delete[]( void* ptr ) {
             if ( bThreadLocal )
-                apemode::thread_local_free( ptr );
+                apemode::threadLocalDeallocate( ptr );
             else
-                apemode::free( ptr );
+                apemode::deallocate( ptr );
         }
     };
 

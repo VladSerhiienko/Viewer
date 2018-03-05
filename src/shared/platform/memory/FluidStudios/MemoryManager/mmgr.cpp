@@ -87,6 +87,7 @@
 
 #if !defined( WIN32 ) && !defined( DURANGO )
 #include <unistd.h>
+#include <pthread.h>
 #endif
 
 #include "mmgr.h"
@@ -207,10 +208,10 @@ void *apemode_calloc( size_t count, size_t size );
 void *apemode_realloc( void *p, size_t size );
 void  apemode_free( void *p );
 
-#define m_internal_malloc apemode_malloc
-#define m_internal_calloc apemode_calloc
-#define m_internal_realloc apemode_realloc
-#define m_internal_free apemode_free
+#define m_internal_malloc 	apemode_malloc
+#define m_internal_calloc 	apemode_calloc
+#define m_internal_realloc 	apemode_realloc
+#define m_internal_free 	apemode_free
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Defaults for the constants & statics in the MemoryManager class
@@ -270,22 +271,35 @@ char* LogToMemory(char* log);
 // 3. Define MUTEX_UNLOCK to call the unlock function of the mutex.
 // 4. Add the mutex initialization function inside CreateMutex() on the bottom of this file.
 // 5. Add the mutex destruction function inside RemoveMutex() on the bottom of this file. (Currently not used)
+
 #ifdef WIN32
+
 typedef CRITICAL_SECTION MUTEX;
-#define MUTEX_LOCK(MUTEX) if (!MUTEX) {MUTEX = CreateMutex();} EnterCriticalSection(MUTEX);
-#define MUTEX_UNLOCK(MUTEX) LeaveCriticalSection(MUTEX);
+#define MUTEX_LOCK( MUTEX )     \
+    if ( !MUTEX ) {             \
+        MUTEX = CreateMutex( ); \
+    }                           \
+    EnterCriticalSection( MUTEX );
+#define MUTEX_UNLOCK( MUTEX ) LeaveCriticalSection( MUTEX );
+
 #else
+
 // Mutex definition in other OSes or single thread programs
-typedef void MUTEX;
-#define MUTEX_LOCK(MUTEX) ;
-#define MUTEX_UNLOCK(MUTEX) ;
+typedef pthread_spinlock_t MUTEX;
+#define MUTEX_LOCK( pMutex )     \
+    if ( !pMutex ) {             \
+        pMutex = CreateMutex( ); \
+    }                            \
+    pthread_spin_lock( pMutex );
+#define MUTEX_UNLOCK( pMutex ) pthread_spin_unlock( pMutex );
+
 #endif
 
-MUTEX* allocMutex;
-MUTEX* logMutex;
+MUTEX *allocMutex;
+MUTEX *logMutex;
 
-MUTEX* CreateMutex();
-void RemoveMutex(MUTEX*& mutex);
+MUTEX *CreateMutex( );
+void   RemoveMutex( MUTEX *&mutex );
 
 // ---------------------------------------------------------------------------------------------------------------------------------
 // Local functions only
@@ -306,7 +320,7 @@ static	char*	log(const char *format, ...)
 	static char buffer[2048];
 	va_list	ap;
 	va_start(ap, format);
-	vsprintf_s(buffer, format, ap);
+	vsprintf(buffer, format, ap);
 	va_end(ap);
 
 	// Open the log file
@@ -328,7 +342,7 @@ static	char*	log(const char *format, ...)
 	//fprintf(fp, "%s\r\n", buffer);
 	//fclose(fp);
 
-	sprintf_s(buffer, "%s\r\n", buffer);
+	sprintf(buffer, "%s\r\n", buffer);
 	// Quicker
 
 	char* logAddress = LogToMemory(buffer);
@@ -344,18 +358,18 @@ static	void	doCleanupLogOnFirstRun()
 {
 	if (cleanupLogOnFirstRun)
 	{
-		_unlink(memoryLogFile);
+		// _unlink(memoryLogFile);
 		cleanupLogOnFirstRun = false;
 
 		// Print a header for the log
 
 		time_t	t = time(NULL);
-		tm localt;
-		localtime_s(&localt, &t);
+		tm * localt;
+		localt = localtime(&t);
 		char asciiTime[64];
 		// use strftime instead of asctime so we don't get the trailing newline. (We're writing the
 		// file in binary so we need to explicitly make all newlines "\r\n".)
-		strftime(asciiTime, 64, "%c", &localt);
+		strftime(asciiTime, 64, "%c", localt);
 		log("--------------------------------------------------------------------------------");
 		log("");
 		log("      %s - Memory logging file created on %s", memoryLogFile, asciiTime);
@@ -405,7 +419,7 @@ static	const char	*ownerString(const char *sourceFile, const unsigned int source
 {
 	static	char	str[180];
 	memset(str, 0, sizeof(str));
-	sprintf_s(str, "%s(%05d)::%s", sourceFileStripper(sourceFile), sourceLine, sourceFunc);
+	sprintf(str, "%s(%05d)::%s", sourceFileStripper(sourceFile), sourceLine, sourceFunc);
 	return str;
 }
 
@@ -416,7 +430,7 @@ static	const char	*insertCommas(unsigned int value)
 	static	char	str[30];
 	memset(str, 0, sizeof(str));
 
-	sprintf_s(str, "%u", value);
+	sprintf(str, "%u", value);
 	if (strlen(str) > 3)
 	{
 		memmove(&str[strlen(str) - 3], &str[strlen(str) - 4], 4);
@@ -441,9 +455,9 @@ static	const char	*insertCommas(unsigned int value)
 static	const char	*memorySizeString(unsigned long size)
 {
 	static	char	str[90];
-	if (size > (1024 * 1024))	sprintf_s(str, "%10s (%7.2fM)", insertCommas(size), static_cast<float>(size) / (1024.0f * 1024.0f));
-	else if (size > 1024)		sprintf_s(str, "%10s (%7.2fK)", insertCommas(size), static_cast<float>(size) / 1024.0f);
-	else				sprintf_s(str, "%10s bytes     ", insertCommas(size));
+	if (size > (1024 * 1024))	sprintf(str, "%10s (%7.2fM)", insertCommas(size), static_cast<float>(size) / (1024.0f * 1024.0f));
+	else if (size > 1024)		sprintf(str, "%10s (%7.2fK)", insertCommas(size), static_cast<float>(size) / 1024.0f);
+	else				sprintf(str, "%10s bytes     ", insertCommas(size));
 	return str;
 }
 
@@ -595,7 +609,7 @@ static	void	dumpLeakReport()
 	// Open the report file
 
 	FILE	*fp = NULL;
-	fopen_s(&fp, memoryLeakLogFile, "w+b");
+	fp = fopen(memoryLeakLogFile, "w+b");
 
 	// If you hit this assert, then the memory report generator is unable to log information to a file (can't open the file for
 	// some reason.)
@@ -609,8 +623,10 @@ static	void	dumpLeakReport()
 	static  char    timeString[25];
 	memset(timeString, 0, sizeof(timeString));
 	time_t  t = time(NULL);
-	struct tm tme;
-	localtime_s(&tme, &t);
+	struct tm* ptme;
+	ptme = localtime(&t);
+	struct tm& tme = *ptme;
+	// localtime_s(&tme, &t);
 	fprintf(fp, " ------------------------------------------------------------------------------\r\n");
 	fprintf(fp, "|                Memory leak report for:  %02d/%02d/%04d %02d:%02d:%02d                  |\r\n", tme.tm_mon + 1, tme.tm_mday, tme.tm_year + 1900, tme.tm_hour, tme.tm_min, tme.tm_sec);
 	fprintf(fp, " ------------------------------------------------------------------------------\r\n");
@@ -917,10 +933,10 @@ void	*m_allocator(const char *sourceFile, const unsigned int sourceLine, const c
 		au->allocationType = allocationType;
 		au->sourceLine = sourceLine;
 		au->allocationNumber = currentAllocationCount;
-		if (sourceFile) strncpy_s(au->sourceFile, sourceFileStripper(sourceFile), sizeof(au->sourceFile) - 1);
-		else		strcpy_s(au->sourceFile, 2, "??");
-		if (sourceFunc) strncpy_s(au->sourceFunc, sourceFunc, sizeof(au->sourceFunc) - 1);
-		else		strcpy_s(au->sourceFunc, 2, "??");
+		if (sourceFile) strncpy(au->sourceFile, sourceFileStripper(sourceFile), sizeof(au->sourceFile) - 1);
+		else		strcpy(au->sourceFile, "??");
+		if (sourceFunc) strncpy(au->sourceFunc, sourceFunc, sizeof(au->sourceFunc) - 1);
+		else		strcpy(au->sourceFunc, "??");
 
 		// We don't want to assert with random failures, because we want the application to deal with them.
 
@@ -1132,10 +1148,10 @@ void	*m_reallocator(const char *sourceFile, const unsigned int sourceLine, const
 		au->allocationType = reallocationType;
 		au->sourceLine = sourceLine;
 		au->allocationNumber = currentAllocationCount;
-		if (sourceFile) strncpy_s(au->sourceFile, sourceFileStripper(sourceFile), sizeof(au->sourceFile) - 1);
-		else		strcpy_s(au->sourceFile, 2, "??");
-		if (sourceFunc) strncpy_s(au->sourceFunc, sourceFunc, sizeof(au->sourceFunc) - 1);
-		else		strcpy_s(au->sourceFunc, 2, "??");
+		if (sourceFile) strncpy(au->sourceFile, sourceFileStripper(sourceFile), sizeof(au->sourceFile) - 1);
+		else		strcpy(au->sourceFile, "??");
+		if (sourceFunc) strncpy(au->sourceFunc, sourceFunc, sizeof(au->sourceFunc) - 1);
+		else		strcpy(au->sourceFunc, "??");
 
 		// The reallocation may cause the address to change, so we should relocate our allocation unit within the hash table
 
@@ -1507,8 +1523,8 @@ void	m_dumpMemoryReport(const char *filename, const bool overwrite)
 
 	FILE	*fp = NULL;
 
-	if (overwrite) { fopen_s(&fp, filename, "w+b"); }
-	else { fopen_s(&fp, filename, "ab"); }
+	if (overwrite) { fp = fopen(filename, "w+b"); }
+	else { fp = fopen(filename, "ab"); }
 
 	// If you hit this assert, then the memory report generator is unable to log information to a file (can't open the file for
 	// some reason.)
@@ -1520,8 +1536,10 @@ void	m_dumpMemoryReport(const char *filename, const bool overwrite)
 	static  char    timeString[25];
 	memset(timeString, 0, sizeof(timeString));
 	time_t  t = time(NULL);
-	struct  tm tme;
-	localtime_s(&tme, &t);
+	struct  tm * ptme;
+	ptme = localtime(&t);
+	struct  tm & tme = *ptme;
+
 	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
 	fprintf(fp, "|                                             Memory report for: %02d/%02d/%04d %02d:%02d:%02d                                               |\r\n", tme.tm_mon + 1, tme.tm_mday, tme.tm_year + 1900, tme.tm_hour, tme.tm_min, tme.tm_sec);
 	fprintf(fp, " ---------------------------------------------------------------------------------------------------------------------------------- \r\n");
@@ -1592,29 +1610,31 @@ char* LogToMemory(char* log)
 	return logMemory;
 }
 
-MUTEX* CreateMutex()
-{
-	MUTEX* mutex = (MUTEX*)m_internal_malloc(sizeof(MUTEX));
-	new(mutex) MUTEX();
+MUTEX *CreateMutex( ) {
+    MUTEX *mutex = (MUTEX *) m_internal_malloc( sizeof( MUTEX ) );
+    new ( (void*)mutex ) MUTEX( );
 
 #ifdef WIN32
-	InitializeCriticalSectionAndSpinCount(mutex, 0x0400);
+    InitializeCriticalSectionAndSpinCount( mutex, 0x0400 );
+#else
+    pthread_spin_init( mutex, 0x0400 );
 #endif
-	return mutex;
+
+    return mutex;
 }
 
-void RemoveMutex(MUTEX*& mutex)
-{
-	if (mutex)
-	{
+void RemoveMutex( MUTEX *&mutex ) {
+    if ( mutex ) {
 #ifdef WIN32
-		DeleteCriticalSection(mutex);
+        DeleteCriticalSection( mutex );
+#else
+        pthread_spin_destroy( mutex );
 #endif
-		(mutex)->MUTEX::~MUTEX();
-		m_internal_free(mutex);
-		mutex = NULL;
-	}
 
+        ( mutex )->MUTEX::~MUTEX( );
+        m_internal_free( (void*)mutex );
+        mutex = NULL;
+    }
 }
 // ---------------------------------------------------------------------------------------------------------------------------------
 // mmgr.cpp - End of file

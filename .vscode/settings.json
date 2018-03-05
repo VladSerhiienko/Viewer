@@ -50,7 +50,8 @@
         "random": "cpp",
         "string": "cpp",
         "iterator": "cpp",
-        "string_view": "cpp"
+        "string_view": "cpp",
+        "cinttypes": "cpp"
     },
 
     "c-cpp-flylint.clang.enable": true,
