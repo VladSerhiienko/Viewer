@@ -625,6 +625,7 @@ set( viewer_dependencies_dlls_pdbs
      ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.pdb
      )
 
+make_directory(${CMAKE_BINARY_DIR})
 make_directory(${CMAKE_BINARY_DIR}/shaders/)
 make_directory(${CMAKE_BINARY_DIR}/Debug/shaders/)
 make_directory(${CMAKE_BINARY_DIR}/Release/shaders/)
@@ -634,7 +635,7 @@ foreach( Viewer_shader_source_file ${Viewer_shader_source_files} )
         TARGET
         Viewer
         POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        COMMAND ${CMAKE_COMMAND} -E copy
         ${Viewer_shader_source_file}
         ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/shaders/
     )
