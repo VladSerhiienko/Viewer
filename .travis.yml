@@ -1,7 +1,23 @@
-language: cpp
-sudo: required
-os: linux
-dist: trusty
+
+language:
+  - cpp
+
+matrix:
+  fast_finish: true
+  include:
+    - os: linux
+      compiler: gcc
+      sudo: required
+      dist: trusty
+
+cache:
+  apt: true
+
+addons:
+  apt:
+    packages:
+      - ninja-build
+      - lcov
 
 branches:
   only:
@@ -12,6 +28,8 @@ compiler:
 
 before_script:
   - sudo apt-get install 
+  - sudo apt-get update
+  - sudo apt-get -y install python3 libx11-dev libxxf86vm-dev libxrandr-dev libxcb1-dev libxcb-keysyms1-dev libxcb-icccm4-dev clang
 
 install:
   - sudo apt-get -qq update
@@ -24,9 +42,9 @@ install:
 
 script:
   - sed 's,git@github.com:,https://github.com/,g' CMakeLists.txt
-  - cmake -H. -Bbuild_linux_x86_64
+  - cmake -GNinja -H. -Bbuild_linux_x86_64
   - cd build_linux_x86_64
-  - make
+  - ninja
   - cd ..
 
 notifications:
