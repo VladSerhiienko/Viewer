@@ -2,6 +2,13 @@
 
 #include <shaderc/shaderc.hpp>
 
+namespace apemode {
+    template < typename T, typename... Args >
+    std::unique_ptr< T > make_unique( Args&&... args ) {
+        return std::unique_ptr< T >( new T( std::forward< Args >( args )... ) );
+    }
+} // namespace apemode
+
 struct apemodevk::ShaderCompiler::Impl {
     shaderc::Compiler                                 Compiler;
     apemodevk::ShaderCompiler::IShaderFileReader*     pShaderFileReader     = nullptr;
@@ -27,11 +34,11 @@ public:
                                         shaderc_include_type type,
                                         const char*          requesting_source,
                                         size_t               include_depth ) {
-        auto userData = std::make_unique< UserData >( );
+        auto userData = apemode::make_unique< UserData >( );
         if ( FileReader.ReadShaderTxtFile( requested_source, userData->Path, userData->Content ) ) {
             IncludedFiles.insert( userData->Path );
 
-            auto includeResult                = std::make_unique< shaderc_include_result >( );
+            auto includeResult                = apemode::make_unique< shaderc_include_result >( );
             includeResult->content            = userData->Content.data( );
             includeResult->content_length     = userData->Content.size( );
             includeResult->source_name        = userData->Path.data( );
@@ -191,7 +198,7 @@ bool apemodevk::ShaderCompiler::Compile( const std::string&                InFil
     options.SetSourceLanguage( shaderc_source_language_glsl );
     options.SetOptimizationLevel( shaderc_optimization_level_size );
     options.SetTargetEnvironment( shaderc_target_env_vulkan, 0 );
-    options.SetIncluder( std::make_unique< Includer >( *pImpl->pShaderFileReader, OutIncludedFiles ) );
+    options.SetIncluder( apemode::make_unique< Includer >( *pImpl->pShaderFileReader, OutIncludedFiles ) );
 
     for ( uint32_t i = 0; i < Macros.size( ); i += 2 ) {
         options.AddMacroDefinition( Macros[ i ], Macros[ i + 1 ] );

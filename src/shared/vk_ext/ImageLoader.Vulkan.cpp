@@ -4,6 +4,13 @@
 #include <BufferPools.Vulkan.h>
 #include <QueuePools.Vulkan.h>
 
+namespace apemode {
+    template < typename T, typename... Args >
+    std::unique_ptr< T > make_unique( Args&&... args ) {
+        return std::unique_ptr< T >( new T( std::forward< Args >( args )... ) );
+    }
+} // namespace apemode
+
 #ifndef LODEPNG_COMPILE_ALLOCATORS
 #define LODEPNG_COMPILE_ALLOCATORS
 #endif
@@ -73,7 +80,7 @@ bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode, HostBufferPool* 
 std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromData(
     const std::vector< uint8_t >& InFileContent, EImageFileFormat eFileFormat, bool bImgView, bool bAwaitLoading ) {
 
-    auto loadedImage = std::make_unique< LoadedImage >( );
+    auto loadedImage = apemode::make_unique< LoadedImage >( );
 
     std::vector< VkBufferImageCopy > bufferImageCopies;
     VkImageMemoryBarrier             writeImageMemoryBarrier;

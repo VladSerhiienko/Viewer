@@ -1,30 +1,21 @@
-
+dist: trusty
+sudo: required
 language:
   - cpp
-
-matrix:
-  fast_finish: true
-  include:
-    - os: linux
-      compiler: gcc
-      sudo: required
-      dist: trusty
-
-cache:
-  apt: true
-
+compiler:
+  - gcc
 addons:
   apt:
+    sources:
+      - ubuntu-toolchain-r-test
     packages:
-      - ninja-build
-      - lcov
+      - gcc-6
+      - g++-6
+      - cmake
 
 branches:
   only:
     - master
-
-compiler:
-  - gcc
 
 before_script:
   - sudo apt-get install 
@@ -41,11 +32,13 @@ install:
   - export VULKAN_SDK=$TRAVIS_BUILD_DIR/VulkanSDK/1.0.65.1/x86_64
 
 script:
+  - export CC=/usr/bin/gcc-6
+  - export CXX=/usr/bin/g++-6
+  - gcc -v && g++ -v && cmake --version
   - sed -i 's,git@github.com:,https://github.com/,g' CMakeLists.txt
   - cmake -H. -Bbuild_linux_x86_64
   - cd build_linux_x86_64
   - make
-  - cd ..
 
 notifications:
   email:
