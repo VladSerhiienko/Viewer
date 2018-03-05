@@ -41,10 +41,10 @@ install:
   - export VULKAN_SDK=$TRAVIS_BUILD_DIR/VulkanSDK/1.0.65.1/x86_64
 
 script:
-  - sed 's,git@github.com:,https://github.com/,g' CMakeLists.txt
-  - cmake -GNinja -H. -Bbuild_linux_x86_64
+  - sed -i 's,git@github.com:,https://github.com/,g' CMakeLists.txt
+  - cmake -H. -Bbuild_linux_x86_64
   - cd build_linux_x86_64
-  - ninja
+  - make
   - cd ..
 
 notifications:

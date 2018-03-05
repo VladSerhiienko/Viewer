@@ -35,4 +35,5 @@
 /build_linux_x86-64
 /build_linux_x86_64
 /build_windows_amd64
+/FbxSdk
 .vscode/*.bat
