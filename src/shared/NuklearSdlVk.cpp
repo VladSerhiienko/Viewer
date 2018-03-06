@@ -6,6 +6,8 @@ namespace apemode {
     using namespace apemodevk;
 }
 
+#ifndef _WIN32
+
 inline void DebugBreak( ) {
     apemodevk::platform::DebugBreak( );
 }
@@ -13,6 +15,8 @@ inline void DebugBreak( ) {
 inline void OutputDebugStringA( const char* pDebugStringA ) {
     SDL_LogInfo( SDL_LOG_CATEGORY_RENDER, pDebugStringA );
 }
+
+#endif
 
 bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* p ) {
     auto renderParams = (RenderParametersVk*) p;

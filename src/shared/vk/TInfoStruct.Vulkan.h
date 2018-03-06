@@ -80,11 +80,11 @@ namespace apemodevk
         _Define_has_struct_type(VkCommandBufferInheritanceInfo);
         _Define_has_struct_type(VkMappedMemoryRange);
 
-        #if defined(_WIN32)
+        #if defined(VK_USE_PLATFORM_WIN32_KHR) && VK_USE_PLATFORM_WIN32_KHR == 1
         _Define_has_struct_type(VkWin32SurfaceCreateInfoKHR);
         #endif
 
-        #if defined(__GNUC__) || defined(__clang__)
+        #if defined(VK_USE_PLATFORM_XLIB_KHR) && VK_USE_PLATFORM_XLIB_KHR == 1
         _Define_has_struct_type(VkXlibSurfaceCreateInfoKHR);
         #endif
 
@@ -146,11 +146,11 @@ namespace apemodevk
         _Define_resolve_struct_type(VkDeviceQueueCreateInfo, VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO);
         _Define_resolve_struct_type(VkDeviceCreateInfo, VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO);
 
-        #if defined(_WIN32)
+        #if defined(VK_USE_PLATFORM_WIN32_KHR) && VK_USE_PLATFORM_WIN32_KHR == 1
         _Define_resolve_struct_type(VkWin32SurfaceCreateInfoKHR, VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR);
         #endif
 
-        #if defined(__GNUC__) || defined(__clang__)
+        #if defined(VK_USE_PLATFORM_XLIB_KHR) && VK_USE_PLATFORM_XLIB_KHR == 1
         _Define_resolve_struct_type(VkXlibSurfaceCreateInfoKHR, VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR);
         #endif
 

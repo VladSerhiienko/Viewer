@@ -65,5 +65,6 @@ namespace apemodevk {
         std::vector< VkExtensionProperties > DeviceExtensionProps;
         std::unique_ptr< QueuePool >         pQueuePool;
         std::unique_ptr< CommandBufferPool > pCmdBufferPool;
+        VmaAllocator                         Allocator;
     };
 }

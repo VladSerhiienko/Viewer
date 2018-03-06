@@ -1,4 +1,5 @@
 //#include <GameEngine.GraphicsEcosystem.Precompiled.h>
+
 #include <GraphicsDevice.Vulkan.h>
 #include <GraphicsManager.Vulkan.h>
 
@@ -310,3 +311,11 @@ apemodevk::GraphicsManager& apemodevk::GraphicsDevice::GetGraphicsManager( ) {
 const apemodevk::GraphicsManager& apemodevk::GraphicsDevice::GetGraphicsManager( ) const {
     return *pManager;
 }
+
+#pragma warning(push, 4)
+#pragma warning(disable: 4127) // warning C4127: conditional expression is constant
+#pragma warning(disable: 4100) // warning C4100: '...': unreferenced formal parameter
+#pragma warning(disable: 4189) // warning C4189: '...': local variable is initialized but not referenced
+#define VMA_IMPLEMENTATION
+#include <vk_mem_alloc.h>
+#pragma warning(pop)

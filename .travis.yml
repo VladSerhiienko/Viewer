@@ -19,12 +19,10 @@ branches:
 
 before_script:
   - sudo apt-get install 
-  - sudo apt-get update
-  - sudo apt-get -y install python3 libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxcb1-dev libxcb-keysyms1-dev libxcb-icccm4-dev libxxf86vm-dev clang
+  - sudo apt-get -qq update
+  - sudo apt-get -y install python3 libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxext-dev
 
 install:
-  - sudo apt-get -qq update
-  - sudo apt-get install -y libassimp-dev libglm-dev graphviz libxcb-dri3-0 libxcb-present0 libpciaccess0 cmake libpng-dev libxcb-dri3-dev libx11-dev libx11-xcb-dev libmirclient-dev libwayland-dev libxrandr-dev
   - wget -O vulkansdk.run https://sdk.lunarg.com/sdk/download/1.0.68.0/linux/vulkansdk-linux-x86_64-1.0.68.0.run
   - chmod ugo+x vulkansdk.run
   - ./vulkansdk.run

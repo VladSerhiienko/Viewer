@@ -58,5 +58,5 @@
     "c-cpp-flylint.clang.executable": "clang-3.6",
     "c-cpp-flylint.flexelint.enable": false,
     "c-cpp-flylint.cppcheck.enable": false,
-    "c-cpp-flylint.cppcheck.force": true
+    "c-cpp-flylint.cppcheck.force": true,
 }
