@@ -16,6 +16,7 @@
 #include <Input.h>
 #include <Scene.h>
 #include <Camera.h>
+#include <AssetManager.h>
 #include <FileTracker.h>
 #include <CameraControllerInputMouseKeyboard.h>
 #include <CameraControllerProjection.h>
@@ -89,15 +90,18 @@ namespace apemode {
         DebugRendererVk*                pDebugRenderer     = nullptr;
         SceneRendererBase*              pSceneRendererBase = nullptr;
         std::vector< Scene* >           Scenes;
+
         apemodeos::FileTracker          FileTracker;
         apemodeos::FileManager          FileManager;
-        apemodevk::ShaderCompiler*      pShaderCompiler;
-        apemodevk::ShaderFileReader     ShaderFileReader;
-        apemodevk::ShaderFeedbackWriter ShaderFeedbackWriter;
-        apemodevk::Skybox*              pSkybox         = nullptr;
-        apemodevk::SkyboxRenderer*      pSkyboxRenderer = nullptr;
-        apemodevk::LoadedImage*         pLoadedDDS      = nullptr;
-        apemodevk::SamplerManager*      pSamplerManager = nullptr;
+        apemodeos::AssetManager         AssetManager;
+
+        std::unique_ptr< apemodevk::ShaderCompiler >       pShaderCompiler;
+        std::unique_ptr< apemodevk::ShaderFileReader >     pShaderFileReader;
+        std::unique_ptr< apemodevk::ShaderFeedbackWriter > pShaderFeedbackWriter;
+        std::unique_ptr< apemodevk::Skybox >               pSkybox;
+        std::unique_ptr< apemodevk::SkyboxRenderer >       pSkyboxRenderer;
+        std::unique_ptr< apemodevk::LoadedImage >          pLoadedDDS;
+        std::unique_ptr< apemodevk::SamplerManager >       pSamplerManager;
 
     public:
         ViewerApp( );

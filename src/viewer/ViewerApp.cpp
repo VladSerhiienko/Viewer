@@ -80,10 +80,20 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 ViewerApp::ViewerApp( ) {
     pCamController = new FreeLookCameraController( );
     pCamInput      = new MouseKeyboardCameraControllerInput( );
-    AppState::Get()->Options->add_options( "vk" )
-        ( "renderdoc", "Adds renderdoc layer to device layers" )
-        ( "vkapidump", "Adds api dump layer to vk device layers" )
-        ( "vktrace", "Adds vktrace layer to vk device layers" );
+
+    if ( AppState::Get( ) && AppState::Get( )->Options ) {
+
+        AppState::Get()->Options->add_options( "app" )
+            ( "assets", "Asset storage folder path", cxxopts::value<std::string>() );
+
+        AppState::Get()->Options->add_options( "vk" )
+            ( "renderdoc", "Adds renderdoc layer to device layers" )
+            ( "vkapidump", "Adds api dump layer to vk device layers" )
+            ( "vktrace", "Adds vktrace layer to vk device layers" );
+
+        AppState::Get( )->Options->parse( AppState::Get( )->Argc,
+                                          AppState::Get( )->Argv );
+    }
 }
 
 ViewerApp::~ViewerApp( ) {
@@ -97,20 +107,28 @@ bool ViewerApp::Initialize(  ) {
 
     if ( AppBase::Initialize( ) ) {
 
-        FileTracker.FilePatterns.push_back( ".*\\.(vert|frag|comp|geom|tesc|tese|h|hpp|inl|inc|fx)$" );
-        FileTracker.ScanDirectory( "../assets/shaders/**", true );
+        std::string assetsFolder = TGetOption< std::string >( "assets", "./" );
+        std::string interestingFilePattern = ".*\\.(vert|frag|comp|geom|tesc|tese|h|inl|inc|fx)$";
 
-        ShaderFileReader.pFileManager = &FileManager;
-        ShaderFeedbackWriter.pFileManager = &FileManager;
+        AssetManager.AddFilesFromDirectory( assetsFolder, {} );
 
-        pShaderCompiler = new apemodevk::ShaderCompiler( );
-        pShaderCompiler->SetShaderFileReader( &ShaderFileReader );
-        pShaderCompiler->SetShaderFeedbackWriter( &ShaderFeedbackWriter );
+        FileTracker.FilePatterns.push_back( interestingFilePattern );
+        FileTracker.ScanDirectory( assetsFolder, true );
+
+        pShaderFileReader = std::make_unique< apemode::ShaderFileReader >( );
+        pShaderFileReader->pFileManager = &FileManager;
+
+        pShaderFeedbackWriter = std::make_unique< apemode::ShaderFeedbackWriter >( );
+        pShaderFeedbackWriter->pFileManager = &FileManager;
+
+        pShaderCompiler = std::make_unique< apemodevk::ShaderCompiler >( );
+        pShaderCompiler->SetShaderFileReader( pShaderFileReader.get( ) );
+        pShaderCompiler->SetShaderFeedbackWriter( pShaderFeedbackWriter.get( ) );
 
         totalSecs = 0.0f;
 
-        auto appSurfaceBase = GetSurface();
-        if (appSurfaceBase->GetImpl() != kAppSurfaceImpl_SdlVk)
+        auto appSurfaceBase = GetSurface( );
+        if ( appSurfaceBase->GetImpl( ) != kAppSurfaceImpl_SdlVk )
             return false;
 
         auto appSurface = (AppSurfaceSdlVk*) appSurfaceBase;

@@ -37,4 +37,22 @@ namespace apemode {
         AppState( int args, char* ppArgs[] );
         ~AppState( );
     };
-}
+
+    template < typename TFunc >
+    inline void IfHasOptions( TFunc F ) {
+        if ( AppState::Get( ) && AppState::Get( )->Options )
+            F( *AppState::Get( )->Options );
+    }
+
+    template < typename TOption >
+    inline const TOption & TGetOption( const char* optionName, const TOption & defaultValue ) {
+
+        if ( AppState::Get( ) && AppState::Get( )->Options ) {
+
+            auto& optionDetails = AppState::Get( )->Options->operator[]( optionName );
+            return 0 == optionDetails.count( ) ? defaultValue : optionDetails.as< TOption >( );
+        }
+
+        return defaultValue;
+    }
+} // namespace apemode

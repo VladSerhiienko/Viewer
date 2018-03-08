@@ -483,6 +483,7 @@ set(
 
 set(
     shared_platform_source_files
+    ${CMAKE_SOURCE_DIR}/src/shared/platform/AssetManager.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/FileTracker.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/memory/MemoryManager.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/memory/MemoryManager.h
@@ -522,12 +523,12 @@ set(
 file(
     GLOB 
     Viewer_shader_source_files
-    "${CMAKE_SOURCE_DIR}/src/shaders/*.vert"
-    "${CMAKE_SOURCE_DIR}/src/shaders/*.frag"
-    "${CMAKE_SOURCE_DIR}/src/shaders/*.tesc"
-    "${CMAKE_SOURCE_DIR}/src/shaders/*.tese"
-    "${CMAKE_SOURCE_DIR}/src/shaders/*.comp"
-    "${CMAKE_SOURCE_DIR}/src/shaders/*.geom"
+    "${CMAKE_SOURCE_DIR}/assets/shaders/*.vert"
+    "${CMAKE_SOURCE_DIR}/assets/shaders/*.frag"
+    "${CMAKE_SOURCE_DIR}/assets/shaders/*.tesc"
+    "${CMAKE_SOURCE_DIR}/assets/shaders/*.tese"
+    "${CMAKE_SOURCE_DIR}/assets/shaders/*.comp"
+    "${CMAKE_SOURCE_DIR}/assets/shaders/*.geom"
 )
     
 add_executable(
@@ -557,6 +558,7 @@ add_dependencies(
     lodepng
     gli
     sdl2
+    VulkanMemoryAllocator
 )
 
 message(STATUS "VK_SDK_PATH = $ENV{VK_SDK_PATH}")
@@ -629,9 +631,9 @@ elseif(WIN32)
 endif()
 
 make_directory(${CMAKE_BINARY_DIR})
-make_directory(${CMAKE_BINARY_DIR}/shaders/)
-make_directory(${CMAKE_BINARY_DIR}/Debug/shaders/)
-make_directory(${CMAKE_BINARY_DIR}/Release/shaders/)
+make_directory(${CMAKE_BINARY_DIR}/shaders)
+make_directory(${CMAKE_BINARY_DIR}/Debug/shaders)
+make_directory(${CMAKE_BINARY_DIR}/Release/shaders)
 
 foreach( Viewer_shader_source_file ${Viewer_shader_source_files} )
     if(EXISTS ${Viewer_shader_source_file})
@@ -647,22 +649,19 @@ foreach( Viewer_shader_source_file ${Viewer_shader_source_files} )
 endforeach()
 
 set( viewer_dependencies_dlls_pdbs
-     ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/libSDL2-2.0.so
      ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.dll
      ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.pdb
      )
 
 foreach( viewer_dependencies_dll_pdb ${viewer_dependencies_dlls_pdbs} )
-    if(EXISTS ${viewer_dependencies_dll_pdb})
-        add_custom_command(
-            TARGET
-            Viewer
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-            ${viewer_dependencies_dll_pdb}
-            ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}
-        )
-    endif()
+    add_custom_command(
+        TARGET
+        Viewer
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+        ${viewer_dependencies_dll_pdb}
+        ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}
+    )
 endforeach()
 
 target_link_libraries(
