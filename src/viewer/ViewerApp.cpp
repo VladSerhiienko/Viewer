@@ -190,10 +190,10 @@ bool ViewerApp::Initialize(  ) {
         initParamsNk.pDevice         = *appSurface->pNode;
         initParamsNk.pPhysicalDevice = *appSurface->pNode;
         initParamsNk.pRenderPass     = hDbgRenderPass;
-        //initParamsNk.pRenderPass     = hNkRenderPass;
         initParamsNk.pDescPool       = DescPool;
         initParamsNk.pQueue          = acquiredQueue.pQueue;
         initParamsNk.queueFamilyId   = acquiredQueue.queueFamilyId;
+        // initParamsNk.pRenderPass     = hNkRenderPass;
 
         pNkRenderer->Init( &initParamsNk );
 
@@ -214,14 +214,14 @@ bool ViewerApp::Initialize(  ) {
 
         SceneRendererVk::RecreateParametersVk recreateParams;
         recreateParams.pNode           = appSurface->pNode;
-        recreateParams.pShaderCompiler = pShaderCompiler;
+        recreateParams.pShaderCompiler = pShaderCompiler.get( );
         recreateParams.pRenderPass     = hDbgRenderPass;
         recreateParams.pDescPool       = DescPool;
         recreateParams.FrameCount      = FrameCount;
 
         SceneRendererVk::SceneUpdateParametersVk updateParams;
         updateParams.pNode           = appSurface->pNode;
-        updateParams.pShaderCompiler = pShaderCompiler;
+        updateParams.pShaderCompiler = pShaderCompiler.get( );
         updateParams.pRenderPass     = hDbgRenderPass;
         updateParams.pDescPool       = DescPool;
         updateParams.FrameCount      = FrameCount;
@@ -274,13 +274,13 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        pSkybox         = new apemodevk::Skybox( );
-        pSkyboxRenderer = new apemodevk::SkyboxRenderer( );
-        pSamplerManager = new apemodevk::SamplerManager( );
+        pSkybox         = std::make_unique< apemodevk::Skybox >( );
+        pSkyboxRenderer = std::make_unique< apemodevk::SkyboxRenderer >( );
+        pSamplerManager = std::make_unique< apemodevk::SamplerManager >( );
 
         apemodevk::SkyboxRenderer::RecreateParameters skyboxRendererRecreateParams;
         skyboxRendererRecreateParams.pNode           = appSurface->pNode;
-        skyboxRendererRecreateParams.pShaderCompiler = pShaderCompiler;
+        skyboxRendererRecreateParams.pShaderCompiler = pShaderCompiler.get();
         skyboxRendererRecreateParams.pRenderPass     = hDbgRenderPass;
         skyboxRendererRecreateParams.pDescPool       = DescPool;
         skyboxRendererRecreateParams.FrameCount      = FrameCount;
@@ -306,7 +306,7 @@ bool ViewerApp::Initialize(  ) {
         //auto ddsContent = imgFileManager.ReadBinFile( "../../../assets/env/PaperMill/Specular_HDR.dds" );
         //auto ddsContent = imgFileManager.ReadBinFile( "../assets/textures/Environment/Canyon/Unfiltered_HDR.dds" );
         auto ddsContent = imgFileManager.ReadBinFile( "../../assets/textures/Environment/Canyon/Unfiltered_HDR.dds" );
-        pLoadedDDS = imgLoader.LoadImageFromData( ddsContent, apemodevk::ImageLoader::eImageFileFormat_DDS, true, true ).release( );
+        pLoadedDDS = imgLoader.LoadImageFromData( ddsContent, apemodevk::ImageLoader::eImageFileFormat_DDS, true, true );
 
         VkSamplerCreateInfo samplerCreateInfo;
         apemodevk::InitializeStruct( samplerCreateInfo );
@@ -702,7 +702,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         skyboxRenderParams.FieldOfView = apemodexm::DegreesToRadians( 67 );
         skyboxRenderParams.FieldOfView = apemodexm::DegreesToRadians( 67 );
 
-        pSkyboxRenderer->Render( pSkybox, &skyboxRenderParams );
+        pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
 
         DebugRendererVk::RenderParametersVk renderParamsDbg;
         renderParamsDbg.dims[ 0 ]  = (float) width;
