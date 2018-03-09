@@ -2,13 +2,6 @@
 
 #include <shaderc/shaderc.hpp>
 
-namespace apemode {
-    template < typename T, typename... Args >
-    std::unique_ptr< T > make_unique( Args&&... args ) {
-        return std::unique_ptr< T >( new T( std::forward< Args >( args )... ) );
-    }
-} // namespace apemode
-
 struct apemodevk::ShaderCompiler::Impl {
     shaderc::Compiler                                 Compiler;
     apemodevk::ShaderCompiler::IShaderFileReader*     pShaderFileReader     = nullptr;

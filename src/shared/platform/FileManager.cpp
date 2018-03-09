@@ -163,7 +163,7 @@ void apemodeos::FileTracker::CollectChangedFiles( std::vector< std::string >& Ou
     }
 }
 
-std::vector< uint8_t > apemodeos::FileManager::ReadBinFile( const std::string& filePath ) {
+std::vector< uint8_t > apemodeos::FileReader::ReadBinFile( const std::string& filePath ) {
     const std::string filePathFull = ResolveFullPath( filePath );
 
     /* Read file and return */
@@ -178,7 +178,7 @@ std::vector< uint8_t > apemodeos::FileManager::ReadBinFile( const std::string& f
     return {};
 }
 
-std::string apemodeos::FileManager::ReadTxtFile( const std::string& filePath ) {
+std::string apemodeos::FileReader::ReadTxtFile( const std::string& filePath ) {
     const std::string filePathFull = ResolveFullPath( filePath );
 
     /* Read file and return */

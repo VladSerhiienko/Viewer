@@ -4,11 +4,11 @@
 #include <memory>
 
 #ifndef APEMODE_USE_MEMORY_TRACKING
-#define APEMODE_USE_MEMORY_TRACKING
+// #define APEMODE_USE_MEMORY_TRACKING
 #endif
 
 #ifndef APEMODE_USE_DLMALLOC
-#define APEMODE_USE_DLMALLOC
+// #define APEMODE_USE_DLMALLOC
 #endif
 
 #ifndef APEMODE_DEFAULT_ALIGNMENT
@@ -73,6 +73,8 @@ namespace apemode {
      */
     void deallocate( void* p );
 
+#ifdef APEMODE_USE_DLMALLOC
+
     /**
      * The malloc call with aligment from the thread-local memory space.
      * Do not align with less then kDefaultAlignment bytes.
@@ -98,36 +100,7 @@ namespace apemode {
      */
     void threadLocalDeallocate( void* p );
 
-    template < bool bThreadLocal = false >
-    struct TNew {
-        inline static void* operator new( size_t size ) {
-            if ( bThreadLocal )
-                return apemode::threadLocalAllocate( size );
-            else
-                return apemode::allocate( size );
-        }
-
-        inline static void* operator new[]( size_t size ) {
-            if ( bThreadLocal )
-                return apemode::threadLocalAllocate( size );
-            else
-                return apemode::allocate( size );
-        }
-
-        inline static void operator delete( void* ptr ) {
-            if ( bThreadLocal )
-                apemode::threadLocalDeallocate( ptr );
-            else
-                apemode::deallocate( ptr );
-        }
-
-        inline static void operator delete[]( void* ptr ) {
-            if ( bThreadLocal )
-                apemode::threadLocalDeallocate( ptr );
-            else
-                apemode::deallocate( ptr );
-        }
-    };
+#endif
 
 #pragma push_macro( "new" )
 #undef new
@@ -154,7 +127,7 @@ namespace apemode {
 
     template < typename T, typename... Args >
     inline T* Make_impl( Args... args ) {
-        return new ( apemode::malloc( 1, sizeof( T ) ) ) T( args... );
+        return new ( apemode::allocate( sizeof( T ) ) ) T( args... );
     }
 
 #define Make( T, ... ) Make_impl< T >( __VA_ARGS__ )

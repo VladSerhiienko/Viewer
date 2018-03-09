@@ -486,7 +486,7 @@ bool apemode::SceneRendererVk::Recreate(const RecreateParametersBase * pParamsBa
     graphicsPipelineCreateInfo.pStages    = shaderStageCreateInfo;
 
     //
-#if 1
+#if 0
 
     vertexInputBindingDescription[ 0 ].stride    = sizeof( apemodevk::PackedVertex );
     vertexInputBindingDescription[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
@@ -513,28 +513,28 @@ bool apemode::SceneRendererVk::Recreate(const RecreateParametersBase * pParamsBa
 
 #else
 
-    vertexInputBindingDescription[ 0 ].stride    = sizeof( StaticVertex );
+    vertexInputBindingDescription[ 0 ].stride    = sizeof( apemodevk::StaticVertex );
     vertexInputBindingDescription[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
     vertexInputAttributeDescription[ 0 ].location = 0;
     vertexInputAttributeDescription[ 0 ].binding  = vertexInputBindingDescription[ 0 ].binding;
     vertexInputAttributeDescription[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    vertexInputAttributeDescription[ 0 ].offset   = ( size_t )( &( (StaticVertex*) 0 )->position );
+    vertexInputAttributeDescription[ 0 ].offset   = ( size_t )( &( (apemodevk::StaticVertex*) 0 )->position );
 
     vertexInputAttributeDescription[ 1 ].location = 1;
     vertexInputAttributeDescription[ 1 ].binding  = vertexInputBindingDescription[ 0 ].binding;
     vertexInputAttributeDescription[ 1 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    vertexInputAttributeDescription[ 1 ].offset   = ( size_t )( &( (StaticVertex*) 0 )->normal );
+    vertexInputAttributeDescription[ 1 ].offset   = ( size_t )( &( (apemodevk::StaticVertex*) 0 )->normal );
 
     vertexInputAttributeDescription[ 2 ].location = 2;
     vertexInputAttributeDescription[ 2 ].binding  = vertexInputBindingDescription[ 0 ].binding;
     vertexInputAttributeDescription[ 2 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    vertexInputAttributeDescription[ 2 ].offset   = ( size_t )( &( (StaticVertex*) 0 )->tangent );
+    vertexInputAttributeDescription[ 2 ].offset   = ( size_t )( &( (apemodevk::StaticVertex*) 0 )->tangent );
 
     vertexInputAttributeDescription[ 3 ].location = 3;
     vertexInputAttributeDescription[ 3 ].binding  = vertexInputBindingDescription[ 0 ].binding;
     vertexInputAttributeDescription[ 3 ].format   = VK_FORMAT_R32G32_SFLOAT;
-    vertexInputAttributeDescription[ 3 ].offset   = ( size_t )( &( (StaticVertex*) 0 )->texcoords );
+    vertexInputAttributeDescription[ 3 ].offset   = ( size_t )( &( (apemodevk::StaticVertex*) 0 )->texcoords );
 
 #endif
 

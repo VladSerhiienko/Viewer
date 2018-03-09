@@ -484,7 +484,7 @@ set(
 set(
     shared_platform_source_files
     ${CMAKE_SOURCE_DIR}/src/shared/platform/AssetManager.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/platform/FileTracker.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/platform/FileManager.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/memory/MemoryManager.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/memory/MemoryManager.h
 )
@@ -520,9 +520,16 @@ set(
     ${CMAKE_SOURCE_DIR}/dependencies/lodepng/lodepng.cpp
 )
 
+# vert|frag|comp|geom|tesc|tese|h|inl|inc|fx
 file(
     GLOB 
     Viewer_shader_source_files
+    # Headers
+    "${CMAKE_SOURCE_DIR}/assets/shaders/*.h"
+    "${CMAKE_SOURCE_DIR}/assets/shaders/*.inc"
+    "${CMAKE_SOURCE_DIR}/assets/shaders/*.inl"
+    "${CMAKE_SOURCE_DIR}/assets/shaders/*.fx"
+    # Sources
     "${CMAKE_SOURCE_DIR}/assets/shaders/*.vert"
     "${CMAKE_SOURCE_DIR}/assets/shaders/*.frag"
     "${CMAKE_SOURCE_DIR}/assets/shaders/*.tesc"
@@ -648,10 +655,16 @@ foreach( Viewer_shader_source_file ${Viewer_shader_source_files} )
     endif()
 endforeach()
 
-set( viewer_dependencies_dlls_pdbs
-     ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.dll
-     ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.pdb
-     )
+if(WIN32)
+    set( viewer_dependencies_dlls_pdbs
+        ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.dll
+        ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.pdb
+        )
+else()
+    set( viewer_dependencies_dlls_pdbs
+        ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/libSDL2-2.0.so
+        )
+endif()
 
 foreach( viewer_dependencies_dll_pdb ${viewer_dependencies_dlls_pdbs} )
     add_custom_command(

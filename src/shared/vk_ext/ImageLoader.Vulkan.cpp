@@ -4,13 +4,6 @@
 #include <BufferPools.Vulkan.h>
 #include <QueuePools.Vulkan.h>
 
-namespace apemode {
-    template < typename T, typename... Args >
-    std::unique_ptr< T > make_unique( Args&&... args ) {
-        return std::unique_ptr< T >( new T( std::forward< Args >( args )... ) );
-    }
-} // namespace apemode
-
 #ifndef LODEPNG_COMPILE_ALLOCATORS
 #define LODEPNG_COMPILE_ALLOCATORS
 #endif

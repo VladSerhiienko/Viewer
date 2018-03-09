@@ -29,7 +29,7 @@ namespace apemodevk {
 
     class ShaderFileReader : public ShaderCompiler::IShaderFileReader {
     public:
-        apemodeos::FileManager* pFileManager;
+        apemodeos::IAssetManager* mAssetManager;
 
         bool ReadShaderTxtFile( const std::string& FilePath,
                                 std::string&       OutFileFullPath,
@@ -38,8 +38,6 @@ namespace apemodevk {
 
     class ShaderFeedbackWriter : public ShaderCompiler::IShaderFeedbackWriter {
     public:
-        apemodeos::FileManager* pFileManager = nullptr;
-
         void WriteFeedback( EFeedbackType                     eType,
                             const std::string&                FullFilePath,
                             const std::vector< std::string >& Macros,
@@ -69,6 +67,13 @@ namespace apemode {
         uint32_t FrameIndex = 0;
         uint64_t FrameId    = 0;
 
+        apemodeos::FileTracker          mFileTracker;
+        apemodeos::AssetManager         mAssetManager;
+
+        CameraProjectionController                   CamProjController;
+        std::unique_ptr< CameraControllerInputBase > pCamInput          = nullptr;
+        std::unique_ptr< CameraControllerBase >      pCamController     = nullptr;
+
         uint32_t                                          BackbufferIndices[ kMaxFrames ] = {0};
         apemodevk::DescriptorPool                         DescPool;
         apemodevk::TDispatchableHandle< VkCommandPool >   hCmdPool[ kMaxFrames ];
@@ -83,17 +88,12 @@ namespace apemode {
         apemodevk::TDispatchableHandle< VkImageView >     hDepthImgViews[ kMaxFrames ];
         apemodevk::TDispatchableHandle< VkDeviceMemory >  hDepthImgMemory[ kMaxFrames ];
 
-        CameraProjectionController      CamProjController;
-        CameraControllerInputBase*      pCamInput          = nullptr;
-        CameraControllerBase*           pCamController     = nullptr;
-        NuklearRendererSdlBase*         pNkRenderer        = nullptr;
-        DebugRendererVk*                pDebugRenderer     = nullptr;
-        SceneRendererBase*              pSceneRendererBase = nullptr;
-        std::vector< Scene* >           Scenes;
 
-        apemodeos::FileTracker          FileTracker;
-        apemodeos::FileManager          FileManager;
-        apemodeos::AssetManager         AssetManager;
+        NuklearRendererSdlBase*                      pNkRenderer        = nullptr;
+        DebugRendererVk*                             pDebugRenderer     = nullptr;
+        SceneRendererBase*                           pSceneRendererBase = nullptr;
+        std::vector< Scene* >                        Scenes;
+
 
         std::unique_ptr< apemodevk::ShaderCompiler >       pShaderCompiler;
         std::unique_ptr< apemodevk::ShaderFileReader >     pShaderFileReader;

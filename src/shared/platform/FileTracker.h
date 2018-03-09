@@ -1,29 +1,9 @@
 #pragma once
 
 #include <map>
-#include <string>
-#include <vector>
+#include <FileReader.h>
 
 namespace apemodeos {
-
-    std::string CurrentDirectory( );
-    std::string GetFileName( const std::string& InPath );
-    bool        PathExists( const std::string& InPath );
-    bool        DirectoryExists( const std::string& InPath );
-    bool        FileExists( const std::string& InPath );
-    std::string ReplaceSlashes( std::string InPath );
-    std::string RealPath( std::string InPath );
-    std::string ResolveFullPath( const std::string& InPath );
-
-    /**
-     * Scans the directory and stores full file paths.
-     * If FilePatterns is not empty, the file names will be checked and only matched will be included.
-     **/
-    class FileManager {
-    public:
-        std::vector< uint8_t > ReadBinFile( const std::string& InPath ); /* Returns the content of the file. */
-        std::string            ReadTxtFile( const std::string& InPath ); /* Returns the content of the file. */
-    };
 
     class FileTracker {
     public:

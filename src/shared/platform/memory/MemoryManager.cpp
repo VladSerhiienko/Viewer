@@ -117,9 +117,7 @@ namespace apemode {
         ::posix_memalign( &p, alignment, size );
         return p;
 #else
-        (void) alignment;
-        return ::malloc( size );
-        //return ::_aligned_malloc( size, alignment );
+        return malloc( size );
 #endif
     }
 
@@ -131,9 +129,7 @@ namespace apemode {
 #elif defined( __ANDROID__ )
         static_assert(true, "Not implemented.");
 #else
-        (void) alignment;
-        return ::calloc( num, size );
-        //return ::_aligned_calloc( num, size, alignment );
+        return calloc( num, size );
 #endif
     }
 
@@ -145,9 +141,7 @@ namespace apemode {
 #elif defined( __ANDROID__ )
         static_assert( true, "Not implemented." );
 #else
-        (void) alignment;
-        return ::realloc( p, size );
-        //return ::_aligned_realloc( p, size, alignment );
+        return realloc( p, size );
 #endif
     }
 
@@ -164,6 +158,8 @@ namespace apemode {
 #endif
     }
 
+#ifdef APEMODE_USE_DLMALLOC
+
     void *threadLocalAllocate( size_t size ) {
         return mspace_malloc( tlms, size );
     }
@@ -175,6 +171,8 @@ namespace apemode {
     void threadLocalDeallocate( void *p ) {
         mspace_free( tlms, p );
     }
+
+#endif
 }
 
 #if defined( USE_MEMORY_TRACKING )

@@ -1,5 +1,10 @@
 #include "AssetManager.h"
 
+#include <FileReader.h>
+#include <AppState.h>
+
+#include <fstream>
+#include <iterator>
 #include <set>
 #include <regex>
 
@@ -12,10 +17,21 @@ namespace std {
     namespace filesystem = std::experimental::filesystem::v1;
 }
 
-#include <fstream>
-#include <iterator>
+const std::string& apemodeos::AssetFile::GetName( ) const {
+    return RelPath;
+}
 
-#include <AppState.h>
+const std::string& apemodeos::AssetFile::GetId( ) const {
+    return FullPath;
+}
+
+std::string apemodeos::AssetFile::AsTxt( ) const {
+    return FileReader( ).ReadTxtFile( FullPath );
+}
+
+std::vector< uint8_t > apemodeos::AssetFile::AsBin( ) const {
+    return FileReader( ).ReadBinFile( FullPath );
+}
 
 inline std::string ToCanonicalAbsolutPath( std::string InRelativePath ) {
     InRelativePath = std::filesystem::canonical( std::filesystem::absolute( InRelativePath ) ).string( );
@@ -23,7 +39,13 @@ inline std::string ToCanonicalAbsolutPath( std::string InRelativePath ) {
     return InRelativePath;
 }
 
-void apemodeos::AssetManager::AddFilesFromDirectory( const std::string& InStorageDirectory, const std::vector< std::string >& InFilePatterns ) {
+const apemodeos::IAsset* apemodeos::AssetManager::GetAsset( const std::string& InAssetName ) const {
+    auto assetIt = AssetFiles.find( InAssetName );
+    return assetIt == AssetFiles.end( ) ? 0 : &assetIt->second;
+}
+
+void apemodeos::AssetManager::AddFilesFromDirectory( const std::string&                InStorageDirectory,
+                                                     const std::vector< std::string >& InFilePatterns ) {
     auto appState = apemode::AppState::Get( );
 
     std::string storageDirectory = InStorageDirectory;
@@ -63,15 +85,16 @@ void apemodeos::AssetManager::AddFilesFromDirectory( const std::string& InStorag
 
                 if ( matches ) {
                     std::string fullPath = ToCanonicalAbsolutPath( filePath.string( ) );
-                    std::string relativePath = fullPath.substr( storageDirectoryFull.size() );
+                    std::string relativePath = fullPath.substr( storageDirectoryFull.size() + 1 );
 
                     auto assetIt = AssetFiles.find( relativePath );
-                    if ( assetIt != AssetFiles.end() ) {
+                    if ( assetIt == AssetFiles.end() ) {
                         appState->Logger->info( "AssetManager: Added: {}", fullPath );
                     } else {
-                        appState->Logger->warn( "AssetManager: Replaced: {}", fullPath );
+                        appState->Logger->warn( "AssetManager: Replaced: {} -> {}", assetIt->second.FullPath, fullPath );
                     }
 
+                    AssetFiles[ relativePath ].RelPath = relativePath;
                     AssetFiles[ relativePath ].FullPath = fullPath;
                 }
             }

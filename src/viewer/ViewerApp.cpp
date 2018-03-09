@@ -41,12 +41,17 @@ struct EFeedbackTypeWithOStream {
     // clang-format on
 };
 
-bool ShaderFileReader::ReadShaderTxtFile( const std::string& FilePath,
+bool ShaderFileReader::ReadShaderTxtFile( const std::string& InFilePath,
                                           std::string&       OutFileFullPath,
                                           std::string&       OutFileContent ) {
-    OutFileFullPath = apemodeos::ResolveFullPath( FilePath );
-    OutFileContent  = pFileManager->ReadTxtFile( FilePath );
-    return false == OutFileContent.empty( );
+    if ( auto pAsset = mAssetManager->GetAsset( InFilePath ) ) {
+        OutFileContent  = pAsset->AsTxt( );
+        OutFileFullPath = pAsset->GetId( );
+        return true;
+    }
+
+    apemodevk::platform::DebugBreak( );
+    return false;
 }
 
 void ShaderFeedbackWriter::WriteFeedback( EFeedbackType                     eType,
@@ -78,13 +83,13 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 //const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
 ViewerApp::ViewerApp( ) {
-    pCamController = new FreeLookCameraController( );
-    pCamInput      = new MouseKeyboardCameraControllerInput( );
+    pCamController = apemode::make_unique< FreeLookCameraController >( );
+    pCamInput      = apemode::make_unique< MouseKeyboardCameraControllerInput >( );
 
     if ( AppState::Get( ) && AppState::Get( )->Options ) {
-
-        AppState::Get()->Options->add_options( "app" )
-            ( "assets", "Asset storage folder path", cxxopts::value<std::string>() );
+        AppState::Get( )->Options->add_options( "app" )
+            ( "assets", "Asset storage folder path", cxxopts::value< std::string >( ) )
+            ( "scene", "Scene file", cxxopts::value< std::vector< std::string > >( ) );
 
         AppState::Get()->Options->add_options( "vk" )
             ( "renderdoc", "Adds renderdoc layer to device layers" )
@@ -108,20 +113,19 @@ bool ViewerApp::Initialize(  ) {
     if ( AppBase::Initialize( ) ) {
 
         std::string assetsFolder = TGetOption< std::string >( "assets", "./" );
+        mAssetManager.AddFilesFromDirectory( assetsFolder, {} );
+
+        // Shaders and possible headers ...
         std::string interestingFilePattern = ".*\\.(vert|frag|comp|geom|tesc|tese|h|inl|inc|fx)$";
+        mFileTracker.FilePatterns.push_back( interestingFilePattern );
+        mFileTracker.ScanDirectory( assetsFolder, true );
 
-        AssetManager.AddFilesFromDirectory( assetsFolder, {} );
+        pShaderFileReader = apemode::make_unique< apemode::ShaderFileReader >( );
+        pShaderFileReader->mAssetManager = &mAssetManager;
 
-        FileTracker.FilePatterns.push_back( interestingFilePattern );
-        FileTracker.ScanDirectory( assetsFolder, true );
+        pShaderFeedbackWriter = apemode::make_unique< apemode::ShaderFeedbackWriter >( );
 
-        pShaderFileReader = std::make_unique< apemode::ShaderFileReader >( );
-        pShaderFileReader->pFileManager = &FileManager;
-
-        pShaderFeedbackWriter = std::make_unique< apemode::ShaderFeedbackWriter >( );
-        pShaderFeedbackWriter->pFileManager = &FileManager;
-
-        pShaderCompiler = std::make_unique< apemodevk::ShaderCompiler >( );
+        pShaderCompiler = apemode::make_unique< apemodevk::ShaderCompiler >( );
         pShaderCompiler->SetShaderFileReader( pShaderFileReader.get( ) );
         pShaderCompiler->SetShaderFeedbackWriter( pShaderFeedbackWriter.get( ) );
 
@@ -132,42 +136,41 @@ bool ViewerApp::Initialize(  ) {
             return false;
 
         auto appSurface = (AppSurfaceSdlVk*) appSurfaceBase;
-        if ( auto swapchain = &appSurface->Swapchain ) {
-            FrameId    = 0;
-            FrameIndex = 0;
-            FrameCount = swapchain->ImgCount;
 
-            OnResized();
+        FrameId    = 0;
+        FrameIndex = 0;
+        FrameCount = appSurface->Swapchain.ImgCount;
 
-            for (uint32_t i = 0; i < FrameCount; ++i) {
-                VkCommandPoolCreateInfo cmdPoolCreateInfo;
-                InitializeStruct( cmdPoolCreateInfo );
-                cmdPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-                cmdPoolCreateInfo.queueFamilyIndex = appSurface->PresentQueueFamilyIds[0];
+        OnResized();
 
-                if ( false == hCmdPool[ i ].Recreate( *appSurface->pNode, cmdPoolCreateInfo ) ) {
-                    DebugBreak( );
-                    return false;
-                }
+        for (uint32_t i = 0; i < FrameCount; ++i) {
+            VkCommandPoolCreateInfo cmdPoolCreateInfo;
+            InitializeStruct( cmdPoolCreateInfo );
+            cmdPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+            cmdPoolCreateInfo.queueFamilyIndex = appSurface->PresentQueueFamilyIds[0];
 
-                VkCommandBufferAllocateInfo cmdBufferAllocInfo;
-                InitializeStruct( cmdBufferAllocInfo );
-                cmdBufferAllocInfo.commandPool = hCmdPool[ i ];
-                cmdBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-                cmdBufferAllocInfo.commandBufferCount = 1;
+            if ( false == hCmdPool[ i ].Recreate( *appSurface->pNode, cmdPoolCreateInfo ) ) {
+                DebugBreak( );
+                return false;
+            }
 
-                if ( false == hCmdBuffers[ i ].Recreate( *appSurface->pNode, cmdBufferAllocInfo ) ) {
-                    DebugBreak( );
-                    return false;
-                }
+            VkCommandBufferAllocateInfo cmdBufferAllocInfo;
+            InitializeStruct( cmdBufferAllocInfo );
+            cmdBufferAllocInfo.commandPool = hCmdPool[ i ];
+            cmdBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+            cmdBufferAllocInfo.commandBufferCount = 1;
 
-                VkSemaphoreCreateInfo semaphoreCreateInfo;
-                InitializeStruct( semaphoreCreateInfo );
-                if ( false == hPresentCompleteSemaphores[ i ].Recreate( *appSurface->pNode, semaphoreCreateInfo ) ||
-                    false == hRenderCompleteSemaphores[ i ].Recreate( *appSurface->pNode, semaphoreCreateInfo ) ) {
-                    DebugBreak( );
-                    return false;
-                }
+            if ( false == hCmdBuffers[ i ].Recreate( *appSurface->pNode, cmdBufferAllocInfo ) ) {
+                DebugBreak( );
+                return false;
+            }
+
+            VkSemaphoreCreateInfo semaphoreCreateInfo;
+            InitializeStruct( semaphoreCreateInfo );
+            if ( false == hPresentCompleteSemaphores[ i ].Recreate( *appSurface->pNode, semaphoreCreateInfo ) ||
+                 false == hRenderCompleteSemaphores[ i ].Recreate( *appSurface->pNode, semaphoreCreateInfo ) ) {
+                DebugBreak( );
+                return false;
             }
         }
 
@@ -243,9 +246,12 @@ bool ViewerApp::Initialize(  ) {
         // ./FbxPipeline -i "/home/user/vserhiienko/models/mech-m-6k/source/93d43cf18ad5406ba0176c9fae7d4927.fbx" -o "/home/user/vserhiienko/models/mech-m-6k/source/Mech6kv4p.fbx" -p -m .*\.png
         //Scenes.push_back( LoadSceneFromFile( "/home/user/vserhiienko/models/mech-m-6k/source/Mech6kv4p.fbx" ) );
 
-        Scenes.push_back( LoadSceneFromFile( "/home/user/vserhiienko/models_v2/9_mm.fbxp" ) );
-        // Scenes.push_back( LoadSceneFromFile( "E:/Media/Models/mech-m-6k/source/Mech6kv4p.fbxp" ) );
+        auto sceneFiles = TGetOption< std::vector< std::string > >( "scene", {} );
+        for ( auto sceneFile : sceneFiles ) {
+            Scenes.push_back( LoadSceneFromFile( sceneFile.c_str( ) ) );
+        }
 
+        // Scenes.push_back( LoadSceneFromFile( "E:/Media/Models/mech-m-6k/source/Mech6kv4p.fbxp" ) );
         //Scenes.push_back( LoadSceneFromFile( "E:/Media/Models/1972-datsun-240k-gt/source/datsun240k.fbxp" ) );
         //Scenes.push_back( LoadSceneFromFile( "/home/user/vserhiienko/models/stesla-elephant-steam-engines/source/stesla.fbxp" ) );
 
@@ -274,9 +280,9 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        pSkybox         = std::make_unique< apemodevk::Skybox >( );
-        pSkyboxRenderer = std::make_unique< apemodevk::SkyboxRenderer >( );
-        pSamplerManager = std::make_unique< apemodevk::SamplerManager >( );
+        pSkybox         = apemode::make_unique< apemodevk::Skybox >( );
+        pSkyboxRenderer = apemode::make_unique< apemodevk::SkyboxRenderer >( );
+        pSamplerManager = apemode::make_unique< apemodevk::SamplerManager >( );
 
         apemodevk::SkyboxRenderer::RecreateParameters skyboxRendererRecreateParams;
         skyboxRendererRecreateParams.pNode           = appSurface->pNode;
@@ -295,18 +301,18 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        apemodeos::FileManager imgFileManager;
         apemodevk::ImageLoader imgLoader;
         imgLoader.Recreate( appSurface->pNode, nullptr );
 
         //auto pngContent = imgFileManager.ReadBinFile( "../../../assets/img/DragonMain_Diff.png" );
         //auto loadedPNG  = imgLoader.LoadImageFromData( pngContent, apemodevk::ImageLoader::eImageFileFormat_PNG, true, true );
-
         //auto ddsContent = imgFileManager.ReadBinFile( "../../../assets/env/kyoto_lod.dds" );
         //auto ddsContent = imgFileManager.ReadBinFile( "../../../assets/env/PaperMill/Specular_HDR.dds" );
         //auto ddsContent = imgFileManager.ReadBinFile( "../assets/textures/Environment/Canyon/Unfiltered_HDR.dds" );
-        auto ddsContent = imgFileManager.ReadBinFile( "../../assets/textures/Environment/Canyon/Unfiltered_HDR.dds" );
-        pLoadedDDS = imgLoader.LoadImageFromData( ddsContent, apemodevk::ImageLoader::eImageFileFormat_DDS, true, true );
+
+        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/Canyon/Unfiltered_HDR.dds" ) ) {
+            pLoadedDDS = imgLoader.LoadImageFromData( pTexAsset->AsBin( ), apemodevk::ImageLoader::eImageFileFormat_DDS, true, true );
+        }
 
         VkSamplerCreateInfo samplerCreateInfo;
         apemodevk::InitializeStruct( samplerCreateInfo );
@@ -342,17 +348,17 @@ bool ViewerApp::Initialize(  ) {
 }
 
 bool apemode::ViewerApp::OnResized( ) {
-    if ( auto appSurfaceVk = (AppSurfaceSdlVk*) GetSurface( ) ) {
-        if ( auto swapchain = &appSurfaceVk->Swapchain ) {
-            width  = appSurfaceVk->GetWidth( );
-            height = appSurfaceVk->GetHeight( );
+    if ( auto appSurface = (AppSurfaceSdlVk*) GetSurface( ) ) {
+
+            width  = appSurface->GetWidth( );
+            height = appSurface->GetHeight( );
 
             VkImageCreateInfo depthImgCreateInfo;
             InitializeStruct( depthImgCreateInfo );
             depthImgCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
             depthImgCreateInfo.format        = sDepthFormat;
-            depthImgCreateInfo.extent.width  = swapchain->ImgExtent.width;
-            depthImgCreateInfo.extent.height = swapchain->ImgExtent.height;
+            depthImgCreateInfo.extent.width  = appSurface->Swapchain.ImgExtent.width;
+            depthImgCreateInfo.extent.height = appSurface->Swapchain.ImgExtent.height;
             depthImgCreateInfo.extent.depth  = 1;
             depthImgCreateInfo.mipLevels     = 1;
             depthImgCreateInfo.arrayLayers   = 1;
@@ -371,7 +377,7 @@ bool apemode::ViewerApp::OnResized( ) {
             depthImgViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
 
             for ( uint32_t i = 0; i < FrameCount; ++i ) {
-                if ( false == hDepthImgs[ i ].Recreate( *appSurfaceVk->pNode, *appSurfaceVk->pNode, depthImgCreateInfo ) ) {
+                if ( false == hDepthImgs[ i ].Recreate( *appSurface->pNode, *appSurface->pNode, depthImgCreateInfo ) ) {
                     DebugBreak( );
                     return false;
                 }
@@ -379,7 +385,7 @@ bool apemode::ViewerApp::OnResized( ) {
 
             for ( uint32_t i = 0; i < FrameCount; ++i ) {
                 auto memoryAllocInfo = hDepthImgs[ i ].GetMemoryAllocateInfo( VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
-                if ( false == hDepthImgMemory[ i ].Recreate( *appSurfaceVk->pNode, memoryAllocInfo ) ) {
+                if ( false == hDepthImgMemory[ i ].Recreate( *appSurface->pNode, memoryAllocInfo ) ) {
                     DebugBreak( );
                     return false;
                 }
@@ -394,7 +400,7 @@ bool apemode::ViewerApp::OnResized( ) {
 
             for ( uint32_t i = 0; i < FrameCount; ++i ) {
                 depthImgViewCreateInfo.image = hDepthImgs[ i ];
-                if ( false == hDepthImgViews[ i ].Recreate( *appSurfaceVk->pNode, depthImgViewCreateInfo ) ) {
+                if ( false == hDepthImgViews[ i ].Recreate( *appSurface->pNode, depthImgViewCreateInfo ) ) {
                     DebugBreak( );
                     return false;
                 }
@@ -403,7 +409,7 @@ bool apemode::ViewerApp::OnResized( ) {
             VkAttachmentDescription colorDepthAttachments[ 2 ];
             InitializeStruct( colorDepthAttachments );
 
-            colorDepthAttachments[ 0 ].format         = appSurfaceVk->Surface.eColorFormat;
+            colorDepthAttachments[ 0 ].format         = appSurface->Surface.eColorFormat;
             colorDepthAttachments[ 0 ].samples        = VK_SAMPLE_COUNT_1_BIT;
             colorDepthAttachments[ 0 ].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
             colorDepthAttachments[ 0 ].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -458,12 +464,12 @@ bool apemode::ViewerApp::OnResized( ) {
             renderPassCreateInfoDbg.subpassCount    = 1;
             renderPassCreateInfoDbg.pSubpasses      = &subpassDbg;
 
-            if ( false == hNkRenderPass.Recreate( *appSurfaceVk->pNode, renderPassCreateInfoNk ) ) {
+            if ( false == hNkRenderPass.Recreate( *appSurface->pNode, renderPassCreateInfoNk ) ) {
                 DebugBreak( );
                 return false;
             }
 
-            if ( false == hDbgRenderPass.Recreate( *appSurfaceVk->pNode, renderPassCreateInfoDbg ) ) {
+            if ( false == hDbgRenderPass.Recreate( *appSurface->pNode, renderPassCreateInfoDbg ) ) {
                 DebugBreak( );
                 return false;
             }
@@ -472,38 +478,37 @@ bool apemode::ViewerApp::OnResized( ) {
             InitializeStruct( framebufferCreateInfoNk );
             framebufferCreateInfoNk.renderPass      = hNkRenderPass;
             framebufferCreateInfoNk.attachmentCount = 1;
-            framebufferCreateInfoNk.width           = swapchain->ImgExtent.width;
-            framebufferCreateInfoNk.height          = swapchain->ImgExtent.height;
+            framebufferCreateInfoNk.width           = appSurface->Swapchain.ImgExtent.width;
+            framebufferCreateInfoNk.height          = appSurface->Swapchain.ImgExtent.height;
             framebufferCreateInfoNk.layers          = 1;
 
             VkFramebufferCreateInfo framebufferCreateInfoDbg;
             InitializeStruct( framebufferCreateInfoDbg );
             framebufferCreateInfoDbg.renderPass      = hDbgRenderPass;
             framebufferCreateInfoDbg.attachmentCount = 2;
-            framebufferCreateInfoDbg.width           = swapchain->ImgExtent.width;
-            framebufferCreateInfoDbg.height          = swapchain->ImgExtent.height;
+            framebufferCreateInfoDbg.width           = appSurface->Swapchain.ImgExtent.width;
+            framebufferCreateInfoDbg.height          = appSurface->Swapchain.ImgExtent.height;
             framebufferCreateInfoDbg.layers          = 1;
 
             for ( uint32_t i = 0; i < FrameCount; ++i ) {
-                VkImageView attachments[ 1 ] = {swapchain->hImgViews[ i ]};
+                VkImageView attachments[ 1 ] = {appSurface->Swapchain.hImgViews[ i ]};
                 framebufferCreateInfoNk.pAttachments = attachments;
 
-                if ( false == hNkFramebuffers[ i ].Recreate( *appSurfaceVk->pNode, framebufferCreateInfoNk ) ) {
+                if ( false == hNkFramebuffers[ i ].Recreate( *appSurface->pNode, framebufferCreateInfoNk ) ) {
                     DebugBreak( );
                     return false;
                 }
             }
 
             for ( uint32_t i = 0; i < FrameCount; ++i ) {
-                VkImageView attachments[ 2 ] = {swapchain->hImgViews[ i ], hDepthImgViews[ i ]};
+                VkImageView attachments[ 2 ] = {appSurface->Swapchain.hImgViews[ i ], hDepthImgViews[ i ]};
                 framebufferCreateInfoDbg.pAttachments = attachments;
 
-                if ( false == hDbgFramebuffers[ i ].Recreate( *appSurfaceVk->pNode, framebufferCreateInfoDbg ) ) {
+                if ( false == hDbgFramebuffers[ i ].Recreate( *appSurface->pNode, framebufferCreateInfoDbg ) ) {
                     DebugBreak( );
                     return false;
                 }
             }
-        }
     }
 
     return true;

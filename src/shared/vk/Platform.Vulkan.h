@@ -136,6 +136,13 @@
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 
+namespace apemode {
+    template < typename T, typename... Args >
+    std::unique_ptr< T > make_unique( Args&&... args ) {
+        return std::unique_ptr< T >( new T( std::forward< Args >( args )... ) );
+    }
+} // namespace apemode
+
 namespace apemodevk {
 
     namespace platform {
