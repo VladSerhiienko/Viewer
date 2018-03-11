@@ -4,7 +4,7 @@
 #include <memory>
 
 #ifndef APEMODE_USE_MEMORY_TRACKING
-// #define APEMODE_USE_MEMORY_TRACKING
+ #define APEMODE_USE_MEMORY_TRACKING
 #endif
 
 #ifndef APEMODE_USE_DLMALLOC

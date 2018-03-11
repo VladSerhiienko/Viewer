@@ -17,7 +17,7 @@ apemode::AppState* apemode::AppState::Get( ) {
     return gState;
 }
 
-void apemode::AppState::OnMain( int args, char* ppArgs[] ) {
+void apemode::AppState::OnMain( int args, const char** ppArgs ) {
     if ( nullptr == gState )
         gState = new AppState( args, ppArgs );
 }
@@ -29,18 +29,14 @@ void apemode::AppState::OnExit( ) {
     }
 }
 
-apemode::AppState::AppState( int argc, char* argv[] )
-    : Argc( argc )
-    , Argv( argv )
-    , Logger( spdlog::create< spdlog::sinks::stdout_sink_mt >( "apemode/stdout" ) )
-    , Options( new cxxopts::Options( argc ? argv[ 0 ] : "" ) ) {
+std::string ComposeLogFile( ) {
 
     tm* pCurrentTime = nullptr;
     time_t currentSystemTime = std::chrono::system_clock::to_time_t( std::chrono::system_clock::now( ) );
 
 #if _WIN32
     tm currentTime;
-    localtime_s(&currentTime, &currentSystemTime);
+    localtime_s( &currentTime, &currentSystemTime );
     pCurrentTime = &currentTime;
 #else
     pCurrentTime = localtime( &currentSystemTime );
@@ -58,22 +54,47 @@ apemode::AppState::AppState( int argc, char* argv[] )
     logFile += curentTimeStr;
     logFile += ".txt";
 
-    std::vector< spdlog::sink_ptr > sinks{
+    return logFile;
+}
 
+std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, std::string logFile ) {
+
+    std::vector< spdlog::sink_ptr > sinks {
 #if _WIN32
         std::make_shared< spdlog::sinks::wincolor_stdout_sink_mt >( ),
         std::make_shared< spdlog::sinks::msvc_sink_mt >( ),
-        std::make_shared< spdlog::sinks::simple_file_sink_mt >( logFile )
+        std::make_shared< spdlog::sinks::simple_file_sink_mt >( logFile.c_str( ) )
 #else
         std::make_shared< spdlog::sinks::stdout_sink_mt >( ),
         std::make_shared< spdlog::sinks::simple_file_sink_mt >( logFile )
 #endif
-
     };
 
-#ifdef _DEBUG
-    Logger->set_level( spdlog::level::debug );
-#endif
+    auto logger = spdlog::create<>( "the-forge", sinks.begin( ), sinks.end( ) );
+    logger->set_level( lvl );
+
+    spdlog::set_pattern( "%v" );
+
+    logger->info( "" );
+    logger->info(" _    ___");
+    logger->info("| |  / (_)__ _      _____  _____");
+    logger->info("| | / / / _ \\ | /| / / _ \\/ ___/");
+    logger->info("| |/ / /  __/ |/ |/ /  __/ /");
+    logger->info("|___/_/\\___/|__/|__/\\___/_/");
+    logger->info( "" );
+
+    spdlog::set_pattern( "%c" );
+    logger->info( "" );
+
+    spdlog::set_pattern( "[%T.%f] [%L] %v" );
+    return logger;
+}
+
+apemode::AppState::AppState( int argc, const char** argv )
+    : Argc( argc )
+    , ppArgv( argv )
+    , Logger( CreateLogger( spdlog::level::trace, ComposeLogFile( ) ) )
+    , Options( new cxxopts::Options( argc ? argv[ 0 ] : "" ) ) {
 }
 
 apemode::AppState::~AppState( ) {

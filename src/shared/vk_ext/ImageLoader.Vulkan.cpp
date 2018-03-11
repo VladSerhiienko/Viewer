@@ -381,3 +381,5 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
 #undef lodepng_malloc
 #undef lodepng_realloc
 #undef lodepng_free
+
+#include <lodepng.cpp>

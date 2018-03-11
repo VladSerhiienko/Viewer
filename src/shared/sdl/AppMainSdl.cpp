@@ -8,7 +8,7 @@
 extern "C" apemode::AppBase* CreateApp( );
 
 struct AppStateScope {
-    AppStateScope( int args, char* ppArgs[] ) {
+    AppStateScope( int args, const char** ppArgs ) {
         apemode::AppState::OnMain( args, ppArgs );
     }
     ~AppStateScope( ) {
@@ -20,8 +20,8 @@ struct AppStateScope {
 #undef main
 #endif
 
-int main( int argc, char* argv[] ) {
-    AppStateScope appStateScope( argc, argv );
+int main( int argc, char** argv ) {
+    AppStateScope appStateScope( argc, (const char**) argv );
 
     std::unique_ptr< apemode::AppBase > pAppImpl( CreateApp( ) );
 

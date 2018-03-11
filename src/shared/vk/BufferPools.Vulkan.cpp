@@ -163,7 +163,7 @@ apemodevk::HostBufferPool::Page *apemodevk::HostBufferPool::FindPage( uint32_t d
     /* Try to find an existing free page. */
     auto pageIt = std::find_if( Pages.begin( ), Pages.end( ), [&]( Page *pPage ) {
         assert( nullptr != pPage );
-        const uint32_t availableOffsets = pPage->TotalOffsetCount - pPage->CurrentOffsetIndex + 1;
+        const uint32_t availableOffsets = pPage->TotalOffsetCount - pPage->CurrentOffsetIndex;
         return availableOffsets >= coveredOffsetCount;
     } );
 
@@ -212,7 +212,7 @@ void apemodevk::HostBufferPool::Destroy( ) {
 
 uint32_t apemodevk::HostBufferPool::Page::Push( const void *pDataStructure, uint32_t ByteSize ) {
     const uint32_t coveredOffsetCount   = ByteSize / Alignment + ( uint32_t )( 0 != ByteSize % Alignment );
-    const uint32_t availableOffsetCount = TotalOffsetCount - CurrentOffsetIndex + 1;
+    const uint32_t availableOffsetCount = TotalOffsetCount - CurrentOffsetIndex;
 
     assert( nullptr != pMapped );
     assert( coveredOffsetCount <= availableOffsetCount );

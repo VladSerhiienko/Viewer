@@ -19,8 +19,8 @@ namespace apemode {
      */
     class AppState {
     public:
-        int    Argc = 0;
-        char** Argv = nullptr;
+        int          Argc = 0;
+        const char** ppArgv = nullptr;
 
         std::shared_ptr< spdlog::logger >   Logger;  /* Prints to console and file, on Windows also prints to Output Window */
         std::unique_ptr< cxxopts::Options > Options; /* User parameters */
@@ -30,11 +30,11 @@ namespace apemode {
          * @note Returns null before the application creation, or after its destruction.
          */
         static AppState* Get( );
-        static void      OnMain( int argc, char* argv[] );
+        static void      OnMain( int argc, const char** argv );
         static void      OnExit( );
 
     private:
-        AppState( int args, char* ppArgs[] );
+        AppState( int args, const char** argv );
         ~AppState( );
     };
 

@@ -87,7 +87,9 @@
 
 #if !defined( WIN32 ) && !defined( DURANGO )
 #include <unistd.h>
-#include <pthread.h>
+#include <pthread.h
+#else
+#include <Windows.h>
 #endif
 
 #include "mmgr.h"

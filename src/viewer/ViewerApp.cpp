@@ -83,7 +83,8 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 //const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
 ViewerApp::ViewerApp( ) {
-    pCamController = apemode::make_unique< FreeLookCameraController >( );
+    pCamController = apemode::make_unique< ModelViewCameraController >();
+    //pCamController = apemode::make_unique< FreeLookCameraController >( );
     pCamInput      = apemode::make_unique< MouseKeyboardCameraControllerInput >( );
 
     if ( AppState::Get( ) && AppState::Get( )->Options ) {
@@ -97,7 +98,7 @@ ViewerApp::ViewerApp( ) {
             ( "vktrace", "Adds vktrace layer to vk device layers" );
 
         AppState::Get( )->Options->parse( AppState::Get( )->Argc,
-                                          AppState::Get( )->Argv );
+                                          AppState::Get( )->ppArgv );
     }
 }
 
@@ -248,7 +249,7 @@ bool ViewerApp::Initialize(  ) {
 
         auto sceneFiles = TGetOption< std::vector< std::string > >( "scene", {} );
         for ( auto sceneFile : sceneFiles ) {
-            Scenes.push_back( LoadSceneFromFile( sceneFile.c_str( ) ) );
+            Scenes.push_back( LoadSceneFromFile( sceneFile.c_str( ) ).release( ) );
         }
 
         // Scenes.push_back( LoadSceneFromFile( "E:/Media/Models/mech-m-6k/source/Mech6kv4p.fbxp" ) );
@@ -270,6 +271,9 @@ bool ViewerApp::Initialize(  ) {
         // Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/Mech6kv4p.fbxp" ));
         updateParams.pSceneSrc = Scenes.back( )->sourceScene;
 
+        // C:\Sources\Models\graograman.fbxp
+        // --assets "..\..\assets\**" --scene "C:/Sources/Models/1972-datsun-240k-gt.fbxp"
+        // --assets "..\..\assets\**" --scene "C:\Sources\Models\graograman.fbxp"
         if ( false == pSceneRendererBase->Recreate( &recreateParams ) ) {
             DebugBreak( );
             return false;

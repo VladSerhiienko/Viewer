@@ -8,7 +8,7 @@
 #include <GraphicsDevice.Vulkan.h>
 #include <DescriptorPool.Vulkan.h>
 
-#define _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges 0
+#define _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges 1
 
 namespace apemodevk {
 

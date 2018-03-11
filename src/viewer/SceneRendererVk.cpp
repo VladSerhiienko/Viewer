@@ -303,9 +303,9 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
         if ( auto pMeshDeviceAsset = (const apemodevk::SceneMeshDeviceAssetVk*) mesh.pDeviceAsset ) {
             for (auto& subset : mesh.subsets) {
-                auto& mat = pScene->materials[ node.materialIds[ subset.materialId ] ];
+                //auto& mat = pScene->materials[ node.materialIds.empty( ) ? subset.materialId : node.materialIds[ subset.materialId ] ];
 
-                frameData.color          = mat.albedo;
+                //frameData.color          = mat.baseColorFactor;
                 frameData.positionOffset = pMeshDeviceAsset->positionOffset;
                 frameData.positionScale  = pMeshDeviceAsset->positionScale;
                 XMStoreFloat4x4( &frameData.worldMatrix, pScene->worldMatrices[ node.id ] );
@@ -559,11 +559,11 @@ bool apemode::SceneRendererVk::Recreate(const RecreateParametersBase * pParamsBa
 
     //
 
-    // rasterizationStateCreateInfo.cullMode                = VK_CULL_MODE_NONE;
-    // rasterizationStateCreateInfo.frontFace               = VK_FRONT_FACE_CLOCKWISE; /* CW */
+    rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
+    // rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
+    // rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE; /* CW */
     rasterizationStateCreateInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizationStateCreateInfo.polygonMode             = VK_POLYGON_MODE_FILL;
-    rasterizationStateCreateInfo.cullMode                = VK_CULL_MODE_BACK_BIT;
     rasterizationStateCreateInfo.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE; /* CCW */
     rasterizationStateCreateInfo.depthClampEnable        = VK_FALSE;
     rasterizationStateCreateInfo.rasterizerDiscardEnable = VK_FALSE;

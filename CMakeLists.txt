@@ -500,12 +500,12 @@ set(
 )
 
 # Sources from external projects
-add_custom_command(
-    OUTPUT
-    ${CMAKE_SOURCE_DIR}/dependencies/lodepng/lodepng.cpp
-    DEPENDS Viewer
-    COMMAND ""
-    )
+# add_custom_command(
+#     OUTPUT
+#     # ${CMAKE_SOURCE_DIR}/dependencies/lodepng/lodepng.cpp
+#     DEPENDS Viewer
+#     COMMAND ""
+#     )
 
 set(
     viewer_source_files
@@ -514,10 +514,11 @@ set(
     ${shared_vk_source_files}
     ${shared_vk_ext_source_files}
     ${shared_source_files}
+    ${CMAKE_SOURCE_DIR}/src/viewer/Scene.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/ViewerApp.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/SceneRendererVk.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.cpp
-    ${CMAKE_SOURCE_DIR}/dependencies/lodepng/lodepng.cpp
+    # ${CMAKE_SOURCE_DIR}/dependencies/lodepng/lodepng.cpp
 )
 
 # vert|frag|comp|geom|tesc|tese|h|inl|inc|fx
@@ -582,6 +583,7 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/src/shared/vk_ext
     ${CMAKE_SOURCE_DIR}/src/shared/platform/memory
     ${CMAKE_SOURCE_DIR}/src/viewer
+    ${CMAKE_SOURCE_DIR}/dependencies/Math
     ${CMAKE_SOURCE_DIR}/dependencies/gli
     ${CMAKE_SOURCE_DIR}/dependencies/gli/external
     ${CMAKE_SOURCE_DIR}/dependencies/gli/external/glm
@@ -658,7 +660,7 @@ endforeach()
 if(WIN32)
     set( viewer_dependencies_dlls_pdbs
         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.dll
-        ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.pdb
+        # ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.pdb
         )
 else()
     set( viewer_dependencies_dlls_pdbs
@@ -671,7 +673,7 @@ foreach( viewer_dependencies_dll_pdb ${viewer_dependencies_dlls_pdbs} )
         TARGET
         Viewer
         POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${viewer_dependencies_dll_pdb}
         ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}
     )

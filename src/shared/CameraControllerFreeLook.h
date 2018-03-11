@@ -3,7 +3,7 @@
 #include <CameraControllerBase.h>
 
 namespace apemode {
-    
+
     struct FreeLookCameraController : CameraControllerBase {
         XMFLOAT3 TargetDst;
         XMFLOAT3 PositionDst;
@@ -61,7 +61,7 @@ namespace apemode {
             auto orbitCurr   = XMLoadFloat2( &OrbitCurr );
             auto targetDst   = XMLoadFloat3( &TargetDst );
             auto positionDst = XMLoadFloat3( &PositionDst );
-            
+
             auto toPosNorm = targetDst - positionDst;
             auto toPosLen  = XMVector3Length( toPosNorm );
             toPosNorm /= toPosLen;
@@ -70,7 +70,7 @@ namespace apemode {
 
             auto consume = orbitCurr * _amount;
             orbitCurr -= consume;
-            
+
             // consume.y *= ( ll.y < 0.02 && consume.y < 0 ) || ( ll.y > 0.98 && consume.y > 0 ) ? 0 : -1;
             auto lon = XMVectorGetY( ll );
             auto oy  = XMVectorGetY( consume );
