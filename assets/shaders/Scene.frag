@@ -4,8 +4,11 @@
 #include <shaders/shaderlib.inc>
 
 layout( location = 0 ) in vec4 inColor;
+layout( location = 1 ) in vec3 inNormal;
+
 layout( location = 0 ) out vec4 outColor;
 
 void main( ) {
-    outColor = sepia( inColor );
+    outColor.rgb = abs(sepia( inNormal ));
+    outColor.a = 1;
 }

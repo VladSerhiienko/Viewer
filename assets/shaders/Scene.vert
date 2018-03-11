@@ -14,10 +14,13 @@ layout( location = 0 ) in vec3 inPosition;
 layout( location = 1 ) in vec3 inNormal;
 layout( location = 2 ) in vec4 inTangent;
 layout( location = 3 ) in vec2 inTexcoords;
+
 layout( location = 0 ) out vec4 outColor;
+layout( location = 1 ) out vec3 outNormal;
 
 void main( ) {
     outColor    = frameInfo.color;
+    outNormal   = inNormal;
     gl_Position = frameInfo.projectionMatrix * frameInfo.viewMatrix * frameInfo.worldMatrix *
-                  vec4( inPosition.zyx * frameInfo.positionScale.xyz + frameInfo.positionOffset.xyz, 1.0 );
+                  vec4( inPosition.xyz * frameInfo.positionScale.xyz + frameInfo.positionOffset.xyz, 1.0 );
 }
