@@ -5,6 +5,7 @@
 #include <QueuePools.Vulkan.h>
 #include <BufferPools.Vulkan.h>
 #include <ShaderCompiler.Vulkan.h>
+#include <ImageLoader.Vulkan.h>
 
 #include <SceneRendererVk.h>
 #include <Scene.h>
@@ -46,6 +47,14 @@ namespace apemodevk {
         VkIndexType                           IndexType   = VK_INDEX_TYPE_UINT16;
         XMFLOAT4                              positionOffset;
         XMFLOAT4                              positionScale;
+    };
+
+    struct SceneMaterialDeviceAssetVk {
+        std::unique_ptr< LoadedImage > pBaseColorLoadedImg;
+        std::unique_ptr< LoadedImage > pNormalLoadedImg;
+        std::unique_ptr< LoadedImage > pOcclusionLoadedImg;
+        std::unique_ptr< LoadedImage > pEmissiveLoadedImg;
+        std::unique_ptr< LoadedImage > pMetallicRoughnessLoadedImg;
     };
 }
 
@@ -303,7 +312,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
         if ( auto pMeshDeviceAsset = (const apemodevk::SceneMeshDeviceAssetVk*) mesh.pDeviceAsset ) {
             for (auto& subset : mesh.subsets) {
-                //auto& mat = pScene->materials[ node.materialIds.empty( ) ? subset.materialId : node.materialIds[ subset.materialId ] ];
+                auto& mat = pScene->materials[ node.materialIds[ subset.materialId ] ];
 
                 //frameData.color          = mat.baseColorFactor;
                 frameData.positionOffset = pMeshDeviceAsset->positionOffset;
@@ -348,6 +357,10 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
                                   0 );               /* FirstInstance */
             }
         }
+
+
+
+
     }
 
     return true;

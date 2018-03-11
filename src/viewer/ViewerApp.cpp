@@ -203,8 +203,6 @@ bool ViewerApp::Initialize(  ) {
 
         queueFamilyPool->Release( acquiredQueue );
 
-        pDebugRenderer = new DebugRendererVk( );
-
         DebugRendererVk::InitParametersVk initParamsDbg;
         initParamsDbg.pAlloc          = nullptr;
         initParamsDbg.pDevice         = *appSurface->pNode;
@@ -213,7 +211,9 @@ bool ViewerApp::Initialize(  ) {
         initParamsDbg.pDescPool       = DescPool;
         initParamsDbg.FrameCount      = FrameCount;
 
+        pDebugRenderer = new DebugRendererVk();
         pDebugRenderer->RecreateResources( &initParamsDbg );
+
         pSceneRendererBase = appSurface->CreateSceneRenderer( );
 
         SceneRendererVk::RecreateParametersVk recreateParams;
@@ -230,63 +230,27 @@ bool ViewerApp::Initialize(  ) {
         updateParams.pDescPool       = DescPool;
         updateParams.FrameCount      = FrameCount;
 
-        // -i "E:\Media\Models\run-hedgehog-run\source\c61cca893cdc4f82b26a1d66585bd55d.zip\HEDGEHOG_ANIMATION_1024\animation_NEW_ONLY_ONE_ACTION_2.fbx" -o "$(SolutionDir)assets\hedgehogp.fbxp" -p
-        // -i "E:\Media\Models\bristleback-dota-fan-art\source\POSE.fbx" -o "$(SolutionDir)assets\bristlebackp.fbxp" -p
-        // -i "E:\Media\Models\blood-and-fire\source\DragonMain.fbx" -o "$(SolutionDir)assets\DragonMainp.fbxp" -p
-        // -i "E:\Media\Models\knight-artorias\source\Artorias.fbx.fbx" -o "$(SolutionDir)assets\Artoriasp.fbxp" -p
-        // -i "E:\Media\Models\vanille-flirty-animation\source\happy.fbx" -o "$(SolutionDir)assets\vanille-flirty-animation.fbxp" -p
-        // -i "E:\Media\Models\special-sniper-rifle-vss-vintorez\source\vintorez.FBX" -o "$(SolutionDir)assets\vintorez.fbxp" -p
-        // -i "F:\Dev\AutodeskMaya\Mercedes+Benz+A45+AMG+Centered.FBX" -o "$(SolutionDir)assets\A45p.fbxp" -p
-        // -i "F:\Dev\AutodeskMaya\Mercedes+Benz+A45+AMG+Centered.FBX" -o "$(SolutionDir)assets\A45.fbxp"
-        // -i "E:\Media\Models\mech-m-6k\source\93d43cf18ad5406ba0176c9fae7d4927.fbx" -o "$(SolutionDir)assets\Mech6kv4p.fbxp" -p
-        // -i "E:\Media\Models\mech-m-6k\source\93d43cf18ad5406ba0176c9fae7d4927.fbx" -o "$(SolutionDir)assets\Mech6kv4.fbxp"
-        // -i "E:\Media\Models\carambit\source\Knife.fbx" -o "$(SolutionDir)assets\Knifep.fbxp" -p
-        // -i "E:\Media\Models\pontiac-firebird-formula-1974\source\carz.obj 2.zip\carz.obj\mesh.obj" -o "$(SolutionDir)assets\pontiacp.fbxp" -p
-        //  .\FbxPipeline.exe -i E:\Media\Models\1972-datsun-240k-gt\source\datsun240k.fbx -o E:\Media\Models\1972-datsun-240k-gt\source\datsun240k.fbxp -p -m .*\.png
-        //  .\FbxPipeline -i "E:\Media\Models\mech-m-6k\source\93d43cf18ad5406ba0176c9fae7d4927.fbx" -o "E:\Media\Models\mech-m-6k\source\Mech6kv4p.fbxp" -p -m .*\.png
-        // ./FbxPipeline -i "/home/user/vserhiienko/models/mech-m-6k/source/93d43cf18ad5406ba0176c9fae7d4927.fbx" -o "/home/user/vserhiienko/models/mech-m-6k/source/Mech6kv4p.fbx" -p -m .*\.png
-        //Scenes.push_back( LoadSceneFromFile( "/home/user/vserhiienko/models/mech-m-6k/source/Mech6kv4p.fbx" ) );
-
-        auto sceneFiles = TGetOption< std::vector< std::string > >( "scene", {} );
-        for ( auto sceneFile : sceneFiles ) {
-            Scenes.push_back( LoadSceneFromFile( sceneFile.c_str( ) ).release( ) );
-        }
-
-        // Scenes.push_back( LoadSceneFromFile( "E:/Media/Models/mech-m-6k/source/Mech6kv4p.fbxp" ) );
-        //Scenes.push_back( LoadSceneFromFile( "E:/Media/Models/1972-datsun-240k-gt/source/datsun240k.fbxp" ) );
-        //Scenes.push_back( LoadSceneFromFile( "/home/user/vserhiienko/models/stesla-elephant-steam-engines/source/stesla.fbxp" ) );
-
-        // Scenes.push_back( LoadSceneFromFile( "../../../assets/DragonMainp.fbxp" ) );
-        // Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/Artoriasp.fbxp" ) );
-        // Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/vanille-flirty-animation.fbxp" ) );
-        // Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/vintorez.fbxp" ) );
-        // Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/Mech6kv4p.fbxp" ) );
-        // Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/A45p.fbxp" ));
-        // Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/A45.fbxp" ));
-        // Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/Mech6kv4.fbxp" ));
-        // Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/Mech6kv4.fbxp" ));
-        // Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/Cube10p.fbxp" ));
-        // Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/Knifep.fbxp" ));
-        // Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/pontiacp.fbxp" ));
-        // Scenes.push_back( LoadSceneFromFile( "F:/Dev/Projects/ProjectFbxPipeline/FbxPipeline/assets/Mech6kv4p.fbxp" ));
-        updateParams.pSceneSrc = Scenes.back( )->sourceScene;
-
-        // C:\Sources\Models\graograman.fbxp
+        // --assets "..\..\assets\**" --scene "C:/Sources/Models/skull_salazar.fbxp"
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/1972-datsun-240k-gt.fbxp"
         // --assets "..\..\assets\**" --scene "C:\Sources\Models\graograman.fbxp"
+        // --assets "..\..\assets\**" --scene "C:/Sources/Models/dreadroamer-free.fbxp"
         if ( false == pSceneRendererBase->Recreate( &recreateParams ) ) {
             DebugBreak( );
             return false;
         }
 
+        auto sceneFiles = TGetOption< std::vector< std::string > >("scene", {});
+        for (auto sceneFile : sceneFiles) {
+            auto sceneFileContent = apemodeos::FileReader( ).ReadBinFile( sceneFile );
+            // Scenes.push_back( LoadSceneFromBin( sceneFileContent.data( ) ) );
+            // Scenes.push_back( LoadSceneFromFile( sceneFile.c_str( ) ).release( ) );
+        }
+
+        updateParams.pSceneSrc = Scenes.back()->sourceScene;
         if ( false == pSceneRendererBase->UpdateScene( Scenes.back( ), &updateParams ) ) {
             DebugBreak( );
             return false;
         }
-
-        pSkybox         = apemode::make_unique< apemodevk::Skybox >( );
-        pSkyboxRenderer = apemode::make_unique< apemodevk::SkyboxRenderer >( );
-        pSamplerManager = apemode::make_unique< apemodevk::SamplerManager >( );
 
         apemodevk::SkyboxRenderer::RecreateParameters skyboxRendererRecreateParams;
         skyboxRendererRecreateParams.pNode           = appSurface->pNode;
@@ -295,25 +259,25 @@ bool ViewerApp::Initialize(  ) {
         skyboxRendererRecreateParams.pDescPool       = DescPool;
         skyboxRendererRecreateParams.FrameCount      = FrameCount;
 
+        pSkyboxRenderer = apemode::make_unique< apemodevk::SkyboxRenderer >( );
         if ( false == pSkyboxRenderer->Recreate( &skyboxRendererRecreateParams ) ) {
             DebugBreak( );
             return false;
         }
 
+        pSamplerManager = apemode::make_unique< apemodevk::SamplerManager >( );
         if ( false == pSamplerManager->Recreate( appSurface->pNode ) ) {
             DebugBreak( );
             return false;
         }
 
         apemodevk::ImageLoader imgLoader;
-        imgLoader.Recreate( appSurface->pNode, nullptr );
+        if ( false == imgLoader.Recreate( appSurface->pNode, nullptr ) ) {
+            DebugBreak( );
+            return false;
+        }
 
-        //auto pngContent = imgFileManager.ReadBinFile( "../../../assets/img/DragonMain_Diff.png" );
-        //auto loadedPNG  = imgLoader.LoadImageFromData( pngContent, apemodevk::ImageLoader::eImageFileFormat_PNG, true, true );
-        //auto ddsContent = imgFileManager.ReadBinFile( "../../../assets/env/kyoto_lod.dds" );
-        //auto ddsContent = imgFileManager.ReadBinFile( "../../../assets/env/PaperMill/Specular_HDR.dds" );
-        //auto ddsContent = imgFileManager.ReadBinFile( "../assets/textures/Environment/Canyon/Unfiltered_HDR.dds" );
-
+        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/PaperMill/Specular_HDR.dds" ) ) {
         if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/Canyon/Unfiltered_HDR.dds" ) ) {
             pLoadedDDS = imgLoader.LoadImageFromData( pTexAsset->AsBin( ), apemodevk::ImageLoader::eImageFileFormat_DDS, true, true );
         }
@@ -335,15 +299,16 @@ bool ViewerApp::Initialize(  ) {
         samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
         samplerCreateInfo.unnormalizedCoordinates = false;
 
-        auto samplerIndex = pSamplerManager->GetSamplerIndex(samplerCreateInfo);
-        assert ( samplerIndex != 0xffffffff );
+        auto samplerIndex = pSamplerManager->GetSamplerIndex( samplerCreateInfo );
+        assert( SamplerManager::IsSamplerIndexValid( samplerIndex ) );
 
-        pSkybox->pSampler      = pSamplerManager->StoredSamplers[samplerIndex].pSampler;
+        pSkybox                = apemode::make_unique< apemodevk::Skybox >( );
+        pSkybox->pSampler      = pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
         pSkybox->pImgView      = pLoadedDDS->hImgView;
         pSkybox->Dimension     = pLoadedDDS->imageCreateInfo.extent.width;
         pSkybox->eImgLayout    = pLoadedDDS->eImgLayout;
-        pSkybox->LevelOfDetail = 0;
         pSkybox->Exposure      = 3;
+        pSkybox->LevelOfDetail = 0;
 
         return true;
     }

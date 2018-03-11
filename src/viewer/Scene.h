@@ -10,6 +10,11 @@
 
 namespace apemode {
 
+    struct SceneDeviceAsset {
+        virtual ~SceneDeviceAsset( ) {
+        }
+    };
+
     struct SceneMaterial {
         void *   pDeviceAsset = nullptr;
 
@@ -160,5 +165,9 @@ namespace apemode {
         }
     };
 
-    std::unique_ptr< Scene > LoadSceneFromFile( const char *filename );
+    using UniqueScenePtr     = std::unique_ptr< Scene >;
+    using UniqueSceneSrcPtr  = std::unique_ptr< const apemodefb::SceneFb >;
+    using UniqueScenePtrPair = std::pair< typename UniqueScenePtr, typename UniqueSceneSrcPtr >;
+
+    UniqueScenePtrPair LoadSceneFromBin( const uint8_t *pData, size_t dataSize );
 }
