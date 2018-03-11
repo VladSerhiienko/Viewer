@@ -232,9 +232,9 @@ std::unique_ptr< Scene > apemode::LoadSceneFromFile( const char *filename ) {
                     if ( nodeFb->material_ids( ) && nodeFb->material_ids( )->size( ) )
                         node.materialIds.reserve( nodeFb->material_ids( )->size( ) );
 
-                    auto childIdsIt    = nodeFb->child_ids( )->data( );
+                    auto childIdsIt = nodeFb->child_ids( )->data( );
                     auto childIdsEndIt = childIdsIt + nodeFb->child_ids( )->size( );
-                    std::transform( childIdsIt, childIdsEndIt, std::back_inserter( node.childIds ), [&]( auto id ) {
+                    std::transform( childIdsIt, childIdsEndIt, std::back_inserter( node.childIds ), [&]( uint32_t id ) {
                         auto &childNode    = scene->nodes[ id ];
                         childNode.parentId = node.id;
                         return id;
@@ -245,14 +245,14 @@ std::unique_ptr< Scene > apemode::LoadSceneFromFile( const char *filename ) {
                     }
 
                     if ( nodeFb->material_ids( ) && nodeFb->material_ids( )->size( ) ) {
-                        auto matIdsIt    = nodeFb->material_ids( )->data( );
+                        auto matIdsIt = nodeFb->material_ids( )->data( );
                         auto matIdsEndIt = matIdsIt + nodeFb->material_ids( )->size( );
-                        std::transform( matIdsIt, matIdsEndIt, std::back_inserter( node.materialIds ), [&]( auto id ) { return id; } );
+                        std::transform( matIdsIt, matIdsEndIt, std::back_inserter( node.materialIds ), [&]( uint32_t id ) { return id; } );
                         materialIds.insert( matIdsIt, matIdsEndIt );
                     }
 
-                    auto &transform   = scene->transforms[ nodeFb->id( ) ];
-                    auto  transformFb = ( *scene->sourceScene->transforms( ) )[ nodeFb->id( ) ];
+                    auto &transform = scene->transforms[ nodeFb->id( ) ];
+                    auto transformFb = ( *scene->sourceScene->transforms( ) )[ nodeFb->id( ) ];
 
                     transform.translation.x = ( transformFb->translation( ).x( ) );
                     transform.translation.y = ( transformFb->translation( ).y( ) );
