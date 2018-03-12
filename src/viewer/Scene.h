@@ -1,6 +1,7 @@
 
 #include <map>
 #include <vector>
+#include <memory>
 
 #include <flatbuffers/flatbuffers.h>
 #include <flatbuffers/util.h>
@@ -165,9 +166,9 @@ namespace apemode {
         }
     };
 
-    using UniqueScenePtr     = std::unique_ptr< Scene >;
-    using UniqueSceneSrcPtr  = std::unique_ptr< const apemodefb::SceneFb >;
-    using UniqueScenePtrPair = std::pair< typename UniqueScenePtr, typename UniqueSceneSrcPtr >;
+    using UniqueScenePtr     = typename std::unique_ptr< Scene >;
+    using UniqueSceneSrcPtr  = typename std::unique_ptr< const apemodefb::SceneFb >;
+    using UniqueScenePtrPair = typename std::pair< std::unique_ptr< Scene >, std::unique_ptr< const apemodefb::SceneFb > >;
 
     UniqueScenePtrPair LoadSceneFromBin( const uint8_t *pData, size_t dataSize );
 }
