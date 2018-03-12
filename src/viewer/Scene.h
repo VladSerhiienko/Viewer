@@ -118,9 +118,6 @@ namespace apemode {
         // Scene components
         //
 
-        std::string               sourceData;
-        const apemodefb::SceneFb *sourceScene;
-
         std::vector< SceneNode >          nodes;
         std::vector< SceneNodeTransform > transforms;
         std::vector< SceneMesh >          meshes;
@@ -167,8 +164,7 @@ namespace apemode {
     };
 
     using UniqueScenePtr     = typename std::unique_ptr< Scene >;
-    using UniqueSceneSrcPtr  = typename std::unique_ptr< const apemodefb::SceneFb >;
-    using UniqueScenePtrPair = typename std::pair< std::unique_ptr< Scene >, std::unique_ptr< const apemodefb::SceneFb > >;
+    using UniqueScenePtrPair = typename std::pair< std::unique_ptr< Scene >, const apemodefb::SceneFb * >;
 
     UniqueScenePtrPair LoadSceneFromBin( const uint8_t *pData, size_t dataSize );
 }

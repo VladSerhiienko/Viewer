@@ -92,8 +92,11 @@ namespace apemode {
         NuklearRendererSdlBase*                      pNkRenderer        = nullptr;
         DebugRendererVk*                             pDebugRenderer     = nullptr;
         SceneRendererBase*                           pSceneRendererBase = nullptr;
-        std::vector< Scene* >                        Scenes;
 
+        using SceneSourceData = std::pair< const apemodefb::SceneFb *, std::vector< uint8_t > >;
+
+        std::vector< UniqueScenePtr >             Scenes;
+        std::map< const Scene*, SceneSourceData > SceneSources;
 
         std::unique_ptr< apemodevk::ShaderCompiler >       pShaderCompiler;
         std::unique_ptr< apemodevk::ShaderFileReader >     pShaderFileReader;

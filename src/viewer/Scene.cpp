@@ -205,7 +205,7 @@ void apemode::Scene::UpdateMatrices( ) {
 
 apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, size_t dataSize ) {
 
-    UniqueSceneSrcPtr pSrcScene( apemodefb::GetSceneFb( pData ) );
+    const apemodefb::SceneFb * pSrcScene = apemodefb::GetSceneFb( pData );
     if ( nullptr == pSrcScene ) {
         return UniqueScenePtrPair( nullptr, nullptr );
     }
@@ -228,7 +228,7 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
             node.id = nodeFb->id( );
             node.meshId = nodeFb->mesh_id( );
 
-            LogInfo( "Processing node: {}", GetStringProperty( pSrcScene.get( ), nodeFb->name_id( ) ).c_str( ) );
+            LogInfo( "Processing node: {}", GetStringProperty( pSrcScene, nodeFb->name_id( ) ).c_str( ) );
 
             if ( nodeFb->child_ids( ) && nodeFb->child_ids( )->size( ) )
                 node.childIds.reserve( nodeFb->child_ids( )->size( ) );
@@ -356,23 +356,23 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
             auto pMaterialFb = FlatbuffersTVectorGetAtIndex( pMaterialsFb, materialId );
             assert( pMaterialFb );
 
-            LogInfo( "Processing material {}", GetCStringProperty( pSrcScene.get( ), pMaterialFb->name_id( ) ) );
+            LogInfo( "Processing material {}", GetCStringProperty( pSrcScene, pMaterialFb->name_id( ) ) );
 
             pScene->materials.emplace_back( );
             auto &material = pScene->materials.back( );
 
             if ( auto pPropertiesFb = pMaterialFb->properties( ) ) {
                 for ( auto pMaterialPropFb : *pPropertiesFb ) {
-                    if ( strcmp( "baseColorFactor", GetCStringProperty( pSrcScene.get( ), pMaterialPropFb->name_id( ) ) ) == 0 ) {
-                        material.baseColorFactor = GetVec4Property( pSrcScene.get( ), pMaterialPropFb->value_id( ) );
-                    } else if ( strcmp( "metallicFactor", GetCStringProperty( pSrcScene.get( ), pMaterialPropFb->name_id( ) ) ) == 0 ) {
-                        material.metallicFactor = GetScalarProperty( pSrcScene.get( ), pMaterialPropFb->value_id( ) );
-                    } else if ( strcmp( "emissiveFactor", GetCStringProperty( pSrcScene.get( ), pMaterialPropFb->name_id( ) ) ) == 0 ) {
-                        material.emissiveFactor = GetVec3Property( pSrcScene.get( ), pMaterialPropFb->value_id( ) );
-                    } else if ( strcmp( "roughnessFactor", GetCStringProperty( pSrcScene.get( ), pMaterialPropFb->name_id( ) ) ) == 0 ) {
-                        material.roughnessFactor = GetScalarProperty( pSrcScene.get( ), pMaterialPropFb->value_id( ) );
-                    } else if ( strcmp( "doubleSided", GetCStringProperty( pSrcScene.get( ), pMaterialPropFb->name_id( ) ) ) == 0 ) {
-                        material.bDoubleSided = GetBoolProperty( pSrcScene.get( ), pMaterialPropFb->value_id( ) );
+                    if ( strcmp( "baseColorFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
+                        material.baseColorFactor = GetVec4Property( pSrcScene, pMaterialPropFb->value_id( ) );
+                    } else if ( strcmp( "metallicFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
+                        material.metallicFactor = GetScalarProperty( pSrcScene, pMaterialPropFb->value_id( ) );
+                    } else if ( strcmp( "emissiveFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
+                        material.emissiveFactor = GetVec3Property( pSrcScene, pMaterialPropFb->value_id( ) );
+                    } else if ( strcmp( "roughnessFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
+                        material.roughnessFactor = GetScalarProperty( pSrcScene, pMaterialPropFb->value_id( ) );
+                    } else if ( strcmp( "doubleSided", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
+                        material.bDoubleSided = GetBoolProperty( pSrcScene, pMaterialPropFb->value_id( ) );
                     }
                 }
             }
@@ -380,7 +380,7 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
             if ( auto pTexturePropertiesFb = pMaterialFb->texture_properties( ) ) {
                 for ( auto pMaterialPropFb : *pTexturePropertiesFb ) {
                     LogInfo( "\t{} -> {}",
-                             GetStringProperty( pSrcScene.get( ), pMaterialPropFb->name_id( ) ).c_str( ),
+                             GetStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ).c_str( ),
                              pMaterialPropFb->value_id( ) );
 
                     if ( auto pTexturesFb = pSrcScene->textures( ) )
@@ -390,7 +390,7 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
                                 auto fileName = FlatbuffersTVectorGetAtIndex( pSrcScene->string_values( ),
                                                                               MaterialPropertyGetIndex( pFileFb->name_id( ) ) );
 
-                                LogInfo( "Loading texture: {}", GetStringProperty( pSrcScene.get( ), pTextureFb->name_id( ) ).c_str( ) );
+                                LogInfo( "Loading texture: {}", GetStringProperty( pSrcScene, pTextureFb->name_id( ) ).c_str( ) );
                                 LogInfo( "Loading texture from file: {}", fileName->c_str( ) );
                             }
                         }
@@ -399,5 +399,5 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
         }
     }
 
-    return UniqueScenePtrPair( std::move( pScene ), std::move( pSrcScene ) );
+    return UniqueScenePtrPair( std::move( pScene ), pSrcScene );
 }

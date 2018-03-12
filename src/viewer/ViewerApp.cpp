@@ -239,15 +239,17 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        auto sceneFiles = TGetOption< std::vector< std::string > >("scene", {});
-        for (auto sceneFile : sceneFiles) {
+        auto sceneFiles = TGetOption< std::vector< std::string > >( "scene", {} );
+        for ( auto sceneFile : sceneFiles ) {
             auto sceneFileContent = apemodeos::FileReader( ).ReadBinFile( sceneFile );
-            // Scenes.push_back( LoadSceneFromBin( sceneFileContent.data( ) ) );
-            // Scenes.push_back( LoadSceneFromFile( sceneFile.c_str( ) ).release( ) );
+            auto loadedScene = LoadSceneFromBin( sceneFileContent.data( ), sceneFileContent.size( ) );
+
+            SceneSources[ loadedScene.first.get( ) ] = SceneSourceData( loadedScene.second, std::move( sceneFileContent ) );
+            Scenes.emplace_back( std::move( loadedScene.first ) );
         }
 
-        updateParams.pSceneSrc = Scenes.back()->sourceScene;
-        if ( false == pSceneRendererBase->UpdateScene( Scenes.back( ), &updateParams ) ) {
+        updateParams.pSceneSrc = SceneSources[ Scenes.back( ).get( ) ].first;
+        if ( false == pSceneRendererBase->UpdateScene( Scenes.back( ).get( ), &updateParams ) ) {
             DebugBreak( );
             return false;
         }
@@ -660,7 +662,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 
         pSkyboxRenderer->Reset( FrameIndex );
         pDebugRenderer->Reset( FrameIndex );
-        pSceneRendererBase->Reset( Scenes[ 0 ], FrameIndex );
+        pSceneRendererBase->Reset( Scenes.back( ).get( ), FrameIndex );
 
         apemodevk::SkyboxRenderer::RenderParameters skyboxRenderParams;
         XMStoreFloat4x4( &skyboxRenderParams.InvViewMatrix, InvView );
@@ -720,7 +722,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         sceneRenderParameters.pNode      = appSurfaceVk->pNode;
         sceneRenderParameters.ViewMatrix = frameData.viewMatrix;
         sceneRenderParameters.ProjMatrix = frameData.projectionMatrix;
-        pSceneRendererBase->RenderScene( Scenes[ 0 ], &sceneRenderParameters );
+        pSceneRendererBase->RenderScene( Scenes.back( ).get( ), &sceneRenderParameters );
 
         NuklearRendererSdlVk::RenderParametersVk renderParamsNk;
         renderParamsNk.dims[ 0 ]          = (float) width;
@@ -739,7 +741,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         vkCmdEndRenderPass( cmdBuffer );
 
         pDebugRenderer->Flush( FrameIndex );
-        pSceneRendererBase->Flush( Scenes[0], FrameIndex );
+        pSceneRendererBase->Flush( Scenes.back( ).get( ), FrameIndex );
         pSkyboxRenderer->Flush( FrameIndex );
 
         VkPipelineStageFlags waitPipelineStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
