@@ -3,7 +3,6 @@
 #include <MathInc.h>
 
 namespace apemode {
-
     struct CameraControllerBase {
         XMFLOAT3 Target;
         XMFLOAT3 Position;
@@ -15,8 +14,5 @@ namespace apemode {
         virtual XMMATRIX ViewMatrix( ) {
             return XMMatrixLookAtLH( XMLoadFloat3( &Position ), XMLoadFloat3( &Target ), g_XMIdentityR1.v );
         }
-
     };
-
-
 }

@@ -10,6 +10,9 @@ namespace apemode {
         XMFLOAT2 OrbitCurr;
         XMFLOAT2 ZRange;
 
+        /* Set to 1 for inversing */
+        XMFLOAT2 bInverseOrbitXY;
+
         ModelViewCameraController( ) {
             ZRange.x = 0.1f;
             ZRange.y = 1000.0f;
@@ -17,18 +20,21 @@ namespace apemode {
         }
 
         void Reset( ) {
-            Target      = {0, 0, 0};
-            Position    = {0, 0, -5};
-            TargetDst   = {0, 0, 0};
-            PositionDst = {0, 0, -5};
-            OrbitCurr   = {0, 0};
+            Target          = {0, 0, 0};
+            Position        = {0, 0, -5};
+            TargetDst       = {0, 0, 0};
+            PositionDst     = {0, 0, -5};
+            OrbitCurr       = {0, 0};
+            bInverseOrbitXY = {0, 0};
         }
 
         void Orbit( XMFLOAT2 _dxdy ) override {
-            XMStoreFloat2( &OrbitCurr, XMLoadFloat2( &OrbitCurr ) + XMLoadFloat2( &_dxdy ) );
+            OrbitCurr.x += _dxdy.x;
+            OrbitCurr.y += _dxdy.y;
         }
 
         void Dolly( XMFLOAT3 _dzxy ) override {
+
             auto targetDst   = XMLoadFloat3( &TargetDst );
             auto positionDst = XMLoadFloat3( &PositionDst );
 
@@ -40,15 +46,17 @@ namespace apemode {
             auto newLens = toTargetLen + delta;
             auto newLen = XMVectorGetX(newLens);
 
+            auto positionDstDelta = toTargetNorm * delta;
             if ( ( ZRange.x < newLen || _dzxy.z < 0.0f ) && ( newLen < ZRange.y || _dzxy.z > 0.0f ) ) {
-                positionDst += toTargetNorm * delta;
+                positionDst += positionDstDelta;
                 XMStoreFloat3( &PositionDst, positionDst );
             }
         }
 
         void ConsumeOrbit( float _amount ) {
+            const auto targetDst = XMLoadFloat3( &TargetDst );
+
             auto orbitCurr   = XMLoadFloat2( &OrbitCurr );
-            auto targetDst   = XMLoadFloat3( &TargetDst );
             auto position    = XMLoadFloat3( &Position );
             auto positionDst = XMLoadFloat3( &PositionDst );
 
@@ -59,16 +67,21 @@ namespace apemode {
             auto toPosLen  = XMVector3Length( toPosNorm );
             toPosNorm /= toPosLen;
 
-            auto ll = LatLongFromVec( toPosNorm ) + consume * XMVectorSet( 1, -1, 0, 0 );
+            auto inv = XMVectorSet( -1.0f + bInverseOrbitXY.x, -1.0f +  + bInverseOrbitXY.y, 0, 0 );
+            auto ll = LatLongFromVec( toPosNorm ) + consume * inv;
             ll = XMVectorSetY( ll, std::min( 0.98f, std::max( 0.02f, XMVectorGetY( ll ) ) ) );
 
             auto tmp  = VecFromLatLong( ll );
             auto diff = ( tmp - toPosNorm ) * toPosLen;
 
             position += diff;
+            position = XMVector3Normalize( position ) * toPosLen;
+
             positionDst += diff;
+            positionDst = XMVector3Normalize( positionDst ) * toPosLen;
 
             XMStoreFloat2( &OrbitCurr, orbitCurr );
+            XMStoreFloat3( &Position, position );
             XMStoreFloat3( &PositionDst, positionDst );
         }
 
@@ -77,10 +90,11 @@ namespace apemode {
 
             ConsumeOrbit( amount );
 
-            auto target      = XMLoadFloat3( &Target );
-            auto targetDst   = XMLoadFloat3( &TargetDst );
-            auto position    = XMLoadFloat3( &Position );
-            auto positionDst = XMLoadFloat3( &PositionDst );
+            const auto targetDst   = XMLoadFloat3( &TargetDst );
+            const auto positionDst = XMLoadFloat3( &PositionDst );
+
+            auto target   = XMLoadFloat3( &Target );
+            auto position = XMLoadFloat3( &Position );
 
             target   = XMVectorLerp( target, targetDst, amount );
             position = XMVectorLerp( position, positionDst, amount );

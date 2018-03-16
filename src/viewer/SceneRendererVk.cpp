@@ -67,7 +67,7 @@ inline void OutputDebugStringA( const char* pDebugStringA ) {
 }
 
 bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdateParametersBase* pParamsBase ) {
-    if ( nullptr == pScene ) {
+    if ( nullptr == pScene ||  nullptr == pParamsBase ) {
         return false;
     }
 
@@ -148,9 +148,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             pMeshDeviceAsset->positionScale.x = scale.x();
             pMeshDeviceAsset->positionScale.y = scale.y();
             pMeshDeviceAsset->positionScale.z = scale.z();
-
             pMeshDeviceAsset->VertexCount = meshFb->submeshes( )->begin( )->vertex_count( );
-
 
             auto verticesSuballocResult = bufferPool.Suballocate( meshFb->vertices( )->Data( ), verticesByteSize );
             auto indicesSuballocResult = bufferPool.Suballocate( meshFb->indices( )->Data( ), indicesByteSize );
@@ -366,15 +364,17 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     return true;
 }
 
-bool apemode::SceneRendererVk::Recreate(const RecreateParametersBase * pParamsBase)
-{
-    auto pParams = (RecreateParametersVk*) pParamsBase;
+bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBase ) {
+    if ( nullptr == pParamsBase ) {
+        return false;
+    }
 
+    auto pParams = (RecreateParametersVk*) pParamsBase;
     if ( nullptr == pParams->pNode )
         return false;
 
-    std::set<std::string> includedFiles;
-    std::vector<uint8_t> compiledShaders[2];
+    std::set< std::string > includedFiles;
+    std::vector< uint8_t >  compiledShaders[ 2 ];
 
     if ( false == pParams->pShaderCompiler->Compile( "shaders/Scene.vert",
                                                      {},
@@ -392,22 +392,21 @@ bool apemode::SceneRendererVk::Recreate(const RecreateParametersBase * pParamsBa
 
     VkShaderModuleCreateInfo vertexShaderCreateInfo;
     apemodevk::InitializeStruct( vertexShaderCreateInfo );
-    vertexShaderCreateInfo.pCode    = (const uint32_t*) compiledShaders[ 0 ].data( );
+    vertexShaderCreateInfo.pCode = (const uint32_t*) compiledShaders[ 0 ].data( );
     vertexShaderCreateInfo.codeSize = compiledShaders[ 0 ].size( );
 
     VkShaderModuleCreateInfo fragmentShaderCreateInfo;
     apemodevk::InitializeStruct( fragmentShaderCreateInfo );
-    fragmentShaderCreateInfo.pCode    = (const uint32_t*) compiledShaders[ 1 ].data( );
+    fragmentShaderCreateInfo.pCode = (const uint32_t*) compiledShaders[ 1 ].data( );
     fragmentShaderCreateInfo.codeSize = compiledShaders[ 1 ].size( );
 
     apemodevk::TDispatchableHandle< VkShaderModule > hVertexShaderModule;
     apemodevk::TDispatchableHandle< VkShaderModule > hFragmentShaderModule;
     if ( false == hVertexShaderModule.Recreate( *pParams->pNode, vertexShaderCreateInfo ) ||
-        false == hFragmentShaderModule.Recreate( *pParams->pNode, fragmentShaderCreateInfo ) ) {
+         false == hFragmentShaderModule.Recreate( *pParams->pNode, fragmentShaderCreateInfo ) ) {
         DebugBreak( );
         return false;
     }
-
 
     VkDescriptorSetLayoutBinding bindings[ 1 ];
     apemodevk::InitializeStruct( bindings );
