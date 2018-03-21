@@ -49,6 +49,7 @@ namespace apemode {
         XMFLOAT3                       positionScale;
         XMFLOAT2                       texcoordOffset;
         XMFLOAT2                       texcoordScale;
+        
         /*
         Buffer *                       pVertexBuffer = nullptr;
         Buffer *                       pIndexBuffer = nullptr;
@@ -97,7 +98,6 @@ namespace apemode {
         XMMATRIX CalculateGeometricMatrix( ) const;
     };
 
-    class Scene;
     struct SceneNode {
         void *pDeviceAsset = nullptr;
 
@@ -112,8 +112,7 @@ namespace apemode {
         */
     };
 
-    class Scene {
-    public:
+    struct Scene {
         //
         // Scene components
         //
@@ -166,5 +165,10 @@ namespace apemode {
     using UniqueScenePtr     = typename std::unique_ptr< Scene >;
     using UniqueScenePtrPair = typename std::pair< std::unique_ptr< Scene >, const apemodefb::SceneFb * >;
 
+    /**
+     * Loads scene from loaded .FBXP file
+     * @return A pair of pointers: (1) a unique pointer to scene, (2) a pointer to a source scene
+     * @note A pointer to source scene reinterprets the data from .FBXP file and depends on it.
+     **/
     UniqueScenePtrPair LoadSceneFromBin( const uint8_t *pData, size_t dataSize );
 }

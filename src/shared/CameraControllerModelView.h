@@ -63,11 +63,11 @@ namespace apemode {
             auto consume = orbitCurr * _amount;
             orbitCurr -= consume;
 
-            auto toPosNorm = targetDst - positionDst;
+            auto toPosNorm = positionDst - targetDst;
             auto toPosLen  = XMVector3Length( toPosNorm );
             toPosNorm /= toPosLen;
 
-            auto inv = XMVectorSet( -1.0f + bInverseOrbitXY.x, -1.0f +  + bInverseOrbitXY.y, 0, 0 );
+            auto inv = XMVectorSet( -1.0f + bInverseOrbitXY.x * 2.0f, -1.0f +  + bInverseOrbitXY.y * 2.0f, 0, 0 );
             auto ll = LatLongFromVec( toPosNorm ) + consume * inv;
             ll = XMVectorSetY( ll, std::min( 0.98f, std::max( 0.02f, XMVectorGetY( ll ) ) ) );
 
@@ -75,10 +75,7 @@ namespace apemode {
             auto diff = ( tmp - toPosNorm ) * toPosLen;
 
             position += diff;
-            position = XMVector3Normalize( position ) * toPosLen;
-
             positionDst += diff;
-            positionDst = XMVector3Normalize( positionDst ) * toPosLen;
 
             XMStoreFloat2( &OrbitCurr, orbitCurr );
             XMStoreFloat3( &Position, position );
