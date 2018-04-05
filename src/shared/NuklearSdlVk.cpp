@@ -194,10 +194,6 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* p ) {
         offset += cmd->elem_count;
     }
 
-#ifdef NK_INCLUDE_VERTEX_BUFFER_OUTPUT
-    nk_draw_list_clear( &Context.draw_list );
-#endif
-
     return true;
 }
 
