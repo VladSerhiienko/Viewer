@@ -3,7 +3,7 @@
 #pragma warning( push )
 #pragma warning( disable: 4244 )
 
-#include <cxxopts.hpp>
+#include <argh.h>
 #include <spdlog/spdlog.h>
 #include <spdlog/fmt/ostr.h>
 
@@ -17,8 +17,7 @@ namespace apemode {
      */
     class AppStoredValue {
     public:
-        virtual ~AppStoredValue( ) {
-        }
+        virtual ~AppStoredValue( ) = default;
     };
 
     /**
@@ -27,11 +26,8 @@ namespace apemode {
      */
     class AppState {
     public:
-        int          Argc   = 0;
-        const char** ppArgv = nullptr;
-
         std::shared_ptr< spdlog::logger >                          Logger;       /* Prints to console and file */
-        std::unique_ptr< cxxopts::Options >                        Options;      /* User parameters */
+        argh::parser                                               Cmdl;         /* User parameters */
         std::map< std::string, std::unique_ptr< AppStoredValue > > StoredValues; /* User values */
 
         /**
@@ -48,35 +44,26 @@ namespace apemode {
     };
 
     /**
-     * @brief Passes Options instance to the functor, if it is available.
-     *
-     * IfHasOptions( [&] ( Options & options ) {
-     *     auto opt1 = options["option-1"].as< string >( );
-     *     auto opt2 = options["option-2"].as< string >( );
-     *     auto opt3 = options["option-3"].as< string >( );
-     * }
-     **/
-    template < typename TFunc >
-    inline void IfHasOptions( TFunc F ) {
-        if ( AppState::Get( ) && AppState::Get( )->Options )
-            F( *AppState::Get( )->Options );
-    }
-
-    /**
      * @return Command line option of specified type.
      * @note Silences exceptions, returns default value.
      * auto sceneFiles = TGetOption< std::vector< std::string > >("scene", {});
      **/
     template < typename TOption >
-    inline const TOption & TGetOption( const char* optionName, const TOption & defaultValue ) {
+    inline TOption TGetOption( const char* const optionName, const TOption& defaultValue ) {
+        if ( AppState::Get( ) && AppState::Get( )->Cmdl( {optionName} ) ) {
+            TOption option;
+            if ( AppState::Get( )->Cmdl[ {optionName} ] >> option )
+                return option;
+        }
 
-        if ( AppState::Get( ) && AppState::Get( )->Options ) {
-            try {
-                auto& optionDetails = AppState::Get( )->Options->operator[]( optionName );
-                return 0 == optionDetails.count( ) ? defaultValue : optionDetails.as< TOption >( );
-            } catch ( const std::exception& e ) {
-                AppState::Get( )->Logger->error( "Failed to get option \"{}\" [{}]", optionName, e.what( ) );
-            }
+        return defaultValue;
+    }
+
+    template <>
+    inline std::string TGetOption( const char* const optionName, const std::string& defaultValue ) {
+        if ( AppState::Get( ) && AppState::Get( )->Cmdl( {optionName} ) ) {
+            std::string option = AppState::Get( )->Cmdl( {optionName} ).str( );
+            return option;
         }
 
         return defaultValue;

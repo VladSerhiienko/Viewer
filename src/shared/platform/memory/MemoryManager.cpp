@@ -9,65 +9,32 @@
 #define USE_DLMALLOC 1
 #endif
 
-void *operator new( size_t size ) {
-    return apemode_malloc( size );
+void *operator new[]( std::size_t s, std::nothrow_t const & ) noexcept {
+    return apemode_calloc( 1, s );
+    // return apemode_malloc( s );
 }
 
-void *operator new[]( size_t size ) {
-    return apemode_malloc( size );
-}
-
-void *operator new[]( size_t size,
-                      const char *  /*name*/,
-                      int           /*flags*/,
-                      unsigned      /*debugFlags*/,
-                      const char *  /*file*/,
-                      int           /*line*/ ) {
-    return apemode_malloc( size );
-}
-
-void *operator new[]( size_t size,
-                      size_t        /*alignment*/,
-                      size_t        /*alignmentOffset*/,
-                      const char *  /*name*/,
-                      int           /*flags*/,
-                      unsigned      /*debugFlags*/,
-                      const char *  /*file*/,
-                      int           /*line*/ ) {
-    return apemode_malloc( size );
-}
-
-void *operator new( size_t size, size_t /*alignment*/ ) {
-    return apemode_malloc( size );
-}
-
-void *operator new( size_t size, size_t /*alignment*/, const std::nothrow_t & ) throw( ) {
-    return apemode_malloc( size );
-}
-
-void *operator new[]( size_t size, size_t /*alignment*/ ) {
-    return apemode_malloc( size );
-}
-
-void *operator new[]( size_t size, size_t /*alignment*/, const std::nothrow_t & ) throw( ) {
-    return apemode_malloc( size );
-}
-
-// C++14 deleter
-void operator delete( void *p, std::size_t /*sz*/ ) throw( ) {
-    apemode_free( p );
-}
-
-void operator delete[]( void *p, std::size_t /*sz*/ ) throw( ) {
-    apemode_free( p );
-}
-
-void operator delete( void *p ) throw( ) {
-    apemode_free( p );
+void *operator new[]( std::size_t s ) throw( std::bad_alloc ) {
+    return apemode_calloc( 1, s );
+    // return apemode_malloc( s );
 }
 
 void operator delete[]( void *p ) throw( ) {
-    apemode_free( p );
+    return apemode_free( p );
+}
+
+void *operator new( std::size_t s, std::nothrow_t const & ) noexcept {
+    return apemode_calloc( 1, s );
+    // return apemode_malloc( s );
+}
+
+void *operator new( std::size_t s ) throw( std::bad_alloc ) {
+    return apemode_calloc( 1, s );
+    // return apemode_malloc( s );
+}
+
+void operator delete( void *p ) throw( ) {
+    return apemode_free( p );
 }
 
 #undef apemode_malloc
@@ -109,13 +76,7 @@ static thread_local mspace tlms = create_mspace( 0, 0 );
 namespace apemode {
     void *allocate( size_t size ) {
 #if defined( USE_DLMALLOC )
-
         return dlmalloc( size );
-
-#elif defined( __ANDROID__ )
-        void *p = nullptr;
-        ::posix_memalign( &p, alignment, size );
-        return p;
 #else
         return malloc( size );
 #endif
@@ -123,11 +84,7 @@ namespace apemode {
 
     void *callocate( size_t num, size_t size ) {
 #if defined( USE_DLMALLOC )
-
         return dlcalloc( num, size );
-
-#elif defined( __ANDROID__ )
-        static_assert(true, "Not implemented.");
 #else
         return calloc( num, size );
 #endif
@@ -147,14 +104,9 @@ namespace apemode {
 
     void deallocate( void *p ) {
 #if defined( USE_DLMALLOC )
-
         return dlfree( p );
-
-#elif defined( __ANDROID__ )
-        ::free( p );
 #else
-        ::free( p );
-        //::_aligned_free( p );
+        return free( p );
 #endif
     }
 

@@ -31,6 +31,8 @@ void apemode::AppState::OnExit( ) {
 
 std::string ComposeLogFile( ) {
 
+    #if 1
+
     tm* pCurrentTime = nullptr;
     time_t currentSystemTime = std::chrono::system_clock::to_time_t( std::chrono::system_clock::now( ) );
 
@@ -55,6 +57,12 @@ std::string ComposeLogFile( ) {
     logFile += ".txt";
 
     return logFile;
+
+    #else
+
+    return "log-file.txt";
+
+    #endif
 }
 
 std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, std::string logFile ) {
@@ -91,10 +99,8 @@ std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, s
 }
 
 apemode::AppState::AppState( int argc, const char** argv )
-    : Argc( argc )
-    , ppArgv( argv )
-    , Logger( CreateLogger( spdlog::level::trace, ComposeLogFile( ) ) )
-    , Options( new cxxopts::Options( argc ? argv[ 0 ] : "" ) ) {
+    : Logger( CreateLogger( spdlog::level::trace, ComposeLogFile( ) ) )
+    , Cmdl( argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION ) {
 }
 
 apemode::AppState::~AppState( ) {

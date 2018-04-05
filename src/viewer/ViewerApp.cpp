@@ -2,6 +2,8 @@
 
 using namespace apemode;
 
+#ifndef _WIN32
+
 inline void DebugBreak( ) {
     apemodevk::platform::DebugBreak( );
 }
@@ -9,6 +11,8 @@ inline void DebugBreak( ) {
 inline void OutputDebugStringA( const char* pDebugStringA ) {
     SDL_LogInfo( SDL_LOG_CATEGORY_RENDER, pDebugStringA );
 }
+
+#endif
 
 namespace apemode {
     using namespace apemodexm;
@@ -84,22 +88,8 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 
 ViewerApp::ViewerApp( ) {
     pCamController = apemode::make_unique< ModelViewCameraController >();
-    //pCamController = apemode::make_unique< FreeLookCameraController >( );
     pCamInput      = apemode::make_unique< MouseKeyboardCameraControllerInput >( );
-
-    if ( AppState::Get( ) && AppState::Get( )->Options ) {
-        AppState::Get( )->Options->add_options( "app" )
-            ( "assets", "Asset storage folder path", cxxopts::value< std::string >( ) )
-            ( "scene", "Scene file", cxxopts::value< std::vector< std::string > >( ) );
-
-        AppState::Get()->Options->add_options( "vk" )
-            ( "renderdoc", "Adds renderdoc layer to device layers" )
-            ( "vkapidump", "Adds api dump layer to vk device layers" )
-            ( "vktrace", "Adds vktrace layer to vk device layers" );
-
-        AppState::Get( )->Options->parse( AppState::Get( )->Argc,
-                                          AppState::Get( )->ppArgv );
-    }
+    //pCamController = apemode::make_unique< FreeLookCameraController >( );
 }
 
 ViewerApp::~ViewerApp( ) {
@@ -113,7 +103,7 @@ bool ViewerApp::Initialize(  ) {
 
     if ( AppBase::Initialize( ) ) {
 
-        std::string assetsFolder = TGetOption< std::string >( "assets", "./" );
+        std::string assetsFolder = TGetOption< std::string >( "--assets", "./" );
         mAssetManager.AddFilesFromDirectory( assetsFolder, {} );
 
         // Shaders and possible headers ...
@@ -239,17 +229,16 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        auto sceneFiles = TGetOption< std::vector< std::string > >( "scene", {} );
-        for ( auto sceneFile : sceneFiles ) {
+        auto sceneFile = TGetOption< std::string >( "scene", "" ); {
             auto sceneFileContent = apemodeos::FileReader( ).ReadBinFile( sceneFile );
             auto loadedScene = LoadSceneFromBin( sceneFileContent.data( ), sceneFileContent.size( ) );
 
-            SceneSources[ loadedScene.first.get( ) ] = SceneSourceData( loadedScene.second, std::move( sceneFileContent ) );
-            Scenes.emplace_back( std::move( loadedScene.first ) );
+            pScene = std::move( loadedScene.first );
+            pSceneSource = SceneSourceData( loadedScene.second, std::move( sceneFileContent ) );
         }
 
-        updateParams.pSceneSrc = SceneSources[ Scenes.back( ).get( ) ].first;
-        if ( false == pSceneRendererBase->UpdateScene( Scenes.back( ).get( ), &updateParams ) ) {
+        updateParams.pSceneSrc = pSceneSource.first;
+        if ( false == pSceneRendererBase->UpdateScene( pScene.get( ), &updateParams ) ) {
             DebugBreak( );
             return false;
         }
@@ -662,7 +651,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 
         pSkyboxRenderer->Reset( FrameIndex );
         pDebugRenderer->Reset( FrameIndex );
-        pSceneRendererBase->Reset( Scenes.back( ).get( ), FrameIndex );
+        pSceneRendererBase->Reset( pScene.get( ), FrameIndex );
 
         apemodevk::SkyboxRenderer::RenderParameters skyboxRenderParams;
         XMStoreFloat4x4( &skyboxRenderParams.InvViewMatrix, InvView );
@@ -722,7 +711,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         sceneRenderParameters.pNode      = appSurfaceVk->pNode;
         sceneRenderParameters.ViewMatrix = frameData.viewMatrix;
         sceneRenderParameters.ProjMatrix = frameData.projectionMatrix;
-        pSceneRendererBase->RenderScene( Scenes.back( ).get( ), &sceneRenderParameters );
+        pSceneRendererBase->RenderScene( pScene.get( ), &sceneRenderParameters );
 
         NuklearRendererSdlVk::RenderParametersVk renderParamsNk;
         renderParamsNk.dims[ 0 ]          = (float) width;
@@ -741,7 +730,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         vkCmdEndRenderPass( cmdBuffer );
 
         pDebugRenderer->Flush( FrameIndex );
-        pSceneRendererBase->Flush( Scenes.back( ).get( ), FrameIndex );
+        pSceneRendererBase->Flush( pScene.get( ), FrameIndex );
         pSkyboxRenderer->Flush( FrameIndex );
 
         VkPipelineStageFlags waitPipelineStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;

@@ -3,8 +3,7 @@
 #include <new>
 #include <memory>
 
-#if _WIN32
-
+// #if _WIN32
 #ifndef APEMODE_USE_MEMORY_TRACKING
 #define APEMODE_USE_MEMORY_TRACKING
 #endif
@@ -12,8 +11,7 @@
 #ifndef APEMODE_USE_DLMALLOC
 #define APEMODE_USE_DLMALLOC
 #endif
-
-#endif
+// #endif
 
 #ifndef APEMODE_DEFAULT_ALIGNMENT
 #define APEMODE_DEFAULT_ALIGNMENT ( sizeof( void* ) << 1 )

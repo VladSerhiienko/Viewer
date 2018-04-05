@@ -30,15 +30,14 @@ endif()
 
 #
 #
-# cxxopts
+# argh
 #
 #
 
 ExternalProject_Add(
-    cxxopts
-    GIT_REPOSITORY "git@github.com:jarro2783/cxxopts.git"
-    GIT_TAG "1_0"
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/cxxopts"
+    argh
+    GIT_REPOSITORY "git@github.com:adishavit/argh.git"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/argh"
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
@@ -47,9 +46,9 @@ ExternalProject_Add(
     LOG_DOWNLOAD ON
 )
 
-ExternalProject_Get_Property(cxxopts SOURCE_DIR)
-set(cxxopts_source_dir ${SOURCE_DIR})
-message(STATUS "cxxopts_source_dir = ${cxxopts_source_dir}")
+ExternalProject_Get_Property(argh SOURCE_DIR)
+set(argh_source_dir ${SOURCE_DIR})
+message(STATUS "argh_source_dir = ${cargh_source_dir}")
 
 #
 #
@@ -554,7 +553,7 @@ source_group("Shared Vulkan Sources" FILES ${shared_vk_source_files})
 
 add_dependencies(
     Viewer
-    cxxopts
+    argh
     spdlog
     zlib
     flatbuffers
@@ -592,7 +591,7 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator/src
     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath
     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath/Inc
-    ${CMAKE_SOURCE_DIR}/dependencies/cxxopts/include
+    ${CMAKE_SOURCE_DIR}/dependencies/argh
     ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
     ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
     ${CMAKE_SOURCE_DIR}/dependencies/sdl2/include

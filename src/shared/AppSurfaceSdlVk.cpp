@@ -19,15 +19,14 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
 
         uint32_t graphicsManagerFlags = 0;
 
-        if ( auto appState = apemode::AppState::Get( ) )
-            if ( appState->Options ) {
-                if ( ( *appState->Options )[ "renderdoc" ].count( ) )
-                    graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_RENDERDOC_Capture;
-                if ( ( *appState->Options )[ "vktrace" ].count( ) )
-                    graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_LUNARG_vktrace;
-                if ( ( *appState->Options )[ "vkapidump" ].count( ) )
-                    graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_LUNARG_api_dump;
-            }
+        if ( TGetOption< bool >( "renderdoc", false ) )
+            graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_RENDERDOC_Capture;
+
+        if ( TGetOption< bool >( "vktrace", false ) )
+            graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_LUNARG_vktrace;
+
+        if ( TGetOption< bool >( "vkapidump", false ) )
+            graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_LUNARG_api_dump;
 
         if ( DeviceManager.RecreateGraphicsNodes( graphicsManagerFlags ) ) {
             pNode = DeviceManager.GetPrimaryGraphicsNode( );
