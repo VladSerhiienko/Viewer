@@ -668,6 +668,10 @@ elseif(WIN32)
         ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/flatbuffers.lib
         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/EAStdC.lib
         ${shaderc_binary_dir}/libshaderc${CONFIGURATION_SUFFIX}/shaderc_combined.lib
+        ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-core.lib
+        ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-util.lib
+        ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-cpp.lib
+        ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-glsl.lib
     )
 endif()
 

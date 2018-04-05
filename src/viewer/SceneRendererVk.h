@@ -12,6 +12,8 @@
 #endif
 
 namespace apemode {
+    struct Scene;
+
     class SceneRendererVk : public SceneRendererBase {
     public:
         struct RecreateParametersVk : RecreateParametersBase {

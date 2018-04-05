@@ -50,10 +50,19 @@ namespace apemode {
      **/
     template < typename TOption >
     inline TOption TGetOption( const char* const optionName, const TOption& defaultValue ) {
-        if ( AppState::Get( ) && AppState::Get( )->Cmdl( {optionName} ) ) {
+        if ( AppState::Get( ) && AppState::Get( )->Cmdl[ {optionName} ] ) {
             TOption option;
-            if ( AppState::Get( )->Cmdl[ {optionName} ] >> option )
+            if ( AppState::Get( )->Cmdl( {optionName} ) >> option )
                 return option;
+        }
+
+        return defaultValue;
+    }
+
+    template < >
+    inline bool TGetOption( const char* const optionName, const bool& defaultValue ) {
+        if ( AppState::Get( ) && AppState::Get( )->Cmdl[ {optionName} ] ) {
+            return AppState::Get( )->Cmdl[ {optionName} ];
         }
 
         return defaultValue;

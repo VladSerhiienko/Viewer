@@ -8,7 +8,7 @@ namespace apemodefb
 
 namespace apemode {
 
-    class Scene;
+    struct Scene;
 
     /* Scene renderer will have a simple interface to allow the best flexibility for its implementations */
     class SceneRendererBase {

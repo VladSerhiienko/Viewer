@@ -31,8 +31,6 @@ void apemode::AppState::OnExit( ) {
 
 std::string ComposeLogFile( ) {
 
-    #if 1
-
     tm* pCurrentTime = nullptr;
     time_t currentSystemTime = std::chrono::system_clock::to_time_t( std::chrono::system_clock::now( ) );
 
@@ -57,12 +55,6 @@ std::string ComposeLogFile( ) {
     logFile += ".txt";
 
     return logFile;
-
-    #else
-
-    return "log-file.txt";
-
-    #endif
 }
 
 std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, std::string logFile ) {
@@ -74,21 +66,21 @@ std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, s
         std::make_shared< spdlog::sinks::simple_file_sink_mt >( logFile.c_str( ) )
 #else
         std::make_shared< spdlog::sinks::stdout_sink_mt >( ),
-        std::make_shared< spdlog::sinks::simple_file_sink_mt >( logFile )
+        std::make_shared< spdlog::sinks::simple_file_sink_mt >( logFile.c_str( ) )
 #endif
     };
 
-    auto logger = spdlog::create<>( "the-forge", sinks.begin( ), sinks.end( ) );
+    auto logger = spdlog::create<>( "viewer", sinks.begin( ), sinks.end( ) );
     logger->set_level( lvl );
 
     spdlog::set_pattern( "%v" );
 
     logger->info( "" );
-    logger->info(" _    ___");
-    logger->info("| |  / (_)__ _      _____  _____");
-    logger->info("| | / / / _ \\ | /| / / _ \\/ ___/");
-    logger->info("| |/ / /  __/ |/ |/ /  __/ /");
-    logger->info("|___/_/\\___/|__/|__/\\___/_/");
+    logger->info( " _    ___" );
+    logger->info( "| |  / (_)__ _      _____  _____" );
+    logger->info( "| | / / / _ \\ | /| / / _ \\/ ___/" );
+    logger->info( "| |/ / /  __/ |/ |/ /  __/ /" );
+    logger->info( "|___/_/\\___/|__/|__/\\___/_/" );
     logger->info( "" );
 
     spdlog::set_pattern( "%c" );
