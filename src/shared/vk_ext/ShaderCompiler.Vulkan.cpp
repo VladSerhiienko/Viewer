@@ -1,6 +1,7 @@
 #include <ShaderCompiler.Vulkan.h>
 
 #include <shaderc/shaderc.hpp>
+#include <spirv_glsl.hpp>
 
 struct apemodevk::ShaderCompiler::Impl {
     shaderc::Compiler                                 Compiler;
@@ -173,6 +174,10 @@ bool apemodevk::ShaderCompiler::Compile( const std::string&                Shade
     OutCompiledShader.resize( spvSize );
     memcpy( OutCompiledShader.data( ), spvCompilationResult.cbegin( ), OutCompiledShader.size( ) );
 
+    // The SPIR-V is now parsed, and we can perform reflection on it.
+    // spirv_cross::CompilerGLSL    glsl( (const uint32_t*) OutCompiledShader.data( ), OutCompiledShader.size( ) / 4 );
+    // spirv_cross::ShaderResources resources = glsl.get_shader_resources( );
+
     return true;
 }
 
@@ -189,7 +194,7 @@ bool apemodevk::ShaderCompiler::Compile( const std::string&                InFil
 
     shaderc::CompileOptions options;
     options.SetSourceLanguage( shaderc_source_language_glsl );
-    options.SetOptimizationLevel( shaderc_optimization_level_size );
+    options.SetOptimizationLevel( shaderc_optimization_level_zero );
     options.SetTargetEnvironment( shaderc_target_env_vulkan, 0 );
     options.SetIncluder( apemode::make_unique< Includer >( *pImpl->pShaderFileReader, OutIncludedFiles ) );
 
@@ -288,6 +293,10 @@ bool apemodevk::ShaderCompiler::Compile( const std::string&                InFil
 
         OutCompiledShader.resize( spvSize );
         memcpy( OutCompiledShader.data( ), spvCompilationResult.cbegin( ), OutCompiledShader.size( ) );
+
+        // The SPIR-V is now parsed, and we can perform reflection on it.
+        // spirv_cross::CompilerGLSL    glsl( (const uint32_t*) OutCompiledShader.data( ), OutCompiledShader.size( ) / 4 );
+        // spirv_cross::ShaderResources resources = glsl.get_shader_resources( );
 
         return true;
     }

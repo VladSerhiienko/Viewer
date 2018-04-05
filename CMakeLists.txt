@@ -249,7 +249,7 @@ ExternalProject_Add(
     sdl2
     URL http://www.libsdl.org/release/SDL2-2.0.7.tar.gz
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/sdl2"
-    CMAKE_ARGS -B${BUILD_FOLDER_SUFFIX} -H. -DCMAKE_DEBUG_POSTFIX:STRING=
+    CMAKE_ARGS ${default_cmake_args} -DCMAKE_DEBUG_POSTFIX:STRING=
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
     TEST_COMMAND ""
@@ -276,7 +276,7 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Headers"
-    CMAKE_ARGS -B${BUILD_FOLDER_SUFFIX} -H.
+    CMAKE_ARGS ${default_cmake_args}
     TEST_COMMAND ""
     INSTALL_COMMAND ""
 )
@@ -301,7 +301,7 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/glslang"
-    CMAKE_ARGS -B${BUILD_FOLDER_SUFFIX} -H.
+    CMAKE_ARGS ${default_cmake_args}
     TEST_COMMAND ""
     INSTALL_COMMAND ""
 )
@@ -327,7 +327,7 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Tools"
-    CMAKE_ARGS -B${BUILD_FOLDER_SUFFIX} -H. -DSPIRV-Headers_SOURCE_DIR:PATH=${spirv_headers_source_dir}
+    CMAKE_ARGS ${default_cmake_args} -DSPIRV-Headers_SOURCE_DIR:PATH=${spirv_headers_source_dir}
     TEST_COMMAND ""
     INSTALL_COMMAND ""
 )
@@ -338,6 +338,32 @@ set(spirv_tools_source_dir ${SOURCE_DIR})
 set(spirv_tools_binary_dir ${BINARY_DIR})
 message(STATUS "spirv_tools_source_dir = ${spirv_tools_source_dir}")
 message(STATUS "spirv_tools_binary_dir = ${spirv_tools_binary_dir}")
+
+#
+#
+# spirv_cross
+#
+#
+
+ExternalProject_Add(
+    spirv_cross
+    DEPENDS spirv_headers glslang
+    GIT_REPOSITORY "git@github.com:KhronosGroup/SPIRV-Cross.git"
+    GIT_TAG "master"
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Cross"
+    CMAKE_ARGS ${default_cmake_args}
+    TEST_COMMAND ""
+    INSTALL_COMMAND ""
+)
+
+ExternalProject_Get_Property(spirv_cross SOURCE_DIR)
+ExternalProject_Get_Property(spirv_cross BINARY_DIR)
+set(spirv_cross_source_dir ${SOURCE_DIR})
+set(spirv_cross_binary_dir ${BINARY_DIR})
+message(STATUS "spirv_cross_source_dir = ${spirv_cross_source_dir}")
+message(STATUS "spirv_cross_binary_dir = ${spirv_cross_binary_dir}")
 
 #
 #
@@ -353,11 +379,11 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/shaderc"
-    CMAKE_ARGS -B${BUILD_FOLDER_SUFFIX} -H. -DSHADERC_ENABLE_SHARED_CRT:BOOL=TRUE # MD
-                                            -DSHADERC_SKIP_TESTS:BOOL=TRUE
-                                            -DSHADERC_SPIRV_TOOLS_DIR:PATH=${spirv_tools_source_dir}
-                                            -DSHADERC_SPIRV_HEADERS_DIR:PATH=${spirv_headers_source_dir}
-                                            -DSHADERC_GLSLANG_DIR:PATH=${glslang_source_dir}
+    CMAKE_ARGS ${default_cmake_args} -DSHADERC_ENABLE_SHARED_CRT:BOOL=TRUE # MD
+                                     -DSHADERC_SKIP_TESTS:BOOL=TRUE
+                                     -DSHADERC_SPIRV_TOOLS_DIR:PATH=${spirv_tools_source_dir}
+                                     -DSHADERC_SPIRV_HEADERS_DIR:PATH=${spirv_headers_source_dir}
+                                     -DSHADERC_GLSLANG_DIR:PATH=${glslang_source_dir}
     TEST_COMMAND ""
     INSTALL_COMMAND ""
 )
@@ -558,6 +584,7 @@ add_dependencies(
     zlib
     flatbuffers
     nuklear
+    spirv_cross
     shaderc
     DirectXMath
     FbxPipeline
@@ -595,6 +622,8 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
     ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
     ${CMAKE_SOURCE_DIR}/dependencies/sdl2/include
+    ${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Cross
+    ${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Cross/include
     ${CMAKE_SOURCE_DIR}/dependencies/EASTL/include
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
     ${shaderc_source_dir}/libshaderc/include
@@ -614,6 +643,10 @@ if (UNIX)
         stdc++fs
         ${sdl2_binary_dir}/libSDL2.a
         ${shaderc_binary_dir}/libshaderc/libshaderc_combined.a
+        ${spirv_cross_binary_dir}/libspirv-cross-core.a
+        ${spirv_cross_binary_dir}/libspirv-cross-cpp.a
+        ${spirv_cross_binary_dir}/libspirv-cross-glsl.a
+        ${spirv_cross_binary_dir}/libspirv-cross-util.a
         ${flatbuffers_binary_dir}/libflatbuffers.a
         ${eastl_binary_dir}/libEASTL.a
         ${eastl_binary_dir}/test/packages/EAStdC/libEAStdC.a
