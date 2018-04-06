@@ -13,6 +13,7 @@ namespace apemodevk {
         /* Simple interface to read files from shader assets */
         class IShaderFileReader {
         public:
+            virtual ~IShaderFileReader() = default;
             virtual bool ReadShaderTxtFile( const std::string& FilePath,
                                             std::string&       OutFileFullPath,
                                             std::string&       OutFileContent ) = 0;

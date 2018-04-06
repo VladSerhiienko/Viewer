@@ -57,7 +57,7 @@ namespace apemode
 
         ValueType Value;
 
-        CityHash64Wrapper( ) : Value( 0xc949d7c7509e6557ULL ) {
+        CityHash64Wrapper( ) : Value( 0xc949d7c7509e6557 ) {
         }
 
         CityHash64Wrapper( ValueType OtherHash ) : Value( OtherHash ) {
@@ -103,10 +103,9 @@ namespace apemode
         void CombineWithArray( TPlainStructure const *pStructsIt, TPlainStructure const *pStructsItEnd ) {
             static size_t const StructStride = sizeof( TPlainStructure );
 
-            auto const pBytes     = reinterpret_cast< char const * >( pStructsIt );
-            auto const ByteCount  = static_cast< size_t >( std::distance( pStructsIt, pStructsItEnd ) );
-            auto const BufferHash = CityHash64( pBytes, ByteCount );
-            Value                 = CityHash128to64( Value, BufferHash );
+            size_t const StructCount = static_cast< size_t >( std::distance( pStructsIt, pStructsItEnd ) );
+            uint64_t const BufferHash = CityHash64( reinterpret_cast< char const * >( pStructsIt ), StructCount * StructStride );
+            Value = CityHash128to64( Value, BufferHash );
         }
 
         CityHash64Wrapper &operator<<( CityHash64Wrapper const &Other ) {

@@ -31,11 +31,8 @@ namespace apemodevk
     //  Dispatchable handle types are a pointer to an opaque type. This pointer may be used by layers as part of
     //  intercepting API commands, and thus each API command takes a dispatchable type as its first parameter. Each
     //  object of a dispatchable type has a unique handle value.
-    template <typename TNativeHandle_,
-              typename TDeleter_ = TDispatchableHandleDeleter<TNativeHandle_>>
-    struct TDispatchableHandleBase : public apemodevk::ScalableAllocPolicy,
-                                     public apemodevk::NoCopyAssignPolicy
-    {
+    template < typename TNativeHandle_, typename TDeleter_ = TDispatchableHandleDeleter< TNativeHandle_ > >
+    struct TDispatchableHandleBase : public apemodevk::ScalableAllocPolicy, public apemodevk::NoCopyAssignPolicy {
         typedef TDeleter_ TDeleter;
         typedef TNativeHandle_ TNativeHandle;
         typedef TDispatchableHandleBase<TNativeHandle, TDeleter> SelfType;
