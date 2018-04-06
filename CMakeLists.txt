@@ -223,7 +223,7 @@ message(STATUS "DirectXMath_source_dir = ${DirectXMath_source_dir}")
 ExternalProject_Add(
     flatbuffers
     GIT_REPOSITORY "git@github.com:google/flatbuffers.git"
-    GIT_TAG "master"
+    GIT_TAG "v1.8.0"
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/flatbuffers"
@@ -460,7 +460,7 @@ endif()
 
 if (UNIX)
     add_definitions("-g")
-    
+
     if (CMAKE_VERSION VERSION_LESS "3.1")
       if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
         set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
@@ -516,11 +516,11 @@ set(
 
 set(
     shared_source_files
-    ${CMAKE_SOURCE_DIR}/src/shared/CityHash.cpp      
-    ${CMAKE_SOURCE_DIR}/src/shared/AppBase.cpp 
-    ${CMAKE_SOURCE_DIR}/src/shared/DebugRendererVk.cpp 
-    ${CMAKE_SOURCE_DIR}/src/shared/AppState.cpp 
-    ${CMAKE_SOURCE_DIR}/src/shared/AppSurfaceSdlVk.cpp  
+    ${CMAKE_SOURCE_DIR}/src/shared/CityHash.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/AppBase.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/DebugRendererVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/AppState.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/AppSurfaceSdlVk.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/NuklearSdlVk.cpp
 )
 
@@ -548,7 +548,7 @@ set(
 
 # vert|frag|comp|geom|tesc|tese|h|inl|inc|fx
 file(
-    GLOB 
+    GLOB
     Viewer_shader_source_files
     # Headers
     "${CMAKE_SOURCE_DIR}/assets/shaders/*.h"
@@ -563,7 +563,7 @@ file(
     "${CMAKE_SOURCE_DIR}/assets/shaders/*.comp"
     "${CMAKE_SOURCE_DIR}/assets/shaders/*.geom"
 )
-    
+
 add_executable(
     Viewer
     ${viewer_source_files}
@@ -661,7 +661,7 @@ elseif(WIN32)
         winmm.lib
         imm32.lib
         version.lib
-        
+
         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.lib
         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2main.lib
         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/EASTL.lib
