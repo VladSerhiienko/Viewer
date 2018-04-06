@@ -6,9 +6,11 @@
 #include <QueuePools.Vulkan.h>
 #include <ShaderCompiler.Vulkan.h>
 
+#include <AppState.h>
 #include <ArrayUtils.h>
 #include <shaderc/shaderc.hpp>
 
+using namespace apemode;
 using namespace DirectX;
 
 struct FrameUniformBuffer {
@@ -33,8 +35,9 @@ inline void OutputDebugStringA( const char* pDebugStringA ) {
 }
 
 bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
-    if ( nullptr == pParams->pNode )
+    if ( nullptr == pParams->pNode ) {
         return false;
+    }
 
     std::set< std::string > includedFiles;
     std::vector< uint8_t >  compiledShaders[ 2 ];
@@ -43,8 +46,11 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
                                                      {},
                                                      apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader,
                                                      includedFiles,
-                                                     compiledShaders[ 0 ] ) ||
-         false == pParams->pShaderCompiler->Compile( "shaders/Skybox.frag",
+                                                     compiledShaders[ 0 ] ) ) {
+        return false;
+    }
+
+    if ( false == pParams->pShaderCompiler->Compile( "shaders/Skybox.frag",
                                                      {},
                                                      apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader,
                                                      includedFiles,
@@ -236,7 +242,10 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
 
     for ( uint32_t i = 0; i < pParams->FrameCount; ++i ) {
         BufferPools[ i ].Recreate( *pParams->pNode, *pParams->pNode, &adapterProps.limits, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
-        DescSetPools[ i ].Recreate( *pParams->pNode, pParams->pDescPool, hDescSetLayout );
+
+        if ( false == DescSetPools[ i ].Recreate( *pParams->pNode, pParams->pDescPool, hDescSetLayout ) ) {
+            return false;
+        }
     }
 
     return true;
