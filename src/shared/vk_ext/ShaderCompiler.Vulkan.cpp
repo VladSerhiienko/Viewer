@@ -9,6 +9,27 @@ struct apemodevk::ShaderCompiler::Impl {
     apemodevk::ShaderCompiler::IShaderFeedbackWriter* pShaderFeedbackWriter = nullptr;
 };
 
+class CompiledShader : public apemodevk::ICompiledShader {
+public:
+    std::vector< uint32_t >   Dwords;
+    spirv_cross::CompilerGLSL Glsl;
+
+    CompiledShader( std::vector< uint32_t > dwords ) : Dwords( dwords ), Glsl( dwords ) {
+    }
+
+    const spirv_cross::CompilerGLSL& GetGlsl( ) const {
+        return Glsl;
+    }
+
+    const uint8_t* GetBytePtr( ) const override {
+        return reinterpret_cast< const uint8_t* >( Dwords.data( ) );
+    }
+    
+    size_t GetByteCount( ) const override {
+        return Dwords.size( ) << 2;
+    }
+};
+
 class Includer : public shaderc::CompileOptions::IncluderInterface {
 public:
     struct UserData {
@@ -16,21 +37,23 @@ public:
         std::string Path;
     };
 
-    std::set< std::string >& IncludedFiles;
+    apemodevk::ShaderCompiler::IIncludedFileSet*  pIncludedFiles;
     apemodevk::ShaderCompiler::IShaderFileReader& FileReader;
 
-    Includer( apemodevk::ShaderCompiler::IShaderFileReader& FileReader, std::set< std::string >& IncludedFiles )
-        : FileReader( FileReader ), IncludedFiles( IncludedFiles ) {
+    Includer( apemodevk::ShaderCompiler::IShaderFileReader& FileReader,
+              apemodevk::ShaderCompiler::IIncludedFileSet*  pIncludedFiles )
+        : FileReader( FileReader ), pIncludedFiles( pIncludedFiles ) {
     }
 
     // Handles shaderc_include_resolver_fn callbacks.
-    shaderc_include_result* GetInclude( const char*          requested_source,
-                                        shaderc_include_type type,
-                                        const char*          requesting_source,
-                                        size_t               include_depth ) {
+    shaderc_include_result* GetInclude( const char*          pszRequestedSource,
+                                        shaderc_include_type eShaderIncludeType,
+                                        const char*          pszRequestingSource,
+                                        size_t               includeDepth ) {
+
         auto userData = apemode::make_unique< UserData >( );
-        if ( FileReader.ReadShaderTxtFile( requested_source, userData->Path, userData->Content ) ) {
-            IncludedFiles.insert( userData->Path );
+        if ( userData && FileReader.ReadShaderTxtFile( pszRequestedSource, userData->Path, userData->Content ) ) {
+            pIncludedFiles->InsertIncludedFile( userData->Path );
 
             auto includeResult                = apemode::make_unique< shaderc_include_result >( );
             includeResult->content            = userData->Content.data( );
@@ -74,232 +97,174 @@ void apemodevk::ShaderCompiler::SetShaderFeedbackWriter( IShaderFeedbackWriter* 
     pImpl->pShaderFeedbackWriter = pShaderFeedbackWriter;
 }
 
-bool apemodevk::ShaderCompiler::Compile( const std::string&                ShaderName,
-                                         const std::string&                ShaderCode,
-                                         const std::vector< std::string >& Macros,
-                                         EShaderType                       eShaderKind,
-                                         std::vector< uint8_t >&           OutCompiledShader ) {
+static std::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
+    const std::string&                                           shaderName,
+    const std::string&                                           shaderContent,
+    const apemodevk::ShaderCompiler::IMacroDefinitionCollection* pMacros,
+    const apemodevk::ShaderCompiler::EShaderType                 eShaderKind,
+    shaderc::CompileOptions&                                     options,
+    const bool                                                   bAssembly,
+    shaderc::Compiler*                                           pCompiler,
+    apemodevk::ShaderCompiler::IShaderFeedbackWriter*            pShaderFeedbackWriter ) {
+    using namespace apemodevk;
+
+    if ( nullptr == pCompiler ) {
+        return nullptr;
+    }
+
+    if ( pMacros )
+        for ( uint32_t i = 0; i < pMacros->GetCount( ); ++i ) {
+            const auto macroDefinition = pMacros->GetMacroDefinition( i );
+            options.AddMacroDefinition( std::string( macroDefinition.pszKey ), std::string( macroDefinition.pszValue ) );
+        }
+
+    shaderc::PreprocessedSourceCompilationResult preprocessedSourceCompilationResult =
+        pCompiler->PreprocessGlsl( shaderContent, (shaderc_shader_kind) eShaderKind, shaderName.c_str( ), options );
+
+    if ( shaderc_compilation_status_success != preprocessedSourceCompilationResult.GetCompilationStatus( ) ) {
+        if ( nullptr != pShaderFeedbackWriter ) {
+            pShaderFeedbackWriter->WriteFeedback(
+                apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed |
+                    preprocessedSourceCompilationResult.GetCompilationStatus( ),
+                shaderName,
+                pMacros,
+                preprocessedSourceCompilationResult.GetErrorMessage( ).cbegin( ).operator->( ),
+                preprocessedSourceCompilationResult.GetErrorMessage( ).cend( ).  operator->( ) );
+        }
+
+        platform::DebugBreak( );
+        return nullptr;
+    }
+
+    if ( nullptr != pShaderFeedbackWriter ) {
+        pShaderFeedbackWriter->WriteFeedback(
+            apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed |
+                apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success,
+            shaderName,
+            pMacros,
+            preprocessedSourceCompilationResult.cbegin( ),
+            preprocessedSourceCompilationResult.cend( ) );
+    }
+
+    if ( bAssembly ) {
+        shaderc::AssemblyCompilationResult assemblyCompilationResult = pCompiler->CompileGlslToSpvAssembly(
+            preprocessedSourceCompilationResult.begin( ), (shaderc_shader_kind) eShaderKind, shaderName.c_str( ), options );
+
+        if ( shaderc_compilation_status_success != assemblyCompilationResult.GetCompilationStatus( ) ) {
+            if ( nullptr != pShaderFeedbackWriter ) {
+                pShaderFeedbackWriter->WriteFeedback(
+                    ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Assembly |
+                        assemblyCompilationResult.GetCompilationStatus( ),
+                    shaderName,
+                    pMacros,
+                    assemblyCompilationResult.GetErrorMessage( ).cbegin( ).operator->( ),
+                    assemblyCompilationResult.GetErrorMessage( ).cend( ).  operator->( ) );
+            }
+
+            platform::DebugBreak( );
+            return nullptr;
+        }
+
+        if ( nullptr != pShaderFeedbackWriter ) {
+            pShaderFeedbackWriter->WriteFeedback(
+                ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Assembly |
+                    ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success,
+                shaderName,
+                pMacros,
+                assemblyCompilationResult.cbegin( ),
+                assemblyCompilationResult.cend( ) );
+        }
+    }
+
+    shaderc::SpvCompilationResult spvCompilationResult = pCompiler->CompileGlslToSpv(
+        preprocessedSourceCompilationResult.begin( ), (shaderc_shader_kind) eShaderKind, shaderName.c_str( ), options );
+
+    if ( shaderc_compilation_status_success != spvCompilationResult.GetCompilationStatus( ) ) {
+        if ( nullptr != pShaderFeedbackWriter ) {
+            pShaderFeedbackWriter->WriteFeedback( ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Spv |
+                                                      spvCompilationResult.GetCompilationStatus( ),
+                                                  shaderName,
+                                                  pMacros,
+                                                  spvCompilationResult.GetErrorMessage( ).cbegin( ).operator->( ),
+                                                  spvCompilationResult.GetErrorMessage( ).cend( ).  operator->( ) );
+        }
+
+        platform::DebugBreak( );
+        return nullptr;
+    }
+
+    if ( nullptr != pShaderFeedbackWriter ) {
+        pShaderFeedbackWriter->WriteFeedback(
+            ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Spv |
+                ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success,
+            shaderName,
+            pMacros,
+            spvCompilationResult.cbegin( ),
+            spvCompilationResult.cend( ) );
+    }
+
+    const size_t dwordCount = (size_t) std::distance( spvCompilationResult.cbegin( ), spvCompilationResult.cend( ) );
+    const size_t byteCount  = dwordCount * sizeof( shaderc::SpvCompilationResult::element_type );
+
+    std::vector< uint32_t > dwords;
+    dwords.resize( dwordCount );
+    memcpy( dwords.data( ), spvCompilationResult.cbegin( ), byteCount );
+
+    return apemode::make_unique< CompiledShader >( dwords );
+}
+
+std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile( const std::string& shaderName,
+                                                                                  const std::string& shaderContent,
+                                                                                  const IMacroDefinitionCollection* pMacros,
+                                                                                  const EShaderType eShaderKind ) {
     shaderc::CompileOptions options;
     options.SetSourceLanguage( shaderc_source_language_glsl );
     options.SetOptimizationLevel( shaderc_optimization_level_size );
     options.SetTargetEnvironment( shaderc_target_env_vulkan, 0 );
 
-    for ( uint32_t i = 0; i < Macros.size( ); i += 2 ) {
-        options.AddMacroDefinition( Macros[ i ], Macros[ i + 1 ] );
-    }
-
-    shaderc::PreprocessedSourceCompilationResult preprocessedSourceCompilationResult =
-        pImpl->Compiler.PreprocessGlsl( ShaderCode, (shaderc_shader_kind) eShaderKind, ShaderName.c_str( ), options );
-
-    if ( shaderc_compilation_status_success != preprocessedSourceCompilationResult.GetCompilationStatus( ) ) {
-        if ( nullptr != pImpl->pShaderFeedbackWriter ) {
-            pImpl->pShaderFeedbackWriter->WriteFeedback( IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed |
-                                                         preprocessedSourceCompilationResult.GetCompilationStatus( ),
-                                                         ShaderName,
-                                                         Macros,
-                                                         preprocessedSourceCompilationResult.GetErrorMessage( ).cbegin( ).operator->( ),
-                                                         preprocessedSourceCompilationResult.GetErrorMessage( ).cend( ).  operator->( ) );
-        }
-
-        platform::DebugBreak( );
-        return false;
-    }
-
-    if ( nullptr != pImpl->pShaderFeedbackWriter ) {
-        pImpl->pShaderFeedbackWriter->WriteFeedback( IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed |
-                                                     IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success,
-                                                     ShaderName,
-                                                     Macros,
-                                                     preprocessedSourceCompilationResult.cbegin( ),
-                                                     preprocessedSourceCompilationResult.cend( ) );
-    }
-
-#if 1
-    shaderc::AssemblyCompilationResult assemblyCompilationResult = pImpl->Compiler.CompileGlslToSpvAssembly(
-        preprocessedSourceCompilationResult.begin( ), (shaderc_shader_kind) eShaderKind, ShaderName.c_str( ), options );
-
-    if ( shaderc_compilation_status_success != assemblyCompilationResult.GetCompilationStatus( ) ) {
-        if ( nullptr != pImpl->pShaderFeedbackWriter ) {
-            pImpl->pShaderFeedbackWriter->WriteFeedback( IShaderFeedbackWriter::eFeedbackType_CompilationStage_Assembly |
-                                                         assemblyCompilationResult.GetCompilationStatus( ),
-                                                         ShaderName,
-                                                         Macros,
-                                                         assemblyCompilationResult.GetErrorMessage( ).cbegin( ).operator->( ),
-                                                         assemblyCompilationResult.GetErrorMessage( ).cend( ).  operator->( ) );
-        }
-
-        platform::DebugBreak( );
-        return false;
-    }
-
-    if ( nullptr != pImpl->pShaderFeedbackWriter ) {
-        pImpl->pShaderFeedbackWriter->WriteFeedback( IShaderFeedbackWriter::eFeedbackType_CompilationStage_Assembly |
-                                                     IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success,
-                                                     ShaderName,
-                                                     Macros,
-                                                     assemblyCompilationResult.cbegin( ),
-                                                     assemblyCompilationResult.cend( ) );
-    }
-#endif
-
-    shaderc::SpvCompilationResult spvCompilationResult = pImpl->Compiler.CompileGlslToSpv(
-        preprocessedSourceCompilationResult.begin( ), (shaderc_shader_kind) eShaderKind, ShaderName.c_str( ), options );
-
-    if ( shaderc_compilation_status_success != spvCompilationResult.GetCompilationStatus( ) ) {
-        if ( nullptr != pImpl->pShaderFeedbackWriter ) {
-            pImpl->pShaderFeedbackWriter->WriteFeedback( IShaderFeedbackWriter::eFeedbackType_CompilationStage_Spv |
-                                                         spvCompilationResult.GetCompilationStatus( ),
-                                                         ShaderName,
-                                                         Macros,
-                                                         spvCompilationResult.GetErrorMessage( ).cbegin( ).operator->( ),
-                                                         spvCompilationResult.GetErrorMessage( ).cend( ).  operator->( ) );
-        }
-
-        platform::DebugBreak( );
-        return false;
-    }
-
-    if ( nullptr != pImpl->pShaderFeedbackWriter ) {
-        pImpl->pShaderFeedbackWriter->WriteFeedback( IShaderFeedbackWriter::eFeedbackType_CompilationStage_Spv |
-                                                     IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success,
-                                                     ShaderName,
-                                                     Macros,
-                                                     spvCompilationResult.cbegin( ),
-                                                     spvCompilationResult.cend( ) );
-    }
-
-    const size_t spvSize = (size_t) std::distance( spvCompilationResult.cbegin( ), spvCompilationResult.cend( ) ) *
-                           sizeof( shaderc::SpvCompilationResult::element_type );
-
-    OutCompiledShader.resize( spvSize );
-    memcpy( OutCompiledShader.data( ), spvCompilationResult.cbegin( ), OutCompiledShader.size( ) );
-
-    // The SPIR-V is now parsed, and we can perform reflection on it.
-    // spirv_cross::CompilerGLSL    glsl( (const uint32_t*) OutCompiledShader.data( ), OutCompiledShader.size( ) / 4 );
-    // spirv_cross::ShaderResources resources = glsl.get_shader_resources( );
-
-    return true;
+    return InternalCompile( shaderName,
+                            shaderContent,
+                            pMacros,
+                            eShaderKind,
+                            options,
+                            true,
+                            &pImpl->Compiler,
+                            pImpl->pShaderFeedbackWriter );
 }
 
-bool apemodevk::ShaderCompiler::Compile( const std::string&                InFilePath,
-                                         const std::vector< std::string >& Macros,
-                                         EShaderType                       eShaderKind,
-                                         std::set< std::string >&          OutIncludedFiles,
-                                         std::vector< uint8_t >&           OutCompiledShader ) {
+std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile( const std::string&                InFilePath,
+                                                                                  const IMacroDefinitionCollection* pMacros,
+                                                                                  const EShaderType                 eShaderKind,
+                                                                                  IIncludedFileSet* pOutIncludedFiles ) {
     if ( nullptr == pImpl->pShaderFileReader ) {
         platform::DebugTrace( "ShaderCompiler: pShaderFileReader must be set." );
         platform::DebugBreak( );
-        return false;
+        return nullptr;
     }
 
     shaderc::CompileOptions options;
     options.SetSourceLanguage( shaderc_source_language_glsl );
     options.SetOptimizationLevel( shaderc_optimization_level_zero );
     options.SetTargetEnvironment( shaderc_target_env_vulkan, 0 );
-    options.SetIncluder( apemode::make_unique< Includer >( *pImpl->pShaderFileReader, OutIncludedFiles ) );
-
-    for ( uint32_t i = 0; i < Macros.size( ); i += 2 ) {
-        options.AddMacroDefinition( Macros[ i ], Macros[ i + 1 ] );
-    }
+    options.SetIncluder( apemode::make_unique< Includer >( *pImpl->pShaderFileReader, pOutIncludedFiles ) );
 
     std::string fullPath;
     std::string fileContent;
 
     if ( pImpl->pShaderFileReader->ReadShaderTxtFile( InFilePath, fullPath, fileContent ) ) {
-        shaderc::PreprocessedSourceCompilationResult preprocessedSourceCompilationResult =
-            pImpl->Compiler.PreprocessGlsl( fileContent, (shaderc_shader_kind) eShaderKind, fullPath.c_str( ), options );
-
-        if ( shaderc_compilation_status_success != preprocessedSourceCompilationResult.GetCompilationStatus( ) ) {
-            if ( nullptr != pImpl->pShaderFeedbackWriter ) {
-                pImpl->pShaderFeedbackWriter->WriteFeedback( IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed |
-                                                             preprocessedSourceCompilationResult.GetCompilationStatus( ),
-                                                             fullPath,
-                                                             Macros,
-                                                             preprocessedSourceCompilationResult.GetErrorMessage( ).cbegin( ).operator->( ),
-                                                             preprocessedSourceCompilationResult.GetErrorMessage( ).cend( ).operator->( ) );
-            }
-
-            platform::DebugBreak( );
-            return false;
+        auto compiledShader = InternalCompile( fullPath,
+                                               fileContent,
+                                               pMacros,
+                                               eShaderKind,
+                                               options,
+                                               true,
+                                               &pImpl->Compiler,
+                                               pImpl->pShaderFeedbackWriter );
+        if ( compiledShader ) {
+            pOutIncludedFiles->InsertIncludedFile( fullPath );
+            return std::move( compiledShader );
         }
-
-        if ( nullptr != pImpl->pShaderFeedbackWriter ) {
-            pImpl->pShaderFeedbackWriter->WriteFeedback( IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed |
-                                                         IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success,
-                                                         fullPath,
-                                                         Macros,
-                                                         preprocessedSourceCompilationResult.cbegin( ),
-                                                         preprocessedSourceCompilationResult.cend( ) );
-        }
-
-        OutIncludedFiles.insert( fullPath );
-
-#if 1
-        shaderc::AssemblyCompilationResult assemblyCompilationResult = pImpl->Compiler.CompileGlslToSpvAssembly(
-            preprocessedSourceCompilationResult.begin( ), (shaderc_shader_kind) eShaderKind, fullPath.c_str( ), options );
-
-        if ( shaderc_compilation_status_success != assemblyCompilationResult.GetCompilationStatus( ) ) {
-            if ( nullptr != pImpl->pShaderFeedbackWriter ) {
-                pImpl->pShaderFeedbackWriter->WriteFeedback( IShaderFeedbackWriter::eFeedbackType_CompilationStage_Assembly |
-                                                             assemblyCompilationResult.GetCompilationStatus( ),
-                                                             fullPath,
-                                                             Macros,
-                                                             assemblyCompilationResult.GetErrorMessage( ).cbegin( ).operator->( ),
-                                                             assemblyCompilationResult.GetErrorMessage( ).cend( ).operator->( ) );
-            }
-
-            platform::DebugBreak( );
-            return false;
-        }
-
-        if ( nullptr != pImpl->pShaderFeedbackWriter ) {
-            pImpl->pShaderFeedbackWriter->WriteFeedback( IShaderFeedbackWriter::eFeedbackType_CompilationStage_Assembly |
-                                                         IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success,
-                                                         fullPath,
-                                                         Macros,
-                                                         assemblyCompilationResult.cbegin( ),
-                                                         assemblyCompilationResult.cend( ) );
-        }
-#endif
-
-        shaderc::SpvCompilationResult spvCompilationResult = pImpl->Compiler.CompileGlslToSpv(
-            preprocessedSourceCompilationResult.begin( ), (shaderc_shader_kind) eShaderKind, fullPath.c_str( ), options );
-
-        if ( shaderc_compilation_status_success != spvCompilationResult.GetCompilationStatus( ) ) {
-            if ( nullptr != pImpl->pShaderFeedbackWriter ) {
-                pImpl->pShaderFeedbackWriter->WriteFeedback( IShaderFeedbackWriter::eFeedbackType_CompilationStage_Spv |
-                                                             spvCompilationResult.GetCompilationStatus( ),
-                                                             fullPath,
-                                                             Macros,
-                                                             spvCompilationResult.GetErrorMessage( ).cbegin( ).operator->( ),
-                                                             spvCompilationResult.GetErrorMessage( ).cend( ).operator->( ) );
-            }
-
-            platform::DebugBreak( );
-            return false;
-        }
-
-        if ( nullptr != pImpl->pShaderFeedbackWriter ) {
-            pImpl->pShaderFeedbackWriter->WriteFeedback( IShaderFeedbackWriter::eFeedbackType_CompilationStage_Spv |
-                                                         IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success,
-                                                         fullPath,
-                                                         Macros,
-                                                         spvCompilationResult.cbegin( ),
-                                                         spvCompilationResult.cend( ) );
-        }
-
-        const size_t spvSize = (size_t) std::distance( spvCompilationResult.cbegin( ), spvCompilationResult.cend( ) ) *
-                               sizeof( shaderc::SpvCompilationResult::element_type );
-
-        OutCompiledShader.resize( spvSize );
-        memcpy( OutCompiledShader.data( ), spvCompilationResult.cbegin( ), OutCompiledShader.size( ) );
-
-        // The SPIR-V is now parsed, and we can perform reflection on it.
-        // spirv_cross::CompilerGLSL    glsl( (const uint32_t*) OutCompiledShader.data( ), OutCompiledShader.size( ) / 4 );
-        // spirv_cross::ShaderResources resources = glsl.get_shader_resources( );
-
-        return true;
     }
 
-    return false;
+    return nullptr;
 }

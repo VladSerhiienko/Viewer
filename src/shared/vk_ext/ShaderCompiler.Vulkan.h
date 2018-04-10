@@ -1,15 +1,53 @@
 #pragma once
 
 #include <GraphicsDevice.Vulkan.h>
-#include <set>
 
 namespace apemodevk {
+
+    class ICompiledShader {
+    public:
+        virtual ~ICompiledShader( ) = default;
+
+        virtual const uint8_t*                   GetBytePtr( ) const   = 0;
+        virtual size_t                           GetByteCount( ) const = 0;
+        virtual const spirv_cross::CompilerGLSL& GetGlsl( ) const      = 0;
+
+        inline const uint32_t* GetDwordPtr( ) const {
+            return reinterpret_cast< const uint32_t* >( GetBytePtr( ) );
+        }
+
+        inline size_t GetDwordCount( ) const {
+            assert( GetByteCount( ) % 4 == 0 );
+            return GetByteCount( ) >> 2;
+        }
+    };
+
+    /* Wrapper for shaderc lib */
     class ShaderCompiler {
         struct Impl;
         friend Impl;
         Impl* pImpl;
 
     public:
+        struct MacroDefinition {
+            const char* pszKey   = nullptr;
+            const char* pszValue = nullptr;
+        };
+
+        class IMacroDefinitionCollection {
+        public:
+            virtual ~IMacroDefinitionCollection( )                                = default;
+            virtual size_t          GetCount( ) const                              = 0;
+            virtual MacroDefinition GetMacroDefinition( size_t macroIndex ) const = 0;
+        };
+
+        /* Simple interface to insert included files */
+        class IIncludedFileSet {
+        public:
+            virtual ~IIncludedFileSet() = default;
+            virtual void InsertIncludedFile( const std::string & includedFileName ) = 0;
+        };
+
         /* Simple interface to read files from shader assets */
         class IShaderFileReader {
         public:
@@ -48,7 +86,7 @@ namespace apemodevk {
              **/
             virtual void WriteFeedback( EFeedbackType                     eType,
                                         const std::string&                FullFilePath,
-                                        const std::vector< std::string >& Macros,
+                                        const IMacroDefinitionCollection* pMacros,
                                         const void*                       pContent, /* Txt or bin, @see EFeedbackType */
                                         const void*                       pContentEnd ) = 0;
         };
@@ -94,11 +132,10 @@ namespace apemodevk {
 
         /* @note No files, only ready to compile shader sources */
 
-        virtual bool Compile( const std::string&                ShaderName,
-                              const std::string&                ShaderCode,
-                              const std::vector< std::string >& Macros,
-                              EShaderType                       eShaderKind,
-                              std::vector< uint8_t >&           OutCompiledShader );
+        virtual std::unique_ptr< ICompiledShader > Compile( const std::string&                ShaderName,
+                                                            const std::string&                ShaderCode,
+                                                            const IMacroDefinitionCollection* pMacros,
+                                                            EShaderType                       eShaderKind );
 
         /* @note Compiling from source files */
 
@@ -107,10 +144,58 @@ namespace apemodevk {
         virtual void                   SetShaderFileReader( IShaderFileReader* pShaderFileReader );
         virtual void                   SetShaderFeedbackWriter( IShaderFeedbackWriter* pShaderFeedbackWriter );
 
-        virtual bool Compile( const std::string&                FilePath,
-                              const std::vector< std::string >& Macros,
-                              EShaderType                       eShaderKind,
-                              std::set< std::string >&          OutIncludedFiles,
-                              std::vector< uint8_t >&           OutCompiledShader );
+        virtual std::unique_ptr< ICompiledShader > Compile( const std::string&                FilePath,
+                                                            const IMacroDefinitionCollection* pMacros,
+                                                            EShaderType                       eShaderKind,
+                                                            IIncludedFileSet*                 pOutIncludedFiles );
     };
 } // namespace apemodevk
+
+#define APEMODE_DEFAULT_SHADERCOMPILER_INTERFACE_IMPLEMENTATIONS
+#ifdef APEMODE_DEFAULT_SHADERCOMPILER_INTERFACE_IMPLEMENTATIONS
+
+#include <set>
+#include <vector>
+
+namespace apemodevk {
+
+    class ShaderCompilerIncludedFileSet : public ShaderCompiler::IIncludedFileSet {
+    public:
+        std::set< std::string > IncludedFiles;
+
+        void InsertIncludedFile( const std::string& includedFileName ) override {
+            IncludedFiles.insert( includedFileName );
+        }
+    };
+
+    class ShaderCompilerMacroDefinitionCollection : public ShaderCompiler::IMacroDefinitionCollection {
+    public:
+        std::vector< std::string > Macros;
+
+        void Init( const std::map< std::string, std::string >& definitions ) {
+            Macros.clear( );
+            Macros.resize( definitions.size( ) << 1 );
+
+            for ( const auto& p : definitions ) {
+                Macros.push_back( p.first );
+                Macros.push_back( p.second );
+            }
+        }
+
+        size_t GetCount( ) const {
+            return Macros.size( ) >> 1;
+        }
+
+        ShaderCompiler::MacroDefinition GetMacroDefinition( const size_t macroIndex ) const override {
+            assert( Macros.size( ) > ( macroIndex << 1 + 1 ) );
+
+            ShaderCompiler::MacroDefinition macroDefinition;
+            macroDefinition.pszKey = Macros[ macroIndex << 1 ].c_str( );
+            macroDefinition.pszValue = Macros[ macroIndex << 1 + 1 ].c_str( );
+            return macroDefinition;
+        }
+    };
+
+}
+
+#endif

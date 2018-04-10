@@ -39,34 +39,34 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
         return false;
     }
 
-    std::set< std::string > includedFiles;
-    std::vector< uint8_t >  compiledShaders[ 2 ];
 
-    if ( false == pParams->pShaderCompiler->Compile( "shaders/Skyboxv2.vert",
-                                                     {},
-                                                     apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader,
-                                                     includedFiles,
-                                                     compiledShaders[ 0 ] ) ) {
+    apemodevk::ShaderCompilerIncludedFileSet includedFiles;
+
+    auto compiledVertexShader = pParams->pShaderCompiler->Compile(
+        "shaders/Skyboxv2.vert", nullptr, apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader, &includedFiles );
+
+    if ( nullptr == compiledVertexShader ) {
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
-    if ( false == pParams->pShaderCompiler->Compile( "shaders/Skybox.frag",
-                                                     {},
-                                                     apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader,
-                                                     includedFiles,
-                                                     compiledShaders[ 1 ] ) ) {
+    auto compiledFragmentShader = pParams->pShaderCompiler->Compile(
+        "shaders/Skybox.frag", nullptr, apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader, &includedFiles );
+
+    if ( nullptr == compiledFragmentShader ) {
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
     VkShaderModuleCreateInfo vertexShaderCreateInfo;
-    InitializeStruct( vertexShaderCreateInfo );
-    vertexShaderCreateInfo.pCode    = (const uint32_t*) compiledShaders[ 0 ].data( );
-    vertexShaderCreateInfo.codeSize = compiledShaders[ 0 ].size( );
+    apemodevk::InitializeStruct( vertexShaderCreateInfo );
+    vertexShaderCreateInfo.pCode    = compiledVertexShader->GetDwordPtr( );
+    vertexShaderCreateInfo.codeSize = compiledVertexShader->GetByteCount( );
 
     VkShaderModuleCreateInfo fragmentShaderCreateInfo;
-    InitializeStruct( fragmentShaderCreateInfo );
-    fragmentShaderCreateInfo.pCode    = (const uint32_t*) compiledShaders[ 1 ].data( );
-    fragmentShaderCreateInfo.codeSize = compiledShaders[ 1 ].size( );
+    apemodevk::InitializeStruct( fragmentShaderCreateInfo );
+    fragmentShaderCreateInfo.pCode    = compiledFragmentShader->GetDwordPtr( );
+    fragmentShaderCreateInfo.codeSize = compiledFragmentShader->GetByteCount( );
 
     TDispatchableHandle< VkShaderModule > hVertexShaderModule;
     TDispatchableHandle< VkShaderModule > hFragmentShaderModule;

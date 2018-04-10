@@ -135,6 +135,7 @@
 
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
+#include <spirv_glsl.hpp>
 
 namespace apemode {
     template < typename T, typename... Args >

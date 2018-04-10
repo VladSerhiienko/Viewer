@@ -86,10 +86,4 @@
         "csignal": "cpp",
         "parentbad": "cpp"
     },
-
-    "c-cpp-flylint.clang.enable": true,
-    "c-cpp-flylint.clang.executable": "clang++-5.0",
-    "c-cpp-flylint.flexelint.enable": false,
-    "c-cpp-flylint.cppcheck.enable": false,
-    "c-cpp-flylint.cppcheck.force": true,
 }

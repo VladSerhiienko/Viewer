@@ -104,7 +104,7 @@
             },
             "compilerPath": "/usr/bin/clang++-5.0",
             "cStandard": "c11",
-            "cppStandard": "c++17"
+            "cppStandard": "c++11"
         },
         {
             "name": "Win32",
@@ -169,7 +169,7 @@
                 "databaseFilename": ""
             },
             "cStandard": "c11",
-            "cppStandard": "c++17"
+            "cppStandard": "c++11"
         }
     ],
     "version": 3

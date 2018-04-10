@@ -58,12 +58,12 @@ bool ShaderFileReader::ReadShaderTxtFile( const std::string& InFilePath,
     return false;
 }
 
-void ShaderFeedbackWriter::WriteFeedback( EFeedbackType                     eType,
-                                          const std::string&                FullFilePath,
-                                          const std::vector< std::string >& Macros,
-                                          const void*                       pContent, /* Txt or bin, @see EFeedbackType */
-                                          const void*                       pContentEnd ) {
-
+void ShaderFeedbackWriter::WriteFeedback( EFeedbackType                                     eType,
+                                          const std::string&                                FullFilePath,
+                                          const ShaderCompiler::IMacroDefinitionCollection* pMacros,
+                                          const void*                                       pContent,
+                                          const void*                                       pContentEnd ) {
+                                              
     const auto feedbackStage            = eType & eFeedbackType_CompilationStageMask;
     const auto feedbackCompilationError = eType & eFeedbackType_CompilationStatusMask;
 

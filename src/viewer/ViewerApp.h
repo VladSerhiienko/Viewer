@@ -38,11 +38,11 @@ namespace apemodevk {
 
     class ShaderFeedbackWriter : public ShaderCompiler::IShaderFeedbackWriter {
     public:
-        void WriteFeedback( EFeedbackType                     eType,
-                            const std::string&                FullFilePath,
-                            const std::vector< std::string >& Macros,
-                            const void*                       pContent, /* Txt or bin, @see EFeedbackType */
-                            const void*                       pContentEnd ) override;
+        void WriteFeedback( EFeedbackType                                     eType,
+                            const std::string&                                FullFilePath,
+                            const ShaderCompiler::IMacroDefinitionCollection* Macros,
+                            const void*                                       pContent, /* Txt or bin, @see EFeedbackType */
+                            const void*                                       pContentEnd ) override;
     };
 }
 
