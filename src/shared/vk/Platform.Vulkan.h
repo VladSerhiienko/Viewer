@@ -231,8 +231,13 @@ namespace apemodevk {
         static const size_t ArrayLength = N;
     };
 
+    template < typename TArray, size_t TArraySize >
+    constexpr size_t GetArraySize( TArray ( & )[ TArraySize ] ) {
+        return TArraySize;
+    }
+
     template < typename TArray, uint32_t TArraySize >
-    inline uint32_t GetArraySizeU( TArray ( & )[ TArraySize ] ) {
+    constexpr uint32_t GetArraySizeU( TArray ( & )[ TArraySize ] ) {
         return TArraySize;
     }
 
@@ -244,9 +249,19 @@ namespace apemodevk {
 #undef _Get_array_length_u
 #endif
 
-#define _Get_array_length( Array ) apemodevk::TArrayTraits< decltype( Array ) >::ArrayLength
-#define _Get_array_length_u( Array ) static_cast< unsigned int >( _Get_array_length( Array ) )
-#define ARRAYSIZE _Get_array_length_u
+#define _Get_array_length( Array ) ( apemodevk::GetArraySize( Array ) )
+#define _Get_array_length_u( Array ) ( apemodevk::GetArraySizeU( Array ) )
+
+#ifdef ARRAYSIZE
+#undef ARRAYSIZE
+#endif
+
+#ifdef ARRAYSIZEU
+#undef ARRAYSIZEU
+#endif
+
+#define ARRAYSIZE _Get_array_length
+#define ARRAYSIZEU _Get_array_length_u
 
 #ifdef ZeroMemory
 #undef ZeroMemory

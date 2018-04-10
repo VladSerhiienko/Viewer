@@ -6,19 +6,25 @@ bool apemodevk::SamplerManager::Recreate( apemodevk::GraphicsDevice* pInNode ) {
     return nullptr != pNode;
 }
 
+constexpr uint32_t kInvalidSamplerIndex = 0xffffffff;
+
 uint32_t apemodevk::SamplerManager::GetSamplerIndex( const VkSamplerCreateInfo& samplerCreateInfo ) {
+
+    std::unique_ptr< std::remove_pointer< VkSampler >::type > sampler;
+
+
     const auto samplerHash = apemode::CityHash64( samplerCreateInfo );
 
-    auto samplerIt = std::find_if( StoredSamplers.begin( ), StoredSamplers.end( ), [&]( const StoredSampler& storedSampler ) {
-        return samplerHash == storedSampler.Hash;
-    } );
+    const auto samplerIt = std::find_if( StoredSamplers.begin( ),
+                                         StoredSamplers.end( ),
+                                         [samplerHash]( const StoredSampler& s ) { return samplerHash == s.Hash; } );
 
     if ( samplerIt != StoredSamplers.end( ) )
         return (uint32_t) std::distance( StoredSamplers.begin( ), samplerIt );
 
     TDispatchableHandle< VkSampler > hSampler;
     if ( hSampler.Recreate( *pNode, samplerCreateInfo ) ) {
-        const uint32_t samplerIndex = StoredSamplers.size( );
+        const size_t samplerIndex = StoredSamplers.size( );
 
         StoredSampler storedSampler;
         storedSampler.Hash              = samplerHash;
@@ -26,14 +32,14 @@ uint32_t apemodevk::SamplerManager::GetSamplerIndex( const VkSamplerCreateInfo& 
         storedSampler.SamplerCreateInfo = samplerCreateInfo;
         StoredSamplers.push_back( storedSampler );
 
-        return samplerIndex;
+        return static_cast< uint32_t >( samplerIndex );
     }
 
     platform::DebugTrace( "Failed to create sampler." );
     platform::DebugBreak( );
-    return 0xffffffff;
+    return kInvalidSamplerIndex;
 }
 
-bool apemodevk::SamplerManager::IsSamplerIndexValid( uint32_t samplerIndex ) {
-    return 0xffffffff != samplerIndex;
+bool apemodevk::SamplerManager::IsSamplerIndexValid( const uint32_t samplerIndex ) {
+    return kInvalidSamplerIndex != samplerIndex;
 }

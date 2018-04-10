@@ -309,7 +309,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
         auto& mesh = pScene->meshes[ node.meshId ];
 
         if ( auto pMeshDeviceAsset = (const apemodevk::SceneMeshDeviceAssetVk*) mesh.pDeviceAsset ) {
-            for (auto& subset : mesh.subsets) {
+            for ( auto& subset : mesh.subsets ) {
                 auto& mat = pScene->materials[ node.materialIds[ subset.materialId ] ];
 
                 //frameData.color          = mat.baseColorFactor;
@@ -380,8 +380,12 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
                                                      {},
                                                      apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader,
                                                      includedFiles,
-                                                     compiledShaders[ 0 ] ) ||
-         false == pParams->pShaderCompiler->Compile( "shaders/Scene.frag",
+                                                     compiledShaders[ 0 ] ) ) {
+        DebugBreak( );
+        return false;
+    }
+
+    if ( false == pParams->pShaderCompiler->Compile( "shaders/Scene.frag",
                                                      {},
                                                      apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader,
                                                      includedFiles,

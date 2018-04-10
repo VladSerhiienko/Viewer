@@ -285,7 +285,7 @@ bool ViewerApp::Initialize(  ) {
         samplerCreateInfo.magFilter               = VK_FILTER_LINEAR;
         samplerCreateInfo.minFilter               = VK_FILTER_LINEAR;
         samplerCreateInfo.minLod                  = 0;
-        samplerCreateInfo.maxLod                  = pLoadedDDS->imageCreateInfo.mipLevels;
+        samplerCreateInfo.maxLod                  = (float) pLoadedDDS->imageCreateInfo.mipLevels;
         samplerCreateInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
         samplerCreateInfo.unnormalizedCoordinates = false;
