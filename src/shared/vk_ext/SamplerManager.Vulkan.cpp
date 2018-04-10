@@ -9,12 +9,7 @@ bool apemodevk::SamplerManager::Recreate( apemodevk::GraphicsDevice* pInNode ) {
 constexpr uint32_t kInvalidSamplerIndex = 0xffffffff;
 
 uint32_t apemodevk::SamplerManager::GetSamplerIndex( const VkSamplerCreateInfo& samplerCreateInfo ) {
-
-    std::unique_ptr< std::remove_pointer< VkSampler >::type > sampler;
-
-
     const auto samplerHash = apemode::CityHash64( samplerCreateInfo );
-
     const auto samplerIt = std::find_if( StoredSamplers.begin( ),
                                          StoredSamplers.end( ),
                                          [samplerHash]( const StoredSampler& s ) { return samplerHash == s.Hash; } );
