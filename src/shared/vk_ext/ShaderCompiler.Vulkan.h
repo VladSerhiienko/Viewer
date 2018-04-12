@@ -187,11 +187,11 @@ namespace apemodevk {
         }
 
         ShaderCompiler::MacroDefinition GetMacroDefinition( const size_t macroIndex ) const override {
-            assert( Macros.size( ) > ( macroIndex << 1 + 1 ) );
+            assert( Macros.size( ) > ( ( macroIndex << 1 ) + 1 ) );
 
             ShaderCompiler::MacroDefinition macroDefinition;
-            macroDefinition.pszKey = Macros[ macroIndex << 1 ].c_str( );
-            macroDefinition.pszValue = Macros[ macroIndex << 1 + 1 ].c_str( );
+            macroDefinition.pszKey = Macros[ ( macroIndex << 1 ) ].c_str( );
+            macroDefinition.pszValue = Macros[ ( macroIndex << 1 ) + 1 ].c_str( );
             return macroDefinition;
         }
     };

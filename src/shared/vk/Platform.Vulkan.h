@@ -214,7 +214,24 @@ namespace apemodevk {
 
 namespace apemodevk {
     struct ScalableAllocPolicy {};
-    struct NoCopyAssignPolicy {};
+
+    class NoAssignPolicy {
+        void operator=( const NoAssignPolicy & );
+    public:
+        NoAssignPolicy( ) { }
+    };
+
+    class NoCopyPolicy {
+        NoCopyPolicy( const NoCopyPolicy & );
+    public:
+        NoCopyPolicy( ) { }
+    };
+
+    class NoCopyAssignPolicy : NoCopyPolicy, NoAssignPolicy {
+    public:
+        NoCopyAssignPolicy( ) { }
+    };
+
 } // namespace apemodevk
 
 #ifdef ARRAYSIZE

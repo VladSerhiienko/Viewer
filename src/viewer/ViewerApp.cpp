@@ -63,7 +63,7 @@ void ShaderFeedbackWriter::WriteFeedback( EFeedbackType                         
                                           const ShaderCompiler::IMacroDefinitionCollection* pMacros,
                                           const void*                                       pContent,
                                           const void*                                       pContentEnd ) {
-                                              
+
     const auto feedbackStage            = eType & eFeedbackType_CompilationStageMask;
     const auto feedbackCompilationError = eType & eFeedbackType_CompilationStatusMask;
 
@@ -220,6 +220,7 @@ bool ViewerApp::Initialize(  ) {
         updateParams.pDescPool       = DescPool;
         updateParams.FrameCount      = FrameCount;
 
+        // --assets "..\..\assets\**" --scene "C:/Sources/Models/bristleback-dota-fan-art.fbxp"
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/skull_salazar.fbxp"
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/1972-datsun-240k-gt.fbxp"
         // --assets "..\..\assets\**" --scene "C:\Sources\Models\graograman.fbxp"

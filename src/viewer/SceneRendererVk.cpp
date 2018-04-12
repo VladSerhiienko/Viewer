@@ -30,6 +30,23 @@ namespace apemodevk {
         uint32_t texcoords;
     };
 
+    struct StaticSkinnedVertex {
+        XMFLOAT3 position;
+        XMFLOAT3 normal;
+        XMFLOAT4 tangent;
+        XMFLOAT2 texcoords;
+        XMFLOAT4 weights;
+        XMFLOAT4 indices;
+    };
+
+    struct PackedSkinnedVertex {
+        uint32_t position;
+        uint32_t normal;
+        uint32_t tangent;
+        uint32_t weights;
+        uint32_t indices;
+    };
+
     struct FrameUniformBuffer {
         XMFLOAT4X4 worldMatrix;
         XMFLOAT4X4 viewMatrix;
