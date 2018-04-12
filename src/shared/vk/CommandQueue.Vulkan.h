@@ -1,7 +1,7 @@
 #pragma once
 
 #include <GraphicsDevice.Vulkan.h>
-#include <NativeDispatchableHandles.Vulkan.h>
+#include <NativeHandles.Vulkan.h>
 
 namespace apemodevk
 {
@@ -150,8 +150,8 @@ namespace apemodevk
         apemodevk::Framebuffer const *                  pFramebuffer;
         apemodevk::PipelineLayout const *                pPipelineLayout;
         apemodevk::PipelineState const *                pPipelineState;
-        apemodevk::TDispatchableHandle<VkCommandBuffer> hCmdList;
-        apemodevk::TDispatchableHandle<VkCommandPool>   hCmdAlloc;
+        apemodevk::THandle<VkCommandBuffer> hCmdList;
+        apemodevk::THandle<VkCommandPool>   hCmdAlloc;
     };
 
     /**
@@ -234,7 +234,7 @@ namespace apemodevk
 
     public:
         GraphicsDevice *               pNode;
-        TDispatchableHandle< VkQueue > hCmdQueue;
+        THandle< VkQueue > hCmdQueue;
         uint32_t                       queueFamilyId;
         uint32_t                       queueId;
     };

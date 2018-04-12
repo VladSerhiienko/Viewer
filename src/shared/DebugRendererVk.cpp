@@ -107,8 +107,8 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* initParams )
     fragmentShaderCreateInfo.pCode    = (const uint32_t*)       cube_compiled[ 1 ].begin( );
     fragmentShaderCreateInfo.codeSize = (size_t) std::distance( cube_compiled[ 1 ].begin( ), cube_compiled[ 1 ].end( ) ) * sizeof( uint32_t );
 
-    TDispatchableHandle< VkShaderModule > hVertexShaderModule;
-    TDispatchableHandle< VkShaderModule > hFragmentShaderModule;
+    THandle< VkShaderModule > hVertexShaderModule;
+    THandle< VkShaderModule > hFragmentShaderModule;
     if ( false == hVertexShaderModule.Recreate( initParams->pDevice, vertexShaderCreateInfo ) ||
          false == hFragmentShaderModule.Recreate( initParams->pDevice, fragmentShaderCreateInfo ) ) {
         DebugBreak( );

@@ -37,3 +37,4 @@
 /build_windows_amd64
 /FbxSdk
 .vscode/*.bat
+assets/images/*

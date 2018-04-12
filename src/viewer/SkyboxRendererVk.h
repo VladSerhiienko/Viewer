@@ -52,12 +52,12 @@ namespace apemodevk {
         void Flush( uint32_t FrameIndex );
 
         apemodevk::GraphicsDevice*                              pNode = nullptr;
-        apemodevk::TDispatchableHandle< VkDescriptorSetLayout > hDescSetLayout;
-        apemodevk::TDispatchableHandle< VkPipelineLayout >      hPipelineLayout;
-        apemodevk::TDispatchableHandle< VkPipelineCache >       hPipelineCache;
-        apemodevk::TDispatchableHandle< VkPipeline >            hPipeline;
-        //apemodevk::TDispatchableHandle< VkBuffer >              hVertexBuffer;
-        //apemodevk::TDispatchableHandle< VkDeviceMemory >        hVertexBufferMemory;
+        apemodevk::THandle< VkDescriptorSetLayout > hDescSetLayout;
+        apemodevk::THandle< VkPipelineLayout >      hPipelineLayout;
+        apemodevk::THandle< VkPipelineCache >       hPipelineCache;
+        apemodevk::THandle< VkPipeline >            hPipeline;
+        //apemodevk::THandle< VkBuffer >              hVertexBuffer;
+        //apemodevk::THandle< VkDeviceMemory >        hVertexBufferMemory;
         apemodevk::TDescriptorSets< kMaxFrameCount >            DescSets;
         apemodevk::HostBufferPool                               BufferPools[ kMaxFrameCount ];
         apemodevk::DescriptorSetPool                            DescSetPools[ kMaxFrameCount ];

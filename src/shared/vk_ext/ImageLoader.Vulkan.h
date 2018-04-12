@@ -7,9 +7,9 @@ namespace apemodevk {
     struct HostBufferPool;
 
     struct LoadedImage {
-        apemodevk::TDispatchableHandle< VkImage >        hImg;
-        apemodevk::TDispatchableHandle< VkImageView >    hImgView;
-        apemodevk::TDispatchableHandle< VkDeviceMemory > hImgMemory;
+        apemodevk::THandle< VkImage >        hImg;
+        apemodevk::THandle< VkImageView >    hImgView;
+        apemodevk::THandle< VkDeviceMemory > hImgMemory;
         VkImageCreateInfo                                imageCreateInfo;
         VkImageViewCreateInfo                            imageViewCreateInfo;
         VkImageLayout                                    eImgLayout    = VK_IMAGE_LAYOUT_UNDEFINED;

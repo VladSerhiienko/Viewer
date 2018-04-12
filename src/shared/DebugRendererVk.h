@@ -40,19 +40,19 @@ namespace apemode {
 
         VkDevice pDevice;
         apemodevk::TDescriptorSets< kMaxFrameCount >            DescSets;
-        apemodevk::TDispatchableHandle< VkDescriptorSetLayout > hDescSetLayout;
-        apemodevk::TDispatchableHandle< VkPipelineLayout >      hPipelineLayout;
-        apemodevk::TDispatchableHandle< VkPipelineCache >       hPipelineCache;
-        apemodevk::TDispatchableHandle< VkPipeline >            hPipeline;
-        apemodevk::TDispatchableHandle< VkBuffer >              hVertexBuffer;
-        apemodevk::TDispatchableHandle< VkDeviceMemory >        hVertexBufferMemory;
+        apemodevk::THandle< VkDescriptorSetLayout > hDescSetLayout;
+        apemodevk::THandle< VkPipelineLayout >      hPipelineLayout;
+        apemodevk::THandle< VkPipelineCache >       hPipelineCache;
+        apemodevk::THandle< VkPipeline >            hPipeline;
+        apemodevk::THandle< VkBuffer >              hVertexBuffer;
+        apemodevk::THandle< VkDeviceMemory >        hVertexBufferMemory;
 
 #if 1
         apemodevk::HostBufferPool                               BufferPools[ kMaxFrameCount ];
         apemodevk::DescriptorSetPool                            DescSetPools[ kMaxFrameCount ];
 #else
-        apemodevk::TDispatchableHandle< VkBuffer >              hUniformBuffers[ kMaxFrameCount ];
-        apemodevk::TDispatchableHandle< VkDeviceMemory >        hUniformBufferMemory[ kMaxFrameCount ];
+        apemodevk::THandle< VkBuffer >              hUniformBuffers[ kMaxFrameCount ];
+        apemodevk::THandle< VkDeviceMemory >        hUniformBufferMemory[ kMaxFrameCount ];
 #endif
 
 

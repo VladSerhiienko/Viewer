@@ -17,7 +17,7 @@ uint32_t apemodevk::SamplerManager::GetSamplerIndex( const VkSamplerCreateInfo& 
     if ( samplerIt != StoredSamplers.end( ) )
         return (uint32_t) std::distance( StoredSamplers.begin( ), samplerIt );
 
-    TDispatchableHandle< VkSampler > hSampler;
+    THandle< VkSampler > hSampler;
     if ( hSampler.Recreate( *pNode, samplerCreateInfo ) ) {
         const size_t samplerIndex = StoredSamplers.size( );
 

@@ -2,7 +2,7 @@
 
 #include <GraphicsDevice.Vulkan.h>
 #include <TInfoStruct.Vulkan.h>
-#include <NativeDispatchableHandles.Vulkan.h>
+#include <NativeHandles.Vulkan.h>
 
 namespace apemodevk
 {
@@ -104,7 +104,7 @@ namespace apemodevk
     public:
         apemodevk::GraphicsDevice const*                  pNode;
         apemodevk::DescriptorPool const*                  pDescPool;
-        apemodevk::TDispatchableHandle< VkDescriptorSet > hDescSet;
+        apemodevk::THandle< VkDescriptorSet > hDescSet;
         VkDescriptorSetLayout                             hDescSetLayout;
     };
 
@@ -171,7 +171,7 @@ namespace apemodevk
 
     public:
         apemodevk::GraphicsDevice const *                pNode;
-        apemodevk::TDispatchableHandle<VkDescriptorPool> hDescPool;
+        apemodevk::THandle<VkDescriptorPool> hDescPool;
 
         friend DescriptorSet;
 

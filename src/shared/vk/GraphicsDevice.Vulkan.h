@@ -53,7 +53,8 @@ namespace apemodevk {
         operator VkInstance( ) const;
 
         GraphicsManager *                    pManager;
-        TDispatchableHandle< VkDevice >      hLogicalDevice;
+        THandle< VkDevice >      hLogicalDevice;
+        THandle< VmaAllocator >  Allocator;
         VkPhysicalDevice                     pPhysicalDevice;
         VkPhysicalDeviceProperties           AdapterProps;
         VkPhysicalDeviceMemoryProperties     MemoryProps;
@@ -65,6 +66,5 @@ namespace apemodevk {
         std::vector< VkExtensionProperties > DeviceExtensionProps;
         std::unique_ptr< QueuePool >         pQueuePool;
         std::unique_ptr< CommandBufferPool > pCmdBufferPool;
-        VmaAllocator                         Allocator;
     };
 }

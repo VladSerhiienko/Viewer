@@ -68,8 +68,8 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
     fragmentShaderCreateInfo.pCode    = compiledFragmentShader->GetDwordPtr( );
     fragmentShaderCreateInfo.codeSize = compiledFragmentShader->GetByteCount( );
 
-    TDispatchableHandle< VkShaderModule > hVertexShaderModule;
-    TDispatchableHandle< VkShaderModule > hFragmentShaderModule;
+    THandle< VkShaderModule > hVertexShaderModule;
+    THandle< VkShaderModule > hFragmentShaderModule;
     if ( false == hVertexShaderModule.Recreate( *pParams->pNode, vertexShaderCreateInfo ) ||
          false == hFragmentShaderModule.Recreate( *pParams->pNode, fragmentShaderCreateInfo ) ) {
         return false;

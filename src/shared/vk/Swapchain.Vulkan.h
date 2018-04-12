@@ -18,7 +18,7 @@ namespace apemodevk {
         VkFormat                            eColorFormat;
         VkColorSpaceKHR                     eColorSpace;
         VkPresentModeKHR                    ePresentMode;
-        TDispatchableHandle< VkSurfaceKHR > hSurface;
+        THandle< VkSurfaceKHR > hSurface;
 
 #ifdef _WINDOWS_
         bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, HINSTANCE hInstance, HWND hWindow );
@@ -68,7 +68,7 @@ namespace apemodevk {
         uint32_t                              ImgCount;
         VkExtent2D                            ImgExtent;
         VkImage                               hImgs[ 3 ];
-        TDispatchableHandle< VkImageView >    hImgViews[ 3 ];
-        TDispatchableHandle< VkSwapchainKHR > hSwapchain;
+        THandle< VkImageView >    hImgViews[ 3 ];
+        THandle< VkSwapchainKHR > hSwapchain;
     };
 }

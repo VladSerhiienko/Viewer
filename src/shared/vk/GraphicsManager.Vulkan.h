@@ -1,6 +1,6 @@
 #pragma once
 
-#include <NativeDispatchableHandles.Vulkan.h>
+#include <NativeHandles.Vulkan.h>
 #include <TInfoStruct.Vulkan.h>
 
 namespace apemodevk {
@@ -69,7 +69,7 @@ namespace apemodevk {
         std::vector< const char * >          InstanceExtensions;
         std::vector< VkLayerProperties >     InstanceLayerProps;
         std::vector< VkExtensionProperties > InstanceExtensionProps;
-        TDispatchableHandle< VkInstance >    hInstance;
+        THandle< VkInstance >    hInstance;
         std::vector< NativeLayerWrapper >    LayerWrappers;
     };
 }

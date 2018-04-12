@@ -76,17 +76,17 @@ namespace apemode {
 
         uint32_t                                          BackbufferIndices[ kMaxFrames ] = {0};
         apemodevk::DescriptorPool                         DescPool;
-        apemodevk::TDispatchableHandle< VkCommandPool >   hCmdPool[ kMaxFrames ];
-        apemodevk::TDispatchableHandle< VkCommandBuffer > hCmdBuffers[ kMaxFrames ];
-        apemodevk::TDispatchableHandle< VkSemaphore >     hPresentCompleteSemaphores[ kMaxFrames ];
-        apemodevk::TDispatchableHandle< VkSemaphore >     hRenderCompleteSemaphores[ kMaxFrames ];
-        apemodevk::TDispatchableHandle< VkRenderPass >    hNkRenderPass;
-        apemodevk::TDispatchableHandle< VkFramebuffer >   hNkFramebuffers[ kMaxFrames ];
-        apemodevk::TDispatchableHandle< VkRenderPass >    hDbgRenderPass;
-        apemodevk::TDispatchableHandle< VkFramebuffer >   hDbgFramebuffers[ kMaxFrames ];
-        apemodevk::TDispatchableHandle< VkImage >         hDepthImgs[ kMaxFrames ];
-        apemodevk::TDispatchableHandle< VkImageView >     hDepthImgViews[ kMaxFrames ];
-        apemodevk::TDispatchableHandle< VkDeviceMemory >  hDepthImgMemory[ kMaxFrames ];
+        apemodevk::THandle< VkCommandPool >   hCmdPool[ kMaxFrames ];
+        apemodevk::THandle< VkCommandBuffer > hCmdBuffers[ kMaxFrames ];
+        apemodevk::THandle< VkSemaphore >     hPresentCompleteSemaphores[ kMaxFrames ];
+        apemodevk::THandle< VkSemaphore >     hRenderCompleteSemaphores[ kMaxFrames ];
+        apemodevk::THandle< VkRenderPass >    hNkRenderPass;
+        apemodevk::THandle< VkFramebuffer >   hNkFramebuffers[ kMaxFrames ];
+        apemodevk::THandle< VkRenderPass >    hDbgRenderPass;
+        apemodevk::THandle< VkFramebuffer >   hDbgFramebuffers[ kMaxFrames ];
+        apemodevk::THandle< VkImage >         hDepthImgs[ kMaxFrames ];
+        apemodevk::THandle< VkImageView >     hDepthImgViews[ kMaxFrames ];
+        apemodevk::THandle< VkDeviceMemory >  hDepthImgMemory[ kMaxFrames ];
 
 
         NuklearRendererSdlBase*                      pNkRenderer        = nullptr;

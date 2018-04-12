@@ -1,11 +1,11 @@
 #pragma once
 
-#include <TDispatchableHandle.Vulkan.h>
+#include <THandle.Vulkan.h>
 
 namespace apemodevk
 {
     template <>
-    struct TDispatchableHandleDeleter< VkInstance > : public TDispatchableHandleHandleTypeResolver< VkInstance > {
+    struct THandleDeleter< VkInstance > : public THandleHandleTypeResolver< VkInstance > {
         void operator( )( VkInstance &Handle ) {
             if ( Handle == nullptr )
                 return;
@@ -15,7 +15,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter< VkDevice > : public TDispatchableHandleHandleTypeResolver< VkDevice > {
+    struct THandleDeleter< VkDevice > : public THandleHandleTypeResolver< VkDevice > {
         void operator( )( VkDevice &Handle ) {
             if ( Handle == nullptr )
                 return;
@@ -25,7 +25,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter< VkQueue > : public TDispatchableHandleHandleTypeResolver< VkQueue > {
+    struct THandleDeleter< VkQueue > : public THandleHandleTypeResolver< VkQueue > {
         void operator( )( VkQueue &Handle ) {
             // Queues are created along with a logical device creation during vkCreateDevice. Because of this, no
             // explicit deletion of queues is required. All queues associated with a logical device are destroyed when
@@ -35,10 +35,10 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter< VkSurfaceKHR > : public TDispatchableHandleHandleTypeResolver< VkSurfaceKHR > {
+    struct THandleDeleter< VkSurfaceKHR > : public THandleHandleTypeResolver< VkSurfaceKHR > {
         VkInstance hInstance;
 
-        TDispatchableHandleDeleter( ) : hInstance( VK_NULL_HANDLE ) {
+        THandleDeleter( ) : hInstance( VK_NULL_HANDLE ) {
         }
 
         void operator( )( VkSurfaceKHR &Handle ) {
@@ -51,10 +51,10 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter< VkSwapchainKHR > : public TDispatchableHandleHandleTypeResolver< VkSwapchainKHR > {
+    struct THandleDeleter< VkSwapchainKHR > : public THandleHandleTypeResolver< VkSwapchainKHR > {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ) {
+        THandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ) {
         }
 
         void operator( )( VkSwapchainKHR &Handle ) {
@@ -67,10 +67,10 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter< VkCommandPool > : public TDispatchableHandleHandleTypeResolver< VkCommandPool > {
+    struct THandleDeleter< VkCommandPool > : public THandleHandleTypeResolver< VkCommandPool > {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ) {
+        THandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ) {
         }
 
         void operator( )( VkCommandPool &Handle ) {
@@ -83,11 +83,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter< VkCommandBuffer > : public TDispatchableHandleHandleTypeResolver< VkCommandBuffer > {
+    struct THandleDeleter< VkCommandBuffer > : public THandleHandleTypeResolver< VkCommandBuffer > {
         VkDevice      hLogicalDevice;
         VkCommandPool CmdPool;
 
-        TDispatchableHandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ), CmdPool( VK_NULL_HANDLE ) {
+        THandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ), CmdPool( VK_NULL_HANDLE ) {
         }
 
         void operator( )( VkCommandBuffer &Handle ) {
@@ -100,10 +100,10 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter< VkFence > : public TDispatchableHandleHandleTypeResolver< VkFence > {
+    struct THandleDeleter< VkFence > : public THandleHandleTypeResolver< VkFence > {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ) {
+        THandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ) {
         }
 
         void operator( )( VkFence &Handle ) {
@@ -116,10 +116,10 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter< VkEvent > : public TDispatchableHandleHandleTypeResolver< VkEvent > {
+    struct THandleDeleter< VkEvent > : public THandleHandleTypeResolver< VkEvent > {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ) {
+        THandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ) {
         }
 
         void operator( )( VkEvent &Handle ) {
@@ -132,11 +132,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter< VkImage > : public TDispatchableHandleHandleTypeResolver< VkImage > {
+    struct THandleDeleter< VkImage > : public THandleHandleTypeResolver< VkImage > {
         VkDevice         hLogicalDevice;
         VkPhysicalDevice PhysicalDeviceHandle;
 
-        TDispatchableHandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ), PhysicalDeviceHandle( VK_NULL_HANDLE ) {
+        THandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ), PhysicalDeviceHandle( VK_NULL_HANDLE ) {
         }
 
         void operator( )( VkImage &Handle ) {
@@ -151,11 +151,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter< VkSampler > : public TDispatchableHandleHandleTypeResolver< VkSampler > {
+    struct THandleDeleter< VkSampler > : public THandleHandleTypeResolver< VkSampler > {
         VkDevice         hLogicalDevice;
         VkPhysicalDevice PhysicalDeviceHandle;
 
-        TDispatchableHandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ), PhysicalDeviceHandle( VK_NULL_HANDLE ) {
+        THandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ), PhysicalDeviceHandle( VK_NULL_HANDLE ) {
         }
 
         void operator( )( VkSampler &Handle ) {
@@ -169,11 +169,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter<VkImageView> : public TDispatchableHandleHandleTypeResolver<VkImageView>
+    struct THandleDeleter<VkImageView> : public THandleHandleTypeResolver<VkImageView>
     {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
+        THandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
 
         void operator()(VkImageView & Handle)
         {
@@ -186,11 +186,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter<VkDeviceMemory> : public TDispatchableHandleHandleTypeResolver<VkDeviceMemory>
+    struct THandleDeleter<VkDeviceMemory> : public THandleHandleTypeResolver<VkDeviceMemory>
     {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
+        THandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
 
         void operator()(VkDeviceMemory & Handle)
         {
@@ -203,12 +203,12 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter<VkBuffer> : public TDispatchableHandleHandleTypeResolver<VkBuffer>
+    struct THandleDeleter<VkBuffer> : public THandleHandleTypeResolver<VkBuffer>
     {
         VkDevice hLogicalDevice;
         VkPhysicalDevice PhysicalDeviceHandle;
 
-        TDispatchableHandleDeleter() : hLogicalDevice(VK_NULL_HANDLE)
+        THandleDeleter() : hLogicalDevice(VK_NULL_HANDLE)
                                      , PhysicalDeviceHandle(VK_NULL_HANDLE){}
 
         void operator()(VkBuffer & Handle)
@@ -222,11 +222,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter<VkBufferView> : public TDispatchableHandleHandleTypeResolver<VkBuffer>
+    struct THandleDeleter<VkBufferView> : public THandleHandleTypeResolver<VkBufferView>
     {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
+        THandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
 
         void operator()(VkBufferView & Handle)
         {
@@ -239,11 +239,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter<VkFramebuffer> : public TDispatchableHandleHandleTypeResolver<VkFramebuffer>
+    struct THandleDeleter<VkFramebuffer> : public THandleHandleTypeResolver<VkFramebuffer>
     {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
+        THandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
 
         void operator()(VkFramebuffer & Handle)
         {
@@ -256,11 +256,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter<VkRenderPass> : public TDispatchableHandleHandleTypeResolver<VkRenderPass>
+    struct THandleDeleter<VkRenderPass> : public THandleHandleTypeResolver<VkRenderPass>
     {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
+        THandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
 
         void operator()(VkRenderPass & Handle)
         {
@@ -273,11 +273,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter<VkPipelineCache> : public TDispatchableHandleHandleTypeResolver<VkPipelineCache>
+    struct THandleDeleter<VkPipelineCache> : public THandleHandleTypeResolver<VkPipelineCache>
     {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
+        THandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
 
         void operator()(VkPipelineCache & Handle)
         {
@@ -290,11 +290,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter<VkPipeline> : public TDispatchableHandleHandleTypeResolver<VkPipeline>
+    struct THandleDeleter<VkPipeline> : public THandleHandleTypeResolver<VkPipeline>
     {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
+        THandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
 
         void operator()(VkPipeline & Handle)
         {
@@ -307,11 +307,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter<VkDescriptorSetLayout> : public TDispatchableHandleHandleTypeResolver<VkDescriptorSetLayout>
+    struct THandleDeleter<VkDescriptorSetLayout> : public THandleHandleTypeResolver<VkDescriptorSetLayout>
     {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
+        THandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
 
         void operator()(VkDescriptorSetLayout & Handle)
         {
@@ -324,11 +324,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter< VkDescriptorSet > : public TDispatchableHandleHandleTypeResolver< VkDescriptorSet > {
+    struct THandleDeleter< VkDescriptorSet > : public THandleHandleTypeResolver< VkDescriptorSet > {
         VkDevice         hLogicalDevice;
         VkDescriptorPool hDescPool;
 
-        TDispatchableHandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ), hDescPool( VK_NULL_HANDLE ) {
+        THandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ), hDescPool( VK_NULL_HANDLE ) {
         }
 
         void operator( )( VkDescriptorSet &Handle ) {
@@ -344,11 +344,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter<VkDescriptorPool> : public TDispatchableHandleHandleTypeResolver<VkDescriptorPool>
+    struct THandleDeleter<VkDescriptorPool> : public THandleHandleTypeResolver<VkDescriptorPool>
     {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter()
+        THandleDeleter()
             : hLogicalDevice(VK_NULL_HANDLE)
         {
         }
@@ -364,11 +364,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter<VkPipelineLayout> : public TDispatchableHandleHandleTypeResolver<VkPipelineLayout>
+    struct THandleDeleter<VkPipelineLayout> : public THandleHandleTypeResolver<VkPipelineLayout>
     {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
+        THandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
 
         void operator()(VkPipelineLayout & Handle)
         {
@@ -381,11 +381,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter<VkShaderModule> : public TDispatchableHandleHandleTypeResolver<VkShaderModule>
+    struct THandleDeleter<VkShaderModule> : public THandleHandleTypeResolver<VkShaderModule>
     {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
+        THandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
 
         void operator()(VkShaderModule & Handle)
         {
@@ -398,11 +398,11 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandleDeleter<VkSemaphore> : public TDispatchableHandleHandleTypeResolver<VkSemaphore>
+    struct THandleDeleter<VkSemaphore> : public THandleHandleTypeResolver<VkSemaphore>
     {
         VkDevice hLogicalDevice;
 
-        TDispatchableHandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
+        THandleDeleter() : hLogicalDevice(VK_NULL_HANDLE) {}
 
         void operator()(VkSemaphore & Handle)
         {
@@ -414,11 +414,18 @@ namespace apemodevk
         }
     };
 
+    template <>
+    struct THandleDeleter< VmaAllocator > : public THandleHandleTypeResolver< VmaAllocator > {
+        void operator( )( VmaAllocator &Handle ) {
+            vmaDestroyAllocator( Handle );
+        }
+    };
+
     template < typename TNativeHandle >
-    struct TDispatchableHandle : public TDispatchableHandleBase< TNativeHandle > {};
+    struct THandle : public THandleBase< TNativeHandle > {};
 
     template <>
-    struct TDispatchableHandle< VkInstance > : public TDispatchableHandleBase< VkInstance > {
+    struct THandle< VkInstance > : public THandleBase< VkInstance > {
         bool Recreate( VkInstanceCreateInfo const &CreateInfo ) {
             Deleter( Handle );
             return VK_SUCCESS == CheckedCall( vkCreateInstance( &CreateInfo, *this, *this ) );
@@ -426,7 +433,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkDevice > : public TDispatchableHandleBase< VkDevice > {
+    struct THandle< VkDevice > : public THandleBase< VkDevice > {
         bool Recreate( VkPhysicalDevice pPhysicalDevice, VkDeviceCreateInfo const &CreateInfo ) {
             apemode_assert( pPhysicalDevice != VK_NULL_HANDLE, "Device is required." );
 
@@ -436,7 +443,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkQueue > : public TDispatchableHandleBase< VkQueue > {
+    struct THandle< VkQueue > : public THandleBase< VkQueue > {
         void Recreate( VkDevice InLogicalDeviceHandle, uint32_t queueFamilyId, uint32_t queueId ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
 
@@ -453,7 +460,7 @@ namespace apemodevk
 #if _WIN32
 
     template <>
-    struct TDispatchableHandle< VkSurfaceKHR > : public TDispatchableHandleBase< VkSurfaceKHR > {
+    struct THandle< VkSurfaceKHR > : public THandleBase< VkSurfaceKHR > {
         bool Recreate( VkInstance InInstanceHandle, VkWin32SurfaceCreateInfoKHR const &CreateInfo ) {
             apemode_assert( InInstanceHandle != VK_NULL_HANDLE, "Instance is required." );
 
@@ -466,7 +473,7 @@ namespace apemodevk
 #else
 
     template <>
-    struct TDispatchableHandle< VkSurfaceKHR > : public TDispatchableHandleBase< VkSurfaceKHR > {
+    struct THandle< VkSurfaceKHR > : public THandleBase< VkSurfaceKHR > {
         bool Recreate( VkInstance InInstanceHandle, VkXlibSurfaceCreateInfoKHR const &CreateInfo ) {
             apemode_assert( InInstanceHandle != VK_NULL_HANDLE, "Instance is required." );
 
@@ -479,7 +486,7 @@ namespace apemodevk
 #endif
 
     template <>
-    struct TDispatchableHandle< VkSwapchainKHR > : public TDispatchableHandleBase< VkSwapchainKHR > {
+    struct THandle< VkSwapchainKHR > : public THandleBase< VkSwapchainKHR > {
         /**
          * Creates swapchain.
          * Handles deleting of the old swapchain.
@@ -511,7 +518,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkCommandPool > : public TDispatchableHandleBase< VkCommandPool > {
+    struct THandle< VkCommandPool > : public THandleBase< VkCommandPool > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkCommandPoolCreateInfo const &CreateInfo ) {
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
@@ -527,7 +534,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkCommandBuffer > : public TDispatchableHandleBase< VkCommandBuffer > {
+    struct THandle< VkCommandBuffer > : public THandleBase< VkCommandBuffer > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkCommandBufferAllocateInfo const &AllocInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
             apemode_assert( AllocInfo.commandPool != VK_NULL_HANDLE, "No default pools available." );
@@ -541,7 +548,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkFence > : public TDispatchableHandleBase< VkFence > {
+    struct THandle< VkFence > : public THandleBase< VkFence > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkFenceCreateInfo const &CreateInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
 
@@ -561,7 +568,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkEvent > : public TDispatchableHandleBase< VkEvent > {
+    struct THandle< VkEvent > : public THandleBase< VkEvent > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkEventCreateInfo const &CreateInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
 
@@ -584,9 +591,7 @@ namespace apemodevk
         inline bool     Failed( ) const  { return vkGetEventStatus( Deleter.hLogicalDevice, Handle ) < VK_SUCCESS; }
     };
 
-    inline uint32_t ResolveMemoryType( VkPhysicalDevice gpu, VkMemoryPropertyFlags properties, uint32_t type_bits ) {
-        VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
-        vkGetPhysicalDeviceMemoryProperties( gpu, &physicalDeviceMemoryProperties );
+    inline uint32_t ResolveMemoryType( const VkPhysicalDeviceMemoryProperties & physicalDeviceMemoryProperties, VkMemoryPropertyFlags properties, uint32_t type_bits ) {
         for ( uint32_t i = 0; i < physicalDeviceMemoryProperties.memoryTypeCount; i++ )
             if ( ( physicalDeviceMemoryProperties.memoryTypes[ i ].propertyFlags & properties ) == properties && type_bits & ( 1 << i ) )
                 return i;
@@ -596,8 +601,14 @@ namespace apemodevk
         return uint32_t( -1 );
     }
 
+    inline uint32_t ResolveMemoryType( VkPhysicalDevice gpu, VkMemoryPropertyFlags properties, uint32_t type_bits ) {
+        VkPhysicalDeviceMemoryProperties physicalDeviceMemoryProperties;
+        vkGetPhysicalDeviceMemoryProperties( gpu, &physicalDeviceMemoryProperties );
+        return ResolveMemoryType( physicalDeviceMemoryProperties, properties, type_bits );
+    }
+
     template <>
-    struct TDispatchableHandle<VkImage> : public TDispatchableHandleBase<VkImage>
+    struct THandle<VkImage> : public THandleBase<VkImage>
     {
         bool Assign( VkDevice         InLogicalDeviceHandle,
                      VkPhysicalDevice InPhysicalDeviceHandle,
@@ -657,7 +668,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkImageView > : public TDispatchableHandleBase< VkImageView > {
+    struct THandle< VkImageView > : public THandleBase< VkImageView > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkImageViewCreateInfo const &CreateInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
 
@@ -668,7 +679,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle<VkDeviceMemory> : public TDispatchableHandleBase<VkDeviceMemory>
+    struct THandle<VkDeviceMemory> : public THandleBase<VkDeviceMemory>
     {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkMemoryAllocateInfo const &AllocInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
@@ -699,7 +710,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkBuffer > : public TDispatchableHandleBase< VkBuffer > {
+    struct THandle< VkBuffer > : public THandleBase< VkBuffer > {
         bool Recreate( VkDevice                  InLogicalDeviceHandle,
                        VkPhysicalDevice          InPhysicalDeviceHandle,
                        VkBufferCreateInfo const &CreateInfo ) {
@@ -737,7 +748,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkBufferView > : public TDispatchableHandleBase< VkBufferView > {
+    struct THandle< VkBufferView > : public THandleBase< VkBufferView > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkBufferViewCreateInfo const &CreateInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
 
@@ -748,7 +759,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkFramebuffer > : public TDispatchableHandleBase< VkFramebuffer > {
+    struct THandle< VkFramebuffer > : public THandleBase< VkFramebuffer > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkFramebufferCreateInfo const &CreateInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
 
@@ -759,7 +770,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkRenderPass > : public TDispatchableHandleBase< VkRenderPass > {
+    struct THandle< VkRenderPass > : public THandleBase< VkRenderPass > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkRenderPassCreateInfo const &CreateInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
 
@@ -770,7 +781,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkPipelineCache > : public TDispatchableHandleBase< VkPipelineCache > {
+    struct THandle< VkPipelineCache > : public THandleBase< VkPipelineCache > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkPipelineCacheCreateInfo const &CreateInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
 
@@ -781,7 +792,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkPipelineLayout > : public TDispatchableHandleBase< VkPipelineLayout > {
+    struct THandle< VkPipelineLayout > : public THandleBase< VkPipelineLayout > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkPipelineLayoutCreateInfo const &CreateInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
 
@@ -792,21 +803,21 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkDescriptorSetLayout > : public TDispatchableHandleBase< VkDescriptorSetLayout > {
-        using Vector             = std::vector< TDispatchableHandle< VkDescriptorSetLayout > >;
+    struct THandle< VkDescriptorSetLayout > : public THandleBase< VkDescriptorSetLayout > {
+        using Vector             = std::vector< THandle< VkDescriptorSetLayout > >;
         using NativeHandleVector = std::vector< VkDescriptorSetLayout >;
 
-        TDispatchableHandle( ) {
+        THandle( ) {
             Handle                 = VK_NULL_HANDLE;
             Deleter.hLogicalDevice = VK_NULL_HANDLE;
         }
 
-        TDispatchableHandle( TDispatchableHandle< VkDescriptorSetLayout > &&Other ) {
+        THandle( THandle< VkDescriptorSetLayout > &&Other ) {
             Handle                 = Other.Release( );
             Deleter.hLogicalDevice = Other.Deleter.hLogicalDevice;
         }
 
-        TDispatchableHandle( VkDevice InLogicalDeviceHandle, VkDescriptorSetLayout SetLayoutHandle ) {
+        THandle( VkDevice InLogicalDeviceHandle, VkDescriptorSetLayout SetLayoutHandle ) {
             Handle                 = SetLayoutHandle;
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
         }
@@ -821,7 +832,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkDescriptorSet > : public TDispatchableHandleBase< VkDescriptorSet > {
+    struct THandle< VkDescriptorSet > : public THandleBase< VkDescriptorSet > {
         bool Recreate( VkDevice                           InLogicalDeviceHandle,
                        VkDescriptorPool                   InDescPoolHandle,
                        VkDescriptorSetAllocateInfo const &AllocInfo ) {
@@ -834,7 +845,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkDescriptorPool > : public TDispatchableHandleBase< VkDescriptorPool > {
+    struct THandle< VkDescriptorPool > : public THandleBase< VkDescriptorPool > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkDescriptorPoolCreateInfo const &CreateInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
 
@@ -845,7 +856,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkPipeline > : public TDispatchableHandleBase< VkPipeline > {
+    struct THandle< VkPipeline > : public THandleBase< VkPipeline > {
         bool Recreate( VkDevice                            InLogicalDeviceHandle,
                        VkPipelineCache                     pCache,
                        VkGraphicsPipelineCreateInfo const &CreateInfo ) {
@@ -866,7 +877,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkShaderModule > : public TDispatchableHandleBase< VkShaderModule > {
+    struct THandle< VkShaderModule > : public THandleBase< VkShaderModule > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkShaderModuleCreateInfo const &CreateInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
 
@@ -877,7 +888,7 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkSemaphore > : public TDispatchableHandleBase< VkSemaphore > {
+    struct THandle< VkSemaphore > : public THandleBase< VkSemaphore > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkSemaphoreCreateInfo const &CreateInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
 
@@ -888,11 +899,19 @@ namespace apemodevk
     };
 
     template <>
-    struct TDispatchableHandle< VkSampler > : public TDispatchableHandleBase< VkSampler > {
+    struct THandle< VkSampler > : public THandleBase< VkSampler > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkSamplerCreateInfo const &CreateInfo ) {
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
             return VK_SUCCESS == CheckedCall( vkCreateSampler( InLogicalDeviceHandle, &CreateInfo, *this, *this ) );
+        }
+    };
+
+    template <>
+    struct THandle< VmaAllocator > : public THandleBase< VmaAllocator > {
+        bool Recreate( VmaAllocatorCreateInfo const &CreateInfo ) {
+            Deleter( Handle );
+            return VK_SUCCESS == CheckedCall( vmaCreateAllocator( &CreateInfo, &Handle ) );
         }
     };
 }

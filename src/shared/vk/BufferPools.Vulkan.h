@@ -14,8 +14,8 @@ namespace apemodevk {
 
     struct HostBufferPool {
         struct Page {
-            TDispatchableHandle< VkBuffer >       hBuffer;
-            TDispatchableHandle< VkDeviceMemory > hMemory;
+            THandle< VkBuffer >       hBuffer;
+            THandle< VkDeviceMemory > hMemory;
             VkDevice                              pDevice              = VK_NULL_HANDLE;
             uint8_t *                             pMapped              = nullptr;
             uint32_t                              Alignment            = 0;

@@ -6,7 +6,7 @@
 namespace apemodevk
 {
     template <typename TNativeHandle>
-    struct TDispatchableHandleHandleTypeResolver
+    struct THandleHandleTypeResolver
     {
         typedef typename std::remove_pointer<TNativeHandle>::type HandleType;
         operator VkAllocationCallbacks const * ()
@@ -17,7 +17,7 @@ namespace apemodevk
     };
 
     template <typename TNativeHandle>
-    struct TDispatchableHandleDeleter : public TDispatchableHandleHandleTypeResolver<TNativeHandle>,
+    struct THandleDeleter : public THandleHandleTypeResolver<TNativeHandle>,
                                         public apemodevk::ScalableAllocPolicy
     {
         void operator()(TNativeHandle *& Handle)
@@ -31,18 +31,18 @@ namespace apemodevk
     //  Dispatchable handle types are a pointer to an opaque type. This pointer may be used by layers as part of
     //  intercepting API commands, and thus each API command takes a dispatchable type as its first parameter. Each
     //  object of a dispatchable type has a unique handle value.
-    template < typename TNativeHandle_, typename TDeleter_ = TDispatchableHandleDeleter< TNativeHandle_ > >
-    struct TDispatchableHandleBase : public apemodevk::ScalableAllocPolicy, public apemodevk::NoCopyAssignPolicy {
+    template < typename TNativeHandle_, typename TDeleter_ = THandleDeleter< TNativeHandle_ > >
+    struct THandleBase : public apemodevk::ScalableAllocPolicy, public apemodevk::NoCopyAssignPolicy {
         typedef TDeleter_ TDeleter;
         typedef TNativeHandle_ TNativeHandle;
-        typedef TDispatchableHandleBase<TNativeHandle, TDeleter> SelfType;
+        typedef THandleBase<TNativeHandle, TDeleter> SelfType;
 
         TNativeHandle Handle;
         TDeleter Deleter;
 
-        inline TDispatchableHandleBase() : Handle(VK_NULL_HANDLE) {}
-        inline TDispatchableHandleBase(SelfType && Other) : Handle(Other.Release()) {}
-        inline ~TDispatchableHandleBase() { Destroy(); }
+        inline THandleBase() : Handle(VK_NULL_HANDLE) {}
+        inline THandleBase(SelfType && Other) : Handle(Other.Release()) {}
+        inline ~THandleBase() { Destroy(); }
 
         inline TNativeHandle * operator()() const { return &Handle; }
         inline operator TNativeHandle *() { return &Handle; }

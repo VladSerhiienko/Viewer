@@ -7,7 +7,7 @@
 #include <ShaderCompiler.Vulkan.h>
 
 #include <GraphicsManager.KnownExtensions.Vulkan.h>
-#include <NativeDispatchableHandles.Vulkan.h>
+#include <NativeHandles.Vulkan.h>
 #include <SystemAllocationCallbacks.Vulkan.h>
 #include <TInfoStruct.Vulkan.h>
 
@@ -229,17 +229,25 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( VkPhysicalDevice InAdapter
             const auto bOk = hLogicalDevice.Recreate( pPhysicalDevice, DeviceDesc );
             apemode_assert( bOk, "vkCreateDevice failed." );
 
-            pQueuePool.reset( new QueuePool( hLogicalDevice,
-                                             pPhysicalDevice,
-                                             QueueProps.data( ),
-                                             QueueProps.data( ) + QueueProps.size( ),
-                                             QueuePriorities.data( ),
-                                             QueuePriorities.data( ) + QueuePriorities.size( ) ) );
+            if ( bOk ) {
+                VmaAllocatorCreateInfo allocatorCreateInfo = {};
+                allocatorCreateInfo.physicalDevice         = pPhysicalDevice;
+                allocatorCreateInfo.device                 = hLogicalDevice;
 
-            pCmdBufferPool.reset( new CommandBufferPool( hLogicalDevice,
-                                                         pPhysicalDevice,
-                                                         QueueProps.data( ),
-                                                         QueueProps.data( ) + QueueProps.size( ) ) );
+                Allocator.Recreate( allocatorCreateInfo );
+
+                pQueuePool.reset( new QueuePool( hLogicalDevice,
+                                                 pPhysicalDevice,
+                                                 QueueProps.data( ),
+                                                 QueueProps.data( ) + QueueProps.size( ),
+                                                 QueuePriorities.data( ),
+                                                 QueuePriorities.data( ) + QueuePriorities.size( ) ) );
+
+                pCmdBufferPool.reset( new CommandBufferPool( hLogicalDevice,
+                                                             pPhysicalDevice,
+                                                             QueueProps.data( ),
+                                                             QueueProps.data( ) + QueueProps.size( ) ) );
+            }
 
             return bOk;
         }

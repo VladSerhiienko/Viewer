@@ -53,10 +53,10 @@ namespace apemode {
         virtual bool Flush( const Scene* pScene, uint32_t FrameIndex ) override;
 
         apemodevk::GraphicsDevice*                              pNode = nullptr;
-        apemodevk::TDispatchableHandle< VkDescriptorSetLayout > hDescSetLayout;
-        apemodevk::TDispatchableHandle< VkPipelineLayout >      hPipelineLayout;
-        apemodevk::TDispatchableHandle< VkPipelineCache >       hPipelineCache;
-        apemodevk::TDispatchableHandle< VkPipeline >            hPipeline;
+        apemodevk::THandle< VkDescriptorSetLayout > hDescSetLayout;
+        apemodevk::THandle< VkPipelineLayout >      hPipelineLayout;
+        apemodevk::THandle< VkPipelineCache >       hPipelineCache;
+        apemodevk::THandle< VkPipeline >            hPipeline;
         apemodevk::TDescriptorSets< kMaxFrameCount >            DescSets;
         apemodevk::HostBufferPool                               BufferPools[ kMaxFrameCount ];
         apemodevk::DescriptorSetPool                            DescSetPools[ kMaxFrameCount ];

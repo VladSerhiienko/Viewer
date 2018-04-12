@@ -2,7 +2,7 @@
 #include <GraphicsDevice.Vulkan.h>
 #include <GraphicsManager.Vulkan.h>
 
-#include <NativeDispatchableHandles.Vulkan.h>
+#include <NativeHandles.Vulkan.h>
 #include <SystemAllocationCallbacks.Vulkan.h>
 #include <TInfoStruct.Vulkan.h>
 

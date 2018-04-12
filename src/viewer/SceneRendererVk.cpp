@@ -57,8 +57,8 @@ namespace apemodevk {
     };
 
     struct SceneMeshDeviceAssetVk {
-        TDispatchableHandle< VkBuffer >       hBuffer;
-        TDispatchableHandle< VkDeviceMemory > hMemory;
+        THandle< VkBuffer >       hBuffer;
+        THandle< VkDeviceMemory > hMemory;
         uint32_t                              VertexCount = 0;
         uint32_t                              IndexOffset = 0;
         VkIndexType                           IndexType   = VK_INDEX_TYPE_UINT16;
@@ -418,8 +418,8 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     fragmentShaderCreateInfo.pCode    = compiledFragmentShader->GetDwordPtr( );
     fragmentShaderCreateInfo.codeSize = compiledFragmentShader->GetByteCount( );
 
-    apemodevk::TDispatchableHandle< VkShaderModule > hVertexShaderModule;
-    apemodevk::TDispatchableHandle< VkShaderModule > hFragmentShaderModule;
+    apemodevk::THandle< VkShaderModule > hVertexShaderModule;
+    apemodevk::THandle< VkShaderModule > hFragmentShaderModule;
     if ( false == hVertexShaderModule.Recreate( *pParams->pNode, vertexShaderCreateInfo ) ||
          false == hFragmentShaderModule.Recreate( *pParams->pNode, fragmentShaderCreateInfo ) ) {
         DebugBreak( );

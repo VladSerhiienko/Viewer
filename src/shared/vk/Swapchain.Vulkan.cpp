@@ -22,7 +22,7 @@ apemodevk::Swapchain::Swapchain( ) {
 apemodevk::Swapchain::~Swapchain( ) {
     for ( auto& hBuffer : hImgs )
         if ( hBuffer ) {
-            apemodevk::TDispatchableHandle< VkImage > hImg;
+            apemodevk::THandle< VkImage > hImg;
             hImg.Deleter.hLogicalDevice = pDevice;
             hImg.Handle                 = hBuffer;
             hImg.Destroy( );

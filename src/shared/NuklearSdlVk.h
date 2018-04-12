@@ -6,7 +6,7 @@
 #include <DescriptorPool.Vulkan.h>
 #include <GraphicsDevice.Vulkan.h>
 #include <GraphicsManager.Vulkan.h>
-#include <NativeDispatchableHandles.Vulkan.h>
+#include <NativeHandles.Vulkan.h>
 
 #include <TInfoStruct.Vulkan.h>
 
@@ -47,23 +47,23 @@ namespace apemode {
         VkRenderPass                                            pRenderPass     = VK_NULL_HANDLE;
         VkCommandBuffer                                         pCmdBuffer      = VK_NULL_HANDLE;
         apemodevk::TDescriptorSets< 1 >                         DescSet;
-        apemodevk::TDispatchableHandle< VkSampler >             hFontSampler;
-        apemodevk::TDispatchableHandle< VkDescriptorSetLayout > hDescSetLayout;
-        apemodevk::TDispatchableHandle< VkPipelineLayout >      hPipelineLayout;
-        apemodevk::TDispatchableHandle< VkPipelineCache >       hPipelineCache;
-        apemodevk::TDispatchableHandle< VkPipeline >            hPipeline;
-        apemodevk::TDispatchableHandle< VkImage >               hFontImg;
-        apemodevk::TDispatchableHandle< VkImageView >           hFontImgView;
-        apemodevk::TDispatchableHandle< VkDeviceMemory >        hFontImgMemory;
-        apemodevk::TDispatchableHandle< VkBuffer >              hUploadBuffer;
-        apemodevk::TDispatchableHandle< VkDeviceMemory >        hUploadBufferMemory;
+        apemodevk::THandle< VkSampler >             hFontSampler;
+        apemodevk::THandle< VkDescriptorSetLayout > hDescSetLayout;
+        apemodevk::THandle< VkPipelineLayout >      hPipelineLayout;
+        apemodevk::THandle< VkPipelineCache >       hPipelineCache;
+        apemodevk::THandle< VkPipeline >            hPipeline;
+        apemodevk::THandle< VkImage >               hFontImg;
+        apemodevk::THandle< VkImageView >           hFontImgView;
+        apemodevk::THandle< VkDeviceMemory >        hFontImgMemory;
+        apemodevk::THandle< VkBuffer >              hUploadBuffer;
+        apemodevk::THandle< VkDeviceMemory >        hUploadBufferMemory;
 
-        apemodevk::TDispatchableHandle< VkBuffer >       hVertexBuffer[ kMaxFrameCount ];
-        apemodevk::TDispatchableHandle< VkDeviceMemory > hVertexBufferMemory[ kMaxFrameCount ];
-        apemodevk::TDispatchableHandle< VkBuffer >       hIndexBuffer[ kMaxFrameCount ];
-        apemodevk::TDispatchableHandle< VkDeviceMemory > hIndexBufferMemory[ kMaxFrameCount ];
-        apemodevk::TDispatchableHandle< VkBuffer >       hUniformBuffer[ kMaxFrameCount ];
-        apemodevk::TDispatchableHandle< VkDeviceMemory > hUniformBufferMemory[ kMaxFrameCount ];
+        apemodevk::THandle< VkBuffer >       hVertexBuffer[ kMaxFrameCount ];
+        apemodevk::THandle< VkDeviceMemory > hVertexBufferMemory[ kMaxFrameCount ];
+        apemodevk::THandle< VkBuffer >       hIndexBuffer[ kMaxFrameCount ];
+        apemodevk::THandle< VkDeviceMemory > hIndexBufferMemory[ kMaxFrameCount ];
+        apemodevk::THandle< VkBuffer >       hUniformBuffer[ kMaxFrameCount ];
+        apemodevk::THandle< VkDeviceMemory > hUniformBufferMemory[ kMaxFrameCount ];
         uint32_t                                         VertexBufferSize[ kMaxFrameCount ] = {0};
         uint32_t                                         IndexBufferSize[ kMaxFrameCount ]  = {0};
 

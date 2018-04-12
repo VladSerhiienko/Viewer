@@ -308,8 +308,8 @@ bool apemode::NuklearRendererSdlVk::DeviceCreate( InitParametersBase* init_param
     fragmentShaderCreateInfo.codeSize =
         (size_t) std::distance( nuklear_compiled[ 1 ].begin( ), nuklear_compiled[ 1 ].end( ) ) * sizeof( uint32_t );
 
-    TDispatchableHandle< VkShaderModule > hVertexShaderModule;
-    TDispatchableHandle< VkShaderModule > hFragmentShaderModule;
+    THandle< VkShaderModule > hVertexShaderModule;
+    THandle< VkShaderModule > hFragmentShaderModule;
     if ( false == hVertexShaderModule.Recreate( pDevice, vertexShaderCreateInfo ) ||
          false == hFragmentShaderModule.Recreate( pDevice, fragmentShaderCreateInfo ) ) {
         apemodevk::platform::DebugBreak( );
@@ -608,8 +608,8 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
         hUploadBufferMemory.Unmap( );
     }
 
-    TDispatchableHandle< VkCommandPool >   cmdPool;
-    TDispatchableHandle< VkCommandBuffer > cmdBuffer;
+    THandle< VkCommandPool >   cmdPool;
+    THandle< VkCommandBuffer > cmdBuffer;
     VkCommandBuffer                        finalCmdBuffer = initParametersVk->pCmdBuffer;
 
     if ( VK_NULL_HANDLE == finalCmdBuffer ) {
