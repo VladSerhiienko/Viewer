@@ -30,7 +30,6 @@ namespace apemode {
 
         uint32_t                   LastWidth;
         uint32_t                   LastHeight;
-        apemodevk::GraphicsManager DeviceManager;
         apemodevk::Surface         Surface;
         apemodevk::Swapchain       Swapchain;
         std::vector< uint32_t >    PresentQueueFamilyIds;

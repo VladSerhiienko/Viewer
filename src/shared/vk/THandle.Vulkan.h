@@ -16,11 +16,10 @@ namespace apemodevk
         }
     };
 
-    template <typename TNativeHandle>
-    struct THandleDeleter : public THandleHandleTypeResolver<TNativeHandle>,
-                                        public apemodevk::ScalableAllocPolicy
-    {
-        void operator()(TNativeHandle *& Handle)
+    template < typename TNativeHandle >
+    struct THandleDeleter : public THandleHandleTypeResolver< TNativeHandle >
+                          , public apemodevk::ScalableAllocPolicy {
+        void operator( )( TNativeHandle *&Handle )
         // void operator()(HandleType *& Handle)
         {
             apemode_error("Please, specialize the proprietary deleter for your class.");
@@ -32,7 +31,7 @@ namespace apemodevk
     //  intercepting API commands, and thus each API command takes a dispatchable type as its first parameter. Each
     //  object of a dispatchable type has a unique handle value.
     template < typename TNativeHandle_, typename TDeleter_ = THandleDeleter< TNativeHandle_ > >
-    struct THandleBase : public apemodevk::ScalableAllocPolicy, public apemodevk::NoCopyAssignPolicy {
+    struct THandleBase : public apemodevk::ScalableAllocPolicy, public NoCopyAssignPolicy {
         typedef TDeleter_ TDeleter;
         typedef TNativeHandle_ TNativeHandle;
         typedef THandleBase<TNativeHandle, TDeleter> SelfType;

@@ -84,7 +84,7 @@ namespace apemodevk
         }
     };
 
-    class DescriptorSet : public apemodevk::NoCopyAssignPolicy {
+    class DescriptorSet : public NoCopyAssignPolicy {
     public:
         DescriptorSet( );
         ~DescriptorSet( );
@@ -108,7 +108,7 @@ namespace apemodevk
         VkDescriptorSetLayout                             hDescSetLayout;
     };
 
-    class DescriptorSetUpdater : public apemodevk::NoCopyAssignPolicy {
+    class DescriptorSetUpdater : public NoCopyAssignPolicy {
         bool SetGraphicsNode (apemodevk::GraphicsDevice const & GraphicsNode);
 
     public:
@@ -143,7 +143,7 @@ namespace apemodevk
         std::vector< VkCopyDescriptorSet >    Copies;
     };
 
-    class DescriptorPool : public apemodevk::NoCopyAssignPolicy {
+    class DescriptorPool : public NoCopyAssignPolicy {
     public:
         DescriptorPool( );
         ~DescriptorPool( );

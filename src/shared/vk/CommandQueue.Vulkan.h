@@ -13,7 +13,7 @@ namespace apemodevk
     class PipelineState;
 
     class CommandBuffer : public apemodevk::ScalableAllocPolicy,
-                                                    public apemodevk::NoCopyAssignPolicy
+                                                    public NoCopyAssignPolicy
     {
     public:
         enum CommandListType
@@ -159,7 +159,7 @@ namespace apemodevk
      * but can also be potentially used by the graphics devices.
      */
     class CommandQueueReserver : public apemodevk::ScalableAllocPolicy,
-                                                             public apemodevk::NoCopyAssignPolicy
+                                                             public NoCopyAssignPolicy
     {
         friend CommandQueue;
         friend GraphicsDevice;
@@ -210,7 +210,7 @@ namespace apemodevk
         static CommandQueueReserver &Get( );
     };
 
-    class CommandQueue : public apemodevk::NoCopyAssignPolicy {
+    class CommandQueue : public NoCopyAssignPolicy {
     public:
         CommandQueue( );
         ~CommandQueue( );

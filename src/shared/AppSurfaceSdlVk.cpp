@@ -28,15 +28,15 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
         if ( TGetOption< bool >( "vkapidump", false ) )
             graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_LUNARG_api_dump;
 
-        if ( DeviceManager.RecreateGraphicsNodes( graphicsManagerFlags ) ) {
-            pNode = DeviceManager.GetPrimaryGraphicsNode( );
+        if ( apemodevk::GraphicsManager::Get()->RecreateGraphicsNodes( graphicsManagerFlags, nullptr ) ) {
+            pNode = apemodevk::GraphicsManager::Get()->GetPrimaryGraphicsNode( );
 
 #ifdef X_PROTOCOL
-            Surface.Recreate( pNode->pPhysicalDevice, DeviceManager.hInstance, pDisplayX11, pWindowX11 );
+            Surface.Recreate( pNode->pPhysicalDevice, apemodevk::GraphicsManager::Get()->hInstance, pDisplayX11, pWindowX11 );
 #endif
 
 #ifdef _WINDOWS_
-            Surface.Recreate( pNode->pPhysicalDevice, DeviceManager.hInstance, hInstance, hWnd );
+            Surface.Recreate( pNode->pPhysicalDevice, apemodevk::GraphicsManager::Get()->hInstance, hInstance, hWnd );
 #endif
 
             uint32_t queueFamilyIndex = 0;
@@ -139,7 +139,7 @@ void apemode::AppSurfaceSdlVk::OnFrameMove( ) {
 }
 
 void* apemode::AppSurfaceSdlVk::GetGraphicsHandle( ) {
-    return reinterpret_cast< void* >( &DeviceManager );
+    return reinterpret_cast< void* >( apemodevk::GraphicsManager::Get() );
 }
 
 apemode::SceneRendererBase* apemode::AppSurfaceSdlVk::CreateSceneRenderer( ) {

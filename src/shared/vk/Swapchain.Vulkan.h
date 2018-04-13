@@ -9,7 +9,7 @@ namespace apemodevk {
     class ColorResourceView;
     class RenderPassResources;
 
-    class Surface : public apemodevk::NoCopyAssignPolicy {
+    class Surface : public NoCopyAssignPolicy {
     public:
         VkPhysicalDevice                    pPhysicalDevice;
         VkInstance                          pInstance;
@@ -32,7 +32,7 @@ namespace apemodevk {
         bool SetSurfaceProperties( );
     };
 
-    class Swapchain : public apemodevk::NoCopyAssignPolicy {
+    class Swapchain : public NoCopyAssignPolicy {
     public:
         static uint32_t const kExtentMatchFullscreen;
         static uint32_t const kExtentMatchWindow;

@@ -11,7 +11,7 @@ namespace apemodevk {
     class CommandBufferPool;
     class ShaderCompiler;
 
-    class GraphicsDevice : public apemodevk::NoCopyAssignPolicy {
+    class GraphicsDevice : public NoCopyAssignPolicy {
     public:
         friend Swapchain;
         friend GraphicsManager;

@@ -329,10 +329,24 @@ bool apemodevk::GraphicsManager::NativeLayerWrapper::IsValidInstanceLayer( ) con
 /// GraphicsEcosystem
 /// -------------------------------------------------------------------------------------------------------------------
 
+// apemodevk::GraphicsManager* InitOnceGraphicsManager( ) {
+//     static apemodevk::GraphicsManager graphicsManagerInstance;
+//     return &graphicsManagerInstance;
+// }
+
+apemodevk::GraphicsManager* apemodevk::GraphicsManager::Get( ) {
+    static apemodevk::GraphicsManager graphicsManagerInstance;
+    return &graphicsManagerInstance;
+}
+
 apemodevk::GraphicsManager::GraphicsManager( ) {
 }
 
 apemodevk::GraphicsManager::~GraphicsManager( ) {
+}
+
+apemodevk::GraphicsManager::IAllocator* apemodevk::GraphicsManager::GetAllocator( ) {
+    return pAllocator.get( );
 }
 
 apemodevk::GraphicsDevice *apemodevk::GraphicsManager::GetPrimaryGraphicsNode( ) {
@@ -343,7 +357,7 @@ apemodevk::GraphicsDevice *apemodevk::GraphicsManager::GetSecondaryGraphicsNode(
     return SecondaryNode.get( );
 }
 
-bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t flags ) {
+bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t flags, std::unique_ptr< IAllocator > pAlloc ) {
     auto const bIsInstInitialized = InitializeInstance( flags );
     apemode_assert( bIsInstInitialized, "Vulkan Instance initialization failed." );
     return bIsInstInitialized;

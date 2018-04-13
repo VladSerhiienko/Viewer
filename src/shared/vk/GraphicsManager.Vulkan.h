@@ -6,13 +6,16 @@
 namespace apemodevk {
     class GraphicsDevice;
 
-    class GraphicsManager : public apemodevk::NoCopyAssignPolicy {
+    class GraphicsManager : public NoCopyAssignPolicy {
     public:
         friend class GraphicsDevice;
 
-        static uint32_t const kEnable_RENDERDOC_Capture = 1; // Must be enabled for RenderDoc tool.
-        static uint32_t const kEnable_LUNARG_vktrace    = 2; // Must be enable for vktrace tool.
-        static uint32_t const kEnable_LUNARG_api_dump   = 4; // Traces every call to stdout.
+        enum InitFlags : uint32_t {
+            kNormal                   = 0, // Normal initialization.
+            kEnable_RENDERDOC_Capture = 1, // Must be enabled for RenderDoc tool.
+            kEnable_LUNARG_vktrace    = 2, // Must be enable for vktrace tool.
+            kEnable_LUNARG_api_dump   = 4, // Traces every call to stdout.
+        };
 
         struct APIVersion : public apemodevk::ScalableAllocPolicy {
             uint32_t Major, Minor, Patch;
@@ -31,16 +34,41 @@ namespace apemodevk {
             bool IsValidDeviceLayer( ) const;
         };
 
-        GraphicsManager( );
-        ~GraphicsManager( );
+        struct AllocationCallbacks {
+            static void* AllocationFunction( void*                   pUserData,
+                                             size_t                  size,
+                                             size_t                  alignment,
+                                             VkSystemAllocationScope allocationScope );
 
-        bool                RecreateGraphicsNodes( uint32_t flags = 0 );
-        GraphicsDevice *    GetPrimaryGraphicsNode( );
-        GraphicsDevice *    GetSecondaryGraphicsNode( );
-        bool                ScanInstanceLayerProperties( uint32_t flags );
-        bool                ScanAdapters( uint32_t flags );
-        NativeLayerWrapper &GetUnnamedLayer( );
-        bool                InitializeInstance( uint32_t flags );
+            static void* ReallocationFunction( void* pUserData, void* pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope );
+
+            static void FreeFunction( void* pUserData, void* pMemory );
+        };
+
+        /* Allocator interface, allows tracking. */
+        struct IAllocator {
+            /* malloc */
+            virtual void* Allocation( size_t             size,
+                                      size_t             alignment,
+                                      const char*        sourceFile,
+                                      const unsigned int sourceLine,
+                                      const char*        sourceFunc ) = 0;
+
+            /* realloc */
+            virtual void* Reallocation( void*              pOriginal,
+                                        size_t             size,
+                                        size_t             alignment,
+                                        const char*        sourceFile,
+                                        const unsigned int sourceLine,
+                                        const char*        sourceFunc ) = 0;
+
+            /* free */
+            virtual void  Free( void*              pUserData,
+                                void*              pMemory,
+                                const char*        sourceFile,
+                                const unsigned int sourceLine,
+                                const char*        sourceFunc ) = 0;
+        };
 
         static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback( VkFlags                    msgFlags,
                                                              VkDebugReportObjectTypeEXT objType,
@@ -69,7 +97,25 @@ namespace apemodevk {
         std::vector< const char * >          InstanceExtensions;
         std::vector< VkLayerProperties >     InstanceLayerProps;
         std::vector< VkExtensionProperties > InstanceExtensionProps;
-        THandle< VkInstance >    hInstance;
         std::vector< NativeLayerWrapper >    LayerWrappers;
+        THandle< VkInstance >                hInstance;
+        std::unique_ptr< IAllocator >        pAllocator;
+
+        /* Initializes the instance if needed, and returns it. */
+        static GraphicsManager *Get( );
+
+        bool            RecreateGraphicsNodes( uint32_t flags, std::unique_ptr< IAllocator > pAlloc );
+        GraphicsDevice* GetPrimaryGraphicsNode( );
+        GraphicsDevice* GetSecondaryGraphicsNode( );
+        IAllocator*     GetAllocator( );
+
+    private:
+        GraphicsManager( );
+        ~GraphicsManager( );
+
+        bool                ScanInstanceLayerProperties( uint32_t flags );
+        bool                ScanAdapters( uint32_t flags );
+        bool                InitializeInstance( uint32_t flags );
+        NativeLayerWrapper &GetUnnamedLayer( );
     };
 }
