@@ -1,5 +1,6 @@
 #pragma once
 
+#include <MemoryManager.h>
 #include <Platform.Vulkan.h>
 
 //

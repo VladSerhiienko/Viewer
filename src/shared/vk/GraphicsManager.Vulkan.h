@@ -19,19 +19,22 @@ namespace apemodevk {
 
         struct APIVersion : public apemodevk::ScalableAllocPolicy {
             uint32_t Major, Minor, Patch;
-            APIVersion( bool bDump = true );
+            APIVersion( );
         };
 
         struct NativeLayerWrapper : public apemodevk::ScalableAllocPolicy {
-            typedef TInfoStruct< VkExtensionProperties >::Vector VkExtensionPropertiesVector;
-
-            bool                             bIsUnnamed;
-            TInfoStruct< VkLayerProperties > Layer;
-            VkExtensionPropertiesVector      Extensions;
+            bool                                 bIsUnnamed;
+            VkLayerProperties                    Layer;
+            std::vector< VkExtensionProperties > Extensions;
 
             bool IsUnnamedLayer( ) const;
             bool IsValidInstanceLayer( ) const;
             bool IsValidDeviceLayer( ) const;
+        };
+
+        struct ILogger {
+            using LogLevel = platform::LogLevel;
+            virtual void Log( LogLevel lvl, const char* pszMsg ) = 0;
         };
 
         struct AllocationCallbacks {
@@ -40,34 +43,48 @@ namespace apemodevk {
                                              size_t                  alignment,
                                              VkSystemAllocationScope allocationScope );
 
-            static void* ReallocationFunction( void* pUserData, void* pOriginal, size_t size, size_t alignment, VkSystemAllocationScope allocationScope );
+            static void* ReallocationFunction( void*                   pUserData,
+                                               void*                   pOriginal,
+                                               size_t                  size,
+                                               size_t                  alignment,
+                                               VkSystemAllocationScope allocationScope );
 
-            static void FreeFunction( void* pUserData, void* pMemory );
+            static void FreeFunction( void* pUserData,
+                                      void* pMemory );
+
+            static void InternalAllocationNotification( void*                    pUserData,
+                                                        size_t                   size,
+                                                        VkInternalAllocationType allocationType,
+                                                        VkSystemAllocationScope  allocationScope );
+
+            static void InternalFreeNotification( void*                    pUserData,
+                                                  size_t                   size,
+                                                  VkInternalAllocationType allocationType,
+                                                  VkSystemAllocationScope  allocationScope );
         };
 
         /* Allocator interface, allows tracking. */
         struct IAllocator {
             /* malloc */
-            virtual void* Allocation( size_t             size,
-                                      size_t             alignment,
-                                      const char*        sourceFile,
-                                      const unsigned int sourceLine,
-                                      const char*        sourceFunc ) = 0;
+            virtual void* Malloc( size_t             size,
+                                 size_t             alignment,
+                                 const char*        sourceFile,
+                                 const unsigned int sourceLine,
+                                 const char*        sourceFunc ) = 0;
 
             /* realloc */
-            virtual void* Reallocation( void*              pOriginal,
-                                        size_t             size,
-                                        size_t             alignment,
-                                        const char*        sourceFile,
-                                        const unsigned int sourceLine,
-                                        const char*        sourceFunc ) = 0;
+            virtual void* Realloc( void*              pOriginal,
+                                   size_t             size,
+                                   size_t             alignment,
+                                   const char*        sourceFile,
+                                   const unsigned int sourceLine,
+                                   const char*        sourceFunc ) = 0;
 
             /* free */
-            virtual void  Free( void*              pUserData,
-                                void*              pMemory,
-                                const char*        sourceFile,
-                                const unsigned int sourceLine,
-                                const char*        sourceFunc ) = 0;
+            virtual void Free( void*              pMemory,
+                               const char*        sourceFile,
+                               const unsigned int sourceLine,
+                               const char*        sourceFunc ) = 0;
         };
 
         static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback( VkFlags                    msgFlags,
@@ -100,14 +117,17 @@ namespace apemodevk {
         std::vector< NativeLayerWrapper >    LayerWrappers;
         THandle< VkInstance >                hInstance;
         std::unique_ptr< IAllocator >        pAllocator;
+        std::unique_ptr< ILogger >           pLogger;
 
-        /* Initializes the instance if needed, and returns it. */
-        static GraphicsManager *Get( );
+        /* Initializes and returns GraphicsManager instance. */
+        friend GraphicsManager* GetGraphicsManager( );
 
-        bool            RecreateGraphicsNodes( uint32_t flags, std::unique_ptr< IAllocator > pAlloc );
-        GraphicsDevice* GetPrimaryGraphicsNode( );
-        GraphicsDevice* GetSecondaryGraphicsNode( );
-        IAllocator*     GetAllocator( );
+        bool                         RecreateGraphicsNodes( uint32_t flags, std::unique_ptr< IAllocator > pAlloc, std::unique_ptr< ILogger > pLogger );
+        GraphicsDevice*              GetPrimaryGraphicsNode( );
+        GraphicsDevice*              GetSecondaryGraphicsNode( );
+        IAllocator*                  GetAllocator( );
+        ILogger*                     GetLogger( );
+        const VkAllocationCallbacks* GetAllocationCallbacks( ) const;
 
     private:
         GraphicsManager( );
@@ -115,7 +135,6 @@ namespace apemodevk {
 
         bool                ScanInstanceLayerProperties( uint32_t flags );
         bool                ScanAdapters( uint32_t flags );
-        bool                InitializeInstance( uint32_t flags );
         NativeLayerWrapper &GetUnnamedLayer( );
     };
 }

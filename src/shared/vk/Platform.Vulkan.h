@@ -166,39 +166,41 @@ namespace apemodevk {
             }
         }
 
-        template < bool bNewLine = true, bool bConsole = true, unsigned uBufferSize = 1024u >
-        static void DebugTrace( char const *fmt, ... ) {
-            static const int s_length = uBufferSize - 2;
-            char buffer[ uBufferSize ];
+        enum LogLevel {
+            Trace    = 0,
+            Debug    = 1,
+            Info     = 2,
+            Warn     = 3,
+            Err      = 4,
+            Critical = 5,
+        };
+
+        void Log( LogLevel level, const char *pszMsg );
+
+        template < bool bNewLine = false, unsigned uBufferSize = 1024u >
+        static void DebugTrace( LogLevel level, char const *pszFmt, ... ) {
+
+            const int uLength = uBufferSize - 1 - bNewLine;
+            char szBuffer[ uBufferSize ] = {0};
 
             va_list ap;
-            va_start( ap, fmt );
+            va_start( ap, pszFmt );
 
 #ifdef _WINDOWS_
-            auto n = _vsnprintf_s( buffer, s_length, fmt, ap );
+            auto n = _vsnprintf_s( szBuffer, uLength, pszFmt, ap );
 #else
-            auto n = vsnprintf( buffer, s_length, fmt, ap );
+            auto n = vsnprintf( szBuffer, uLength, pszFmt, ap );
 #endif
-
-            if ( n > uBufferSize - 2 )
-                n = uBufferSize - 2;
+            assert( n <= uLength );
 
             if ( bNewLine ) {
-                buffer[ n ] = L'\n';
-                buffer[ n + 1 ] = L'\0';
-            } else
-                buffer[ n ] = L'\0';
-
-#ifdef _WINDOWS_
-            OutputDebugStringA( "APEMODE VK: " );
-            OutputDebugStringA( buffer );
-
-            if ( bConsole ) {
-                 printf_s( "APEMODE VK: " );
-                 printf_s( buffer );
+                szBuffer[ n ]     = '\n';
+                szBuffer[ n + 1 ] = '\0';
+            } else {
+                szBuffer[ n ] = '\0';
             }
-#endif
 
+            Log( level, szBuffer );
             va_end( ap );
         }
     } // namespace platform
@@ -210,7 +212,13 @@ namespace apemodevk {
 #define apemode_unlikely( ... ) __VA_ARGS__
 #define apemode_error( ... )
 #define apemode_halt( ... )
-#define _Get_collection_length_u( c ) ( (uint32_t) c.size( ) )
+
+namespace apemodevk {
+    template < typename T >
+    uint32_t GetSizeU( const T &c ) {
+        return static_cast< uint32_t >( c.size( ) );
+    }
+}
 
 namespace apemodevk {
     struct ScalableAllocPolicy {};
@@ -259,17 +267,6 @@ namespace apemodevk {
         return TArraySize;
     }
 
-#ifdef _Get_array_length
-#undef _Get_array_length
-#endif
-
-#ifdef _Get_array_length_u
-#undef _Get_array_length_u
-#endif
-
-#define _Get_array_length( Array ) ( apemodevk::GetArraySize( Array ) )
-#define _Get_array_length_u( Array ) ( apemodevk::GetArraySizeU( Array ) )
-
 #ifdef ARRAYSIZE
 #undef ARRAYSIZE
 #endif
@@ -278,8 +275,8 @@ namespace apemodevk {
 #undef ARRAYSIZEU
 #endif
 
-#define ARRAYSIZE _Get_array_length
-#define ARRAYSIZEU _Get_array_length_u
+#define ARRAYSIZE apemodevk::GetArraySize
+#define ARRAYSIZEU apemodevk::GetArraySizeU
 
 #ifdef ZeroMemory
 #undef ZeroMemory

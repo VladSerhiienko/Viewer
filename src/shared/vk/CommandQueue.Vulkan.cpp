@@ -48,8 +48,8 @@ bool apemodevk::CommandBuffer::RecreateResourcesFor (GraphicsDevice & GraphicsNo
         ? CmdPoolTransientWithIndividualReset
         : CmdPoolWithIndividualReset;
 
-    const VkCommandBufferLevel CmdListType = bIsDirect 
-        ? VK_COMMAND_BUFFER_LEVEL_PRIMARY 
+    const VkCommandBufferLevel CmdListType = bIsDirect
+        ? VK_COMMAND_BUFFER_LEVEL_PRIMARY
         : VK_COMMAND_BUFFER_LEVEL_SECONDARY;
 
     TInfoStruct<VkCommandPoolCreateInfo> CmdAllocDesc;
@@ -89,84 +89,79 @@ static uint64_t ComposeKey (VkPipelineStageFlags SrcFlags, VkPipelineStageFlags 
     return static_cast<uint64_t> (SrcFlags) << 32 | static_cast<uint64_t> (DstFlags);
 }
 
-void apemodevk::CommandBuffer::InsertBarrier (VkPipelineStageFlags    SrcFlags,
-                                       VkPipelineStageFlags    DstFlags,
-                                       VkMemoryBarrier const & Barrier)
-{
+void apemodevk::CommandBuffer::InsertBarrier( VkPipelineStageFlags   srcFlags,
+                                              VkPipelineStageFlags   dstFlags,
+                                              VkMemoryBarrier const& barrier ) {
+    StagedBarrier const CmdBarrier( srcFlags, dstFlags, barrier );
+    StagedBarriers.insert( std::make_pair<>( CmdBarrier.StageHash, CmdBarrier ) );
     ++BarrierCount;
-
-    StagedBarrier const CmdBarrier (SrcFlags, DstFlags, Barrier);
-    StagedBarriers.insert (std::make_pair<> (CmdBarrier.StageHash, CmdBarrier));
 }
 
-void apemodevk::CommandBuffer::InsertBarrier (VkPipelineStageFlags         SrcFlags,
-                                       VkPipelineStageFlags         DstFlags,
-                                       VkImageMemoryBarrier const & Barrier)
-{
+void apemodevk::CommandBuffer::InsertBarrier( VkPipelineStageFlags        srcFlags,
+                                              VkPipelineStageFlags        dstFlags,
+                                              VkImageMemoryBarrier const& barrier ) {
+    StagedBarrier const CmdBarrier( srcFlags, dstFlags, barrier );
+    StagedBarriers.insert( std::make_pair<>( CmdBarrier.StageHash, CmdBarrier ) );
     ++ImgBarrierCount;
-
-    StagedBarrier const CmdBarrier (SrcFlags, DstFlags, Barrier);
-    StagedBarriers.insert (std::make_pair<> (CmdBarrier.StageHash, CmdBarrier));
 }
 
-void apemodevk::CommandBuffer::InsertBarrier (VkPipelineStageFlags          SrcFlags,
-                                       VkPipelineStageFlags          DstFlags,
-                                       VkBufferMemoryBarrier const & Barrier)
-{
+void apemodevk::CommandBuffer::InsertBarrier( VkPipelineStageFlags         srcFlags,
+                                              VkPipelineStageFlags         dstFlags,
+                                              VkBufferMemoryBarrier const& barrier ) {
+    StagedBarrier const CmdBarrier( srcFlags, dstFlags, barrier );
+    StagedBarriers.insert( std::make_pair<>( CmdBarrier.StageHash, CmdBarrier ) );
     ++BufferBarrierCount;
-
-    StagedBarrier const CmdBarrier (SrcFlags, DstFlags, Barrier);
-    StagedBarriers.insert (std::make_pair<> (CmdBarrier.StageHash, CmdBarrier));
 }
 
-void apemodevk::CommandBuffer::FlushStagedBarriers()
-{
-    Barriers.reserve (BarrierCount);
-    ImgBarriers.reserve (ImgBarrierCount);
-    BufferBarriers.reserve (BufferBarrierCount);
+void apemodevk::CommandBuffer::FlushStagedBarriers( ) {
+
+    Barriers.reserve( BarrierCount );
+    ImgBarriers.reserve( ImgBarrierCount );
+    BufferBarriers.reserve( BufferBarrierCount );
 
     BarrierCount       = 0;
     ImgBarrierCount    = 0;
     BufferBarrierCount = 0;
 
-    auto FillBarriersFn = [this](StagedBarrier::Pair const & KeydStagedBarrier)
-    {
-        switch (KeydStagedBarrier.second.BarrierType)
-        {
-        case VK_STRUCTURE_TYPE_MEMORY_BARRIER:
-            Barriers.push_back (KeydStagedBarrier.second.Barrier);
-            break;
-        case VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER:
-            ImgBarriers.push_back (KeydStagedBarrier.second.ImgBarrier);
-            break;
-        case VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER:
-            BufferBarriers.push_back (KeydStagedBarrier.second.BufferBarrier);
-            break;
-        default:
-            apemode_halt ("Memory corruption.");
-            break;
+    auto fillBarriersFn = [this]( StagedBarrier::Pair const& keydStagedBarrier ) {
+        switch ( keydStagedBarrier.second.BarrierType ) {
+            case VK_STRUCTURE_TYPE_MEMORY_BARRIER:
+                Barriers.push_back( keydStagedBarrier.second.Barrier );
+                break;
+            case VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER:
+                ImgBarriers.push_back( keydStagedBarrier.second.ImgBarrier );
+                break;
+            case VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER:
+                BufferBarriers.push_back( keydStagedBarrier.second.BufferBarrier );
+                break;
+            default:
+                apemode_halt( "Memory corruption." );
+                break;
         }
     };
 
-    StagedBarrier::ItRange StagedBarrierItRange;
-    StagedBarrier::It      StagedBarrierIt = StagedBarriers.begin( );
-    for ( ; StagedBarrierIt != StagedBarriers.cend( ); StagedBarrierIt = StagedBarrierItRange.second ) {
-        StagedBarrierItRange = StagedBarriers.equal_range( StagedBarrierIt->first );
-        std::for_each( StagedBarrierItRange.first, StagedBarrierItRange.second, FillBarriersFn );
+    StagedBarrier::It stagedBarrierIt = StagedBarriers.begin( );
+
+    StagedBarrier::ItRange stagedBarrierItRange;
+    for ( ; stagedBarrierIt != StagedBarriers.cend( ); stagedBarrierIt = stagedBarrierItRange.second ) {
+
+        stagedBarrierItRange = StagedBarriers.equal_range( stagedBarrierIt->first );
+        std::for_each( stagedBarrierItRange.first, stagedBarrierItRange.second, fillBarriersFn );
 
         apemode_assert( !Barriers.empty( ) || !ImgBarriers.empty( ) || !BufferBarriers.empty( ),
                         "Nothing to submit to the command list." );
 
         if ( apemode_likely( !Barriers.empty( ) || !ImgBarriers.empty( ) || !BufferBarriers.empty( ) ) ) {
+
             vkCmdPipelineBarrier( hCmdList,
-                                  StagedBarrierItRange.first->second.SrcStage,
-                                  StagedBarrierItRange.first->second.DstStage,
+                                  stagedBarrierItRange.first->second.SrcStage,
+                                  stagedBarrierItRange.first->second.DstStage,
                                   static_cast< VkDependencyFlags >( 0 ),
-                                  _Get_collection_length_u( Barriers ),
+                                  GetSizeU( Barriers ),
                                   Barriers.data( ),
-                                  _Get_collection_length_u( BufferBarriers ),
+                                  GetSizeU( BufferBarriers ),
                                   BufferBarriers.data( ),
-                                  _Get_collection_length_u( ImgBarriers ),
+                                  GetSizeU( ImgBarriers ),
                                   ImgBarriers.data( ) );
         }
 
@@ -192,17 +187,14 @@ bool apemodevk::CommandBuffer::IsDirect () const
 /// CommandQueue
 /// -------------------------------------------------------------------------------------------------------------------
 
-apemodevk::CommandQueue::CommandQueue () : pNode (nullptr), queueFamilyId (0), queueId (0)
-{
+apemodevk::CommandQueue::CommandQueue( ) : pNode( nullptr ), queueFamilyId( 0 ), queueId( 0 ) {
 }
 
 /// -------------------------------------------------------------------------------------------------------------------
 
-apemodevk::CommandQueue::~CommandQueue ()
-{
-    if (pNode != nullptr)
-    {
-        CommandQueueReserver::Get ().Unreserve (*pNode, queueFamilyId, queueId);
+apemodevk::CommandQueue::~CommandQueue( ) {
+    if ( pNode != nullptr ) {
+        CommandQueueReserver::Get( ).Unreserve( *pNode, queueFamilyId, queueId );
     }
 }
 
@@ -211,6 +203,7 @@ apemodevk::CommandQueue::~CommandQueue ()
 bool apemodevk::CommandQueue::RecreateResourcesFor( GraphicsDevice& InGraphicsNode,
                                                     uint32_t        InQueueFamilyId,
                                                     uint32_t        InQueueId ) {
+
     if ( CommandQueueReserver::Get( ).TryReserve( InGraphicsNode, InQueueFamilyId, InQueueId ) ) {
         pNode         = &InGraphicsNode;
         queueFamilyId = InQueueFamilyId;
@@ -308,8 +301,7 @@ bool apemodevk::CommandQueue::Execute( CommandBuffer* CmdLists, uint32_t CmdList
 /// CommandQueueReserver Key
 /// -------------------------------------------------------------------------------------------------------------------
 
-apemodevk::CommandQueueReserver::Key::Key() : GraphicsNodeHash(0), QueueHash(0)
-{
+apemodevk::CommandQueueReserver::Key::Key( ) : GraphicsNodeHash( 0 ), QueueHash( 0 ) {
 }
 
 /// -------------------------------------------------------------------------------------------------------------------
@@ -366,9 +358,7 @@ bool apemodevk::CommandQueueReserver::Key::CmpOpEqual::operator( )( Key const& K
 
 /// -------------------------------------------------------------------------------------------------------------------
 
-bool apemodevk::CommandQueueReserver::Key::CmpOpLess::operator() (Key const & Key0,
-                                                             Key const & Key1) const
-{
+bool apemodevk::CommandQueueReserver::Key::CmpOpLess::operator( )( Key const& Key0, Key const& Key1 ) const {
     return Key0.QueueHash < Key1.QueueHash && Key0.GraphicsNodeHash < Key1.GraphicsNodeHash;
 }
 
@@ -376,22 +366,18 @@ bool apemodevk::CommandQueueReserver::Key::CmpOpLess::operator() (Key const & Ke
 /// CommandQueueReserver Reservation
 /// -------------------------------------------------------------------------------------------------------------------
 
-apemodevk::CommandQueueReserver::Reservation::Reservation ()
-    : pQueue (nullptr), queueId (0), queueFamilyId (0)
-{
+apemodevk::CommandQueueReserver::Reservation::Reservation( ) : pQueue( nullptr ), queueId( 0 ), queueFamilyId( 0 ) {
 }
 
 /// -------------------------------------------------------------------------------------------------------------------
 
-bool apemodevk::CommandQueueReserver::Reservation::IsValid () const
-{
+bool apemodevk::CommandQueueReserver::Reservation::IsValid( ) const {
     return pQueue != nullptr;
 }
 
 /// -------------------------------------------------------------------------------------------------------------------
 
-void apemodevk::CommandQueueReserver::Reservation::Release ()
-{
+void apemodevk::CommandQueueReserver::Reservation::Release( ) {
     pQueue = nullptr;
 }
 
@@ -464,25 +450,22 @@ apemodevk::CommandBuffer::BeginEndScope::~BeginEndScope ()
 /// CommandBuffer StagedBarrier
 /// -------------------------------------------------------------------------------------------------------------------
 
-apemodevk::CommandBuffer::StagedBarrier::StagedBarrier (VkPipelineStageFlags    SrcStage,
-                                                 VkPipelineStageFlags    DstStage,
-                                                 VkMemoryBarrier const & Barrier)
-    : SrcStage (SrcStage), DstStage (DstStage), Barrier (Barrier)
-{
+apemodevk::CommandBuffer::StagedBarrier::StagedBarrier( VkPipelineStageFlags   SrcStage,
+                                                        VkPipelineStageFlags   DstStage,
+                                                        VkMemoryBarrier const& Barrier )
+    : SrcStage( SrcStage ), DstStage( DstStage ), Barrier( Barrier ) {
 }
 
-apemodevk::CommandBuffer::StagedBarrier::StagedBarrier (VkPipelineStageFlags         SrcStage,
-                                                 VkPipelineStageFlags         DstStage,
-                                                 VkImageMemoryBarrier const & Barrier)
-    : SrcStage (SrcStage), DstStage (DstStage), ImgBarrier (Barrier)
-{
+apemodevk::CommandBuffer::StagedBarrier::StagedBarrier( VkPipelineStageFlags        SrcStage,
+                                                        VkPipelineStageFlags        DstStage,
+                                                        VkImageMemoryBarrier const& Barrier )
+    : SrcStage( SrcStage ), DstStage( DstStage ), ImgBarrier( Barrier ) {
 }
 
-apemodevk::CommandBuffer::StagedBarrier::StagedBarrier (VkPipelineStageFlags          SrcStage,
-                                                 VkPipelineStageFlags          DstStage,
-                                                 VkBufferMemoryBarrier const & Barrier)
-    : SrcStage (SrcStage), DstStage (DstStage), BufferBarrier (Barrier)
-{
+apemodevk::CommandBuffer::StagedBarrier::StagedBarrier( VkPipelineStageFlags         SrcStage,
+                                                        VkPipelineStageFlags         DstStage,
+                                                        VkBufferMemoryBarrier const& Barrier )
+    : SrcStage( SrcStage ), DstStage( DstStage ), BufferBarrier( Barrier ) {
 }
 
 /// -------------------------------------------------------------------------------------------------------------------

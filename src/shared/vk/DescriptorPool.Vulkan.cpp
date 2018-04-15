@@ -245,9 +245,9 @@ void apemodevk::DescriptorSetUpdater::Flush( ) {
 
     if ( apemode_likely( pNode != nullptr ) ) {
         vkUpdateDescriptorSets( *pNode,
-                                _Get_collection_length_u( Writes ),
+                                GetSizeU( Writes ),
                                 Writes.empty( ) ? nullptr : Writes.data( ),
-                                _Get_collection_length_u( Copies ),
+                                GetSizeU( Copies ),
                                 Copies.empty( ) ? nullptr : Copies.data( ) );
     }
 }

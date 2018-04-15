@@ -13,5 +13,5 @@ namespace Vulkan {
         "VK_LAYER_GOOGLE_unique_objects",
     };
 
-    static size_t const KnownValidationLayerCount = _Get_array_length(KnownValidationLayers);
+    static size_t const KnownValidationLayerCount = apemodevk::GetArraySize( KnownValidationLayers );
 }

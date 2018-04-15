@@ -24,7 +24,7 @@ public:
     const uint8_t* GetBytePtr( ) const override {
         return reinterpret_cast< const uint8_t* >( Dwords.data( ) );
     }
-    
+
     size_t GetByteCount( ) const override {
         return Dwords.size( ) << 2;
     }
@@ -237,7 +237,7 @@ std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile
                                                                                   const EShaderType                 eShaderKind,
                                                                                   IIncludedFileSet* pOutIncludedFiles ) {
     if ( nullptr == pImpl->pShaderFileReader ) {
-        platform::DebugTrace( "ShaderCompiler: pShaderFileReader must be set." );
+        platform::DebugTrace( platform::LogLevel::Err, "ShaderCompiler: pShaderFileReader must be set." );
         platform::DebugBreak( );
         return nullptr;
     }

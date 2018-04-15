@@ -40,7 +40,7 @@ namespace apemodevk {
     inline VkResult CheckedCall( VkResult eResult ) {
 #ifdef _DEBUG
         if ( VK_SUCCESS != eResult ) {
-            platform::DebugTrace( " (ERROR) %u %s.", eResult, ToString( eResult ) );
+            platform::DebugTrace( platform::LogLevel::Err, " (ERROR) %u %s.", eResult, ToString( eResult ) );
             platform::DebugBreak( );
         }
 #endif

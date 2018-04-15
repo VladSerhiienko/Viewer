@@ -168,7 +168,7 @@ namespace apemodevk
         {
             uint64_t GraphicsNodeHash;
 
-            union 
+            union
             {
                 struct
                 {
@@ -222,9 +222,9 @@ namespace apemodevk
         bool Execute( CommandBuffer &CmdBuffer, VkFence hFence );
         bool Execute( CommandBuffer *pCmdLists, uint32_t CmdListCount, VkFence Fence );
 
-        /** 
+        /**
          * Waits on the completion of all work within a single queue.
-         * It will block until all command buffers and sparse binding 
+         * It will block until all command buffers and sparse binding
          * operations in the queue have completed.
          */
         bool Await( );

@@ -1,4 +1,5 @@
 #include "AppSurfaceSdlBase.h"
+#include <AppState.h>
 
 apemode::AppSurfaceSdlBase::AppSurfaceSdlBase( ) {
 }
@@ -8,14 +9,14 @@ apemode::AppSurfaceSdlBase::~AppSurfaceSdlBase( ) {
 }
 
 bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, const char* name ) {
-    SDL_Log( "apemode/AppSurfaceSdlBase/Initialize" );
+    LogInfo( "apemode/AppSurfaceSdlBase/Initialize" );
 
     if ( nullptr == pSdlWindow && !SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS ) ) {
         const uint32_t sdlWindowProps = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
         pSdlWindow = SDL_CreateWindow( name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, sdlWindowProps );
 
         if ( pSdlWindow ) {
-            SDL_Log( "apemode/AppSurfaceSdlBase/Initialize: Created a windows." );
+            LogInfo( "apemode/AppSurfaceSdlBase/Initialize: Created a windows." );
 
             SDL_SysWMinfo windowInfo{};
             windowInfo.version.major = SDL_MAJOR_VERSION;
@@ -25,13 +26,13 @@ bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, co
 #ifdef X_PROTOCOL
                 pDisplayX11 = windowInfo.info.x11.display;
                 pWindowX11  = windowInfo.info.x11.window;
-                SDL_Log( "apemode/AppSurfaceSdlBase/Initialize: Resolved Xlib handles." );
+                LogInfo( "apemode/AppSurfaceSdlBase/Initialize: Resolved Xlib handles." );
 #endif
 
 #ifdef _WINDOWS_
                 hWnd      = windowInfo.info.win.window;
                 hInstance = (HINSTANCE) GetWindowLongPtrA( windowInfo.info.win.window, GWLP_HINSTANCE );
-                SDL_Log( "apemode/AppSurfaceSdlBase/Initialize: Resolved Win32 handles." );
+                LogInfo( "apemode/AppSurfaceSdlBase/Initialize: Resolved Win32 handles." );
 #endif
             }
         }
@@ -42,7 +43,7 @@ bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, co
 
 void apemode::AppSurfaceSdlBase::Finalize( ) {
     if ( pSdlWindow ) {
-        SDL_Log( "apemode/AppSurfaceSdlVk/Finalize: Deleting window." );
+        LogInfo( "apemode/AppSurfaceSdlVk/Finalize: Deleting window." );
         SDL_DestroyWindow( pSdlWindow );
         pSdlWindow = nullptr;
     }

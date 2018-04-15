@@ -17,6 +17,6 @@ namespace Vulkan
 #endif
     };
 
-    static size_t const KnownDeviceExtensionCount   = _Get_array_length(KnownDeviceExtensions);
-    static size_t const KnownInstanceExtensionCount = _Get_array_length(KnownInstanceExtensions);
+    static size_t const KnownDeviceExtensionCount   = apemodevk::GetArraySize( KnownDeviceExtensions );
+    static size_t const KnownInstanceExtensionCount = apemodevk::GetArraySize( KnownInstanceExtensions );
 }

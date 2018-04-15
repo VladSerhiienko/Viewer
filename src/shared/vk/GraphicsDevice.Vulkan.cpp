@@ -54,11 +54,11 @@ bool apemodevk::GraphicsDevice::ScanDeviceQueues( VkQueueFamilyPropertiesVector&
         QueueReqs.reserve( QueuesFound );
 
         vkGetPhysicalDeviceQueueFamilyProperties( pPhysicalDevice, &QueuesFound, QueueProps.data( ) );
-        platform::DebugTrace( "Queue Families: %u", QueuesFound );
+        platform::DebugTrace( platform::LogLevel::Info, "Queue Families: %u", QueuesFound );
 
         uint32_t TotalQueuePrioritiesCount = 0;
         std::for_each( QueueProps.begin( ), QueueProps.end( ), [&]( VkQueueFamilyProperties& QueueProp ) {
-            platform::DebugTrace( "> Flags: %x, Count: %u", QueueProp.queueFlags, QueueProp.queueCount );
+            platform::DebugTrace( platform::LogLevel::Info, "> Flags: %x, Count: %u", QueueProp.queueFlags, QueueProp.queueCount );
             TotalQueuePrioritiesCount += QueueProp.queueCount;
         } );
 
@@ -160,8 +160,8 @@ bool apemodevk::GraphicsDevice::ScanDeviceLayerProperties( uint32_t flags ) {
         }
     }
 
-    platform::DebugTrace( "Device Layers (%u):", DeviceLayers.size( ) );
-    std::for_each( DeviceLayers.begin( ), DeviceLayers.end( ), [&]( const char* pName ) { platform::DebugTrace( "> %s", pName ); } );
+    platform::DebugTrace( platform::LogLevel::Info, "Device Layers (%u):", DeviceLayers.size( ) );
+    std::for_each( DeviceLayers.begin( ), DeviceLayers.end( ), [&]( const char* pName ) { platform::DebugTrace( platform::LogLevel::Info, "> %s", pName ); } );
 
     DeviceExtensions.reserve( DeviceExtensionProps.size( ) );
     std::transform( DeviceExtensionProps.begin( ),
@@ -169,8 +169,8 @@ bool apemodevk::GraphicsDevice::ScanDeviceLayerProperties( uint32_t flags ) {
                     std::back_inserter( DeviceExtensions ),
                     [&]( VkExtensionProperties const& ExtProp ) { return ExtProp.extensionName; } );
 
-    platform::DebugTrace( "Device Extensions (%u):", DeviceExtensions.size( ) );
-    std::for_each( DeviceExtensions.begin( ), DeviceExtensions.end( ), [&]( const char* pName ) { platform::DebugTrace( "> %s", pName ); } );
+    platform::DebugTrace( platform::LogLevel::Info, "Device Extensions (%u):", DeviceExtensions.size( ) );
+    std::for_each( DeviceExtensions.begin( ), DeviceExtensions.end( ), [&]( const char* pName ) { platform::DebugTrace( platform::LogLevel::Info, "> %s", pName ); } );
 
     return VK_SUCCESS == eResult;
 }
@@ -186,8 +186,7 @@ bool apemodevk::GraphicsDevice::ScanFormatProperties( ) {
     return true;
 }
 
-bool apemodevk::GraphicsDevice::RecreateResourcesFor( VkPhysicalDevice InAdapterHandle, GraphicsManager& GraphicsEcosystem, uint32_t flags ) {
-    pManager = &GraphicsEcosystem;
+bool apemodevk::GraphicsDevice::RecreateResourcesFor( VkPhysicalDevice InAdapterHandle, uint32_t flags ) {
     apemode_assert( Args != nullptr, "Ecosystem is required in case of Vulkan." );
 
     pPhysicalDevice = InAdapterHandle;
@@ -199,8 +198,8 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( VkPhysicalDevice InAdapter
         vkGetPhysicalDeviceMemoryProperties( pPhysicalDevice, &MemoryProps );
         vkGetPhysicalDeviceFeatures( pPhysicalDevice, &Features );
 
-        platform::DebugTrace( "Device Name: %s", AdapterProps.deviceName );
-        platform::DebugTrace( "Device Type: %u", AdapterProps.deviceType );
+        platform::DebugTrace( platform::LogLevel::Info, "Device Name: %s", AdapterProps.deviceName );
+        platform::DebugTrace( platform::LogLevel::Info, "Device Type: %u", AdapterProps.deviceType );
 
         VkQueueFamilyPropertiesVector QueueProps;
         VkDeviceQueueCreateInfoVector QueueReqs;
@@ -219,7 +218,7 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( VkPhysicalDevice InAdapter
 
             TInfoStruct< VkDeviceCreateInfo > DeviceDesc;
             DeviceDesc->pEnabledFeatures        = &Features;
-            DeviceDesc->queueCreateInfoCount    = _Get_collection_length_u( QueueReqs );
+            DeviceDesc->queueCreateInfoCount    = GetSizeU( QueueReqs );
             DeviceDesc->pQueueCreateInfos       = QueueReqs.data( );
             DeviceDesc->enabledLayerCount       = (uint32_t)DeviceLayers.size();
             DeviceDesc->ppEnabledLayerNames     = DeviceLayers.data( );
@@ -268,7 +267,7 @@ std::unique_ptr< apemodevk::GraphicsDevice > apemodevk::GraphicsDevice::MakeNull
     return std::unique_ptr< GraphicsDevice >( nullptr );
 }
 
-apemodevk::GraphicsDevice::GraphicsDevice( ) : pManager( nullptr ) {
+apemodevk::GraphicsDevice::GraphicsDevice( ) {
 }
 
 apemodevk::GraphicsDevice::~GraphicsDevice( ) {
@@ -283,7 +282,7 @@ apemodevk::GraphicsDevice::operator VkPhysicalDevice( ) const {
 }
 
 apemodevk::GraphicsDevice::operator VkInstance( ) const {
-    return pManager->hInstance;
+    return GetGraphicsManager( )->hInstance;
 }
 
 bool apemodevk::GraphicsDevice::IsValid( ) const {
@@ -292,7 +291,7 @@ bool apemodevk::GraphicsDevice::IsValid( ) const {
 
 bool apemodevk::GraphicsDevice::Await( ) {
     apemode_assert( IsValid( ), "Must be valid." );
-    return VK_SUCCESS == CheckedCall( vkDeviceWaitIdle( *this ) );
+    return VK_SUCCESS == CheckedCall( vkDeviceWaitIdle( hLogicalDevice ) );
 }
 
 apemodevk::QueuePool* apemodevk::GraphicsDevice::GetQueuePool( ) {
@@ -310,14 +309,6 @@ apemodevk::CommandBufferPool * apemodevk::GraphicsDevice::GetCommandBufferPool()
 
 const apemodevk::CommandBufferPool* apemodevk::GraphicsDevice::GetCommandBufferPool( ) const {
     return pCmdBufferPool.get( );
-}
-
-apemodevk::GraphicsManager& apemodevk::GraphicsDevice::GetGraphicsManager( ) {
-    return *pManager;
-}
-
-const apemodevk::GraphicsManager& apemodevk::GraphicsDevice::GetGraphicsManager( ) const {
-    return *pManager;
 }
 
 #pragma warning(push, 4)

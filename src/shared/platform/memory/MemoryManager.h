@@ -17,23 +17,6 @@
 #define APEMODE_DEFAULT_ALIGNMENT ( sizeof( void* ) << 1 )
 #endif
 
-#if defined( APEMODE_USE_MEMORY_TRACKING )
-#include "FluidStudios/MemoryManager/mmgr.h"
-
-#define apemode_malloc( size )           m_allocator( __FILE__, __LINE__, __FUNCTION__, m_alloc_malloc, ( size ) )
-#define apemode_calloc( count, size )    m_allocator( __FILE__, __LINE__, __FUNCTION__, m_alloc_calloc, ( ( size ) * ( count ) ) )
-#define apemode_realloc( ptr, size )   m_reallocator( __FILE__, __LINE__, __FUNCTION__, m_alloc_realloc, ( size ), ( ptr ) )
-#define apemode_free( ptr )            m_deallocator( __FILE__, __LINE__, __FUNCTION__, m_alloc_free, ( ptr ) )
-
-#else
-
-void* apemode_malloc( size_t size );
-void* apemode_calloc( size_t count, size_t size );
-void* apemode_realloc( void* p, size_t size );
-void  apemode_free( void* p );
-
-#endif
-
 namespace apemode {
 
     /**
@@ -48,7 +31,7 @@ namespace apemode {
      * @param alignment The byte alignment of the memory chunk.
      * @return The allocated memory chunk address.
      */
-    void* allocate( size_t size );
+    void* allocate( size_t size, size_t alignment, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc );
 
     /**
      * The regular calloc call with aligment.
@@ -58,7 +41,7 @@ namespace apemode {
      * @param alignment The byte alignment of the memory chunk.
      * @return The allocated memory chunk address.
      */
-    void* callocate( size_t num, size_t size );
+    void* callocate( size_t num, size_t size, size_t alignment, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc );
 
     /**
      * The regular realloc call with aligment.
@@ -67,75 +50,58 @@ namespace apemode {
      * @param alignment The byte alignment of the memory chunk.
      * @return The allocated memory chunk address.
      */
-    void* reallocate( void* p, size_t size );
+    void* reallocate( void* p, size_t size, size_t alignment, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc );
 
     /**
      * The regular free call.
      * @param p The memory chunk address.
      */
-    void deallocate( void* p );
+    void deallocate( void* p, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc );
 
-#ifdef APEMODE_USE_DLMALLOC
+} // namespace apemode
 
-    /**
-     * The malloc call with aligment from the thread-local memory space.
-     * Do not align with less then kDefaultAlignment bytes.
-     * @param size The byte size of the memory chunk.
-     * @param alignment The byte alignment of the memory chunk.
-     * @return The allocated memory chunk address.
-     */
-    void* threadLocalAllocate( size_t size );
+void* operator new[]( std::size_t s,
+                      std::nothrow_t const&,
+                      const char*        sourceFile,
+                      const unsigned int sourceLine,
+                      const char*        sourceFunc ) noexcept;
 
-    /**
-     * The realloc call with aligment from the thread-local memory space.
-     * Do not align with less then kDefaultAlignment bytes.
-     * @param p Address of the old memroy chunk.
-     * @param size The byte size of the memory chunk.
-     * @param alignment The byte alignment of the memory chunk.
-     * @return The reallocated memory chunk address.
-     */
-    void* threadLocalReallocate( void* p, size_t size );
+void* operator new[]( std::size_t        s,
+                      const char*        sourceFile,
+                      const unsigned int sourceLine,
+                      const char*        sourceFunc ) throw( );
 
-    /**
-     * The free call from the thread-local memory space.
-     * @param p The memory chunk address.
-     */
-    void threadLocalDeallocate( void* p );
+void operator delete[]( void* p, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc ) throw( );
 
-#endif
+void* operator new( std::size_t s,
+                    std::nothrow_t const&,
+                    const char*        sourceFile,
+                    const unsigned int sourceLine,
+                    const char*        sourceFunc ) noexcept;
 
-#pragma push_macro( "new" )
-#undef new
+void* operator new( std::size_t        s,
+                    const char*        sourceFile,
+                    const unsigned int sourceLine,
+                    const char*        sourceFunc ) throw( );
 
-    template < typename T, typename... Args >
-    inline T* Init( void* ptr, Args... args ) {
-        return new ( ptr ) T( args... );
-    }
-
-#ifdef Make
-#undef Make
-#endif
+void operator delete( void* p, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc ) throw( );
 
 #if defined( APEMODE_USE_MEMORY_TRACKING )
+#include "FluidStudios/MemoryManager/mmgr.h"
 
-    template < typename T, typename... Args >
-    inline T* Make_impl( const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc, Args... args ) {
-        return new ( m_allocator( sourceFile, sourceLine, sourceFunc, m_alloc_malloc, ( sizeof( T ) ) ) ) T( args... );
-    }
-
-#define Make( T, ... ) Make_impl< T >( __FILE__, __LINE__, __FUNCTION__, __VA_ARGS__ )
+#define apemode_malloc( size, alignment )        apemode::allocate( size, alignment, __FILE__, __LINE__, __FUNCTION__ )
+#define apemode_calloc( count, size, alignment ) apemode::callocate( count, size, alignment,  __FILE__, __LINE__, __FUNCTION__ )
+#define apemode_realloc( ptr, size, alignment )  apemode::reallocate( ptr, size, alignment, __FILE__, __LINE__, __FUNCTION__ )
+#define apemode_free( ptr )                      apemode::deallocate( ptr, __FILE__, __LINE__, __FUNCTION__ )
 
 #else
 
-    template < typename T, typename... Args >
-    inline T* Make_impl( Args... args ) {
-        return new ( apemode::allocate( sizeof( T ) ) ) T( args... );
-    }
-
-#define Make( T, ... ) Make_impl< T >( __VA_ARGS__ )
+void* apemode_malloc( size_t size, size_t alignment = APEMODE_DEFAULT_ALIGNMENT );
+void* apemode_calloc( size_t count, size_t size, size_t alignment = APEMODE_DEFAULT_ALIGNMENT );
+void* apemode_realloc( void* p, size_t size, size_t alignment = APEMODE_DEFAULT_ALIGNMENT );
+void  apemode_free( void* p );
 
 #endif
 
-#pragma pop_macro( "new" )
-
-} // namespace apemode
+#define apemode_new new ( __FILE__, __LINE__, __FUNCTION__ )
+#define apemode_delete delete ( __FILE__, __LINE__, __FUNCTION__ )

@@ -59,11 +59,11 @@ namespace apemodevk {
     struct SceneMeshDeviceAssetVk {
         THandle< VkBuffer >       hBuffer;
         THandle< VkDeviceMemory > hMemory;
-        uint32_t                              VertexCount = 0;
-        uint32_t                              IndexOffset = 0;
-        VkIndexType                           IndexType   = VK_INDEX_TYPE_UINT16;
-        XMFLOAT4                              positionOffset;
-        XMFLOAT4                              positionScale;
+        uint32_t                  VertexCount = 0;
+        uint32_t                  IndexOffset = 0;
+        VkIndexType               IndexType   = VK_INDEX_TYPE_UINT16;
+        XMFLOAT4                  positionOffset;
+        XMFLOAT4                  positionScale;
     };
 
     struct SceneMaterialDeviceAssetVk {
@@ -140,7 +140,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             /* Create mesh device asset if needed. */
             auto pMeshDeviceAsset = (apemodevk::SceneMeshDeviceAssetVk*) mesh.pDeviceAsset;
             if ( nullptr == pMeshDeviceAsset ) {
-                pMeshDeviceAsset  = new apemodevk::SceneMeshDeviceAssetVk( );
+                pMeshDeviceAsset  = apemode_new apemodevk::SceneMeshDeviceAssetVk( );
                 mesh.pDeviceAsset = pMeshDeviceAsset;
             }
 

@@ -9,12 +9,16 @@
 #include <GraphicsManager.KnownExtensions.Vulkan.h>
 #include <GraphicsManager.KnownLayers.Vulkan.h>
 
+#include <stdlib.h>
+
 /// -------------------------------------------------------------------------------------------------------------------
 /// GraphicsEcosystem PrivateContent
 /// -------------------------------------------------------------------------------------------------------------------
 
-apemodevk::GraphicsManager::APIVersion::APIVersion( bool bDump )
-    : Major( VK_API_VERSION_1_0 >> 22 ), Minor( ( VK_API_VERSION_1_0 >> 12 ) & 0x3ff ), Patch( VK_API_VERSION_1_0 & 0xfff ) {
+apemodevk::GraphicsManager::APIVersion::APIVersion( )
+    : Major( VK_API_VERSION_1_0 >> 22 )
+    , Minor( ( VK_API_VERSION_1_0 >> 12 ) & 0x3ff )
+    , Patch( VK_API_VERSION_1_0 & 0xfff ) {
 }
 
 bool apemodevk::GraphicsManager::ScanInstanceLayerProperties( uint32_t flags ) {
@@ -100,9 +104,9 @@ bool apemodevk::GraphicsManager::ScanInstanceLayerProperties( uint32_t flags ) {
 
     InstanceLayers.erase( InstanceLayers.begin( ) );
 
-    platform::DebugTrace( "Instance Layers (%u):", InstanceLayers.size( ) );
+    platform::DebugTrace( platform::LogLevel::Info, "Instance Layers (%u):", InstanceLayers.size( ) );
     std::for_each( InstanceLayers.begin( ), InstanceLayers.end( ), [&]( const char* pName ) {
-        platform::DebugTrace( "> %s", pName );
+        platform::DebugTrace( platform::LogLevel::Info, "> %s", pName );
     } );
 
     InstanceExtensions.reserve( InstanceExtensionProps.size( ) );
@@ -139,44 +143,42 @@ bool apemodevk::GraphicsManager::ScanInstanceLayerProperties( uint32_t flags ) {
         }
     }
 
-    platform::DebugTrace( "Instance Extensions (%u):", InstanceExtensions.size( ) );
+    platform::DebugTrace( platform::LogLevel::Info, "Instance Extensions (%u):", InstanceExtensions.size( ) );
     std::for_each( InstanceExtensions.begin( ), InstanceExtensions.end( ), [&]( const char* pName ) {
-        platform::DebugTrace( "> %s", pName );
+        platform::DebugTrace( platform::LogLevel::Info, "> %s", pName );
     } );
 
     return true;
 }
 
-bool apemodevk::GraphicsManager::ScanAdapters( uint32_t flags) {
-    std::vector<VkPhysicalDevice> Adapters;
+bool apemodevk::GraphicsManager::ScanAdapters( uint32_t flags ) {
 
-    uint32_t AdaptersFound = 0;
-    CheckedCall( vkEnumeratePhysicalDevices( hInstance, &AdaptersFound, NULL ) );
+    uint32_t adaptersFound = 0;
+    CheckedCall( vkEnumeratePhysicalDevices( hInstance, &adaptersFound, NULL ) );
 
-    Adapters.resize( AdaptersFound );
-    CheckedCall( vkEnumeratePhysicalDevices( hInstance, &AdaptersFound, Adapters.data( ) ) );
+    std::vector< VkPhysicalDevice > adapters( adaptersFound );
+    CheckedCall( vkEnumeratePhysicalDevices( hInstance, &adaptersFound, adapters.data( ) ) );
 
-    // TODO:
-    //      Choose the best 2 nodes here.
-    //      Ensure the integrated GPU is always the secondary one.
+    // TODO: Choose the best 2 nodes here.
+    //       Ensure the integrated GPU is always the secondary one.
 
-    std::for_each( Adapters.begin( ), Adapters.end( ), [&]( VkPhysicalDevice const &Adapter ) {
-        GraphicsDevice *CurrentNode = nullptr;
+    std::for_each( adapters.begin( ), adapters.end( ), [&]( VkPhysicalDevice const &adapter ) {
+        GraphicsDevice *pCurrentNode = nullptr;
 
         if ( GetPrimaryGraphicsNode( ) == nullptr ) {
             PrimaryNode.reset( new GraphicsDevice( ) );
-            CurrentNode = GetPrimaryGraphicsNode( );
+            pCurrentNode = GetPrimaryGraphicsNode( );
         } else if ( GetSecondaryGraphicsNode( ) == nullptr ) {
             SecondaryNode.reset( new GraphicsDevice( ) );
-            CurrentNode = GetSecondaryGraphicsNode( );
+            pCurrentNode = GetSecondaryGraphicsNode( );
         }
 
-        if ( CurrentNode != nullptr ) {
-            CurrentNode->RecreateResourcesFor( Adapter, *this, flags );
+        if ( pCurrentNode != nullptr ) {
+            pCurrentNode->RecreateResourcesFor( adapter, flags );
         }
     } );
 
-    return AdaptersFound != 0;
+    return adaptersFound != 0;
 }
 
 apemodevk::GraphicsManager::NativeLayerWrapper &apemodevk::GraphicsManager::GetUnnamedLayer( ) {
@@ -184,17 +186,23 @@ apemodevk::GraphicsManager::NativeLayerWrapper &apemodevk::GraphicsManager::GetU
     return LayerWrappers.front( );
 }
 
-bool apemodevk::GraphicsManager::InitializeInstance( uint32_t flags ) {
+bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t                      flags,
+                                                        std::unique_ptr< IAllocator > pInAllocator,
+                                                        std::unique_ptr< ILogger >    pInLogger ) {
+    pAllocator = std::move( pInAllocator );
+    pLogger    = std::move( pInLogger );
+
     if ( !ScanInstanceLayerProperties( flags ) )
         return false;
 
-    TInfoStruct< VkApplicationInfo > AppDesc;
-    AppDesc->apiVersion         = VK_API_VERSION_1_0;
-    AppDesc->pApplicationName   = AppName.c_str( );
-    AppDesc->pEngineName        = EngineName.c_str( );
-    AppDesc->applicationVersion = 1;
-    AppDesc->engineVersion      = 1;
-    AppDesc->pNext              = VK_NULL_HANDLE;
+    VkApplicationInfo applicationInfo;
+    InitializeStruct( applicationInfo );
+    applicationInfo.pNext              = VK_NULL_HANDLE;
+    applicationInfo.apiVersion         = VK_API_VERSION_1_0;
+    applicationInfo.pApplicationName   = AppName.c_str( );
+    applicationInfo.pEngineName        = EngineName.c_str( );
+    applicationInfo.applicationVersion = 1;
+    applicationInfo.engineVersion      = 1;
 
     // clang-format off
     auto DebugFlags
@@ -204,19 +212,21 @@ bool apemodevk::GraphicsManager::InitializeInstance( uint32_t flags ) {
         | VK_DEBUG_REPORT_INFORMATION_BIT_EXT;
     // clang-format on
 
-    TInfoStruct< VkDebugReportCallbackCreateInfoEXT > DebugDesc;
-    DebugDesc->pfnCallback = DebugCallback;
-    DebugDesc->pUserData   = this;
-    DebugDesc->sType       = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
-    DebugDesc->flags       = DebugFlags;
+    VkDebugReportCallbackCreateInfoEXT debugReportCallbackCreateInfo;
+    InitializeStruct( debugReportCallbackCreateInfo );
+    debugReportCallbackCreateInfo.pfnCallback = DebugCallback;
+    debugReportCallbackCreateInfo.pUserData   = this;
+    debugReportCallbackCreateInfo.sType       = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
+    debugReportCallbackCreateInfo.flags       = DebugFlags;
 
-    TInfoStruct< VkInstanceCreateInfo > InstanceDesc;
-    InstanceDesc->pNext                   = DebugDesc;
-    InstanceDesc->pApplicationInfo        = AppDesc;
-    InstanceDesc->enabledLayerCount       = _Get_collection_length_u( InstanceLayers );
-    InstanceDesc->ppEnabledLayerNames     = InstanceLayers.data( );
-    InstanceDesc->enabledExtensionCount   = _Get_collection_length_u( InstanceExtensions );
-    InstanceDesc->ppEnabledExtensionNames = InstanceExtensions.data( );
+    VkInstanceCreateInfo instanceCreateInfo;
+    InitializeStruct( instanceCreateInfo );
+    instanceCreateInfo.pNext                   = &debugReportCallbackCreateInfo;
+    instanceCreateInfo.pApplicationInfo        = &applicationInfo;
+    instanceCreateInfo.enabledLayerCount       = GetSizeU( InstanceLayers );
+    instanceCreateInfo.ppEnabledLayerNames     = InstanceLayers.data( );
+    instanceCreateInfo.enabledExtensionCount   = GetSizeU( InstanceExtensions );
+    instanceCreateInfo.ppEnabledExtensionNames = InstanceExtensions.data( );
 
     /*
     Those layers cannot be used as standalone layers (please, see vktrace, renderdoc docs)
@@ -233,7 +243,7 @@ bool apemodevk::GraphicsManager::InitializeInstance( uint32_t flags ) {
     -----------------------------------------------------------------
     */
 
-    bool bIsOk = hInstance.Recreate( InstanceDesc );
+    bool bIsOk = hInstance.Recreate( instanceCreateInfo );
     apemode_assert( bIsOk, "vkCreateInstance failed." );
 
     if ( !ScanAdapters( flags ) )
@@ -300,41 +310,36 @@ bool apemodevk::GraphicsManager::NativeLayerWrapper::IsUnnamedLayer( ) const {
 
 bool apemodevk::GraphicsManager::NativeLayerWrapper::IsValidInstanceLayer( ) const {
     if ( IsUnnamedLayer( ) ) {
-        auto const KnownExtensionBeginIt = Vulkan::KnownInstanceExtensions;
-        auto const KnownExtensionEndIt   = Vulkan::KnownInstanceExtensions + Vulkan::KnownInstanceExtensionCount;
-        size_t     KnownExtensionsFound =
-            std::count_if( KnownExtensionBeginIt, KnownExtensionEndIt, [this]( char const *KnownExtension ) {
-                auto const ExtensionBeginIt = Extensions.begin( );
-                auto const ExtensionEndIt   = Extensions.end( );
-                auto const FoundExtensionIt =
-                    std::find_if( ExtensionBeginIt, ExtensionEndIt, [&]( TInfoStruct< VkExtensionProperties > const &Extension ) {
-                    // std::find_if( ExtensionBeginIt, ExtensionEndIt, [&]( VkExtensionProperties const &Extension ) {
-                        static const int eStrCmp_EqualStrings = 0;
-                        return strcmp( KnownExtension, Extension->extensionName ) == eStrCmp_EqualStrings;
-                    } );
 
-                auto const bIsExtensionFound = FoundExtensionIt != ExtensionEndIt;
-                apemode_assert( bIsExtensionFound, "Extension '%s' was not found.", KnownExtension );
+        auto const pKnownExtensionBeginIt = Vulkan::KnownInstanceExtensions;
+        auto const pKnownExtensionEndIt   = Vulkan::KnownInstanceExtensions + Vulkan::KnownInstanceExtensionCount;
 
-                return bIsExtensionFound;
+        size_t knownExtensionsFound = std::count_if( pKnownExtensionBeginIt, pKnownExtensionEndIt, [this]( char const *KnownExtension ) {
+
+            auto const pExtensionBeginIt = Extensions.begin( );
+            auto const pExtensionEndIt   = Extensions.end( );
+
+            auto const pFoundExtensionIt = std::find_if( pExtensionBeginIt, pExtensionEndIt, [&]( VkExtensionProperties const& Extension ) {
+                return strcmp( KnownExtension, Extension.extensionName ) == 0;
             } );
 
-        return KnownExtensionsFound == Vulkan::KnownInstanceExtensionCount;
+            bool const bIsExtensionFound = pFoundExtensionIt != pExtensionEndIt;
+            apemode_assert( bIsExtensionFound, "Extension '%s' was not found.", KnownExtension );
+
+            return bIsExtensionFound;
+        } );
+
+        return knownExtensionsFound == Vulkan::KnownInstanceExtensionCount;
     }
 
     return true;
 }
 
 /// -------------------------------------------------------------------------------------------------------------------
-/// GraphicsEcosystem
+/// GraphicsManager
 /// -------------------------------------------------------------------------------------------------------------------
 
-// apemodevk::GraphicsManager* InitOnceGraphicsManager( ) {
-//     static apemodevk::GraphicsManager graphicsManagerInstance;
-//     return &graphicsManagerInstance;
-// }
-
-apemodevk::GraphicsManager* apemodevk::GraphicsManager::Get( ) {
+apemodevk::GraphicsManager* apemodevk::GetGraphicsManager( ) {
     static apemodevk::GraphicsManager graphicsManagerInstance;
     return &graphicsManagerInstance;
 }
@@ -349,6 +354,20 @@ apemodevk::GraphicsManager::IAllocator* apemodevk::GraphicsManager::GetAllocator
     return pAllocator.get( );
 }
 
+apemodevk::GraphicsManager::ILogger* apemodevk::GraphicsManager::GetLogger( ) {
+    return pLogger.get( );
+}
+
+const VkAllocationCallbacks* apemodevk::GraphicsManager::GetAllocationCallbacks( ) const {
+    static VkAllocationCallbacks allocationCallbacks{nullptr,
+                                                     &AllocationCallbacks::AllocationFunction,
+                                                     &AllocationCallbacks::ReallocationFunction,
+                                                     &AllocationCallbacks::FreeFunction,
+                                                     &AllocationCallbacks::InternalAllocationNotification,
+                                                     &AllocationCallbacks::InternalFreeNotification};
+    return &allocationCallbacks;
+}
+
 apemodevk::GraphicsDevice *apemodevk::GraphicsManager::GetPrimaryGraphicsNode( ) {
     return PrimaryNode.get( );
 }
@@ -357,8 +376,74 @@ apemodevk::GraphicsDevice *apemodevk::GraphicsManager::GetSecondaryGraphicsNode(
     return SecondaryNode.get( );
 }
 
-bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t flags, std::unique_ptr< IAllocator > pAlloc ) {
-    auto const bIsInstInitialized = InitializeInstance( flags );
-    apemode_assert( bIsInstInitialized, "Vulkan Instance initialization failed." );
-    return bIsInstInitialized;
+void* apemodevk::GraphicsManager::AllocationCallbacks::AllocationFunction( void*,
+                                                                           size_t                  size,
+                                                                           size_t                  alignment,
+                                                                           VkSystemAllocationScope allocationScope ) {
+    return GetGraphicsManager( )->GetAllocator( )->Malloc( size, alignment, __FILE__, __LINE__, __FUNCTION__ );
+}
+
+void* apemodevk::GraphicsManager::AllocationCallbacks::ReallocationFunction( void*,
+                                                                             void*                   pOriginal,
+                                                                             size_t                  size,
+                                                                             size_t                  alignment,
+                                                                             VkSystemAllocationScope allocationScope ) {
+    return GetGraphicsManager( )->GetAllocator( )->Realloc( pOriginal, size, alignment, __FILE__, __LINE__, __FUNCTION__ );
+}
+
+void apemodevk::GraphicsManager::AllocationCallbacks::FreeFunction( void*,
+                                                                    void* pMemory ) {
+    return GetGraphicsManager( )->GetAllocator( )->Free( pMemory, __FILE__, __LINE__, __FUNCTION__ );
+}
+
+const char* ToString( VkInternalAllocationType allocationType ) {
+    switch ( allocationType ) {
+        case VK_INTERNAL_ALLOCATION_TYPE_EXECUTABLE:
+            return "VK_INTERNAL_ALLOCATION_TYPE_EXECUTABLE";
+        default:
+            return "?";
+    }
+}
+
+const char* ToString( VkSystemAllocationScope allocationScope ) {
+    switch ( allocationScope ) {
+        case VK_SYSTEM_ALLOCATION_SCOPE_COMMAND:
+            return "VK_SYSTEM_ALLOCATION_SCOPE_COMMAND";
+        case VK_SYSTEM_ALLOCATION_SCOPE_OBJECT:
+            return "VK_SYSTEM_ALLOCATION_SCOPE_OBJECT";
+        case VK_SYSTEM_ALLOCATION_SCOPE_CACHE:
+            return "VK_SYSTEM_ALLOCATION_SCOPE_CACHE";
+        case VK_SYSTEM_ALLOCATION_SCOPE_DEVICE:
+            return "VK_SYSTEM_ALLOCATION_SCOPE_DEVICE";
+        case VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE:
+            return "VK_SYSTEM_ALLOCATION_SCOPE_INSTANCE";
+        default:
+            return "?";
+    }
+}
+
+void apemodevk::GraphicsManager::AllocationCallbacks::InternalAllocationNotification( void*,
+                                                                                      size_t                   size,
+                                                                                      VkInternalAllocationType allocationType,
+                                                                                      VkSystemAllocationScope  allocationScope ) {
+    platform::DebugTrace( platform::LogLevel::Debug,
+                          "[vk-internal-notification] allocated: %uz, type: %s, scope: %s",
+                          size,
+                          ToString( allocationType ),
+                          ToString( allocationScope ) );
+}
+
+void apemodevk::GraphicsManager::AllocationCallbacks::InternalFreeNotification( void*,
+                                                                                size_t                   size,
+                                                                                VkInternalAllocationType allocationType,
+                                                                                VkSystemAllocationScope  allocationScope ) {
+    platform::DebugTrace( platform::LogLevel::Debug,
+                          "[vk-internal-notification] freed: %uz, type: %s, scope: %s",
+                          size,
+                          ToString( allocationType ),
+                          ToString( allocationScope ) );
+}
+
+void apemodevk::platform::Log( apemodevk::platform::LogLevel level, char const* pszMsg ) {
+    GetGraphicsManager( )->GetLogger( )->Log( level, pszMsg );
 }

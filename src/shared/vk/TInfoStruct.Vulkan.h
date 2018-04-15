@@ -345,12 +345,7 @@ namespace apemodevk
 
 } // namespace apemodevk
 
-namespace apemodevk
-{
-    template <typename T>
-    inline uint32_t GetSizeU(T const & c) {
-        return _Get_collection_length_u(c);
-    }
+namespace apemodevk {
 
     /** Aliasing cares only about size matching. */
     template < typename TVector, typename TNativeDesc >

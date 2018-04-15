@@ -29,7 +29,7 @@ namespace apemodevk {
         GraphicsDevice( );
         ~GraphicsDevice( );
 
-        bool RecreateResourcesFor( VkPhysicalDevice pPhysicalDevice, GraphicsManager &GraphicsEcosystem, uint32_t flags );
+        bool RecreateResourcesFor( VkPhysicalDevice pPhysicalDevice, uint32_t flags );
 
         bool IsValid( ) const;
         bool Await( );
@@ -38,8 +38,6 @@ namespace apemodevk {
         const QueuePool *        GetQueuePool( ) const;
         CommandBufferPool *      GetCommandBufferPool( );
         const CommandBufferPool *GetCommandBufferPool( ) const;
-        GraphicsManager &        GetGraphicsManager( );
-        const GraphicsManager &  GetGraphicsManager( ) const;
 
         bool ScanDeviceQueues( VkQueueFamilyPropertiesVector &QueueProps,
                                VkDeviceQueueCreateInfoVector &QueueReqs,
@@ -52,9 +50,8 @@ namespace apemodevk {
         operator VkPhysicalDevice( ) const;
         operator VkInstance( ) const;
 
-        GraphicsManager *                    pManager;
-        THandle< VkDevice >      hLogicalDevice;
-        THandle< VmaAllocator >  Allocator;
+        THandle< VkDevice >                  hLogicalDevice;
+        THandle< VmaAllocator >              Allocator;
         VkPhysicalDevice                     pPhysicalDevice;
         VkPhysicalDeviceProperties           AdapterProps;
         VkPhysicalDeviceMemoryProperties     MemoryProps;
