@@ -216,22 +216,24 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( VkPhysicalDevice InAdapter
             VkPhysicalDeviceFeatures Features;
             vkGetPhysicalDeviceFeatures( pPhysicalDevice, &Features );
 
-            TInfoStruct< VkDeviceCreateInfo > DeviceDesc;
-            DeviceDesc->pEnabledFeatures        = &Features;
-            DeviceDesc->queueCreateInfoCount    = GetSizeU( QueueReqs );
-            DeviceDesc->pQueueCreateInfos       = QueueReqs.data( );
-            DeviceDesc->enabledLayerCount       = (uint32_t)DeviceLayers.size();
-            DeviceDesc->ppEnabledLayerNames     = DeviceLayers.data( );
-            DeviceDesc->enabledExtensionCount   = (uint32_t)DeviceExtensions.size();
-            DeviceDesc->ppEnabledExtensionNames = DeviceExtensions.data( );
+            VkDeviceCreateInfo deviceCreateInfo      = TNewInitializedStruct< VkDeviceCreateInfo >( );
+            deviceCreateInfo.pEnabledFeatures        = &Features;
+            deviceCreateInfo.queueCreateInfoCount    = GetSizeU( QueueReqs );
+            deviceCreateInfo.pQueueCreateInfos       = QueueReqs.data( );
+            deviceCreateInfo.enabledLayerCount       = (uint32_t) DeviceLayers.size( );
+            deviceCreateInfo.ppEnabledLayerNames     = DeviceLayers.data( );
+            deviceCreateInfo.enabledExtensionCount   = (uint32_t) DeviceExtensions.size( );
+            deviceCreateInfo.ppEnabledExtensionNames = DeviceExtensions.data( );
 
-            const auto bOk = hLogicalDevice.Recreate( pPhysicalDevice, DeviceDesc );
+            const auto bOk = hLogicalDevice.Recreate( pPhysicalDevice, deviceCreateInfo );
             apemode_assert( bOk, "vkCreateDevice failed." );
 
             if ( bOk ) {
+
                 VmaAllocatorCreateInfo allocatorCreateInfo = {};
                 allocatorCreateInfo.physicalDevice         = pPhysicalDevice;
                 allocatorCreateInfo.device                 = hLogicalDevice;
+                allocatorCreateInfo.pAllocationCallbacks   = GetAllocationCallbacks( );
 
                 Allocator.Recreate( allocatorCreateInfo );
 
