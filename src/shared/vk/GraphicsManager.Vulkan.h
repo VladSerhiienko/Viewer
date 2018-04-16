@@ -137,4 +137,10 @@ namespace apemodevk {
         bool                ScanAdapters( uint32_t flags );
         NativeLayerWrapper &GetUnnamedLayer( );
     };
+
+    /* Returns GraphicsManager instance */
+    GraphicsManager* GetGraphicsManager( );
+
+    /* Returns allocation callbacks of the GraphicsManager. */
+    const VkAllocationCallbacks* GetAllocationCallbacks( );
 }

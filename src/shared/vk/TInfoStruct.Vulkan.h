@@ -337,7 +337,7 @@ namespace apemodevk
 
     /* Please, see InitializeStruct( ) */
     template < typename TVulkanNativeStruct >
-    TVulkanNativeStruct NewInitializedStruct( ) {
+    TVulkanNativeStruct TNewInitializedStruct( ) {
         TVulkanNativeStruct NativeDesc;
         InitializeStruct( NativeDesc );
         return NativeDesc;

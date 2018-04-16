@@ -1,20 +1,14 @@
 #pragma once
 
-#include <SystemAllocationCallbacks.Vulkan.h>
+#include <ResultHandle.Vulkan.h>
 #include <type_traits>
 
 namespace apemodevk {
 
-    template < typename TNativeHandle >
-    struct THandleHandleTypeResolver {
-        typedef typename std::remove_pointer< TNativeHandle >::type HandleType;
-        operator VkAllocationCallbacks const *( ) {
-            return GetGraphicsManager( )->GetAllocationCallbacks( );
-        }
-    };
+    const VkAllocationCallbacks* GetAllocationCallbacks( );
 
     template < typename TNativeHandle >
-    struct THandleDeleter : public THandleHandleTypeResolver< TNativeHandle >, public apemodevk::ScalableAllocPolicy {
+    struct THandleDeleter {
         void operator( )( TNativeHandle *&Handle ) {
             apemode_error( "Please, specialize the proprietary deleter for your class." );
             Handle = VK_NULL_HANDLE;
@@ -25,7 +19,7 @@ namespace apemodevk {
     //  intercepting API commands, and thus each API command takes a dispatchable type as its first parameter. Each
     //  object of a dispatchable type has a unique handle value.
     template < typename TNativeHandle_, typename TDeleter_ = THandleDeleter< TNativeHandle_ > >
-    struct THandleBase : public apemodevk::ScalableAllocPolicy, public NoCopyAssignPolicy {
+    struct THandleBase : public NoCopyAssignPolicy {
         typedef TDeleter_                              TDeleter;
         typedef TNativeHandle_                         TNativeHandle;
         typedef THandleBase< TNativeHandle, TDeleter > SelfType;
@@ -37,14 +31,15 @@ namespace apemodevk {
         inline THandleBase( SelfType &&Other ) : Handle( Other.Release( ) ) { }
         inline ~THandleBase( ) { Destroy( ); }
 
-        inline TNativeHandle *operator( )( ) const { return &Handle; }
-        inline operator TNativeHandle *( ) { return &Handle; }
-        inline operator TNativeHandle const *( ) const { return &Handle; }
-        inline operator TNativeHandle( ) const { return Handle; }
-        inline operator bool( ) const { return Handle != nullptr; }
         inline bool IsNull( ) const { return Handle == nullptr; }
         inline bool IsNotNull( ) const { return Handle != nullptr; }
         inline void Destroy( ) { Deleter( Handle ); }
+
+        inline operator TNativeHandle( ) const { return Handle; }
+        inline operator bool( ) const { return nullptr != Handle; }
+        inline TNativeHandle *operator( )( ) const { return &Handle; }
+        inline operator TNativeHandle *( ) { return &Handle; }
+        inline operator TNativeHandle const *( ) const { return &Handle; }
 
         SelfType operator=( SelfType &&Other ) {
             Handle = Other.Release( );
@@ -55,10 +50,6 @@ namespace apemodevk {
             TNativeHandle ReleasedHandle = *this;
             Handle = VK_NULL_HANDLE;
             return ReleasedHandle;
-        }
-
-        operator VkAllocationCallbacks const *( ) {
-            return GetGraphicsManager( )->GetAllocationCallbacks( );
         }
 
         void Swap( SelfType &Other ) {

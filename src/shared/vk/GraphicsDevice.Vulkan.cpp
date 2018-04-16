@@ -8,7 +8,7 @@
 
 #include <GraphicsManager.KnownExtensions.Vulkan.h>
 #include <NativeHandles.Vulkan.h>
-#include <SystemAllocationCallbacks.Vulkan.h>
+
 #include <TInfoStruct.Vulkan.h>
 
 /// -------------------------------------------------------------------------------------------------------------------

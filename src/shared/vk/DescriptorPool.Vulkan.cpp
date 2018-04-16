@@ -1,7 +1,4 @@
-//#include <GameEngine.GraphicsEcosystem.Precompiled.h>
 #include <DescriptorPool.Vulkan.h>
-
-#include <CommandQueue.Vulkan.h>
 
 apemodevk::DescriptorPool::DescriptorPool( ) : pNode( nullptr ) {
 }
@@ -13,72 +10,74 @@ uint32_t apemodevk::DescriptorPool::GetAvailableSetCount( ) const {
     return DescSetCounter;
 }
 
-uint32_t apemodevk::DescriptorPool::GetAvailableDescCount( VkDescriptorType DescType ) const {
-    apemode_assert( DescPoolCounters[ DescType ].type == DescType, "Desc type mismatch." );
+uint32_t apemodevk::DescriptorPool::GetAvailableDescCount( VkDescriptorType descriptorType ) const {
+    apemode_assert( DescPoolCounters[ descriptorType ].type == DescType, "Desc type mismatch." );
 
-    return DescPoolCounters[ DescType ].descriptorCount;
+    return DescPoolCounters[ descriptorType ].descriptorCount;
 }
 
-bool apemodevk::DescriptorPool::RecreateResourcesFor( GraphicsDevice& GraphicsNode,
-                                                      uint32_t        MaxSets,
-                                                      uint32_t        MaxSamplerCount,
-                                                      uint32_t        MaxCombinedImgCount,
-                                                      uint32_t        MaxSampledImgCount,
-                                                      uint32_t        MaxStorageImgCount,
-                                                      uint32_t        MaxUniformTexelBufferCount,
-                                                      uint32_t        MaxStorageTexelBufferCount,
-                                                      uint32_t        MaxUniformBufferCount,
-                                                      uint32_t        MaxStorageBufferCount,
-                                                      uint32_t        MaxDynamicUniformBufferCount,
-                                                      uint32_t        MaxDynamicStorageBufferCount,
-                                                      uint32_t        MaxInputAttachmentCount ) {
-    DescSetCounter = MaxSets;
+bool apemodevk::DescriptorPool::RecreateResourcesFor( GraphicsDevice& graphicsNode,
+                                                      uint32_t        maxSets,
+                                                      uint32_t        maxSamplerCount,
+                                                      uint32_t        maxCombinedImgCount,
+                                                      uint32_t        maxSampledImgCount,
+                                                      uint32_t        maxStorageImgCount,
+                                                      uint32_t        maxUniformTexelBufferCount,
+                                                      uint32_t        maxStorageTexelBufferCount,
+                                                      uint32_t        maxUniformBufferCount,
+                                                      uint32_t        maxStorageBufferCount,
+                                                      uint32_t        maxDynamicUniformBufferCount,
+                                                      uint32_t        maxDynamicStorageBufferCount,
+                                                      uint32_t        maxInputAttachmentCount ) {
+    DescSetCounter = maxSets;
 
     // This array is used for creating descriptor pool.
-    VkDescriptorPoolSize LclSubpoolSizes[ VK_DESCRIPTOR_TYPE_RANGE_SIZE ];
+    VkDescriptorPoolSize descriptorPoolSizes[ VK_DESCRIPTOR_TYPE_RANGE_SIZE ];
 
     apemodevk::ZeroMemory( DescPoolCounters );
-    apemodevk::ZeroMemory( LclSubpoolSizes );
+    apemodevk::ZeroMemory( descriptorPoolSizes );
 
-    uint32_t DescTypeCounter       = 0;
-    uint32_t SubpoolSizeCounter    = 0;
-    uint32_t LclSubpoolSizeCounter = 0;
-    for ( const auto MaxDescTypeCount : {MaxSamplerCount,
-                                         MaxCombinedImgCount,
-                                         MaxSampledImgCount,
-                                         MaxStorageImgCount,
-                                         MaxUniformTexelBufferCount,
-                                         MaxStorageTexelBufferCount,
-                                         MaxUniformBufferCount,
-                                         MaxStorageBufferCount,
-                                         MaxDynamicUniformBufferCount,
-                                         MaxDynamicStorageBufferCount,
-                                         MaxInputAttachmentCount} ) {
-        VkDescriptorType DescType = static_cast< VkDescriptorType >( DescTypeCounter );
+    uint32_t descriptorTypeCounter     = 0;
+    uint32_t sizeCounter               = 0;
+    uint32_t descriptorPoolSizeCounter = 0;
+    for ( const auto maxDescTypeCount : {maxSamplerCount,
+                                         maxCombinedImgCount,
+                                         maxSampledImgCount,
+                                         maxStorageImgCount,
+                                         maxUniformTexelBufferCount,
+                                         maxStorageTexelBufferCount,
+                                         maxUniformBufferCount,
+                                         maxStorageBufferCount,
+                                         maxDynamicUniformBufferCount,
+                                         maxDynamicStorageBufferCount,
+                                         maxInputAttachmentCount} ) {
+        VkDescriptorType descriptorType = static_cast< VkDescriptorType >( descriptorTypeCounter );
 
-        DescPoolCounters[ SubpoolSizeCounter ].descriptorCount = MaxDescTypeCount;
-        DescPoolCounters[ SubpoolSizeCounter ].type            = DescType;
+        DescPoolCounters[ sizeCounter ].descriptorCount = maxDescTypeCount;
+        DescPoolCounters[ sizeCounter ].type            = descriptorType;
 
-        if ( apemode_unlikely( MaxDescTypeCount ) ) {
-            LclSubpoolSizes[ LclSubpoolSizeCounter ] = DescPoolCounters[ SubpoolSizeCounter ];
-            ++LclSubpoolSizeCounter;
+        if ( apemode_unlikely( maxDescTypeCount ) ) {
+            descriptorPoolSizes[ descriptorPoolSizeCounter ] = DescPoolCounters[ sizeCounter ];
+            ++descriptorPoolSizeCounter;
         }
 
-        ++SubpoolSizeCounter;
-        ++DescTypeCounter;
+        ++sizeCounter;
+        ++descriptorTypeCounter;
     }
 
     // TOFIX Does it make sense creating empty descriptor pool?
     // TOFIX Is it required by certain API functions just to provide a valid (even empty) pool?
-    apemode_assert( LclSubpoolSizeCounter && MaxSets, "Empty descriptor pool." );
+    apemode_assert( descriptorPoolSizeCounter && maxSets, "Empty descriptor pool." );
 
-    TInfoStruct< VkDescriptorPoolCreateInfo > DescPoolDesc;
-    DescPoolDesc->maxSets       = MaxSets;
-    DescPoolDesc->pPoolSizes    = LclSubpoolSizes;
-    DescPoolDesc->poolSizeCount = LclSubpoolSizeCounter;
+    VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
+    InitializeStruct( descriptorPoolCreateInfo );
 
-    if ( apemode_likely( hDescPool.Recreate( GraphicsNode, DescPoolDesc ) ) ) {
-        pNode = &GraphicsNode;
+    descriptorPoolCreateInfo.maxSets       = maxSets;
+    descriptorPoolCreateInfo.pPoolSizes    = descriptorPoolSizes;
+    descriptorPoolCreateInfo.poolSizeCount = descriptorPoolSizeCounter;
+
+    if ( apemode_likely( hDescPool.Recreate( graphicsNode, descriptorPoolCreateInfo ) ) ) {
+        pNode = &graphicsNode;
         return true;
     }
 
@@ -89,29 +88,30 @@ apemodevk::DescriptorPool::operator VkDescriptorPool( ) const {
     return hDescPool;
 }
 
-apemodevk::DescriptorSet::DescriptorSet( ) : pDescPool( nullptr ), pNode( nullptr ) {
+apemodevk::DescriptorSet::DescriptorSet( ) : pDescriptorPool( nullptr ), pNode( nullptr ) {
 }
 
 apemodevk::DescriptorSet::~DescriptorSet( ) {
-    if ( pDescPool ) {
+    if ( pDescriptorPool ) {
     }
 }
 
-bool apemodevk::DescriptorSet::RecreateResourcesFor( apemodevk::GraphicsDevice& GraphicsNode,
-                                                     apemodevk::DescriptorPool& DescPool,
-                                                     VkDescriptorSetLayout      DescSetLayout ) {
-    if ( DescPool.DescSetCounter >= 1 ) {
-        TInfoStruct< VkDescriptorSetAllocateInfo > AllocInfo;
-        AllocInfo->pSetLayouts        = &DescSetLayout;
-        AllocInfo->descriptorPool     = DescPool;
-        AllocInfo->descriptorSetCount = 1;
+bool apemodevk::DescriptorSet::RecreateResourcesFor( apemodevk::GraphicsDevice& node,
+                                                     apemodevk::DescriptorPool& descriptorPool,
+                                                     VkDescriptorSetLayout      descriptorSetLayout ) {
+    if ( descriptorPool.DescSetCounter >= 1 ) {
+        VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
+        InitializeStruct( descriptorSetAllocateInfo );
 
-        if ( apemode_likely( hDescSet.Recreate( GraphicsNode, DescPool, AllocInfo ) ) ) {
-            pDescPool = &DescPool;
-            // pRootSign     = &RootSign;
-            pNode = &GraphicsNode;
+        descriptorSetAllocateInfo.pSetLayouts        = &descriptorSetLayout;
+        descriptorSetAllocateInfo.descriptorPool     = descriptorPool;
+        descriptorSetAllocateInfo.descriptorSetCount = 1;
 
-            --DescPool.DescSetCounter;
+        if ( apemode_likely( hDescSet.Recreate( node, descriptorPool, descriptorSetAllocateInfo ) ) ) {
+            pDescriptorPool = &descriptorPool;
+            pNode           = &node;
+
+            --descriptorPool.DescSetCounter;
             return true;
         }
     }
@@ -144,7 +144,7 @@ apemodevk::DescriptorSet::operator VkDescriptorSet( ) const {
 apemodevk::DescriptorSetUpdater::DescriptorSetUpdater( ) {
 }
 
-void apemodevk::DescriptorSetUpdater::Reset( uint32_t MaxWrites, uint32_t MaxCopies ) {
+void apemodevk::DescriptorSetUpdater::Reset( uint32_t maxWrites, uint32_t maxCopies ) {
     pNode = nullptr;
 
     BufferInfos.clear( );
@@ -152,30 +152,34 @@ void apemodevk::DescriptorSetUpdater::Reset( uint32_t MaxWrites, uint32_t MaxCop
     Writes.clear( );
     Copies.clear( );
 
-    BufferInfos.reserve( MaxWrites );
-    ImgInfos.reserve( MaxWrites );
-    Writes.reserve( MaxWrites );
-    Copies.reserve( MaxCopies );
+    BufferInfos.reserve( maxWrites );
+    ImgInfos.reserve( maxWrites );
+    Writes.reserve( maxWrites );
+    Copies.reserve( maxCopies );
 }
 
-bool apemodevk::DescriptorSetUpdater::SetGraphicsNode( GraphicsDevice const& GraphicsNode ) {
+bool apemodevk::DescriptorSetUpdater::SetGraphicsNode( GraphicsDevice const& node ) {
     if ( apemode_likely( pNode ) ) {
         apemode_assert( pNode == &GraphicsNode, "Descriptor sets of different devices." );
-        return pNode == &GraphicsNode;
+        return pNode == &node;
     }
 
-    pNode = &GraphicsNode;
+    pNode = &node;
     return true;
 }
 
-bool apemodevk::DescriptorSetUpdater::WriteUniformBuffer(
-    DescriptorSet const& DescSet, VkBuffer Buffer, uint32_t Offset, uint32_t TotalSize, uint32_t Binding, uint32_t Count ) {
-    if ( DescSet.pDescPool->GetAvailableDescCount( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER ) < Count ) {
+bool apemodevk::DescriptorSetUpdater::WriteUniformBuffer( DescriptorSet const& descriptorSet,
+                                                          VkBuffer             pBuffer,
+                                                          uint32_t             offset,
+                                                          uint32_t             totalSize,
+                                                          uint32_t             binding,
+                                                          uint32_t             count ) {
+    if ( descriptorSet.pDescriptorPool->GetAvailableDescCount( VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER ) < count ) {
         apemode_halt( "Reserve more." );
         return false;
     }
 
-    if ( !SetGraphicsNode( *DescSet.pNode ) ) {
+    if ( !SetGraphicsNode( *descriptorSet.pNode ) ) {
         return false;
     }
 
@@ -183,32 +187,32 @@ bool apemodevk::DescriptorSetUpdater::WriteUniformBuffer(
     auto&     Write         = apemodevk::PushBackAndGet( Writes );
     auto&     BufferInfo    = apemodevk::PushBackAndGet( BufferInfos );
 
-    BufferInfo.buffer = Buffer;
-    BufferInfo.offset = Offset;
-    BufferInfo.range  = TotalSize;
+    BufferInfo.buffer = pBuffer;
+    BufferInfo.offset = offset;
+    BufferInfo.range  = totalSize;
 
-    Write                 = TInfoStruct< VkWriteDescriptorSet >( );
+    Write                 = TNewInitializedStruct< VkWriteDescriptorSet >( );
     Write.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    Write.descriptorCount = Count;
-    Write.dstBinding      = Binding;
-    Write.dstSet          = DescSet;
+    Write.descriptorCount = count;
+    Write.dstBinding      = binding;
+    Write.dstSet          = descriptorSet;
     Write.pBufferInfo     = reinterpret_cast< const VkDescriptorBufferInfo* >( BufferInfoIdx );
 
     return true;
 }
 
-bool apemodevk::DescriptorSetUpdater::WriteCombinedImgSampler( DescriptorSet const& DescSet,
-                                                               VkImageView          ImgView,
-                                                               VkImageLayout        ImgLayout,
-                                                               VkSampler            Sampler,
-                                                               uint32_t             Binding,
-                                                               uint32_t             Count ) {
-    if ( DescSet.pDescPool->GetAvailableDescCount( VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER ) < Count ) {
+bool apemodevk::DescriptorSetUpdater::WriteCombinedImgSampler( DescriptorSet const& descriptorSet,
+                                                               VkImageView          pImageView,
+                                                               VkImageLayout        pImageLayout,
+                                                               VkSampler            pSampler,
+                                                               uint32_t             binding,
+                                                               uint32_t             count ) {
+    if ( descriptorSet.pDescriptorPool->GetAvailableDescCount( VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER ) < count ) {
         apemode_halt( "Reserve more." );
         return false;
     }
 
-    if ( !SetGraphicsNode( *DescSet.pNode ) ) {
+    if ( !SetGraphicsNode( *descriptorSet.pNode ) ) {
         return false;
     }
 
@@ -216,14 +220,14 @@ bool apemodevk::DescriptorSetUpdater::WriteCombinedImgSampler( DescriptorSet con
     auto&     Write      = apemodevk::PushBackAndGet( Writes );
     auto&     ImgInfo    = apemodevk::PushBackAndGet( ImgInfos );
 
-    ImgInfo.sampler     = Sampler;
-    ImgInfo.imageView   = ImgView;
-    ImgInfo.imageLayout = ImgLayout;
+    ImgInfo.sampler     = pSampler;
+    ImgInfo.imageView   = pImageView;
+    ImgInfo.imageLayout = pImageLayout;
 
-    Write                 = TInfoStruct< VkWriteDescriptorSet >( );
-    Write.dstSet          = DescSet;
-    Write.dstBinding      = Binding;
-    Write.descriptorCount = Count;
+    Write                 = TNewInitializedStruct< VkWriteDescriptorSet >( );
+    Write.dstSet          = descriptorSet;
+    Write.dstBinding      = binding;
+    Write.descriptorCount = count;
     Write.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     Write.pImageInfo      = reinterpret_cast< const VkDescriptorImageInfo* >( ImgInfoIdx );
 
@@ -233,11 +237,11 @@ bool apemodevk::DescriptorSetUpdater::WriteCombinedImgSampler( DescriptorSet con
 void apemodevk::DescriptorSetUpdater::Flush( ) {
     for ( auto& Write : Writes ) {
         if ( Write.pBufferInfo ) {
-            uintptr_t BufferInfoIdx = reinterpret_cast< const uintptr_t >( Write.pBufferInfo );
-            Write.pBufferInfo       = &BufferInfos[ BufferInfoIdx ];
+            uintptr_t bufferInfoIdx = reinterpret_cast< const uintptr_t >( Write.pBufferInfo );
+            Write.pBufferInfo       = &BufferInfos[ bufferInfoIdx ];
         } else if ( Write.pImageInfo ) {
-            uintptr_t ImgInfoIdx = reinterpret_cast< const uintptr_t >( Write.pImageInfo );
-            Write.pImageInfo     = &ImgInfos[ ImgInfoIdx ];
+            uintptr_t imgInfoIdx = reinterpret_cast< const uintptr_t >( Write.pImageInfo );
+            Write.pImageInfo     = &ImgInfos[ imgInfoIdx ];
         }
     }
 

@@ -2,7 +2,6 @@
 
 #include <NuklearSdlBase.h>
 
-#include <CommandQueue.Vulkan.h>
 #include <DescriptorPool.Vulkan.h>
 #include <GraphicsDevice.Vulkan.h>
 #include <GraphicsManager.Vulkan.h>

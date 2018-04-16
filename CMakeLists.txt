@@ -481,35 +481,58 @@ endif()
 
 set(
     shared_vk_source_files
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/Image.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/Buffer.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/NativeHandles.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/ResultHandle.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/THandle.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/TInfoStruct.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/BufferPools.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/shared/vk/BufferPools.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/CommandQueue.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/vk/DescriptorPool.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/DescriptorPool.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/shared/vk/GraphicsDevice.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/GraphicsDevice.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/shared/vk/GraphicsManager.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/GraphicsManager.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/shared/vk/QueuePools.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/QueuePools.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/shared/vk/Swapchain.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/Swapchain.Vulkan.h
+    # ${CMAKE_SOURCE_DIR}/src/shared/vk/CommandQueue.Vulkan.cpp
+    # ${CMAKE_SOURCE_DIR}/src/shared/vk/CommandQueue.Vulkan.h
 )
 
 set(
     shared_vk_ext_source_files
+    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/ShaderCompiler.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/ShaderCompiler.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/ImageLoader.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/ImageLoader.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/SamplerManager.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/SamplerManager.Vulkan.cpp
 )
 
 set(
     shared_sdl_source_files
     ${CMAKE_SOURCE_DIR}/src/shared/sdl/AppMainSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/sdl/InputSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/sdl/StopwatchSdl.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/sdl/AppSurfaceSdlBase.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/sdl/AppSurfaceSdlBase.h
+    ${CMAKE_SOURCE_DIR}/src/shared/sdl/InputSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/sdl/Input.h
     ${CMAKE_SOURCE_DIR}/src/shared/sdl/NuklearSdlBase.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/sdl/NuklearSdlBase.h
+    ${CMAKE_SOURCE_DIR}/src/shared/sdl/StopwatchSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/sdl/Stopwatch.h
 )
 
 set(
     shared_platform_source_files
+    ${CMAKE_SOURCE_DIR}/src/shared/platform/AssetManager.h
     ${CMAKE_SOURCE_DIR}/src/shared/platform/AssetManager.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/FileManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/platform/FileTracker.h
+    ${CMAKE_SOURCE_DIR}/src/shared/platform/FileReader.h
     ${CMAKE_SOURCE_DIR}/src/shared/platform/memory/MemoryManager.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/memory/MemoryManager.h
 )
@@ -517,11 +540,17 @@ set(
 set(
     shared_source_files
     ${CMAKE_SOURCE_DIR}/src/shared/CityHash.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/CityHash.h
     ${CMAKE_SOURCE_DIR}/src/shared/AppBase.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/AppBase.h
     ${CMAKE_SOURCE_DIR}/src/shared/DebugRendererVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/DebugRendererVk.h
     ${CMAKE_SOURCE_DIR}/src/shared/AppState.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/AppState.h
     ${CMAKE_SOURCE_DIR}/src/shared/AppSurfaceSdlVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/AppSurfaceSdlVk.h
     ${CMAKE_SOURCE_DIR}/src/shared/NuklearSdlVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/NuklearSdlVk.h
 )
 
 # Sources from external projects
@@ -540,9 +569,13 @@ set(
     ${shared_vk_ext_source_files}
     ${shared_source_files}
     ${CMAKE_SOURCE_DIR}/src/viewer/Scene.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/Scene.h
     ${CMAKE_SOURCE_DIR}/src/viewer/ViewerApp.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/ViewerApp.h
     ${CMAKE_SOURCE_DIR}/src/viewer/SceneRendererVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/SceneRendererVk.h
     ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.h
     # ${CMAKE_SOURCE_DIR}/dependencies/lodepng/lodepng.cpp
 )
 

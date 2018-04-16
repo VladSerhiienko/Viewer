@@ -3,7 +3,7 @@
 #include <GraphicsManager.Vulkan.h>
 
 #include <NativeHandles.Vulkan.h>
-#include <SystemAllocationCallbacks.Vulkan.h>
+
 #include <TInfoStruct.Vulkan.h>
 
 #include <GraphicsManager.KnownExtensions.Vulkan.h>
@@ -342,6 +342,10 @@ bool apemodevk::GraphicsManager::NativeLayerWrapper::IsValidInstanceLayer( ) con
 apemodevk::GraphicsManager* apemodevk::GetGraphicsManager( ) {
     static apemodevk::GraphicsManager graphicsManagerInstance;
     return &graphicsManagerInstance;
+}
+
+const VkAllocationCallbacks* apemodevk::GetAllocationCallbacks( ) {
+    return GetGraphicsManager( )->GetAllocationCallbacks( );
 }
 
 apemodevk::GraphicsManager::GraphicsManager( ) {

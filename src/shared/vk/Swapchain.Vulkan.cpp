@@ -1,4 +1,4 @@
-#include <CommandQueue.Vulkan.h>
+#include <Platform.Vulkan.h>
 #include <GraphicsManager.KnownExtensions.Vulkan.h>
 #include <Swapchain.Vulkan.h>
 
@@ -6,15 +6,10 @@
 /// Swapchain
 /// -------------------------------------------------------------------------------------------------------------------
 
-
-uint32_t const
-apemodevk::Swapchain::kExtentMatchFullscreen = -1;
-uint32_t const
-apemodevk::Swapchain::kExtentMatchWindow     = 0;
-uint64_t const
-apemodevk::Swapchain::kMaxTimeout            = uint64_t( -1 );
-uint32_t const
-apemodevk::Swapchain::kMaxImgs               = 3;
+uint32_t const apemodevk::Swapchain::kExtentMatchFullscreen = -1;
+uint32_t const apemodevk::Swapchain::kExtentMatchWindow     = 0;
+uint64_t const apemodevk::Swapchain::kMaxTimeout            = uint64_t( -1 );
+uint32_t const apemodevk::Swapchain::kMaxImgs               = 3;
 
 apemodevk::Swapchain::Swapchain( ) {
 }
@@ -29,17 +24,17 @@ apemodevk::Swapchain::~Swapchain( ) {
         }
 }
 
-bool apemodevk::Swapchain::ExtractSwapchainBuffers( VkImage * OutBufferImgs) {
-    apemode_assert(hSwapchain.IsNotNull(), "Not initialized.");
+bool apemodevk::Swapchain::ExtractSwapchainBuffers( VkImage* OutBufferImgs ) {
+    apemode_assert( hSwapchain.IsNotNull( ), "Not initialized." );
 
-    uint32_t OutSwapchainBufferCount = 0;
-    if ( apemode_likely(  VK_SUCCESS == CheckedCall( vkGetSwapchainImagesKHR( pDevice, hSwapchain, &OutSwapchainBufferCount, nullptr ) ) ) ) {
-        if (OutSwapchainBufferCount > kMaxImgs) {
-            platform::DebugBreak();
+    uint32_t swapchainBufferCount = 0;
+    if ( apemode_likely( VK_SUCCESS == CheckedCall( vkGetSwapchainImagesKHR( pDevice, hSwapchain, &swapchainBufferCount, nullptr ) ) ) ) {
+        if ( swapchainBufferCount > kMaxImgs ) {
+            platform::DebugBreak( );
             return false;
         }
 
-        if ( apemode_likely( VK_SUCCESS == CheckedCall( vkGetSwapchainImagesKHR( pDevice, hSwapchain, &OutSwapchainBufferCount, OutBufferImgs ) ) ) )
+        if ( apemode_likely( VK_SUCCESS == CheckedCall( vkGetSwapchainImagesKHR( pDevice, hSwapchain, &swapchainBufferCount, OutBufferImgs ) ) ) )
             return true;
     }
 
@@ -75,22 +70,24 @@ bool apemodevk::Swapchain::Recreate( VkDevice                   pInDevice,
     ImgExtent.width  = DesiredColorWidth;
     ImgExtent.height = DesiredColorHeight;
 
-    TInfoStruct< VkSwapchainCreateInfoKHR > SwapchainDesc;
-    SwapchainDesc->surface          = pInSurface;
-    SwapchainDesc->minImageCount    = ImgCount;
-    SwapchainDesc->imageFormat      = eColorFormat;
-    SwapchainDesc->imageColorSpace  = eColorSpace;
-    SwapchainDesc->imageExtent      = ImgExtent;
-    SwapchainDesc->imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    SwapchainDesc->preTransform     = static_cast< VkSurfaceTransformFlagBitsKHR >( eSurfaceTransform );
-    SwapchainDesc->compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    SwapchainDesc->imageArrayLayers = 1;
-    SwapchainDesc->imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    SwapchainDesc->presentMode      = ePresentMode;
-    SwapchainDesc->oldSwapchain     = hSwapchain;
-    SwapchainDesc->clipped          = true;
+    VkSwapchainCreateInfoKHR swapchainCreateInfoKHR;
+    InitializeStruct( swapchainCreateInfoKHR );
 
-    if ( !hSwapchain.Recreate( pInDevice, SwapchainDesc ) ) {
+    swapchainCreateInfoKHR.surface          = pInSurface;
+    swapchainCreateInfoKHR.minImageCount    = ImgCount;
+    swapchainCreateInfoKHR.imageFormat      = eColorFormat;
+    swapchainCreateInfoKHR.imageColorSpace  = eColorSpace;
+    swapchainCreateInfoKHR.imageExtent      = ImgExtent;
+    swapchainCreateInfoKHR.imageUsage       = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    swapchainCreateInfoKHR.preTransform     = static_cast< VkSurfaceTransformFlagBitsKHR >( eSurfaceTransform );
+    swapchainCreateInfoKHR.compositeAlpha   = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    swapchainCreateInfoKHR.imageArrayLayers = 1;
+    swapchainCreateInfoKHR.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    swapchainCreateInfoKHR.presentMode      = ePresentMode;
+    swapchainCreateInfoKHR.oldSwapchain     = hSwapchain;
+    swapchainCreateInfoKHR.clipped          = true;
+
+    if ( !hSwapchain.Recreate( pInDevice, swapchainCreateInfoKHR ) ) {
         apemode_halt( "Failed to create swapchain." );
         return false;
     }
@@ -100,22 +97,24 @@ bool apemodevk::Swapchain::Recreate( VkDevice                   pInDevice,
         return false;
     }
 
-    TInfoStruct< VkImageViewCreateInfo > imgViewCreateInfo;
-    imgViewCreateInfo->viewType                        = VK_IMAGE_VIEW_TYPE_2D;
-    imgViewCreateInfo->format                          = eColorFormat;
-    imgViewCreateInfo->components.r                    = VK_COMPONENT_SWIZZLE_R;
-    imgViewCreateInfo->components.g                    = VK_COMPONENT_SWIZZLE_G;
-    imgViewCreateInfo->components.b                    = VK_COMPONENT_SWIZZLE_B;
-    imgViewCreateInfo->components.a                    = VK_COMPONENT_SWIZZLE_A;
-    imgViewCreateInfo->subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-    imgViewCreateInfo->subresourceRange.baseArrayLayer = 0;
-    imgViewCreateInfo->subresourceRange.baseMipLevel   = 0;
-    imgViewCreateInfo->subresourceRange.layerCount     = 1;
-    imgViewCreateInfo->subresourceRange.levelCount     = 1;
+    VkImageViewCreateInfo imageViewCreateInfo;
+    InitializeStruct( imageViewCreateInfo );
+
+    imageViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+    imageViewCreateInfo.format                          = eColorFormat;
+    imageViewCreateInfo.components.r                    = VK_COMPONENT_SWIZZLE_R;
+    imageViewCreateInfo.components.g                    = VK_COMPONENT_SWIZZLE_G;
+    imageViewCreateInfo.components.b                    = VK_COMPONENT_SWIZZLE_B;
+    imageViewCreateInfo.components.a                    = VK_COMPONENT_SWIZZLE_A;
+    imageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+    imageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
+    imageViewCreateInfo.subresourceRange.layerCount     = 1;
+    imageViewCreateInfo.subresourceRange.levelCount     = 1;
 
     for ( uint32_t i = 0; i < ImgCount; ++i ) {
-        imgViewCreateInfo->image = hImgs[ i ];
-        hImgViews[ i ].Recreate( pInDevice, imgViewCreateInfo );
+        imageViewCreateInfo.image = hImgs[ i ];
+        hImgViews[ i ].Recreate( pInDevice, imageViewCreateInfo );
     }
 
     /* TODO: Warning after resizing, consider changing image layouts manually. */
@@ -127,12 +126,12 @@ uint32_t apemodevk::Swapchain::GetBufferCount( ) const {
 }
 bool apemodevk::Surface::SetSurfaceProperties( ) {
     if ( hSurface.IsNotNull( ) ) {
-        uint32_t SurfaceFormatCount = 0;
-        if ( VK_SUCCESS == CheckedCall( vkGetPhysicalDeviceSurfaceFormatsKHR( pPhysicalDevice, hSurface, &SurfaceFormatCount, nullptr ) ) ) {
+        uint32_t surfaceFormatCount = 0;
+        if ( VK_SUCCESS == CheckedCall( vkGetPhysicalDeviceSurfaceFormatsKHR( pPhysicalDevice, hSurface, &surfaceFormatCount, nullptr ) ) ) {
 
-            std::vector< VkSurfaceFormatKHR > SurfaceFormats( SurfaceFormatCount );
-            if ( VK_SUCCESS == CheckedCall( vkGetPhysicalDeviceSurfaceFormatsKHR( pPhysicalDevice, hSurface, &SurfaceFormatCount, SurfaceFormats.data( ) ) ) ) {
-                const bool bCanChooseAny = SurfaceFormatCount == 1 && SurfaceFormats[ 0 ].format == VK_FORMAT_UNDEFINED;
+            std::vector< VkSurfaceFormatKHR > SurfaceFormats( surfaceFormatCount );
+            if ( VK_SUCCESS == CheckedCall( vkGetPhysicalDeviceSurfaceFormatsKHR( pPhysicalDevice, hSurface, &surfaceFormatCount, SurfaceFormats.data( ) ) ) ) {
+                const bool bCanChooseAny = surfaceFormatCount == 1 && SurfaceFormats[ 0 ].format == VK_FORMAT_UNDEFINED;
                 eColorFormat             = bCanChooseAny ? VK_FORMAT_B8G8R8A8_UNORM : SurfaceFormats[ 0 ].format;
                 eColorSpace              = SurfaceFormats[ 0 ].colorSpace;
             }
@@ -141,16 +140,16 @@ bool apemodevk::Surface::SetSurfaceProperties( ) {
         // We fall back to FIFO which is always available.
         ePresentMode = VK_PRESENT_MODE_FIFO_KHR;
 
-        uint32_t PresentModeCount = 0;
-        if ( VK_SUCCESS == CheckedCall( vkGetPhysicalDeviceSurfacePresentModesKHR( pPhysicalDevice, hSurface, &PresentModeCount, nullptr ) ) ) {
+        uint32_t presentModeCount = 0;
+        if ( VK_SUCCESS == CheckedCall( vkGetPhysicalDeviceSurfacePresentModesKHR( pPhysicalDevice, hSurface, &presentModeCount, nullptr ) ) ) {
 
-            std::vector< VkPresentModeKHR > PresentModes;
-            PresentModes.resize( PresentModeCount );
+            std::vector< VkPresentModeKHR > presentModes;
+            presentModes.resize( presentModeCount );
 
-            if ( VK_SUCCESS == CheckedCall( vkGetPhysicalDeviceSurfacePresentModesKHR( pPhysicalDevice, hSurface, &PresentModeCount, PresentModes.data( ) ) ) ) {
-                for ( auto i = 0u; i < PresentModeCount; i++ ) {
-                    auto& CurrentPresentMode = PresentModes[ i ];
-                    if ( CurrentPresentMode == VK_PRESENT_MODE_MAILBOX_KHR ) {
+            if ( VK_SUCCESS == CheckedCall( vkGetPhysicalDeviceSurfacePresentModesKHR( pPhysicalDevice, hSurface, &presentModeCount, presentModes.data( ) ) ) ) {
+                for ( auto i = 0u; i < presentModeCount; i++ ) {
+                    auto& currentPresentMode = presentModes[ i ];
+                    if ( currentPresentMode == VK_PRESENT_MODE_MAILBOX_KHR ) {
                         // If mailbox mode is available, use it, as is the lowest-latency non- tearing mode.
                         ePresentMode = VK_PRESENT_MODE_MAILBOX_KHR;
                         break;
@@ -158,7 +157,7 @@ bool apemodevk::Surface::SetSurfaceProperties( ) {
 
                     // If not, try IMMEDIATE which will usually be available, and is fastest (though it tears).
                     if ( ( ePresentMode != VK_PRESENT_MODE_MAILBOX_KHR ) &&
-                         ( CurrentPresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR ) )
+                         ( currentPresentMode == VK_PRESENT_MODE_IMMEDIATE_KHR ) )
                         ePresentMode = VK_PRESENT_MODE_IMMEDIATE_KHR;
                 }
             }
@@ -187,11 +186,13 @@ bool apemodevk::Surface::Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstanc
     assert( nullptr != pInstance );
     assert( nullptr != pPhysicalDevice );
 
-    TInfoStruct< VkWin32SurfaceCreateInfoKHR > SurfaceDesc;
-    SurfaceDesc->hwnd      = hWindow;
-    SurfaceDesc->hinstance = hInstance;
+    VkWin32SurfaceCreateInfoKHR win32SurfaceCreateInfoKHR;
+    InitializeStruct( win32SurfaceCreateInfoKHR );
 
-    return hSurface.Recreate( pInInstance, SurfaceDesc ) && SetSurfaceProperties( );
+    win32SurfaceCreateInfoKHR.hwnd      = hWindow;
+    win32SurfaceCreateInfoKHR.hinstance = hInstance;
+
+    return hSurface.Recreate( pInInstance, win32SurfaceCreateInfoKHR ) && SetSurfaceProperties( );
 }
 #endif
 
@@ -203,10 +204,12 @@ bool apemodevk::Surface::Recreate( VkPhysicalDevice pInPhysicalDevice,
     pInstance       = pInInstance;
     pPhysicalDevice = pInPhysicalDevice;
 
-    TInfoStruct< VkXlibSurfaceCreateInfoKHR > SurfaceDesc;
-    SurfaceDesc->window = pWindowX11;
-    SurfaceDesc->dpy    = pDisplayX11;
+    VkXlibSurfaceCreateInfoKHR xlibSurfaceCreateInfoKHR;
+    InitializeStruct( xlibSurfaceCreateInfoKHR );
 
-    return hSurface.Recreate( pInInstance, SurfaceDesc ) && SetSurfaceProperties( );
+    xlibSurfaceCreateInfoKHR.window = pWindowX11;
+    xlibSurfaceCreateInfoKHR.dpy    = pDisplayX11;
+
+    return hSurface.Recreate( pInInstance, xlibSurfaceCreateInfoKHR ) && SetSurfaceProperties( );
 }
 #endif

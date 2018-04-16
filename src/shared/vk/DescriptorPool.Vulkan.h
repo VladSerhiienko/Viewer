@@ -103,7 +103,7 @@ namespace apemodevk
 
     public:
         apemodevk::GraphicsDevice const*                  pNode;
-        apemodevk::DescriptorPool const*                  pDescPool;
+        apemodevk::DescriptorPool const*                  pDescriptorPool;
         apemodevk::THandle< VkDescriptorSet > hDescSet;
         VkDescriptorSetLayout                             hDescSetLayout;
     };

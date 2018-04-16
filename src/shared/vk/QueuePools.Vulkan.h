@@ -20,10 +20,10 @@ namespace apemodevk {
         /* Queue properties: */
 
         uint32_t                queueFamilyId    = 0;
-        VkQueueFamilyProperties QueueFamilyProps = {};
+        VkQueueFamilyProperties queueFamilyProps = {};
 
         QueueFamilyBased( ) = default;
-        QueueFamilyBased( uint32_t queueFamilyId, VkQueueFamilyProperties QueueFamilyProps );
+        QueueFamilyBased( uint32_t queueFamilyId, VkQueueFamilyProperties queueFamilyProps );
 
         /* Queue features: */
 
@@ -55,7 +55,7 @@ namespace apemodevk {
         VkCommandPool   pCmdPool      = VK_NULL_HANDLE; /* Command pool handle (associated with the Handle) */
         VkFence         pFence        = VK_NULL_HANDLE; /* Last queue fence */
         uint32_t        queueFamilyId = 0;
-        uint32_t        CmdBufferId   = 0;
+        uint32_t        cmdBufferId   = 0;
     };
 
     class CommandBufferFamilyPool : public QueueFamilyBased {

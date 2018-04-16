@@ -11,13 +11,13 @@ TQueueFamilyBasedElement* TGetPool( TQueueFamilyBasedCollection& Pools, VkQueueF
     /* First, try to find the exact match. */
     /* This can be crucial for only trasfer or only compute queues. */
     for ( auto& pool : Pools )
-        if ( pool.QueueFamilyProps.queueFlags == queueFlags )
+        if ( pool.queueFamilyProps.queueFlags == queueFlags )
             return &pool;
 
     /* Try to find something usable. */
     if ( false == match )
         for ( auto& pool : Pools )
-            if ( queueFlags == ( pool.QueueFamilyProps.queueFlags & queueFlags ) )
+            if ( queueFlags == ( pool.queueFamilyProps.queueFlags & queueFlags ) )
                 return &pool;
 
     /* Nothing available for immediate usage */
@@ -111,18 +111,18 @@ apemodevk::QueueFamilyPool::QueueFamilyPool( VkDevice                       pInD
 
 apemodevk::QueueFamilyPool::~QueueFamilyPool( ) {
     if ( false == Queues.empty( ) ) {
-        uint32_t queueIndex = QueueFamilyProps.queueCount;
+        uint32_t queueIndex = queueFamilyProps.queueCount;
         while ( queueIndex-- ) {
             if ( VK_NULL_HANDLE != Queues[ queueIndex ].hFence ) {
                 vkWaitForFences( pDevice, 1, &Queues[ queueIndex ].hFence, true, UINT64_MAX );
-                vkDestroyFence( pDevice, Queues[ queueIndex ].hFence, nullptr );
+                vkDestroyFence( pDevice, Queues[ queueIndex ].hFence, GetAllocationCallbacks( ) );
             }
         }
     }
 }
 
 const VkQueueFamilyProperties& apemodevk::QueueFamilyPool::GetQueueFamilyProps( ) const {
-    return QueueFamilyProps;
+    return queueFamilyProps;
 }
 
 bool apemodevk::QueueFamilyPool::SupportsPresenting( VkSurfaceKHR pSurface ) const {
@@ -144,29 +144,32 @@ bool apemodevk::QueueFamilyPool::SupportsPresenting( VkSurfaceKHR pSurface ) con
     return false;
 }
 
-apemodevk::QueueFamilyBased::QueueFamilyBased( uint32_t queueFamilyId, VkQueueFamilyProperties queueFamilyProps )
-    : queueFamilyId( queueFamilyId ), QueueFamilyProps( queueFamilyProps ) {
+apemodevk::QueueFamilyBased::QueueFamilyBased( uint32_t queueFamilyId, VkQueueFamilyProperties queueFamilyProperties )
+    : queueFamilyId( queueFamilyId ), queueFamilyProps( queueFamilyProperties ) {
+
     /* From the docs: VK_QUEUE_TRANSFER_BIT is enabled if either GRAPHICS or COMPUTE or both are enabled. */
     /* Since we search queues / command buffers according to those flags, we set them here. */
-    if ( ( QueueFamilyProps.queueFlags & VK_QUEUE_GRAPHICS_BIT ) == VK_QUEUE_GRAPHICS_BIT ||
-         ( QueueFamilyProps.queueFlags & VK_QUEUE_COMPUTE_BIT ) == VK_QUEUE_COMPUTE_BIT )
-        QueueFamilyProps.queueFlags |= VK_QUEUE_TRANSFER_BIT;
+    if ( ( queueFamilyProps.queueFlags & VK_QUEUE_GRAPHICS_BIT ) == VK_QUEUE_GRAPHICS_BIT ||
+         ( queueFamilyProps.queueFlags & VK_QUEUE_COMPUTE_BIT ) == VK_QUEUE_COMPUTE_BIT ) {
+
+        queueFamilyProps.queueFlags |= VK_QUEUE_TRANSFER_BIT;
+    }
 }
 
 bool apemodevk::QueueFamilyBased::SupportsGraphics( ) const {
-    return apemodevk::HasFlagEq( QueueFamilyProps.queueFlags, VK_QUEUE_GRAPHICS_BIT );
+    return apemodevk::HasFlagEq( queueFamilyProps.queueFlags, VK_QUEUE_GRAPHICS_BIT );
 }
 
 bool apemodevk::QueueFamilyBased::SupportsCompute( ) const {
-    return apemodevk::HasFlagEq( QueueFamilyProps.queueFlags, VK_QUEUE_COMPUTE_BIT );
+    return apemodevk::HasFlagEq( queueFamilyProps.queueFlags, VK_QUEUE_COMPUTE_BIT );
 }
 
 bool apemodevk::QueueFamilyBased::SupportsSparseBinding( ) const {
-    return apemodevk::HasFlagEq( QueueFamilyProps.queueFlags, VK_QUEUE_SPARSE_BINDING_BIT );
+    return apemodevk::HasFlagEq( queueFamilyProps.queueFlags, VK_QUEUE_SPARSE_BINDING_BIT );
 }
 
 bool apemodevk::QueueFamilyBased::SupportsTransfer( ) const {
-    return apemodevk::HasFlagEq( QueueFamilyProps.queueFlags, VK_QUEUE_TRANSFER_BIT );
+    return apemodevk::HasFlagEq( queueFamilyProps.queueFlags, VK_QUEUE_TRANSFER_BIT );
 }
 
 apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence ) {
@@ -174,6 +177,7 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
 
     /* Loop through queues */
     for (auto& queue : Queues) {
+
         /* If the queue is not used by other thread and it is not executing cmd lists, it will be returned */
         /* Note that queue can suspend the execution of the commands, or discard "one time" buffers. */
         if ( false == queue.bInUse.exchange( true, std::memory_order_acquire ) ) {
@@ -187,7 +191,7 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
                     fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
                     vkGetDeviceQueue( pDevice, queueFamilyId, queueIndex, &queue.hQueue );
-                    vkCreateFence( pDevice, &fenceCreateInfo, nullptr, &queue.hFence );
+                    vkCreateFence( pDevice, &fenceCreateInfo, GetAllocationCallbacks( ), &queue.hFence );
 
                     assert( queue.hQueue );
                     assert( queue.hFence );
@@ -213,10 +217,13 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
 }
 
 bool apemodevk::QueueFamilyPool::Release( const apemodevk::AcquiredQueue& acquiredQueue ) {
+
     /* Check if the queue was acquired */
     if ( VK_NULL_HANDLE != acquiredQueue.pQueue ) {
+
         /* No longer used, ok */
         const bool previouslyUsed = Queues[ acquiredQueue.queueId ].bInUse.exchange( false, std::memory_order_release );
+
         /* Try to track incorrect usage or atomic mess. */
         if ( false == previouslyUsed )
             apemodevk::platform::DebugBreak( );
@@ -328,7 +335,7 @@ void InitializeCommandBufferInPool( VkDevice pDevice, uint32_t queueFamilyId, ap
     commandPoolCreateInfo.queueFamilyIndex = queueFamilyId;
     commandPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    vkCreateCommandPool( pDevice, &commandPoolCreateInfo, nullptr, &cmdBuffer.pCmdPool );
+    vkCreateCommandPool( pDevice, &commandPoolCreateInfo, GetAllocationCallbacks( ), &cmdBuffer.pCmdPool );
     assert( cmdBuffer.pCmdPool );
 
     VkCommandBufferAllocateInfo commandBufferAllocateInfo;
@@ -358,7 +365,7 @@ apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bo
 
                 acquiredCommandBuffer.pCmdBuffer    = cmdBuffer.pCmdBuffer;
                 acquiredCommandBuffer.pCmdPool      = cmdBuffer.pCmdPool;
-                acquiredCommandBuffer.CmdBufferId   = cmdBufferIndex;
+                acquiredCommandBuffer.cmdBufferId   = cmdBufferIndex;
                 acquiredCommandBuffer.queueFamilyId = queueFamilyId;
 
                 return acquiredCommandBuffer;
@@ -381,20 +388,23 @@ apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bo
     acquiredCommandBuffer.queueFamilyId = queueFamilyId;
     acquiredCommandBuffer.pCmdBuffer    = cmdBuffer.pCmdBuffer;
     acquiredCommandBuffer.pCmdPool      = cmdBuffer.pCmdPool;
-    acquiredCommandBuffer.CmdBufferId   = cmdBufferIndex;
+    acquiredCommandBuffer.cmdBufferId   = cmdBufferIndex;
 
     return acquiredCommandBuffer;
 }
 
 bool apemodevk::CommandBufferFamilyPool::Release( const AcquiredCommandBuffer& acquiredCmdBuffer ) {
+
     /* Check if the command buffer was acquired */
     if ( VK_NULL_HANDLE != acquiredCmdBuffer.pCmdBuffer ) {
-        auto& cmdBufferInPool  = CmdBuffers[ acquiredCmdBuffer.CmdBufferId ];
+        auto& cmdBufferInPool  = CmdBuffers[ acquiredCmdBuffer.cmdBufferId ];
 
         /* Set queue fence */
         cmdBufferInPool.pFence = acquiredCmdBuffer.pFence;
+
         /* No longer in use */
         const bool previouslyUsed = cmdBufferInPool.bInUse.exchange( false, std::memory_order_release );
+
         /* Try to track incorrect usage or atomic mess. */
         if ( false == previouslyUsed )
             apemodevk::platform::DebugBreak( );
@@ -406,7 +416,7 @@ bool apemodevk::CommandBufferFamilyPool::Release( const AcquiredCommandBuffer& a
     return false;
 }
 
-apemodevk::CommandBufferInPool::CommandBufferInPool( ) 
+apemodevk::CommandBufferInPool::CommandBufferInPool( )
     : bInUse( false ) {
 }
 
