@@ -27,7 +27,7 @@ namespace apemode {
 
             VkCommandBuffer pCmdBuffer    = VK_NULL_HANDLE; /* Optional (for uploading font img) */
             VkQueue         pQueue        = VK_NULL_HANDLE; /* Optional (for uploading font img) */
-            uint32_t        queueFamilyId = 0;              /* Optional (for uploading font img) */
+            uint32_t        QueueFamilyId = 0;              /* Optional (for uploading font img) */
             uint32_t        FrameCount    = 0;              /* Required, swapchain img count typically */
         };
 
@@ -63,10 +63,13 @@ namespace apemode {
         std::vector< uint8_t > BufferContent;
 
     public:
-        virtual bool  Render( RenderParametersBase *render_params ) override;
-        virtual void  DeviceDestroy( ) override;
-        virtual bool  DeviceCreate( InitParametersBase *init_params ) override;
-        virtual void *DeviceUploadAtlas( InitParametersBase *init_params, const void *image, int width, int height ) override;
+        bool  Render( RenderParametersBase *pRenderParamsBase ) override;
+        void  DeviceDestroy( ) override;
+        bool  DeviceCreate( InitParametersBase *pInitParamsBase ) override;
+        void *DeviceUploadAtlas( InitParametersBase *pInitParamsBase,
+                                 const void *        pImgData,
+                                 uint32_t            imgWidth,
+                                 uint32_t            imgHeight ) override;
     };
 
 } // namespace apemode

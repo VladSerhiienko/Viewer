@@ -297,8 +297,8 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     apemodevk::InitializeStruct( viewport );
     viewport.x        = 0;
     viewport.y        = 0;
-    viewport.width    = pParams->dims.x * pParams->scale.x;
-    viewport.height   = pParams->dims.y * pParams->scale.y;
+    viewport.width    = pParams->Dims.x * pParams->Scale.x;
+    viewport.height   = pParams->Dims.y * pParams->Scale.y;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
@@ -308,8 +308,8 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     apemodevk::InitializeStruct( scissor );
     scissor.offset.x      = 0;
     scissor.offset.y      = 0;
-    scissor.extent.width  = ( uint32_t )( pParams->dims.x * pParams->scale.x );
-    scissor.extent.height = ( uint32_t )( pParams->dims.y * pParams->scale.y );
+    scissor.extent.width  = ( uint32_t )( pParams->Dims.x * pParams->Scale.x );
+    scissor.extent.height = ( uint32_t )( pParams->Dims.y * pParams->Scale.y );
 
     vkCmdSetScissor(pParams->pCmdBuffer, 0, 1, &scissor);
 

@@ -1,7 +1,6 @@
 #define NK_IMPLEMENTATION
 #include <NuklearSdlBase.h>
-#include <memory>
-#include <memory.h>
+#include <MemoryManager.h>
 
 void apemode::NuklearRendererSdlBase::SdlClipboardPaste( nk_handle usr, struct nk_text_edit *edit ) {
     (void) usr;
@@ -16,7 +15,7 @@ void apemode::NuklearRendererSdlBase::SdlClipboardCopy( nk_handle usr, const cha
     if ( !len )
         return;
 
-    if ( char *str = (char *) malloc( (size_t) len + 1 ) ) {
+    if ( char *str = (char *) apemode_malloc( (size_t) len + 1, APEMODE_DEFAULT_ALIGNMENT ) ) {
         memcpy( str, text, (size_t) len );
         str[ len ] = '\0';
         SDL_SetClipboardText( str );
@@ -26,8 +25,8 @@ void apemode::NuklearRendererSdlBase::SdlClipboardCopy( nk_handle usr, const cha
 
 void *apemode::NuklearRendererSdlBase::DeviceUploadAtlas( InitParametersBase *initParamsBase,
                                                           const void *        image,
-                                                          int                 width,
-                                                          int                 height ) {
+                                                          uint32_t            width,
+                                                          uint32_t            height ) {
     (void) initParamsBase;
     (void) image;
     (void) width;

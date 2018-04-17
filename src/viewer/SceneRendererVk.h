@@ -40,8 +40,8 @@ namespace apemode {
 
         struct SceneRenderParametersVk : SceneRenderParametersBase {
             apemodevk::GraphicsDevice* pNode = nullptr;             /* Required */
-            XMFLOAT2                   dims;                        /* Required */
-            XMFLOAT2                   scale;                       /* Required */
+            XMFLOAT2                   Dims;                        /* Required */
+            XMFLOAT2                   Scale;                       /* Required */
             uint32_t                   FrameIndex = 0;              /* Required */
             VkCommandBuffer            pCmdBuffer = VK_NULL_HANDLE; /* Required */
             XMFLOAT4X4                 ViewMatrix;                  /* Required */
@@ -52,13 +52,13 @@ namespace apemode {
         virtual bool RenderScene( const Scene* pScene, const SceneRenderParametersBase* pParams ) override;
         virtual bool Flush( const Scene* pScene, uint32_t FrameIndex ) override;
 
-        apemodevk::GraphicsDevice*                              pNode = nullptr;
-        apemodevk::THandle< VkDescriptorSetLayout > hDescSetLayout;
-        apemodevk::THandle< VkPipelineLayout >      hPipelineLayout;
-        apemodevk::THandle< VkPipelineCache >       hPipelineCache;
-        apemodevk::THandle< VkPipeline >            hPipeline;
-        apemodevk::TDescriptorSets< kMaxFrameCount >            DescSets;
-        apemodevk::HostBufferPool                               BufferPools[ kMaxFrameCount ];
-        apemodevk::DescriptorSetPool                            DescSetPools[ kMaxFrameCount ];
+        apemodevk::GraphicsDevice*                   pNode = nullptr;
+        apemodevk::THandle< VkDescriptorSetLayout >  hDescSetLayout;
+        apemodevk::THandle< VkPipelineLayout >       hPipelineLayout;
+        apemodevk::THandle< VkPipelineCache >        hPipelineCache;
+        apemodevk::THandle< VkPipeline >             hPipeline;
+        apemodevk::TDescriptorSets< kMaxFrameCount > DescSets;
+        apemodevk::HostBufferPool                    BufferPools[ kMaxFrameCount ];
+        apemodevk::DescriptorSetPool                 DescSetPools[ kMaxFrameCount ];
     };
 }

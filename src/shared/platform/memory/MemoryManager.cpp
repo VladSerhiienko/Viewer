@@ -14,6 +14,7 @@
 #include <new>
 #include <time.h>
 #include <cstdlib>
+#include <cassert>
 
 #ifdef USE_DLMALLOC
 
@@ -43,11 +44,7 @@ namespace apememint {
 
     void *reallocate( void *p, size_t size ) {
 #if defined( USE_DLMALLOC )
-
         return dlrealloc( p, size );
-
-#elif defined( __ANDROID__ )
-        static_assert( true, "Not implemented." );
 #else
         return realloc( p, size );
 #endif
@@ -80,19 +77,14 @@ namespace apememext {
     }
 
     /* Make sure it is at least default and is power of 2 */
-    size_t calculate_alignment( size_t alignment ) {
-
-        alignment
-            = APEMODE_DEFAULT_ALIGNMENT >= alignment
-            ? APEMODE_DEFAULT_ALIGNMENT
-            : nearest_pow2( static_cast< uint32_t >( alignment ) );
-
-        return alignment;
+    size_t calculate_alignment( const size_t alignment ) {
+        return APEMODE_DEFAULT_ALIGNMENT >= alignment ? APEMODE_DEFAULT_ALIGNMENT
+                                                      : nearest_pow2( static_cast< uint32_t >( alignment ) );
     }
 
     /* Accomodate at least one aligned area by adding (alignment - 1)
      * Add pointer size to store the original not aligned pointer */
-    size_t calculate_size( size_t size, size_t alignment ) {
+    size_t calculate_size( const size_t size, const size_t alignment ) {
         return size + alignment - 1 + ptr_size;
     }
 
@@ -114,10 +106,14 @@ namespace apememext {
 
 #endif
 
-    void *aligned_malloc( size_t size, size_t alignment, const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc, const unsigned int allocationType ) {
+    void *aligned_malloc( const size_t       size,
+                          const size_t       requestedAlignment,
+                          const char *       sourceFile,
+                          const unsigned int sourceLine,
+                          const char *       sourceFunc,
+                          const unsigned int allocationType ) {
 
-        alignment = calculate_alignment( alignment );
-
+        const size_t alignment = calculate_alignment( requestedAlignment );
         if ( void *p = apemode_internal_malloc( calculate_size( size, alignment ) ) ) {
             /* Address of the aligned memory according to the align parameter*/
             void * ptr = (void *) ( ( (size_t) p + ptr_size + ( alignment - 1 ) ) & ~( alignment - 1 ) );
@@ -133,10 +129,15 @@ namespace apememext {
         return nullptr;
     }
 
-    void *aligned_realloc( void *p, size_t size, size_t alignment, const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc, const unsigned int allocationType ) {
+    void *aligned_realloc( void *             p,
+                           const size_t       size,
+                           const size_t       requestedAlignment,
+                           const char *       sourceFile,
+                           const unsigned int sourceLine,
+                           const char *       sourceFunc,
+                           const unsigned int allocationType ) {
 
-        alignment = calculate_alignment( alignment );
-
+        const size_t alignment = calculate_alignment( requestedAlignment );
         void *ptr = *( (void **) ( (size_t) p - sizeof( void * ) ) );
         if ( p = apemode_internal_realloc( ptr, calculate_size( size, alignment ) ) ) {
             /* Address of the aligned memory according to the align parameter*/
@@ -153,7 +154,11 @@ namespace apememext {
         return nullptr;
     }
 
-    void aligned_free( void *p, const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc, const unsigned int deallocationType ) {
+    void aligned_free( void *             p,
+                       const char *       sourceFile,
+                       const unsigned int sourceLine,
+                       const char *       sourceFunc,
+                       const unsigned int deallocationType ) {
         if ( p ) {
             /* Get the address of the memory, stored at the start of our total memory area. */
             void *ptr = *( (void **) ( (size_t) p - sizeof( void * ) ) );

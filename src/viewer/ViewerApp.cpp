@@ -185,7 +185,7 @@ bool ViewerApp::Initialize(  ) {
         initParamsNk.pRenderPass     = hDbgRenderPass;
         initParamsNk.pDescPool       = DescPool;
         initParamsNk.pQueue          = acquiredQueue.pQueue;
-        initParamsNk.queueFamilyId   = acquiredQueue.queueFamilyId;
+        initParamsNk.QueueFamilyId   = acquiredQueue.queueFamilyId;
         // initParamsNk.pRenderPass     = hNkRenderPass;
 
         pNkRenderer->Init( &initParamsNk );
@@ -701,10 +701,10 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         pDebugRenderer->Render(&renderParamsDbg);
 
         apemode::SceneRendererVk::SceneRenderParametersVk sceneRenderParameters;
-        sceneRenderParameters.dims.x     = (float) width;
-        sceneRenderParameters.dims.y     = (float) height;
-        sceneRenderParameters.scale.x    = 1;
-        sceneRenderParameters.scale.y    = 1;
+        sceneRenderParameters.Dims.x     = (float) width;
+        sceneRenderParameters.Dims.y     = (float) height;
+        sceneRenderParameters.Scale.x    = 1;
+        sceneRenderParameters.Scale.y    = 1;
         sceneRenderParameters.FrameIndex = FrameIndex;
         sceneRenderParameters.pCmdBuffer = cmdBuffer;
         sceneRenderParameters.pNode      = appSurfaceVk->pNode;

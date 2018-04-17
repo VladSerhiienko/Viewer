@@ -60,7 +60,7 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
     /* Load vertices/elements directly into vertex/element buffer */
     vertices = hVertexBuffer[ frameIndex ].Handle.allocInfo.pMappedData;
     elements = hIndexBuffer[ frameIndex ].Handle.allocInfo.pMappedData;
-    
+
     /* Fill convert configuration */
     struct nk_convert_config config;
     static const struct nk_draw_vertex_layout_element vertex_layout[] = {
@@ -408,10 +408,14 @@ bool apemode::NuklearRendererSdlVk::DeviceCreate( InitParametersBase* pInitParam
     return true;
 }
 
-void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init_params, const void* image, int width, int height ) {
-    auto           pInitParams   = reinterpret_cast< InitParametersVk* >( init_params );
-    const uint8_t* fontImgPixels = reinterpret_cast< const uint8_t* >( image );
-    uint32_t       uploadSize    = width * height * 4 * sizeof( uint8_t );
+void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init_params,
+                                                        const void*         image,
+                                                        uint32_t            width,
+                                                        uint32_t            height ) {
+
+    InitParametersVk* pInitParams   = reinterpret_cast< InitParametersVk* >( init_params );
+    const uint8_t*    fontImgPixels = reinterpret_cast< const uint8_t* >( image );
+    uint32_t          uploadSize    = width * height * 4 * sizeof( uint8_t );
 
     // Create the Image:
     {
@@ -514,7 +518,7 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
         InitializeStruct( cmdPoolCreateInfo );
 
         cmdPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        cmdPoolCreateInfo.queueFamilyIndex = pInitParams->queueFamilyId;
+        cmdPoolCreateInfo.queueFamilyIndex = pInitParams->QueueFamilyId;
 
         if ( false == cmdPool.Recreate( pInitParams->pNode->hLogicalDevice, cmdPoolCreateInfo ) ) {
             apemodevk::platform::DebugBreak( );

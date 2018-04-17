@@ -65,6 +65,6 @@ namespace apemode {
         virtual bool  Render( RenderParametersBase *render_params );
         virtual void  DeviceDestroy( );
         virtual bool  DeviceCreate( InitParametersBase *init_params );
-        virtual void *DeviceUploadAtlas( InitParametersBase *init_params, const void *image, int width, int height );
+        virtual void *DeviceUploadAtlas( InitParametersBase *init_params, const void *pImgData, uint32_t width, uint32_t height );
     };
 }
