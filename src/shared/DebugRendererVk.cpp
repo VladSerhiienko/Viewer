@@ -6,14 +6,6 @@ namespace apemode {
     using namespace apemodevk;
 }
 
-inline void DebugBreak( ) {
-    apemodevk::platform::DebugBreak( );
-}
-
-inline void OutputDebugStringA( const char* pDebugStringA ) {
-    // SDL_LogInfo( SDL_LOG_CATEGORY_RENDER, pDebugStringA );
-}
-
 bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams ) {
     if ( nullptr == pInitParams )
         return false;
@@ -75,7 +67,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     THandle< VkShaderModule > hFragmentShaderModule;
     if ( false == hVertexShaderModule.Recreate( pNode->hLogicalDevice, vertexShaderCreateInfo ) ||
          false == hFragmentShaderModule.Recreate( pNode->hLogicalDevice, fragmentShaderCreateInfo ) ) {
-        DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
@@ -93,7 +85,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     descSetLayoutCreateInfo.pBindings    = bindings;
 
     if ( false == hDescSetLayout.Recreate( pNode->hLogicalDevice, descSetLayoutCreateInfo ) ) {
-        DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
@@ -103,7 +95,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     }
 
     if ( false == DescSets.RecreateResourcesFor( pNode->hLogicalDevice, pInitParams->pDescPool, descriptorSetLayouts ) ) {
-        DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
@@ -113,7 +105,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     pipelineLayoutCreateInfo.pSetLayouts    = descriptorSetLayouts;
 
     if ( false == hPipelineLayout.Recreate( pNode->hLogicalDevice, pipelineLayoutCreateInfo ) ) {
-        DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
@@ -245,12 +237,12 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     //
 
     if ( false == hPipelineCache.Recreate( pNode->hLogicalDevice, pipelineCacheCreateInfo ) ) {
-        DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
     if ( false == hPipeline.Recreate( pNode->hLogicalDevice, hPipelineCache, graphicsPipelineCreateInfo ) ) {
-        DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
@@ -320,7 +312,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
         allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
         if ( false == hVertexBuffer.Recreate( pNode->Allocator, bufferCreateInfo, allocationCreateInfo ) ) {
-            DebugBreak( );
+            apemodevk::platform::DebugBreak( );
             return false;
         }
 
