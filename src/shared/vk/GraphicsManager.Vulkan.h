@@ -96,17 +96,8 @@ namespace apemodevk {
                                                              const char *               pMsg,
                                                              void *                     pUserData );
 
-        static VKAPI_ATTR VkBool32 VKAPI_CALL BreakCallback( VkFlags                    msgFlags,
-                                                             VkDebugReportObjectTypeEXT objType,
-                                                             uint64_t                   srcObject,
-                                                             size_t                     location,
-                                                             int32_t                    msgCode,
-                                                             const char *               pLayerPrefix,
-                                                             const char *               pMsg,
-                                                             void *                     pUserData );
+        /* Destruction order must be preserved */
 
-        std::unique_ptr< GraphicsDevice >    PrimaryNode;
-        std::unique_ptr< GraphicsDevice >    SecondaryNode;
         APIVersion                           Version;
         std::string                          AppName;
         std::string                          EngineName;
@@ -115,9 +106,11 @@ namespace apemodevk {
         std::vector< VkLayerProperties >     InstanceLayerProps;
         std::vector< VkExtensionProperties > InstanceExtensionProps;
         std::vector< NativeLayerWrapper >    LayerWrappers;
-        THandle< VkInstance >                hInstance;
         std::unique_ptr< IAllocator >        pAllocator;
         std::unique_ptr< ILogger >           pLogger;
+        std::unique_ptr< GraphicsDevice >    PrimaryNode;
+        std::unique_ptr< GraphicsDevice >    SecondaryNode;
+        THandle< VkInstance >                hInstance;
 
         /* Initializes and returns GraphicsManager instance. */
         friend GraphicsManager* GetGraphicsManager( );
@@ -141,6 +134,7 @@ namespace apemodevk {
     /* Returns GraphicsManager instance */
     GraphicsManager* GetGraphicsManager( );
 
-    /* Returns allocation callbacks of the GraphicsManager. */
+    /* Returns allocation callbacks of the GraphicsManager.
+     * @see GraphicsManager::GetAllocationCallbacks() */
     const VkAllocationCallbacks* GetAllocationCallbacks( );
 }

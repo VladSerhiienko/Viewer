@@ -43,9 +43,9 @@ bool apemodevk::GraphicsManager::NativeLayerWrapper::IsValidDeviceLayer( ) const
     return true;
 }
 
-bool apemodevk::GraphicsDevice::ScanDeviceQueues( VkQueueFamilyPropertiesVector& QueueProps,
-                                                  VkDeviceQueueCreateInfoVector& QueueReqs,
-                                                  FloatVector&                   QueuePriorities ) {
+bool apemodevk::GraphicsDevice::ScanDeviceQueues( std::vector< VkQueueFamilyProperties >& QueueProps,
+                                                  std::vector< VkDeviceQueueCreateInfo >& QueueReqs,
+                                                  std::vector< float >&                   QueuePriorities ) {
     uint32_t QueuesFound = 0;
     vkGetPhysicalDeviceQueueFamilyProperties( pPhysicalDevice, &QueuesFound, NULL );
 
@@ -66,10 +66,10 @@ bool apemodevk::GraphicsDevice::ScanDeviceQueues( VkQueueFamilyPropertiesVector&
         QueuePriorities.resize( TotalQueuePrioritiesCount );
         std::for_each( QueueProps.begin( ), QueueProps.end( ), [&]( VkQueueFamilyProperties& QueueProp ) {
             auto& QueueReq             = apemodevk::PushBackAndGet( QueueReqs );
-            QueueReq->pNext            = NULL;
-            QueueReq->queueFamilyIndex = static_cast< uint32_t >( std::distance( QueueProps.data( ), &QueueProp ) );
-            QueueReq->queueCount       = QueueProp.queueCount;
-            QueueReq->pQueuePriorities = QueuePriorities.data( ) + QueuePrioritiesAssigned;
+            QueueReq.pNext            = NULL;
+            QueueReq.queueFamilyIndex = static_cast< uint32_t >( std::distance( QueueProps.data( ), &QueueProp ) );
+            QueueReq.queueCount       = QueueProp.queueCount;
+            QueueReq.pQueuePriorities = QueuePriorities.data( ) + QueuePrioritiesAssigned;
 
             QueuePrioritiesAssigned += QueueProp.queueCount;
         } );
@@ -201,9 +201,9 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( VkPhysicalDevice InAdapter
         platform::DebugTrace( platform::LogLevel::Info, "Device Name: %s", AdapterProps.deviceName );
         platform::DebugTrace( platform::LogLevel::Info, "Device Type: %u", AdapterProps.deviceType );
 
-        VkQueueFamilyPropertiesVector QueueProps;
-        VkDeviceQueueCreateInfoVector QueueReqs;
-        FloatVector                   QueuePriorities;
+        std::vector< VkQueueFamilyProperties > QueueProps;
+        std::vector< VkDeviceQueueCreateInfo > QueueReqs;
+        std::vector< float >                   QueuePriorities;
 
         if ( ScanDeviceQueues( QueueProps, QueueReqs, QueuePriorities ) && ScanFormatProperties( ) && ScanDeviceLayerProperties( flags ) ) {
             std::vector< const char* > DeviceExtNames;

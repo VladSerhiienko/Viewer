@@ -9,6 +9,7 @@ namespace apemodevk
         void operator( )( VkInstance &Handle ) {
             if ( Handle == nullptr )
                 return;
+
             vkDestroyInstance( Handle, GetAllocationCallbacks( ) );
             Handle = VK_NULL_HANDLE;
         }
@@ -19,6 +20,7 @@ namespace apemodevk
         void operator( )( VkDevice &Handle ) {
             if ( Handle == nullptr )
                 return;
+
             vkDestroyDevice( Handle, GetAllocationCallbacks( ) );
             Handle = VK_NULL_HANDLE;
         }
@@ -44,6 +46,7 @@ namespace apemodevk
         void operator( )( VkSurfaceKHR &Handle ) {
             if ( Handle == nullptr )
                 return;
+
             apemode_assert( hInstance != nullptr, "Instance is required." );
             vkDestroySurfaceKHR( hInstance, Handle, GetAllocationCallbacks( ) );
             Handle = VK_NULL_HANDLE;
@@ -60,6 +63,7 @@ namespace apemodevk
         void operator( )( VkSwapchainKHR &Handle ) {
             if ( Handle == nullptr )
                 return;
+
             apemode_assert( hLogicalDevice != nullptr, "Device is required." );
             vkDestroySwapchainKHR( hLogicalDevice, Handle, GetAllocationCallbacks( ) );
             Handle = VK_NULL_HANDLE;
@@ -76,6 +80,7 @@ namespace apemodevk
         void operator( )( VkCommandPool &Handle ) {
             if ( Handle == nullptr )
                 return;
+
             apemode_assert( hLogicalDevice != nullptr, "Device is required." );
             vkDestroyCommandPool( hLogicalDevice, Handle, GetAllocationCallbacks( ) );
             Handle = VK_NULL_HANDLE;
@@ -93,6 +98,7 @@ namespace apemodevk
         void operator( )( VkCommandBuffer &Handle ) {
             if ( Handle == nullptr )
                 return;
+
             apemode_assert( hLogicalDevice != nullptr, "Device is required." );
             vkFreeCommandBuffers( hLogicalDevice, CmdPool, 1, &Handle );
             Handle = VK_NULL_HANDLE;
@@ -109,6 +115,7 @@ namespace apemodevk
         void operator( )( VkFence &Handle ) {
             if ( Handle == nullptr )
                 return;
+
             apemode_assert( hLogicalDevice != nullptr, "Device is required." );
             vkDestroyFence( hLogicalDevice, Handle, GetAllocationCallbacks( ) );
             Handle = VK_NULL_HANDLE;
@@ -125,6 +132,7 @@ namespace apemodevk
         void operator( )( VkEvent &Handle ) {
             if ( Handle == nullptr )
                 return;
+                
             apemode_assert( hLogicalDevice != nullptr, "Device is required." );
             vkDestroyEvent( hLogicalDevice, Handle, GetAllocationCallbacks( ) );
             Handle = VK_NULL_HANDLE;
@@ -349,12 +357,12 @@ namespace apemodevk
         THandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ) {
         }
 
-        void operator()(VkDescriptorPool & Handle)
-        {
-            if (Handle == nullptr) return;
+        void operator( )( VkDescriptorPool &Handle ) {
+            if ( Handle == nullptr )
+                return;
 
-            apemode_assert(hLogicalDevice != nullptr, "Device is required.");
-            vkDestroyDescriptorPool(hLogicalDevice, Handle, GetAllocationCallbacks( ));
+            apemode_assert( hLogicalDevice != nullptr, "Device is required." );
+            vkDestroyDescriptorPool( hLogicalDevice, Handle, GetAllocationCallbacks( ) );
             Handle = VK_NULL_HANDLE;
         }
     };
@@ -500,12 +508,10 @@ namespace apemodevk
             if ( InLogicalDeviceHandle != nullptr ) {
                 Deleter.hLogicalDevice = InLogicalDeviceHandle;
                 if ( VK_SUCCESS == CheckedCall( vkCreateSwapchainKHR( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) ) ) {
-                    /**
-                     * If we just re-created an existing swapchain, we should destroy the old
-                     * swapchain at this point.
-                     *
-                     * @note Destroying the swapchain also cleans up all its associated
-                     *       presentable images once the platform is done with them.
+                    
+                    /* If we just re-created an existing swapchain, we should destroy the old swapchain at this point.
+                     * @note Destroying the swapchain also cleans up all its associated presentable images
+                     * once the platform is done with them.
                      **/
 
                     PrevDeleter( PrevHandle );

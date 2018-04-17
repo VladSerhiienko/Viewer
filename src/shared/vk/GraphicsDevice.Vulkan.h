@@ -17,9 +17,9 @@ namespace apemodevk {
         friend GraphicsManager;
 
         typedef std::vector< float >                           FloatVector;
-        typedef TInfoStruct< VkLayerProperties >::Vector       VkLayerPropertiesVector;
-        typedef TInfoStruct< VkQueueFamilyProperties >::Vector VkQueueFamilyPropertiesVector;
-        typedef TInfoStruct< VkDeviceQueueCreateInfo >::Vector VkDeviceQueueCreateInfoVector;
+        // typedef TInfoStruct< VkLayerProperties >::Vector       VkLayerPropertiesVector;
+        // typedef TInfoStruct< VkQueueFamilyProperties >::Vector VkQueueFamilyPropertiesVector;
+        // typedef TInfoStruct< VkDeviceQueueCreateInfo >::Vector VkDeviceQueueCreateInfoVector;
         typedef GraphicsManager::NativeLayerWrapper            NativeLayerWrapper;
         typedef VkFormatProperties                             VkFormatPropertiesArray[ VK_FORMAT_RANGE_SIZE ];
 
@@ -39,9 +39,9 @@ namespace apemodevk {
         CommandBufferPool *      GetCommandBufferPool( );
         const CommandBufferPool *GetCommandBufferPool( ) const;
 
-        bool ScanDeviceQueues( VkQueueFamilyPropertiesVector &QueueProps,
-                               VkDeviceQueueCreateInfoVector &QueueReqs,
-                               FloatVector &                  QueuePriorities );
+        bool ScanDeviceQueues( std::vector< VkQueueFamilyProperties > &QueueProps,
+                               std::vector< VkDeviceQueueCreateInfo > &QueueReqs,
+                               std::vector< float > &                  QueuePriorities );
 
         bool ScanDeviceLayerProperties( uint32_t flags );
         bool ScanFormatProperties( );

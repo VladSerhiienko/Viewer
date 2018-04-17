@@ -205,7 +205,7 @@ bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t                
     applicationInfo.engineVersion      = 1;
 
     // clang-format off
-    auto DebugFlags
+    auto debugFlags
         = VK_DEBUG_REPORT_ERROR_BIT_EXT
         | VK_DEBUG_REPORT_DEBUG_BIT_EXT
         | VK_DEBUG_REPORT_WARNING_BIT_EXT
@@ -217,7 +217,7 @@ bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t                
     debugReportCallbackCreateInfo.pfnCallback = DebugCallback;
     debugReportCallbackCreateInfo.pUserData   = this;
     debugReportCallbackCreateInfo.sType       = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
-    debugReportCallbackCreateInfo.flags       = DebugFlags;
+    debugReportCallbackCreateInfo.flags       = debugFlags;
 
     VkInstanceCreateInfo instanceCreateInfo;
     InitializeStruct( instanceCreateInfo );
@@ -252,27 +252,107 @@ bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t                
     return true;
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL apemodevk::GraphicsManager::BreakCallback( VkFlags                    msgFlags,
-                                                                          VkDebugReportObjectTypeEXT objType,
-                                                                          uint64_t                   srcObject,
-                                                                          size_t                     location,
-                                                                          int32_t                    msgCode,
-                                                                          const char *               pLayerPrefix,
-                                                                          const char *               pMsg,
-                                                                          void *                     pUserData ) {
-    if ( msgFlags & VK_DEBUG_REPORT_ERROR_BIT_EXT ) {
-        platform::DebugBreak( );
+const char * ToString( VkDebugReportObjectTypeEXT debugReportObjectTypeEXT )
+{
+    switch ( debugReportObjectTypeEXT ) {
+        case VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_INSTANCE_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_PHYSICAL_DEVICE_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_QUEUE_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_SEMAPHORE_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_BUFFER_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_FENCE_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_DEVICE_MEMORY_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_EVENT_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_QUERY_POOL_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_BUFFER_VIEW_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_IMAGE_VIEW_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_SHADER_MODULE_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_CACHE_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_LAYOUT_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_RENDER_PASS_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_PIPELINE_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_LAYOUT_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_SAMPLER_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_POOL_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_SET_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_FRAMEBUFFER_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_COMMAND_POOL_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_SURFACE_KHR_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_SWAPCHAIN_KHR_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_DEBUG_REPORT_CALLBACK_EXT_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_KHR_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_DISPLAY_MODE_KHR_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_OBJECT_TABLE_NVX_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_INDIRECT_COMMANDS_LAYOUT_NVX_EXT";
+        case VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_KHR_EXT:
+            return "VK_DEBUG_REPORT_OBJECT_TYPE_DESCRIPTOR_UPDATE_TEMPLATE_KHR_EXT";
+        default:
+            return "?";
+    }
+}
+
+std::string ToStringFlags( VkFlags flags )
+{
+    std::stringstream ss;
+
+    ss << "[";
+    if ( ( flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT ) == VK_DEBUG_REPORT_INFORMATION_BIT_EXT ) {
+        ss << "info|";
+    }
+    if ( ( flags & VK_DEBUG_REPORT_WARNING_BIT_EXT ) == VK_DEBUG_REPORT_WARNING_BIT_EXT ) {
+        ss << "warn|";
+    }
+    if ( ( flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT ) == VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT ) {
+        ss << "perf|";
+    }
+    if ( ( flags & VK_DEBUG_REPORT_ERROR_BIT_EXT ) == VK_DEBUG_REPORT_ERROR_BIT_EXT ) {
+        ss << "err|";
+    }
+    if ( ( flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT ) == VK_DEBUG_REPORT_DEBUG_BIT_EXT ) {
+        ss << "debug|";
     }
 
-    /*
-    * false indicates that layer should not bail-out of an
-    * API call that had validation failures. This may mean that the
-    * app dies inside the driver due to invalid parameter(s).
-    * That's what would happen without validation layers, so we'll
-    * keep that behavior here.
-    */
+    ss.seekp( ss.tellp( ) - std::stringstream::pos_type( 1 ), ss.beg );
+    ss << "]";
 
-    return false;
+    return ss.str( );
 }
 
 VKAPI_ATTR VkBool32 VKAPI_CALL apemodevk::GraphicsManager::DebugCallback( VkFlags                    msgFlags,
@@ -283,6 +363,16 @@ VKAPI_ATTR VkBool32 VKAPI_CALL apemodevk::GraphicsManager::DebugCallback( VkFlag
                                                                           const char *               pLayerPrefix,
                                                                           const char *               pMsg,
                                                                           void *                     pUserData ) {
+    platform::DebugTrace( platform::LogLevel::Warn,
+                          "[vk-debug-cb] [%s] %s msg: %s, tobj: %s, obj: %llu, location: %zu, msgcode: %i",
+                          pLayerPrefix,
+                          ToStringFlags( msgFlags ).c_str(),
+                          pMsg,
+                          ToString( objType ),
+                          srcObject,
+                          location,
+                          msgCode );
+
     if ( msgFlags & VK_DEBUG_REPORT_ERROR_BIT_EXT ) {
 
         if ( nullptr == strstr( pMsg, "Nvda.Graphics.Interception" ) )

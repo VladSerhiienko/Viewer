@@ -8,7 +8,6 @@ namespace apemodevk
 {
     class CommandBuffer;
     class PipelineLayout;
-    class DescriptorSet;
     class DescriptorPool;
 
     class DescriptorSetLayout;
@@ -39,10 +38,12 @@ namespace apemodevk
             hPool = InDescPool;
             memcpy( hLayouts, InLayouts, TCount * sizeof( VkDescriptorSetLayout ) );
 
-            TInfoStruct< VkDescriptorSetAllocateInfo > AllocInfo;
-            AllocInfo->pSetLayouts        = hLayouts;
-            AllocInfo->descriptorPool     = hPool;
-            AllocInfo->descriptorSetCount = TCount;
+            VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
+            InitializeStruct( descriptorSetAllocateInfo );
+
+            descriptorSetAllocateInfo.pSetLayouts        = hLayouts;
+            descriptorSetAllocateInfo.descriptorPool     = hPool;
+            descriptorSetAllocateInfo.descriptorSetCount = TCount;
 
             //TODO: Only for debugging.
             if ( false == std::is_sorted( &hLayouts[ 0 ], &hLayouts[ TCount ] ) ) {
@@ -74,7 +75,7 @@ namespace apemodevk
             //TODO: Decrement descriptor set counter for the descriptor pool.
             //TODO: Checks
 
-            return VK_SUCCESS == CheckedCall( vkAllocateDescriptorSets( hNode, AllocInfo, hSets ) );
+            return VK_SUCCESS == CheckedCall( vkAllocateDescriptorSets( hNode, &descriptorSetAllocateInfo, hSets ) );
         }
 
         void BindTo( CommandBuffer& CmdBuffer, VkPipelineBindPoint InBindPoint, const uint32_t ( &DynamicOffsets )[ TCount ] ) {
@@ -82,65 +83,6 @@ namespace apemodevk
                 vkCmdBindDescriptorSets( CmdBuffer, InBindPoint, hLayouts[ i ], 0, 1, &hSets[ i ], 1, DynamicOffsets[ i ] );
             }
         }
-    };
-
-    class DescriptorSet : public NoCopyAssignPolicy {
-    public:
-        DescriptorSet( );
-        ~DescriptorSet( );
-
-        bool RecreateResourcesFor( apemodevk::GraphicsDevice& GraphicsNode,
-                                   apemodevk::DescriptorPool& DescPool,
-                                   VkDescriptorSetLayout    DescSetLayout );
-
-        void BindTo( apemodevk::CommandBuffer& CmdBuffer,
-                     VkPipelineBindPoint     PipelineBindPoint,
-                     uint32_t                DynamicOffsetCount,
-                     const uint32_t*         DynamicOffsets );
-
-    public:
-        operator VkDescriptorSet() const;
-
-    public:
-        apemodevk::GraphicsDevice const*                  pNode;
-        apemodevk::DescriptorPool const*                  pDescriptorPool;
-        apemodevk::THandle< VkDescriptorSet > hDescSet;
-        VkDescriptorSetLayout                             hDescSetLayout;
-    };
-
-    class DescriptorSetUpdater : public NoCopyAssignPolicy {
-        bool SetGraphicsNode (apemodevk::GraphicsDevice const & GraphicsNode);
-
-    public:
-        DescriptorSetUpdater ();
-
-        /** Resets graphics node (member pointer), reserves memory. */
-        void Reset( uint32_t MaxWrites, uint32_t MaxCopies );
-
-        /** DescSet must be initialized. */
-        bool WriteUniformBuffer( apemodevk::DescriptorSet const& DescSet,
-                                 VkBuffer                      Buffer,
-                                 uint32_t                      Offset,
-                                 uint32_t                      TotalSize,
-                                 uint32_t                      Binding,
-                                 uint32_t                      Count );
-
-        /** DescSet must be initialized. */
-        bool WriteCombinedImgSampler( apemodevk::DescriptorSet const& DescSet,
-                                      VkImageView                   ImgView,
-                                      VkImageLayout                 ImgLayout,
-                                      VkSampler                     Sampler,
-                                      uint32_t                      Binding,
-                                      uint32_t                      Count );
-
-        void Flush( );
-
-    public:
-        apemodevk::GraphicsDevice const*      pNode;
-        std::vector< VkDescriptorBufferInfo > BufferInfos;
-        std::vector< VkDescriptorImageInfo >  ImgInfos;
-        std::vector< VkWriteDescriptorSet >   Writes;
-        std::vector< VkCopyDescriptorSet >    Copies;
     };
 
     class DescriptorPool : public NoCopyAssignPolicy {
@@ -173,39 +115,9 @@ namespace apemodevk
         apemodevk::GraphicsDevice const *                pNode;
         apemodevk::THandle<VkDescriptorPool> hDescPool;
 
-        friend DescriptorSet;
-
         /** Helps to track descriptor suballocations. */
         VkDescriptorPoolSize DescPoolCounters[ VK_DESCRIPTOR_TYPE_RANGE_SIZE ];
         uint32_t             DescSetCounter;
-    };
-
-    struct DescriptorSetLayoutBinding {
-        TInfoStruct< VkDescriptorSetLayoutBinding > Binding;
-
-        void Clear( ) {
-            Binding.InitializeStruct( );
-        }
-
-        void InitAsUniformBuffer( uint32_t Register, uint32_t Count, VkShaderStageFlagBits StageFlags, uint32_t Set = 0 ) {
-            Binding->stageFlags = static_cast< VkShaderStageFlagBits >( StageFlags );
-        }
-
-        void InitAsUniformBufferDynamic( uint32_t Register, uint32_t Count, VkShaderStageFlagBits StageFlags, uint32_t Set = 0 );
-
-        void InitAsSampler( uint32_t         Register,
-                            uint32_t         Count,
-                            VkShaderStageFlagBits StageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-                            uint32_t         Set        = 0 );
-
-        void InitAsCombinedImageSampler( uint32_t              Register,
-                                         uint32_t              Count,
-                                         VkSampler*            pImmutableSamplers,
-                                         VkShaderStageFlagBits StageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-                                         uint32_t              Set        = 0 );
-
-    public:
-        operator VkDescriptorSetLayoutBinding( ) const;
     };
 
     struct DescriptorSetBase {
@@ -255,8 +167,5 @@ namespace apemodevk
 
         bool            Recreate( VkDevice pInLogicalDevice, VkDescriptorPool pInDescPool, VkDescriptorSetLayout pInLayout );
         VkDescriptorSet GetDescSet( const DescriptorSetBase * pDescriptorSetBase );
-
-
-
     };
 }
