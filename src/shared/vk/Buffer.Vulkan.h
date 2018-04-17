@@ -1,3 +1,4 @@
+#pragma once
 
 #include <GraphicsDevice.Vulkan.h>
 #include <NativeHandles.Vulkan.h>
@@ -13,10 +14,10 @@ namespace apemodevk {
     };
 
     template <>
-    struct THandleDeleter< BufferComposite > : public THandleHandleTypeResolver< BufferComposite > {
+    struct THandleDeleter< BufferComposite > {
 
         void operator( )( BufferComposite &bufferComposite ) {
-            if ( bufferComposite.pBuffer )
+            if ( nullptr == bufferComposite.pBuffer )
                 return;
 
             assert( bufferComposite.pAllocator );
@@ -32,9 +33,13 @@ namespace apemodevk {
         }
     };
 
-
     template <>
-    struct THandle< BufferComposite > : public THandleBase< BufferComposite > {
+    struct THandle< BufferComposite > : public NoCopyAssignPolicy {
+        typedef THandleDeleter< BufferComposite > TDeleter;
+        typedef THandle< BufferComposite >        SelfType;
+
+        BufferComposite Handle;
+        TDeleter        Deleter;
 
         bool Recreate( VmaAllocator                    pAllocator,
                        const VkBufferCreateInfo  &     createInfo,
@@ -42,6 +47,7 @@ namespace apemodevk {
 
             Deleter( Handle );
             Handle.pAllocator = pAllocator;
+
             return VK_SUCCESS == CheckedCall( vmaCreateBuffer( pAllocator,
                                                                &createInfo,
                                                                &allocInfo,
@@ -50,31 +56,36 @@ namespace apemodevk {
                                                                &Handle.allocInfo ) );
         }
 
-        VkMemoryRequirements GetMemoryRequirements( ) {
-            apemode_assert( IsNotNull( ), "Null." );
+        inline THandle( ) = default;
+        inline THandle( THandle &&Other ) { Handle = Other.Release( ); }
+        inline ~THandle( ) { Destroy( ); }
 
-            VkMemoryRequirements memoryRequirements;
-            vkGetBufferMemoryRequirements( Handle.pAllocator->m_hDevice,
-                                           Handle.pAllocator->GetAllocationCallbacks( ),
-                                           &memoryRequirements );
+        inline bool IsNull( ) const { return nullptr == Handle.pBuffer; }
+        inline bool IsNotNull( ) const { return nullptr != Handle.pBuffer; }
+        inline void Destroy( ) { Deleter( Handle ); }
 
-            return memoryRequirements;
+        inline operator VkBuffer ( ) const { return Handle.pBuffer; }
+        inline operator bool( ) const { return nullptr != Handle.pBuffer; }
+        inline VkBuffer *operator( )( ) { return &Handle.pBuffer; }
+        inline operator VkBuffer *( ) { return &Handle.pBuffer; }
+        inline operator VkBuffer const *( ) const { return &Handle.pBuffer; }
+
+        SelfType & operator=( SelfType &&Other ) {
+            Handle = Other.Release( );
+            return *this;
         }
 
-        VkMemoryAllocateInfo GetMemoryAllocateInfo( VkMemoryPropertyFlags memoryPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ) {
-            VkMemoryRequirements memoryRequirements = GetMemoryRequirements( );
-
-            VkMemoryAllocateInfo memoryAllocInfo;
-            apemodevk::ZeroMemory( memoryAllocInfo );
-            memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-            memoryAllocInfo.allocationSize = memoryRequirements.size;
-            memoryAllocInfo.memoryTypeIndex = ResolveMemoryType( Handle.pAllocator->m_MemProps, memoryPropertyFlags, memoryRequirements.memoryTypeBits );
-
-            return memoryAllocInfo;
+        BufferComposite Release( ) {
+            BufferComposite ReleasedHandle = Handle;
+            Handle.pAllocation           = nullptr;
+            Handle.pAllocator            = nullptr;
+            Handle.pBuffer               = nullptr;
+            return ReleasedHandle;
         }
 
-        bool BindMemory( VkDeviceMemory hMemory, uint32_t Offset = 0 ) {
-            return VK_SUCCESS == CheckedCall( vkBindBufferMemory( Handle.pAllocator->m_hDevice, *this, hMemory, Offset ) );
+        void Swap( SelfType &Other ) {
+            std::swap( Handle, Other.Handle );
+            std::swap( Deleter, Other.Deleter );
         }
     };
 

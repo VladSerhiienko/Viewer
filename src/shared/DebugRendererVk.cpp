@@ -1,7 +1,6 @@
 #include "DebugRendererVk.h"
 
 #include <TInfoStruct.Vulkan.h>
-#include <shaderc/shaderc.hpp>
 
 namespace apemode {
     using namespace apemodevk;
@@ -15,8 +14,8 @@ inline void OutputDebugStringA( const char* pDebugStringA ) {
     // SDL_LogInfo( SDL_LOG_CATEGORY_RENDER, pDebugStringA );
 }
 
-bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* initParams ) {
-    if ( nullptr == initParams )
+bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams ) {
+    if ( nullptr == pInitParams )
         return false;
 
     const char* vertexShader =
@@ -44,86 +43,46 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* initParams )
         "    outColor = inColor;\n"
         "}\n";
 
-    shaderc::Compiler compiler;
+    apemodevk::GraphicsDevice* pNode = pInitParams->pNode;
 
-    shaderc::CompileOptions options;
-    options.SetSourceLanguage( shaderc_source_language_glsl );
-    options.SetOptimizationLevel( shaderc_optimization_level_size );
-    options.SetTargetEnvironment( shaderc_target_env_vulkan, 0 );
+    auto compiledVertexShader = pInitParams->pShaderCompiler->Compile(
+        "embedded/debug.vert", vertexShader, nullptr, apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader );
 
-    shaderc::PreprocessedSourceCompilationResult cube_preprocessed[] = {
-        compiler.PreprocessGlsl( vertexShader, shaderc_glsl_vertex_shader, "cube.vert", options ),
-        compiler.PreprocessGlsl( fragmentShader, shaderc_glsl_fragment_shader, "cube.frag", options )};
-
-    if ( shaderc_compilation_status_success != cube_preprocessed[ 0 ].GetCompilationStatus( ) ||
-        shaderc_compilation_status_success != cube_preprocessed[ 1 ].GetCompilationStatus( ) ) {
-        OutputDebugStringA( cube_preprocessed[ 0 ].GetErrorMessage( ).c_str( ) );
-        OutputDebugStringA( cube_preprocessed[ 1 ].GetErrorMessage( ).c_str( ) );
-        DebugBreak( );
+    if ( nullptr == compiledVertexShader ) {
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
-#if 0
+    auto compiledFragmentShader = pInitParams->pShaderCompiler->Compile(
+        "embedded/debug.frag", fragmentShader, nullptr, apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader );
 
-    shaderc::AssemblyCompilationResult cube_compiled_assembly[] = {
-        compiler.CompileGlslToSpvAssembly(cube_preprocessed[0].begin(), shaderc_glsl_vertex_shader, "nuklear.vert.spv", options),
-        compiler.CompileGlslToSpvAssembly(cube_preprocessed[1].begin(), shaderc_glsl_fragment_shader, "nuklear.frag.spv", options) };
-
-    OutputDebugStringA("-------------------------------------------\n");
-    OutputDebugStringA(cube_compiled_assembly[0].begin());
-    OutputDebugStringA("-------------------------------------------\n");
-    OutputDebugStringA(cube_compiled_assembly[1].begin());
-    OutputDebugStringA("-------------------------------------------\n");
-
-    if (shaderc_compilation_status_success != cube_compiled_assembly[0].GetCompilationStatus() ||
-        shaderc_compilation_status_success != cube_compiled_assembly[1].GetCompilationStatus()) {
-
-        OutputDebugStringA(cube_compiled_assembly[0].GetErrorMessage().c_str());
-        OutputDebugStringA(cube_compiled_assembly[1].GetErrorMessage().c_str());
-
-        DebugBreak();
-        return;
-    }
-
-#endif
-
-    shaderc::SpvCompilationResult cube_compiled[] = {
-        compiler.CompileGlslToSpv( cube_preprocessed[ 0 ].begin( ), shaderc_glsl_default_vertex_shader, "nuklear.vert.spv", options ),
-        compiler.CompileGlslToSpv( cube_preprocessed[ 1 ].begin( ), shaderc_glsl_default_fragment_shader, "nuklear.frag.spv", options )};
-
-    if ( shaderc_compilation_status_success != cube_compiled[ 0 ].GetCompilationStatus( ) ||
-         shaderc_compilation_status_success != cube_compiled[ 1 ].GetCompilationStatus( ) ) {
-        DebugBreak( );
+    if ( nullptr == compiledFragmentShader ) {
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
     VkShaderModuleCreateInfo vertexShaderCreateInfo;
     InitializeStruct( vertexShaderCreateInfo );
-    vertexShaderCreateInfo.pCode    = (const uint32_t*)       cube_compiled[ 0 ].begin( );
-    vertexShaderCreateInfo.codeSize = (size_t) std::distance( cube_compiled[ 0 ].begin( ), cube_compiled[ 0 ].end( ) ) * sizeof( uint32_t );
+    vertexShaderCreateInfo.pCode    = compiledVertexShader->GetDwordPtr( );
+    vertexShaderCreateInfo.codeSize = compiledVertexShader->GetByteCount( );
 
     VkShaderModuleCreateInfo fragmentShaderCreateInfo;
     InitializeStruct( fragmentShaderCreateInfo );
-    fragmentShaderCreateInfo.pCode    = (const uint32_t*)       cube_compiled[ 1 ].begin( );
-    fragmentShaderCreateInfo.codeSize = (size_t) std::distance( cube_compiled[ 1 ].begin( ), cube_compiled[ 1 ].end( ) ) * sizeof( uint32_t );
+    fragmentShaderCreateInfo.pCode    = compiledFragmentShader->GetDwordPtr( );
+    fragmentShaderCreateInfo.codeSize = compiledFragmentShader->GetByteCount( );
 
     THandle< VkShaderModule > hVertexShaderModule;
     THandle< VkShaderModule > hFragmentShaderModule;
-    if ( false == hVertexShaderModule.Recreate( initParams->pDevice, vertexShaderCreateInfo ) ||
-         false == hFragmentShaderModule.Recreate( initParams->pDevice, fragmentShaderCreateInfo ) ) {
+    if ( false == hVertexShaderModule.Recreate( pNode->hLogicalDevice, vertexShaderCreateInfo ) ||
+         false == hFragmentShaderModule.Recreate( pNode->hLogicalDevice, fragmentShaderCreateInfo ) ) {
         DebugBreak( );
         return false;
     }
 
-
     VkDescriptorSetLayoutBinding bindings[ 1 ];
     InitializeStruct( bindings );
 
-#if 1
     bindings[ 0 ].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-#else
-    bindings[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-#endif
     bindings[ 0 ].descriptorCount = 1;
     bindings[ 0 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT;
 
@@ -133,7 +92,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* initParams )
     descSetLayoutCreateInfo.bindingCount = 1;
     descSetLayoutCreateInfo.pBindings    = bindings;
 
-    if ( false == hDescSetLayout.Recreate( initParams->pDevice, descSetLayoutCreateInfo ) ) {
+    if ( false == hDescSetLayout.Recreate( pNode->hLogicalDevice, descSetLayoutCreateInfo ) ) {
         DebugBreak( );
         return false;
     }
@@ -143,7 +102,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* initParams )
         descriptorSetLayout = hDescSetLayout;
     }
 
-    if ( false == DescSets.RecreateResourcesFor( initParams->pDevice, initParams->pDescPool, descriptorSetLayouts ) ) {
+    if ( false == DescSets.RecreateResourcesFor( pNode->hLogicalDevice, pInitParams->pDescPool, descriptorSetLayouts ) ) {
         DebugBreak( );
         return false;
     }
@@ -153,7 +112,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* initParams )
     pipelineLayoutCreateInfo.setLayoutCount = GetArraySizeU( descriptorSetLayouts );
     pipelineLayoutCreateInfo.pSetLayouts    = descriptorSetLayouts;
 
-    if ( false == hPipelineLayout.Recreate( initParams->pDevice, pipelineLayoutCreateInfo ) ) {
+    if ( false == hPipelineLayout.Recreate( pNode->hLogicalDevice, pipelineLayoutCreateInfo ) ) {
         DebugBreak( );
         return false;
     }
@@ -192,7 +151,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* initParams )
     //
 
     graphicsPipelineCreateInfo.layout     = hPipelineLayout;
-    graphicsPipelineCreateInfo.renderPass = initParams->pRenderPass;
+    graphicsPipelineCreateInfo.renderPass = pInitParams->pRenderPass;
 
     //
 
@@ -285,20 +244,20 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* initParams )
 
     //
 
-    if ( false == hPipelineCache.Recreate( initParams->pDevice, pipelineCacheCreateInfo ) ) {
+    if ( false == hPipelineCache.Recreate( pNode->hLogicalDevice, pipelineCacheCreateInfo ) ) {
         DebugBreak( );
         return false;
     }
 
-    if ( false == hPipeline.Recreate( initParams->pDevice, hPipelineCache, graphicsPipelineCreateInfo ) ) {
+    if ( false == hPipeline.Recreate( pNode->hLogicalDevice, hPipelineCache, graphicsPipelineCreateInfo ) ) {
         DebugBreak( );
         return false;
     }
 
-    if ( hVertexBuffer.IsNull( ) ) {
+    if (  nullptr == hVertexBuffer.Handle.pBuffer ) {
 
         // clang-format off
-        const float g_vertex_buffer_data[] = {
+        const float vertexBufferData[] = {
             // -X side
             -1.0f,-1.0f,-1.0f,  
             -1.0f,-1.0f, 1.0f,
@@ -349,111 +308,46 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* initParams )
         };
         // clang-format on
 
-        const uint32_t vertexBufferSize = sizeof( g_vertex_buffer_data );
+        const uint32_t vertexBufferSize = sizeof( vertexBufferData );
 
         VkBufferCreateInfo bufferCreateInfo;
         InitializeStruct( bufferCreateInfo );
         bufferCreateInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
         bufferCreateInfo.size  = vertexBufferSize;
 
-        if ( false == hVertexBuffer.Recreate( initParams->pDevice, initParams->pPhysicalDevice, bufferCreateInfo ) ) {
+        VmaAllocationCreateInfo allocationCreateInfo = {};
+        allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+        allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+        if ( false == hVertexBuffer.Recreate( pNode->Allocator, bufferCreateInfo, allocationCreateInfo ) ) {
             DebugBreak( );
             return false;
         }
 
-        auto memoryAllocateInfo = hVertexBuffer.GetMemoryAllocateInfo( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT );
-        if ( false == hVertexBufferMemory.Recreate( initParams->pDevice, memoryAllocateInfo ) ) {
-            DebugBreak( );
-            return false;
-        }
-
-        if ( false == hVertexBuffer.BindMemory( hVertexBufferMemory, 0 ) ) {
-            DebugBreak( );
-            return false;
-        }
-
-        if ( auto mappedData = hVertexBufferMemory.Map( 0, vertexBufferSize, 0 ) ) {
-            memcpy( mappedData, g_vertex_buffer_data, vertexBufferSize );
-
-            VkMappedMemoryRange range;
-            InitializeStruct( range );
-            range.memory = hVertexBufferMemory;
-            range.size   = VK_WHOLE_SIZE;
-
-            if ( VK_SUCCESS != CheckedCall( vkFlushMappedMemoryRanges( initParams->pDevice, 1, &range ) ) ) {
-                DebugBreak( );
-                return false;
-            }
-
-            hVertexBufferMemory.Unmap();
+        if ( auto mappedData = hVertexBuffer.Handle.allocInfo.pMappedData ) {
+            memcpy( mappedData, vertexBufferData, vertexBufferSize );
         }
     }
-
-#if 1
 
     VkPhysicalDeviceProperties adapterProps;
-    vkGetPhysicalDeviceProperties( initParams->pPhysicalDevice, &adapterProps );
+    vkGetPhysicalDeviceProperties( pNode->pPhysicalDevice, &adapterProps );
 
-    for (uint32_t i = 0; i < initParams->FrameCount; ++i) {
-        BufferPools[ i ].Recreate( initParams->pDevice, initParams->pPhysicalDevice, &adapterProps.limits, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
-        DescSetPools[ i ].Recreate( initParams->pDevice, initParams->pDescPool, hDescSetLayout );
-    }
-#else
-    for ( uint32_t i = 0; i < initParams->FrameCount; ++i ) {
-        VkBufferCreateInfo bufferCreateInfo;
-        InitializeStruct( bufferCreateInfo );
-        bufferCreateInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-        bufferCreateInfo.size  = sizeof( FrameUniformBuffer );
-
-        if ( false == hUniformBuffers[ i ].Recreate( initParams->pDevice, initParams->pPhysicalDevice, bufferCreateInfo ) ) {
-            DebugBreak( );
-            return false;
-        }
-
-        auto memoryAllocateInfo = hUniformBuffers[ i ].GetMemoryAllocateInfo( VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT |
-                                                                              VK_MEMORY_PROPERTY_HOST_COHERENT_BIT );
-
-        if ( false == hUniformBufferMemory[ i ].Recreate( initParams->pDevice, memoryAllocateInfo ) ) {
-            DebugBreak( );
-            return false;
-        }
-
-        if ( false == hUniformBuffers[ i ].BindMemory( hUniformBufferMemory[ i ], 0 ) ) {
-            DebugBreak( );
-            return false;
-        }
+    for (uint32_t i = 0; i < pInitParams->FrameCount; ++i) {
+        BufferPools[ i ].Recreate( pNode->hLogicalDevice, pNode->pPhysicalDevice, &adapterProps.limits, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
+        DescSetPools[ i ].Recreate( pNode->hLogicalDevice, pInitParams->pDescPool, hDescSetLayout );
     }
 
-    for ( uint32_t i = 0; i < initParams->FrameCount; ++i ) {
-        VkDescriptorBufferInfo descriptorBufferInfo;
-        InitializeStruct( descriptorBufferInfo );
-        descriptorBufferInfo.buffer = hUniformBuffers[ i ];
-        descriptorBufferInfo.range  = sizeof( FrameUniformBuffer );
-
-        VkWriteDescriptorSet writeDescriptorSet;
-        InitializeStruct( writeDescriptorSet );
-        writeDescriptorSet.dstSet          = DescSets.hSets[ i ];
-        writeDescriptorSet.descriptorCount = 1;
-        writeDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-        writeDescriptorSet.pBufferInfo     = &descriptorBufferInfo;
-        vkUpdateDescriptorSets( initParams->pDevice, 1, &writeDescriptorSet, 0, nullptr );
-    }
-#endif
-
-    pDevice = initParams->pDevice;
     return true;
 }
 
-void apemode::DebugRendererVk::Reset( uint32_t FrameIndex ) {
-    BufferPools[ FrameIndex ].Reset( );
+void apemode::DebugRendererVk::Reset( uint32_t frameIndex ) {
+    BufferPools[ frameIndex ].Reset( );
 }
 
 bool apemode::DebugRendererVk::Render( RenderParametersVk* renderParams ) {
-    auto FrameIndex = ( renderParams->FrameIndex ) % kMaxFrameCount;
+    auto frameIndex = ( renderParams->FrameIndex ) % kMaxFrameCount;
 
-#if 1
-
-    auto suballocResult = BufferPools[ FrameIndex ].TSuballocate( *renderParams->pFrameData );
+    auto suballocResult = BufferPools[ frameIndex ].TSuballocate( *renderParams->pFrameData );
     assert( VK_NULL_HANDLE != suballocResult.descBufferInfo.buffer );
     suballocResult.descBufferInfo.range = sizeof(FrameUniformBuffer);
 
@@ -463,7 +357,7 @@ bool apemode::DebugRendererVk::Render( RenderParametersVk* renderParams ) {
     descSet.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     descSet.pBinding[ 0 ].BufferInfo      = suballocResult.descBufferInfo;
 
-    descriptorSet[ 0 ]  = DescSetPools[ FrameIndex ].GetDescSet( &descSet );
+    descriptorSet[ 0 ]  = DescSetPools[ frameIndex ].GetDescSet( &descSet );
 
     vkCmdBindPipeline( renderParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipeline );
     vkCmdBindDescriptorSets( renderParams->pCmdBuffer,
@@ -475,30 +369,7 @@ bool apemode::DebugRendererVk::Render( RenderParametersVk* renderParams ) {
                              1,
                              &suballocResult.dynamicOffset );
 
-#else
-    if ( auto mappedData = hUniformBufferMemory[ FrameIndex ].Map( 0, sizeof( FrameUniformBuffer ), 0 ) ) {
-        memcpy( mappedData, renderParams->pFrameData, sizeof( FrameUniformBuffer ) );
-
-        /**
-         * Note: if propertyFlags has the VK_MEMORY_PROPERTY_HOST_COHERENT_BIT bit set,
-         *       host cache management commands vkFlushMappedMemoryRanges and vkInvalidateMappedMemoryRanges
-         *       are not needed to make host writes visible to the device or device writes visible to the host,
-         *       respectively.
-         * See: https://vulkan.lunarg.com/doc/view/1.0.30.0/linux/vkspec.chunked/ch10s02.html
-         */
-
-        hUniformBufferMemory[ FrameIndex ].Unmap( );
-    } else {
-        DebugBreak( );
-        return false;
-    }
-
-    VkDescriptorSet descSets[ 1 ] = {DescSets.hSets[ FrameIndex ]};
-    vkCmdBindPipeline( renderParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipeline );
-    vkCmdBindDescriptorSets( renderParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipelineLayout, 0, 1, descSets, 0, NULL );
-#endif
-
-    VkBuffer     vertexBuffers[ 1 ] = {hVertexBuffer};
+    VkBuffer     vertexBuffers[ 1 ] = {hVertexBuffer.Handle.pBuffer};
     VkDeviceSize vertexOffsets[ 1 ] = {0};
     vkCmdBindVertexBuffers( renderParams->pCmdBuffer, 0, 1, vertexBuffers, vertexOffsets );
 
@@ -526,6 +397,6 @@ bool apemode::DebugRendererVk::Render( RenderParametersVk* renderParams ) {
     return true;
 }
 
-void apemode::DebugRendererVk::Flush( uint32_t FrameIndex ) {
-    BufferPools[ FrameIndex ].Flush( );
+void apemode::DebugRendererVk::Flush( uint32_t frameIndex ) {
+    BufferPools[ frameIndex ].Flush( );
 }

@@ -41,7 +41,7 @@ namespace apemodevk {
         inline operator TNativeHandle *( ) { return &Handle; }
         inline operator TNativeHandle const *( ) const { return &Handle; }
 
-        SelfType operator=( SelfType &&Other ) {
+        SelfType & operator=( SelfType &&Other ) {
             Handle = Other.Release( );
             return *this;
         }

@@ -186,6 +186,12 @@ apemodevk::GraphicsManager::NativeLayerWrapper &apemodevk::GraphicsManager::GetU
     return LayerWrappers.front( );
 }
 
+void apemodevk::GraphicsManager::Destroy( ) {
+    PrimaryNode   = nullptr;
+    SecondaryNode = nullptr;
+    hInstance.Destroy( );
+}
+
 bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t                      flags,
                                                         std::unique_ptr< IAllocator > pInAllocator,
                                                         std::unique_ptr< ILogger >    pInLogger ) {

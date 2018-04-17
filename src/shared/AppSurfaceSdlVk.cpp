@@ -147,6 +147,7 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
 }
 
 void apemode::AppSurfaceSdlVk::Finalize( ) {
+    apemodevk::GetGraphicsManager( )->Destroy( );
     AppSurfaceSdlBase::Finalize( );
 }
 

@@ -115,7 +115,9 @@ namespace apemodevk {
         /* Initializes and returns GraphicsManager instance. */
         friend GraphicsManager* GetGraphicsManager( );
 
-        bool                         RecreateGraphicsNodes( uint32_t flags, std::unique_ptr< IAllocator > pAlloc, std::unique_ptr< ILogger > pLogger );
+        bool RecreateGraphicsNodes( uint32_t flags, std::unique_ptr< IAllocator > pAlloc, std::unique_ptr< ILogger > pLogger );
+        void Destroy( );
+
         GraphicsDevice*              GetPrimaryGraphicsNode( );
         GraphicsDevice*              GetSecondaryGraphicsNode( );
         IAllocator*                  GetAllocator( );

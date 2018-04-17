@@ -180,9 +180,8 @@ bool ViewerApp::Initialize(  ) {
         }
 
         NuklearRendererSdlVk::InitParametersVk initParamsNk;
-        initParamsNk.pAlloc          = nullptr;
-        initParamsNk.pDevice         = *appSurface->pNode;
-        initParamsNk.pPhysicalDevice = *appSurface->pNode;
+        initParamsNk.pNode           = appSurface->pNode;
+        initParamsNk.pShaderCompiler = pShaderCompiler.get( );
         initParamsNk.pRenderPass     = hDbgRenderPass;
         initParamsNk.pDescPool       = DescPool;
         initParamsNk.pQueue          = acquiredQueue.pQueue;
@@ -194,9 +193,8 @@ bool ViewerApp::Initialize(  ) {
         queueFamilyPool->Release( acquiredQueue );
 
         DebugRendererVk::InitParametersVk initParamsDbg;
-        initParamsDbg.pAlloc          = nullptr;
-        initParamsDbg.pDevice         = *appSurface->pNode;
-        initParamsDbg.pPhysicalDevice = *appSurface->pNode;
+        initParamsDbg.pNode           = appSurface->pNode;
+        initParamsDbg.pShaderCompiler = pShaderCompiler.get( );
         initParamsDbg.pRenderPass     = hDbgRenderPass;
         initParamsDbg.pDescPool       = DescPool;
         initParamsDbg.FrameCount      = FrameCount;
