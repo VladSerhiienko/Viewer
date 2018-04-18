@@ -284,7 +284,7 @@ bool ViewerApp::Initialize(  ) {
         samplerCreateInfo.magFilter               = VK_FILTER_LINEAR;
         samplerCreateInfo.minFilter               = VK_FILTER_LINEAR;
         samplerCreateInfo.minLod                  = 0;
-        samplerCreateInfo.maxLod                  = (float) pLoadedDDS->imageCreateInfo.mipLevels;
+        samplerCreateInfo.maxLod                  = (float) pLoadedDDS->ImageCreateInfo.mipLevels;
         samplerCreateInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
         samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
         samplerCreateInfo.unnormalizedCoordinates = false;
@@ -295,7 +295,7 @@ bool ViewerApp::Initialize(  ) {
         pSkybox                = apemode::make_unique< apemodevk::Skybox >( );
         pSkybox->pSampler      = pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
         pSkybox->pImgView      = pLoadedDDS->hImgView;
-        pSkybox->Dimension     = pLoadedDDS->imageCreateInfo.extent.width;
+        pSkybox->Dimension     = pLoadedDDS->ImageCreateInfo.extent.width;
         pSkybox->eImgLayout    = pLoadedDDS->eImgLayout;
         pSkybox->Exposure      = 3;
         pSkybox->LevelOfDetail = 0;
@@ -335,23 +335,12 @@ bool apemode::ViewerApp::OnResized( ) {
             depthImgViewCreateInfo.subresourceRange.layerCount     = 1;
             depthImgViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
 
-            for ( uint32_t i = 0; i < FrameCount; ++i ) {
-                if ( false == hDepthImgs[ i ].Recreate( *appSurface->pNode, *appSurface->pNode, depthImgCreateInfo ) ) {
-                    DebugBreak( );
-                    return false;
-                }
-            }
+            VmaAllocationCreateInfo allocationCreateInfo = {};
+            allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+            allocationCreateInfo.flags = 0;
 
             for ( uint32_t i = 0; i < FrameCount; ++i ) {
-                auto memoryAllocInfo = hDepthImgs[ i ].GetMemoryAllocateInfo( VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
-                if ( false == hDepthImgMemory[ i ].Recreate( *appSurface->pNode, memoryAllocInfo ) ) {
-                    DebugBreak( );
-                    return false;
-                }
-            }
-
-            for ( uint32_t i = 0; i < FrameCount; ++i ) {
-                if ( false == hDepthImgs[ i ].BindMemory( hDepthImgMemory[ i ], 0 ) ) {
+                if ( false == hDepthImgs[ i ].Recreate( appSurface->pNode->hAllocator, depthImgCreateInfo, allocationCreateInfo ) ) {
                     DebugBreak( );
                     return false;
                 }

@@ -94,4 +94,39 @@ namespace apemodevk {
             return Suballocate( &dataStructure, sizeof( TDataStructure ) );
         }
     };
+
+    struct PoolComposite {
+        VmaPool      pPool      = VK_NULL_HANDLE;
+        VmaAllocator pAllocator = VK_NULL_HANDLE;
+    };
+
+    template <>
+    struct THandleDeleter< VmaPool > {
+        VmaAllocator pAllocator = VK_NULL_HANDLE;
+
+        void operator( )( VmaPool &pPool ) {
+            if ( nullptr == pPool || nullptr == pAllocator )
+
+            vmaDestroyPool( pAllocator, pPool );
+
+            pPool      = VK_NULL_HANDLE;
+            pAllocator = VK_NULL_HANDLE;
+        }
+    };
+
+    template <>
+    struct THandle< VmaPool > : THandleBase< VmaPool > {
+
+        bool Recreate( VmaAllocator pAllocator, const VmaPoolCreateInfo &poolCreateInfo ) {
+            if ( nullptr == pAllocator )
+                return false;
+
+            Deleter( Handle );
+            Deleter.pAllocator = pAllocator;
+
+            return VK_SUCCESS == CheckedCall( vmaCreatePool( pAllocator, &poolCreateInfo, &Handle ) );
+        }
+
+    };
+
 }

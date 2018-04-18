@@ -67,10 +67,10 @@ namespace apemodevk {
         struct IAllocator {
             /* malloc */
             virtual void* Malloc( size_t             size,
-                                 size_t             alignment,
-                                 const char*        sourceFile,
-                                 const unsigned int sourceLine,
-                                 const char*        sourceFunc ) = 0;
+                                  size_t             alignment,
+                                  const char*        sourceFile,
+                                  const unsigned int sourceLine,
+                                  const char*        sourceFunc ) = 0;
 
             /* realloc */
             virtual void* Realloc( void*              pOriginal,
@@ -98,15 +98,13 @@ namespace apemodevk {
 
         /* Destruction order must be preserved */
 
+        std::unique_ptr< IAllocator >        pAllocator;
         APIVersion                           Version;
-        std::string                          AppName;
-        std::string                          EngineName;
         std::vector< const char * >          InstanceLayers;
         std::vector< const char * >          InstanceExtensions;
         std::vector< VkLayerProperties >     InstanceLayerProps;
         std::vector< VkExtensionProperties > InstanceExtensionProps;
         std::vector< NativeLayerWrapper >    LayerWrappers;
-        std::unique_ptr< IAllocator >        pAllocator;
         std::unique_ptr< ILogger >           pLogger;
         std::unique_ptr< GraphicsDevice >    PrimaryNode;
         std::unique_ptr< GraphicsDevice >    SecondaryNode;
@@ -115,7 +113,11 @@ namespace apemodevk {
         /* Initializes and returns GraphicsManager instance. */
         friend GraphicsManager* GetGraphicsManager( );
 
-        bool RecreateGraphicsNodes( uint32_t flags, std::unique_ptr< IAllocator > pAlloc, std::unique_ptr< ILogger > pLogger );
+        bool RecreateGraphicsNodes( uint32_t                      flags,
+                                    std::unique_ptr< IAllocator > pAlloc,
+                                    std::unique_ptr< ILogger >    pLogger,
+                                    const char*                   pszAppName,
+                                    const char*                   pszEngineName );
         void Destroy( );
 
         GraphicsDevice*              GetPrimaryGraphicsNode( );

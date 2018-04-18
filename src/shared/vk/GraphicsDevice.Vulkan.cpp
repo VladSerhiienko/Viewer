@@ -235,7 +235,7 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( VkPhysicalDevice InAdapter
                 allocatorCreateInfo.device                 = hLogicalDevice;
                 allocatorCreateInfo.pAllocationCallbacks   = GetAllocationCallbacks( );
 
-                Allocator.Recreate( allocatorCreateInfo );
+                hAllocator.Recreate( allocatorCreateInfo );
 
                 pQueuePool.reset( new QueuePool( hLogicalDevice,
                                                  pPhysicalDevice,

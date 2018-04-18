@@ -2,10 +2,11 @@
 
 #include <NuklearSdlBase.h>
 
+#include <Buffer.Vulkan.h>
 #include <DescriptorPool.Vulkan.h>
 #include <GraphicsDevice.Vulkan.h>
 #include <GraphicsManager.Vulkan.h>
-#include <Buffer.Vulkan.h>
+#include <Image.Vulkan.h>
 #include <NativeHandles.Vulkan.h>
 #include <ShaderCompiler.Vulkan.h>
 #include <TInfoStruct.Vulkan.h>
@@ -39,19 +40,18 @@ namespace apemode {
     public:
         static uint32_t const kMaxFrameCount = 3;
 
-        apemodevk::GraphicsDevice *                 pNode       = nullptr;
-        VkDescriptorPool                            pDescPool   = VK_NULL_HANDLE;
-        VkRenderPass                                pRenderPass = VK_NULL_HANDLE;
-        VkCommandBuffer                             pCmdBuffer  = VK_NULL_HANDLE;
-        apemodevk::TDescriptorSets< 1 >             DescSet;
-        apemodevk::THandle< VkSampler >             hFontSampler;
-        apemodevk::THandle< VkDescriptorSetLayout > hDescSetLayout;
-        apemodevk::THandle< VkPipelineLayout >      hPipelineLayout;
-        apemodevk::THandle< VkPipelineCache >       hPipelineCache;
-        apemodevk::THandle< VkPipeline >            hPipeline;
-        apemodevk::THandle< VkImage >               hFontImg;
-        apemodevk::THandle< VkImageView >           hFontImgView;
-        apemodevk::THandle< VkDeviceMemory >        hFontImgMemory;
+        apemodevk::GraphicsDevice *                     pNode       = nullptr;
+        VkDescriptorPool                                pDescPool   = VK_NULL_HANDLE;
+        VkRenderPass                                    pRenderPass = VK_NULL_HANDLE;
+        VkCommandBuffer                                 pCmdBuffer  = VK_NULL_HANDLE;
+        apemodevk::TDescriptorSets< 1 >                 DescSet;
+        apemodevk::THandle< VkSampler >                 hFontSampler;
+        apemodevk::THandle< VkDescriptorSetLayout >     hDescSetLayout;
+        apemodevk::THandle< VkPipelineLayout >          hPipelineLayout;
+        apemodevk::THandle< VkPipelineCache >           hPipelineCache;
+        apemodevk::THandle< VkPipeline >                hPipeline;
+        apemodevk::THandle< apemodevk::ImageComposite > hFontImg;
+        apemodevk::THandle< VkImageView >               hFontImgView;
 
         apemodevk::THandle< apemodevk::BufferComposite > hUploadBuffer;
         apemodevk::THandle< apemodevk::BufferComposite > hVertexBuffer[ kMaxFrameCount ];

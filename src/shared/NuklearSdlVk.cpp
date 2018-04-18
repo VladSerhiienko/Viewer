@@ -23,7 +23,7 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
         allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
         allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-        if ( false == hVertexBuffer[ frameIndex ].Recreate( pNode->Allocator, bufferCreateInfo, allocationCreateInfo ) ) {
+        if ( false == hVertexBuffer[ frameIndex ].Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
         }
@@ -45,7 +45,7 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
         allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
         allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-        if ( false == hIndexBuffer[ frameIndex ].Recreate( pNode->Allocator, bufferCreateInfo, allocationCreateInfo ) ) {
+        if ( false == hIndexBuffer[ frameIndex ].Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
         }
@@ -434,18 +434,11 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
         imageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
         imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-        if ( false == hFontImg.Recreate( pNode->hLogicalDevice, pNode->pPhysicalDevice, imageCreateInfo ) ) {
-            apemodevk::platform::DebugBreak( );
-            return nullptr;
-        }
+        VmaAllocationCreateInfo allocationCreateInfo = {};
+        allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+        allocationCreateInfo.flags = 0;
 
-        auto fontImgAllocInfo = hFontImg.GetMemoryAllocateInfo( VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
-        if ( false == hFontImgMemory.Recreate( pNode->hLogicalDevice, fontImgAllocInfo ) ) {
-            apemodevk::platform::DebugBreak( );
-            return nullptr;
-        }
-
-        if ( false == hFontImg.BindMemory( hFontImgMemory, 0 ) ) {
+        if ( false == hFontImg.Recreate( pNode->hAllocator, imageCreateInfo, allocationCreateInfo ) ) {
             apemodevk::platform::DebugBreak( );
             return nullptr;
         }
@@ -497,7 +490,7 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
         allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
         allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-        if ( false == hUploadBuffer.Recreate( pNode->Allocator, bufferCreateInfo, allocationCreateInfo ) ) {
+        if ( false == hUploadBuffer.Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
             apemodevk::platform::DebugBreak( );
             return nullptr;
         }
@@ -625,5 +618,5 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
         }
     }
 
-    return hFontImg.Handle;
+    return hFontImg.Handle.pImg;
 }

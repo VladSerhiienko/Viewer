@@ -183,7 +183,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
             allocationCreateInfo.flags = 0;
 
-            if ( false == pMeshDeviceAsset->hBuffer.Recreate( pParams->pNode->Allocator, bufferCreateInfo, allocationCreateInfo ) ) {
+            if ( false == pMeshDeviceAsset->hBuffer.Recreate( pParams->pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
                 DebugBreak( );
             }
 

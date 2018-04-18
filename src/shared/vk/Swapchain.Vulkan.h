@@ -11,14 +11,14 @@ namespace apemodevk {
 
     class Surface : public NoCopyAssignPolicy {
     public:
-        VkPhysicalDevice                    pPhysicalDevice;
-        VkInstance                          pInstance;
-        VkSurfaceCapabilitiesKHR            SurfaceCaps;
-        VkSurfaceTransformFlagsKHR          eSurfaceTransform;
-        VkFormat                            eColorFormat;
-        VkColorSpaceKHR                     eColorSpace;
-        VkPresentModeKHR                    ePresentMode;
-        THandle< VkSurfaceKHR > hSurface;
+        VkPhysicalDevice           pPhysicalDevice;
+        VkInstance                 pInstance;
+        VkSurfaceCapabilitiesKHR   SurfaceCaps;
+        VkSurfaceTransformFlagsKHR eSurfaceTransform;
+        VkFormat                   eColorFormat;
+        VkColorSpaceKHR            eColorSpace;
+        VkPresentModeKHR           ePresentMode;
+        THandle< VkSurfaceKHR >    hSurface;
 
 #ifdef _WINDOWS_
         bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, HINSTANCE hInstance, HWND hWindow );
@@ -62,12 +62,12 @@ namespace apemodevk {
         uint32_t GetBufferCount( ) const;
 
     public:
-        VkDevice                              pDevice;
-        VkPhysicalDevice                      pPhysicalDevice;
-        VkSurfaceKHR                          pSurface;
-        uint32_t                              ImgCount;
-        VkExtent2D                            ImgExtent;
-        VkImage                               hImgs[ 3 ];
+        VkDevice                  pDevice;
+        VkPhysicalDevice          pPhysicalDevice;
+        VkSurfaceKHR              pSurface;
+        uint32_t                  ImgCount;
+        VkExtent2D                ImgExtent;
+        VkImage                   hImgs[ 3 ];
         THandle< VkImageView >    hImgViews[ 3 ];
         THandle< VkSwapchainKHR > hSwapchain;
     };

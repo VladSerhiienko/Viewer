@@ -1,10 +1,11 @@
+#pragma once
 
 #include <GraphicsDevice.Vulkan.h>
 #include <NativeHandles.Vulkan.h>
 
 namespace apemodevk {
 
-    struct ImgComposite {
+    struct ImageComposite {
         VkImage           pImg        = VK_NULL_HANDLE;
         VmaAllocator      pAllocator  = VK_NULL_HANDLE;
         VmaAllocation     pAllocation = VK_NULL_HANDLE;
@@ -12,10 +13,10 @@ namespace apemodevk {
     };
 
     template <>
-    struct THandleDeleter< ImgComposite > : THandleHandleTypeResolver< ImgComposite > {
+    struct THandleDeleter< ImageComposite > {
 
-        void operator( )( ImgComposite &imgComposite ) {
-            if ( imgComposite.pBuffer )
+        void operator( )( ImageComposite &imgComposite ) {
+            if ( nullptr == imgComposite.pImg )
                 return;
 
             assert( imgComposite.pAllocator );
@@ -33,7 +34,13 @@ namespace apemodevk {
 
 
     template <>
-    struct THandle< ImgComposite > : THandleBase< ImgComposite > {
+    struct THandle< ImageComposite > : public NoCopyAssignPolicy {
+
+        typedef THandleDeleter< ImageComposite > TDeleter;
+        typedef THandle< ImageComposite >        SelfType;
+
+        ImageComposite Handle;
+        TDeleter     Deleter;
 
         bool Recreate( VmaAllocator                    pAllocator,
                        const VkImageCreateInfo  &      createInfo,
@@ -49,31 +56,36 @@ namespace apemodevk {
                                                               &Handle.allocInfo ) );
         }
 
-        VkMemoryRequirements GetMemoryRequirements( ) {
-            apemode_assert( IsNotNull( ), "Null." );
+        inline THandle( ) = default;
+        inline THandle( THandle &&Other ) { Handle = Other.Release( ); }
+        inline ~THandle( ) { Destroy( ); }
 
-            VkMemoryRequirements memoryRequirements;
-            vkGetImageMemoryRequirements( Handle.pAllocator->m_hDevice,
-                                          Handle.pAllocator->GetAllocationCallbacks( ),
-                                          &memoryRequirements );
+        inline bool IsNull( ) const { return nullptr == Handle.pImg; }
+        inline bool IsNotNull( ) const { return nullptr != Handle.pImg; }
+        inline void Destroy( ) { Deleter( Handle ); }
 
-            return memoryRequirements;
+        inline operator VkImage ( ) const { return Handle.pImg; }
+        inline operator bool( ) const { return nullptr != Handle.pImg; }
+        inline VkImage *operator( )( ) { return &Handle.pImg; }
+        inline operator VkImage *( ) { return &Handle.pImg; }
+        inline operator VkImage const *( ) const { return &Handle.pImg; }
+
+        SelfType & operator=( SelfType &&Other ) {
+            Handle = Other.Release( );
+            return *this;
         }
 
-        VkMemoryAllocateInfo GetMemoryAllocateInfo( VkMemoryPropertyFlags memoryPropertyFlags = VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT ) {
-            VkMemoryRequirements memoryRequirements = GetMemoryRequirements( );
-
-            VkMemoryAllocateInfo memoryAllocInfo;
-            apemodevk::ZeroMemory( memoryAllocInfo );
-            memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-            memoryAllocInfo.allocationSize = memoryRequirements.size;
-            memoryAllocInfo.memoryTypeIndex = ResolveMemoryType( Handle.pAllocator->m_MemProps, memoryPropertyFlags, memoryRequirements.memoryTypeBits );
-
-            return memoryAllocInfo;
+        ImageComposite Release( ) {
+            ImageComposite ReleasedHandle = Handle;
+            Handle.pAllocation           = nullptr;
+            Handle.pAllocator            = nullptr;
+            Handle.pImg               = nullptr;
+            return ReleasedHandle;
         }
 
-        bool BindMemory( VkDeviceMemory hMemory, uint32_t Offset = 0 ) {
-            return VK_SUCCESS == CheckedCall( vkBindImageMemory( Handle.pAllocator->m_hDevice, *this, hMemory, Offset ) );
+        void Swap( SelfType &Other ) {
+            std::swap( Handle, Other.Handle );
+            std::swap( Deleter, Other.Deleter );
         }
     };
 

@@ -1,20 +1,20 @@
 #pragma once
 
 #include <GraphicsDevice.Vulkan.h>
+#include <Image.Vulkan.h>
 
 namespace apemodevk {
     class GraphicsDevice;
     struct HostBufferPool;
 
     struct LoadedImage {
-        apemodevk::THandle< VkImage >        hImg;
-        apemodevk::THandle< VkImageView >    hImgView;
-        apemodevk::THandle< VkDeviceMemory > hImgMemory;
-        VkImageCreateInfo                                imageCreateInfo;
-        VkImageViewCreateInfo                            imageViewCreateInfo;
-        VkImageLayout                                    eImgLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
-        uint32_t                                         queueId       = 0;
-        uint32_t                                         queueFamilyId = 0;
+        THandle< ImageComposite > hImg;
+        THandle< VkImageView >    hImgView;
+        VkImageCreateInfo         ImageCreateInfo;
+        VkImageViewCreateInfo     ImgViewCreateInfo;
+        VkImageLayout             eImgLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
+        uint32_t                  QueueId       = kInvalidIndex;
+        uint32_t                  QueueFamilyId = kInvalidIndex;
     };
 
     class ImageLoader {
@@ -30,7 +30,7 @@ namespace apemodevk {
         HostBufferPool* pHostBufferPool = nullptr;
 
         bool Recreate( GraphicsDevice* pNode, HostBufferPool* pHostBufferPool = nullptr );
-        std::unique_ptr< LoadedImage > LoadImageFromData( const std::vector< uint8_t >& InFileContent,
+        std::unique_ptr< LoadedImage > LoadImageFromData( const std::vector< uint8_t >& fileContent,
                                                           EImageFileFormat              eFileFormat,
                                                           bool                          bImgView,
                                                           bool                          bAwaitLoading );

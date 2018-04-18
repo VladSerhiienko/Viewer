@@ -74,20 +74,19 @@ namespace apemode {
         std::unique_ptr< CameraControllerInputBase > pCamInput          = nullptr;
         std::unique_ptr< CameraControllerBase >      pCamController     = nullptr;
 
-        uint32_t                                          BackbufferIndices[ kMaxFrames ] = {0};
-        apemodevk::DescriptorPool                         DescPool;
-        apemodevk::THandle< VkCommandPool >   hCmdPool[ kMaxFrames ];
-        apemodevk::THandle< VkCommandBuffer > hCmdBuffers[ kMaxFrames ];
-        apemodevk::THandle< VkSemaphore >     hPresentCompleteSemaphores[ kMaxFrames ];
-        apemodevk::THandle< VkSemaphore >     hRenderCompleteSemaphores[ kMaxFrames ];
-        apemodevk::THandle< VkRenderPass >    hNkRenderPass;
-        apemodevk::THandle< VkFramebuffer >   hNkFramebuffers[ kMaxFrames ];
-        apemodevk::THandle< VkRenderPass >    hDbgRenderPass;
-        apemodevk::THandle< VkFramebuffer >   hDbgFramebuffers[ kMaxFrames ];
-        apemodevk::THandle< VkImage >         hDepthImgs[ kMaxFrames ];
-        apemodevk::THandle< VkImageView >     hDepthImgViews[ kMaxFrames ];
-        apemodevk::THandle< VkDeviceMemory >  hDepthImgMemory[ kMaxFrames ];
-
+        uint32_t                                        BackbufferIndices[ kMaxFrames ] = {0};
+        apemodevk::DescriptorPool                       DescPool;
+        apemodevk::THandle< VkCommandPool >             hCmdPool[ kMaxFrames ];
+        apemodevk::THandle< VkCommandBuffer >           hCmdBuffers[ kMaxFrames ];
+        apemodevk::THandle< VkSemaphore >               hPresentCompleteSemaphores[ kMaxFrames ];
+        apemodevk::THandle< VkSemaphore >               hRenderCompleteSemaphores[ kMaxFrames ];
+        apemodevk::THandle< VkRenderPass >              hNkRenderPass;
+        apemodevk::THandle< VkFramebuffer >             hNkFramebuffers[ kMaxFrames ];
+        apemodevk::THandle< VkRenderPass >              hDbgRenderPass;
+        apemodevk::THandle< VkFramebuffer >             hDbgFramebuffers[ kMaxFrames ];
+        apemodevk::THandle< apemodevk::ImageComposite > hDepthImgs[ kMaxFrames ];
+        apemodevk::THandle< VkImageView >               hDepthImgViews[ kMaxFrames ];
+        apemodevk::THandle< VkDeviceMemory >            hDepthImgMemory[ kMaxFrames ];
 
         NuklearRendererSdlBase*                      pNkRenderer        = nullptr;
         DebugRendererVk*                             pDebugRenderer     = nullptr;

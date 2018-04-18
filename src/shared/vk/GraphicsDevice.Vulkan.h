@@ -51,7 +51,7 @@ namespace apemodevk {
         operator VkInstance( ) const;
 
         THandle< VkDevice >                  hLogicalDevice;
-        THandle< VmaAllocator >              Allocator;
+        THandle< VmaAllocator >              hAllocator;
         VkPhysicalDevice                     pPhysicalDevice;
         VkPhysicalDeviceProperties           AdapterProps;
         VkPhysicalDeviceMemoryProperties     MemoryProps;

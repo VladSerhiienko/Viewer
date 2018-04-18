@@ -65,7 +65,9 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
 
         if ( apemodevk::GetGraphicsManager( )->RecreateGraphicsNodes( graphicsManagerFlags,
                                                                       apemode::make_unique< GraphicsAllocator >( ),
-                                                                      apemode::make_unique< GraphicsLogger >( ) ) ) {
+                                                                      apemode::make_unique< GraphicsLogger >( ),
+                                                                      "Viewer",
+                                                                      "apemodevk" ) ) {
             pNode = apemodevk::GetGraphicsManager( )->GetPrimaryGraphicsNode( );
 
 #ifdef X_PROTOCOL

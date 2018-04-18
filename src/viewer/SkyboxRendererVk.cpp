@@ -261,13 +261,13 @@ bool apemodevk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPara
     auto FrameIndex = (pParams->FrameIndex) % kMaxFrameCount;
 
     FrameUniformBuffer frameData;
-    frameData.InvView  = pParams->InvViewMatrix;
-    frameData.InvProj  = pParams->InvProjMatrix;
-    frameData.ProjBias = pParams->ProjBiasMatrix;
-    frameData.params0.x = 0;                      /* u_lerpFactor */
-    frameData.params0.y = pSkybox->Exposure;      /* u_exposure0 */
-    frameData.params0.z = pSkybox->Dimension;     /* u_textureCubeDim0 */
-    frameData.params0.w = pSkybox->LevelOfDetail; /* u_textureCubeLod0 */
+    frameData.InvView   = pParams->InvViewMatrix;
+    frameData.InvProj   = pParams->InvProjMatrix;
+    frameData.ProjBias  = pParams->ProjBiasMatrix;
+    frameData.params0.x = 0;                               /* u_lerpFactor */
+    frameData.params0.y = pSkybox->Exposure;               /* u_exposure0 */
+    frameData.params0.z = float( pSkybox->Dimension );     /* u_textureCubeDim0 */
+    frameData.params0.w = float( pSkybox->LevelOfDetail ); /* u_textureCubeLod0 */
 
     auto suballocResult = BufferPools[ FrameIndex ].TSuballocate( frameData );
     assert( VK_NULL_HANDLE != suballocResult.descBufferInfo.buffer );

@@ -4,13 +4,21 @@
 #include <BufferPools.Vulkan.h>
 #include <QueuePools.Vulkan.h>
 
-#ifndef LODEPNG_COMPILE_ALLOCATORS
-#define LODEPNG_COMPILE_ALLOCATORS
+#ifndef LODEPNG_NO_COMPILE_ALLOCATORS
+#define LODEPNG_NO_COMPILE_ALLOCATORS
 #endif
 
-#define lodepng_malloc  apemode_malloc
-#define lodepng_realloc apemode_realloc
-#define lodepng_free    apemode_free
+void* lodepng_malloc( size_t size ) {
+    return apemode_malloc( size, APEMODE_DEFAULT_ALIGNMENT );
+}
+
+void* lodepng_realloc( void* p, size_t size ) {
+    return apemode_realloc( p, size, APEMODE_DEFAULT_ALIGNMENT );
+}
+
+void lodepng_free( void* p ) {
+    apemode_free( p );
+}
 
 #include <lodepng.h>
 #include <lodepng_util.h>
@@ -82,8 +90,8 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
 
     InitializeStruct( writeImageMemoryBarrier );
     InitializeStruct( readImgMemoryBarrier );
-    InitializeStruct( loadedImage->imageCreateInfo );
-    InitializeStruct( loadedImage->imageViewCreateInfo );
+    InitializeStruct( loadedImage->ImageCreateInfo );
+    InitializeStruct( loadedImage->ImgViewCreateInfo );
 
     pHostBufferPool->Reset( );
 
@@ -99,32 +107,32 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
 
             if ( false == texture.empty( ) ) {
 
-                loadedImage->imageCreateInfo.format        = ToImgFormat( texture.format( ) );
-                loadedImage->imageCreateInfo.imageType     = ToImgType( texture.target( ) );
-                loadedImage->imageCreateInfo.extent.width  = (uint32_t) texture.extent( ).x;
-                loadedImage->imageCreateInfo.extent.height = (uint32_t) texture.extent( ).y;
-                loadedImage->imageCreateInfo.extent.depth  = (uint32_t) texture.extent( ).z;
-                loadedImage->imageCreateInfo.mipLevels     = (uint32_t) texture.levels( );
-                loadedImage->imageCreateInfo.arrayLayers   = (uint32_t) texture.faces( );
-                loadedImage->imageCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
-                loadedImage->imageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
-                loadedImage->imageCreateInfo.usage         = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-                loadedImage->imageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-                loadedImage->imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+                loadedImage->ImageCreateInfo.format        = ToImgFormat( texture.format( ) );
+                loadedImage->ImageCreateInfo.imageType     = ToImgType( texture.target( ) );
+                loadedImage->ImageCreateInfo.extent.width  = (uint32_t) texture.extent( ).x;
+                loadedImage->ImageCreateInfo.extent.height = (uint32_t) texture.extent( ).y;
+                loadedImage->ImageCreateInfo.extent.depth  = (uint32_t) texture.extent( ).z;
+                loadedImage->ImageCreateInfo.mipLevels     = (uint32_t) texture.levels( );
+                loadedImage->ImageCreateInfo.arrayLayers   = (uint32_t) texture.faces( );
+                loadedImage->ImageCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
+                loadedImage->ImageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
+                loadedImage->ImageCreateInfo.usage         = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+                loadedImage->ImageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+                loadedImage->ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
 
-                loadedImage->imageViewCreateInfo.flags                           = 0;
-                loadedImage->imageViewCreateInfo.format                          = ToImgFormat( texture.format( ) );
-                loadedImage->imageViewCreateInfo.viewType                        = ToImgViewType( texture.target( ) );
-                loadedImage->imageViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-                loadedImage->imageViewCreateInfo.subresourceRange.levelCount     = (uint32_t) texture.levels( );
-                loadedImage->imageViewCreateInfo.subresourceRange.layerCount     = (uint32_t) texture.faces( );
-                loadedImage->imageViewCreateInfo.subresourceRange.baseMipLevel   = 0;
-                loadedImage->imageViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+                loadedImage->ImgViewCreateInfo.flags                           = 0;
+                loadedImage->ImgViewCreateInfo.format                          = ToImgFormat( texture.format( ) );
+                loadedImage->ImgViewCreateInfo.viewType                        = ToImgViewType( texture.target( ) );
+                loadedImage->ImgViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+                loadedImage->ImgViewCreateInfo.subresourceRange.levelCount     = (uint32_t) texture.levels( );
+                loadedImage->ImgViewCreateInfo.subresourceRange.layerCount     = (uint32_t) texture.faces( );
+                loadedImage->ImgViewCreateInfo.subresourceRange.baseMipLevel   = 0;
+                loadedImage->ImgViewCreateInfo.subresourceRange.baseArrayLayer = 0;
 
-                switch ( loadedImage->imageViewCreateInfo.viewType ) {
+                switch ( loadedImage->ImgViewCreateInfo.viewType ) {
                     case VK_IMAGE_VIEW_TYPE_CUBE:
                     case VK_IMAGE_VIEW_TYPE_CUBE_ARRAY: {
-                        loadedImage->imageCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+                        loadedImage->ImageCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
                     } break;
                 }
 
@@ -201,24 +209,24 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
                                       InFileContent.data( ),
                                       InFileContent.size( ) ) ) {
 
-                loadedImage->imageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
-                loadedImage->imageCreateInfo.format        = VK_FORMAT_R8G8B8A8_UNORM;
-                loadedImage->imageCreateInfo.extent.width  = imageWidth;
-                loadedImage->imageCreateInfo.extent.height = imageHeight;
-                loadedImage->imageCreateInfo.extent.depth  = 1;
-                loadedImage->imageCreateInfo.mipLevels     = 1;
-                loadedImage->imageCreateInfo.arrayLayers   = 1;
-                loadedImage->imageCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
-                loadedImage->imageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
-                loadedImage->imageCreateInfo.usage         = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-                loadedImage->imageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-                loadedImage->imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+                loadedImage->ImageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
+                loadedImage->ImageCreateInfo.format        = VK_FORMAT_R8G8B8A8_UNORM;
+                loadedImage->ImageCreateInfo.extent.width  = imageWidth;
+                loadedImage->ImageCreateInfo.extent.height = imageHeight;
+                loadedImage->ImageCreateInfo.extent.depth  = 1;
+                loadedImage->ImageCreateInfo.mipLevels     = 1;
+                loadedImage->ImageCreateInfo.arrayLayers   = 1;
+                loadedImage->ImageCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
+                loadedImage->ImageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
+                loadedImage->ImageCreateInfo.usage         = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+                loadedImage->ImageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+                loadedImage->ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-                loadedImage->imageViewCreateInfo.viewType                    = VK_IMAGE_VIEW_TYPE_2D;
-                loadedImage->imageViewCreateInfo.format                      = VK_FORMAT_R8G8B8A8_UNORM;
-                loadedImage->imageViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                loadedImage->imageViewCreateInfo.subresourceRange.levelCount = 1;
-                loadedImage->imageViewCreateInfo.subresourceRange.layerCount = 1;
+                loadedImage->ImgViewCreateInfo.viewType                    = VK_IMAGE_VIEW_TYPE_2D;
+                loadedImage->ImgViewCreateInfo.format                      = VK_FORMAT_R8G8B8A8_UNORM;
+                loadedImage->ImgViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+                loadedImage->ImgViewCreateInfo.subresourceRange.levelCount = 1;
+                loadedImage->ImgViewCreateInfo.subresourceRange.layerCount = 1;
 
                 imageBufferSuballocResult = pHostBufferPool->Suballocate( pImageBytes, imageWidth * imageHeight * 4 );
                 lodepng_free( pImageBytes ); /* Free decoded PNG since it is no longer needed */
@@ -258,22 +266,17 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
 
     pHostBufferPool->Flush( ); /* Unmap buffers and flush all memory ranges */
 
-    if ( false == loadedImage->hImg.Recreate( *pNode, *pNode, loadedImage->imageCreateInfo ) ) {
-        return nullptr;
-    }
+    VmaAllocationCreateInfo allocationCreateInfo = {};
+    allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    allocationCreateInfo.flags = 0;
 
-    auto fontImgAllocInfo = loadedImage->hImg.GetMemoryAllocateInfo( VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT );
-    if ( false == loadedImage->hImgMemory.Recreate( *pNode, fontImgAllocInfo ) ) {
-        return nullptr;
-    }
-
-    if ( false == loadedImage->hImg.BindMemory( loadedImage->hImgMemory, 0 ) ) {
+    if ( false == loadedImage->hImg.Recreate( pNode->hAllocator, loadedImage->ImageCreateInfo, allocationCreateInfo ) ) {
         return nullptr;
     }
 
     if ( bImgView ) {
-        loadedImage->imageViewCreateInfo.image = loadedImage->hImg;
-        if ( false == loadedImage->hImgView.Recreate( *pNode, loadedImage->imageViewCreateInfo ) ) {
+        loadedImage->ImgViewCreateInfo.image = loadedImage->hImg.Handle.pImg;
+        if ( false == loadedImage->hImgView.Recreate( *pNode, loadedImage->ImgViewCreateInfo ) ) {
             return nullptr;
         }
     }
@@ -299,7 +302,7 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
         return nullptr;
     }
 
-    writeImageMemoryBarrier.image               = loadedImage->hImg;
+    writeImageMemoryBarrier.image               = loadedImage->hImg.Handle.pImg;
     writeImageMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     writeImageMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
@@ -316,12 +319,12 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
 
     vkCmdCopyBufferToImage( acquiredCmdBuffer.pCmdBuffer,
                             imageBufferSuballocResult.descBufferInfo.buffer,
-                            loadedImage->hImg,
+                            loadedImage->hImg.Handle.pImg,
                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                             (uint32_t) bufferImageCopies.size( ),
                             bufferImageCopies.data( ) );
 
-    readImgMemoryBarrier.image               = loadedImage->hImg;
+    readImgMemoryBarrier.image               = loadedImage->hImg.Handle.pImg;
     readImgMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
     readImgMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
@@ -358,8 +361,8 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
         acquiredCmdBuffer.pFence = nullptr;
 
         /* No need to pass queue info with the texture result */
-        loadedImage->queueId = 0xffffffff;
-        loadedImage->queueFamilyId = 0xffffffff;
+        loadedImage->QueueId = 0xffffffff;
+        loadedImage->QueueFamilyId = 0xffffffff;
 
         /* Ensure the image can be used right away */
         CheckedCall( vkWaitForFences( *pNode, 1, &acquiredQueue.pFence, true, UINT64_MAX ) );
@@ -368,8 +371,8 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
         acquiredCmdBuffer.pFence = acquiredQueue.pFence;
 
         /* Ensure the image memory transfer can be synchronized */
-        loadedImage->queueId = acquiredQueue.queueId;
-        loadedImage->queueFamilyId = acquiredQueue.queueFamilyId;
+        loadedImage->QueueId = acquiredQueue.queueId;
+        loadedImage->QueueFamilyId = acquiredQueue.queueFamilyId;
     }
 
     pNode->GetCommandBufferPool( )->Release( acquiredCmdBuffer );
@@ -382,4 +385,8 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
 #undef lodepng_realloc
 #undef lodepng_free
 
+#pragma warning( push )
+// '<<': result of 32-bit shift implicitly converted to 64 bits
+#pragma warning( disable : 4334 )
 #include <lodepng.cpp>
+#pragma warning( pop )

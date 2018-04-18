@@ -194,7 +194,9 @@ void apemodevk::GraphicsManager::Destroy( ) {
 
 bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t                      flags,
                                                         std::unique_ptr< IAllocator > pInAllocator,
-                                                        std::unique_ptr< ILogger >    pInLogger ) {
+                                                        std::unique_ptr< ILogger >    pInLogger,
+                                                        const char*                   pszAppName,
+                                                        const char*                   pszEngineName ) {
     pAllocator = std::move( pInAllocator );
     pLogger    = std::move( pInLogger );
 
@@ -205,8 +207,8 @@ bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t                
     InitializeStruct( applicationInfo );
     applicationInfo.pNext              = VK_NULL_HANDLE;
     applicationInfo.apiVersion         = VK_API_VERSION_1_0;
-    applicationInfo.pApplicationName   = AppName.c_str( );
-    applicationInfo.pEngineName        = EngineName.c_str( );
+    applicationInfo.pApplicationName   = pszAppName;
+    applicationInfo.pEngineName        = pszEngineName;
     applicationInfo.applicationVersion = 1;
     applicationInfo.engineVersion      = 1;
 

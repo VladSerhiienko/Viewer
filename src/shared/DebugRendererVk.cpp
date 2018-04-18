@@ -311,7 +311,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
         allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
         allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-        if ( false == hVertexBuffer.Recreate( pNode->Allocator, bufferCreateInfo, allocationCreateInfo ) ) {
+        if ( false == hVertexBuffer.Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
         }
