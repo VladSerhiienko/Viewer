@@ -75,7 +75,7 @@ namespace apemode {
         std::unique_ptr< CameraControllerBase >      pCamController     = nullptr;
 
         uint32_t                                        BackbufferIndices[ kMaxFrames ] = {0};
-        apemodevk::DescriptorPool                       DescPool;
+        apemodevk::DescriptorPool                       DescriptorPool;
         apemodevk::THandle< VkCommandPool >             hCmdPool[ kMaxFrames ];
         apemodevk::THandle< VkCommandBuffer >           hCmdBuffers[ kMaxFrames ];
         apemodevk::THandle< VkSemaphore >               hPresentCompleteSemaphores[ kMaxFrames ];

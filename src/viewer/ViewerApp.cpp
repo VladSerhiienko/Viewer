@@ -165,7 +165,7 @@ bool ViewerApp::Initialize(  ) {
             }
         }
 
-        if ( false == DescPool.RecreateResourcesFor( *appSurface->pNode, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256 ) ) {
+        if ( false == DescriptorPool.RecreateResourcesFor( *appSurface->pNode, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256 ) ) {
             DebugBreak( );
             return false;
         }
@@ -183,7 +183,7 @@ bool ViewerApp::Initialize(  ) {
         initParamsNk.pNode           = appSurface->pNode;
         initParamsNk.pShaderCompiler = pShaderCompiler.get( );
         initParamsNk.pRenderPass     = hDbgRenderPass;
-        initParamsNk.pDescPool       = DescPool;
+        initParamsNk.pDescPool       = DescriptorPool;
         initParamsNk.pQueue          = acquiredQueue.pQueue;
         initParamsNk.QueueFamilyId   = acquiredQueue.queueFamilyId;
         // initParamsNk.pRenderPass     = hNkRenderPass;
@@ -196,7 +196,7 @@ bool ViewerApp::Initialize(  ) {
         initParamsDbg.pNode           = appSurface->pNode;
         initParamsDbg.pShaderCompiler = pShaderCompiler.get( );
         initParamsDbg.pRenderPass     = hDbgRenderPass;
-        initParamsDbg.pDescPool       = DescPool;
+        initParamsDbg.pDescPool       = DescriptorPool;
         initParamsDbg.FrameCount      = FrameCount;
 
         pDebugRenderer = new DebugRendererVk();
@@ -208,14 +208,14 @@ bool ViewerApp::Initialize(  ) {
         recreateParams.pNode           = appSurface->pNode;
         recreateParams.pShaderCompiler = pShaderCompiler.get( );
         recreateParams.pRenderPass     = hDbgRenderPass;
-        recreateParams.pDescPool       = DescPool;
+        recreateParams.pDescPool       = DescriptorPool;
         recreateParams.FrameCount      = FrameCount;
 
         SceneRendererVk::SceneUpdateParametersVk updateParams;
         updateParams.pNode           = appSurface->pNode;
         updateParams.pShaderCompiler = pShaderCompiler.get( );
         updateParams.pRenderPass     = hDbgRenderPass;
-        updateParams.pDescPool       = DescPool;
+        updateParams.pDescPool       = DescriptorPool;
         updateParams.FrameCount      = FrameCount;
 
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/bristleback-dota-fan-art.fbxp"
@@ -223,6 +223,7 @@ bool ViewerApp::Initialize(  ) {
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/1972-datsun-240k-gt.fbxp"
         // --assets "..\..\assets\**" --scene "C:\Sources\Models\graograman.fbxp"
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/dreadroamer-free.fbxp"
+        // --assets "..\..\assets\**" --scene "C:/Sources/Models/warcraft-draenei-fanart.fbxp"
         if ( false == pSceneRendererBase->Recreate( &recreateParams ) ) {
             DebugBreak( );
             return false;
@@ -246,7 +247,7 @@ bool ViewerApp::Initialize(  ) {
         skyboxRendererRecreateParams.pNode           = appSurface->pNode;
         skyboxRendererRecreateParams.pShaderCompiler = pShaderCompiler.get();
         skyboxRendererRecreateParams.pRenderPass     = hDbgRenderPass;
-        skyboxRendererRecreateParams.pDescPool       = DescPool;
+        skyboxRendererRecreateParams.pDescPool       = DescriptorPool;
         skyboxRendererRecreateParams.FrameCount      = FrameCount;
 
         pSkyboxRenderer = apemode::make_unique< apemodevk::SkyboxRenderer >( );
