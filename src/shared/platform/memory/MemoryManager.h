@@ -2,6 +2,7 @@
 #pragma once
 #include <new>
 #include <memory>
+#include <memory.h>
 
 // #if _WIN32
 #ifndef APEMODE_USE_MEMORY_TRACKING
