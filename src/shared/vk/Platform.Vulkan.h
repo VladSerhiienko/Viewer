@@ -117,7 +117,6 @@
 
 #include <assert.h>
 #include <future>
-#include <intsafe.h>
 #include <inttypes.h>
 #include <iostream>
 #include <map>
@@ -147,8 +146,8 @@ namespace apemode {
 
 namespace apemodevk {
 
-    constexpr uint32_t kInvalidIndex   = UINT_ERROR;
-    constexpr uint64_t kInvalidIndex64 = UINT64_ERROR;
+    constexpr uint32_t kInvalidIndex   = uint32_t( -1 );
+    constexpr uint64_t kInvalidIndex64 = uint64_t( -1 );
 
     namespace platform {
 
