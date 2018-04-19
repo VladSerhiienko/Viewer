@@ -35,24 +35,28 @@ void *apemode::NuklearRendererSdlBase::DeviceUploadAtlas( InitParametersBase *in
     return nullptr;
 }
 
-bool apemode::NuklearRendererSdlBase::Init( InitParametersBase *initParamsBase ) {
+bool apemode::NuklearRendererSdlBase::Init( InitParametersBase *pInitParamsBase ) {
+    if ( nullptr == pInitParamsBase->pFontAsset ) {
+        return nullptr;
+    }
+
     nk_init_default( &Context, nullptr /* User font */ );
     nk_buffer_init_default( &RenderCmds );
-    Context.clip.copy     = initParamsBase->pClipboardCopyCallback;
-    Context.clip.paste    = initParamsBase->pClipboardPasteCallback;
+    Context.clip.copy     = pInitParamsBase->pClipboardCopyCallback;
+    Context.clip.paste    = pInitParamsBase->pClipboardPasteCallback;
     Context.clip.userdata = nk_handle_ptr( this );
 
     /* Overrided */
-    DeviceCreate( initParamsBase );
+    DeviceCreate( pInitParamsBase );
 
-#include <droidsans.ttf.h>
+    auto fontAssetBin = pInitParamsBase->pFontAsset->AsBin( );
 
     nk_font_atlas *atlas = nullptr;
     FontStashBegin( &atlas );
-    pDefaultFont = nk_font_atlas_add_from_memory( atlas, (void *) s_droidSansTtf, sizeof( s_droidSansTtf ), 14, 0 );
+    pDefaultFont = nk_font_atlas_add_from_memory( atlas, fontAssetBin.data( ), fontAssetBin.size( ), 14, 0 );
 
     /* Calls overrided DeviceUploadAtlas(). */
-    FontStashEnd( initParamsBase );
+    FontStashEnd( pInitParamsBase );
 
     SetStyle( Dark );
     Context.style.font = &pDefaultFont->handle;

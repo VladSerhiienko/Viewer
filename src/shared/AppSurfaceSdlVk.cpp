@@ -64,8 +64,8 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
             graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_LUNARG_api_dump;
 
         if ( apemodevk::GetGraphicsManager( )->RecreateGraphicsNodes( graphicsManagerFlags,
-                                                                      apemode::make_unique< GraphicsAllocator >( ),
-                                                                      apemode::make_unique< GraphicsLogger >( ),
+                                                                      apemodevk::make_unique< GraphicsAllocator >( ),
+                                                                      apemodevk::make_unique< GraphicsLogger >( ),
                                                                       "Viewer",
                                                                       "apemodevk" ) ) {
             pNode = apemodevk::GetGraphicsManager( )->GetPrimaryGraphicsNode( );

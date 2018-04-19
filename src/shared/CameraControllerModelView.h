@@ -3,7 +3,7 @@
 #include <CameraControllerBase.h>
 
 namespace apemode {
-    
+
     struct ModelViewCameraController : CameraControllerBase {
         XMFLOAT3 TargetDst;
         XMFLOAT3 PositionDst;
@@ -15,7 +15,7 @@ namespace apemode {
 
         ModelViewCameraController( ) {
             ZRange.x = 0.1f;
-            ZRange.y = 1000.0f;
+            ZRange.y = 10000.0f;
             Reset( );
         }
 
@@ -41,7 +41,7 @@ namespace apemode {
             auto toTargetNorm = targetDst - positionDst;
             auto toTargetLen  = XMVector3Length( toTargetNorm );
             toTargetNorm /= toTargetLen;
-            
+
             auto delta =  toTargetLen * _dzxy.z;
             auto newLens = toTargetLen + delta;
             auto newLen = XMVectorGetX(newLens);

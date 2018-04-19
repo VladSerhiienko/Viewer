@@ -12,6 +12,14 @@
 namespace apemode {
 
     /**
+    * @brief make_unique for all platforms
+    */
+    template < typename T, typename... Args >
+    std::unique_ptr< T > make_unique( Args&&... args ) {
+        return std::unique_ptr< T >( new T( std::forward< Args >( args )... ) );
+    }
+
+    /**
      * @class AppStoredValue
      * @brief Contains a value created and stored by the user
      */

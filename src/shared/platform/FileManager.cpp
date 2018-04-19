@@ -164,26 +164,31 @@ void apemodeos::FileTracker::CollectChangedFiles( std::vector< std::string >& Ou
 }
 
 std::vector< uint8_t > apemodeos::FileReader::ReadBinFile( const std::string& filePath ) {
-    const std::string filePathFull = ResolveFullPath( filePath );
+    const std::string resolvedFilePath = ResolveFullPath( filePath );
 
-    /* Read file and return */
-    std::ifstream fileStream( filePathFull, std::ios::binary | std::ios::ate );
-    std::streamsize fileWholeSize = fileStream.tellg( );
-    fileStream.seekg( 0, std::ios::beg );
-    std::vector< uint8_t > fileBuffer( fileWholeSize );
-    if ( fileStream.read( (char*) fileBuffer.data( ), fileWholeSize ).good( ) ) {
-        return fileBuffer;
+    std::ifstream fileStream( resolvedFilePath, std::ios::binary | std::ios::ate );
+    if ( fileStream.good( ) ) {
+
+        std::streamsize fileSize = fileStream.tellg( );
+        fileStream.seekg( 0, std::ios::beg );
+        std::vector< uint8_t > fileBuffer( fileSize );
+
+        /* Read file and return */
+        if ( fileStream.read( (char*) fileBuffer.data( ), fileSize ).good( ) ) {
+            return fileBuffer;
+        }
     }
 
     return {};
 }
 
 std::string apemodeos::FileReader::ReadTxtFile( const std::string& filePath ) {
-    const std::string filePathFull = ResolveFullPath( filePath );
+    const std::string resolvedFilePath = ResolveFullPath( filePath );
 
-    /* Read file and return */
-    std::ifstream fileStream( filePathFull );
+    std::ifstream fileStream( resolvedFilePath );
     if ( fileStream.good( ) ) {
+
+        /* Read file and return */
         return std::string( std::istreambuf_iterator< char >( fileStream ),
                             std::istreambuf_iterator< char >( ) );
     }

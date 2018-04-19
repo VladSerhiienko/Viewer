@@ -87,9 +87,9 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 //const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
 ViewerApp::ViewerApp( ) {
-    pCamController = apemode::make_unique< ModelViewCameraController >();
-    pCamInput      = apemode::make_unique< MouseKeyboardCameraControllerInput >( );
-    //pCamController = apemode::make_unique< FreeLookCameraController >( );
+    pCamController = apemodevk::make_unique< ModelViewCameraController >();
+    pCamInput      = apemodevk::make_unique< MouseKeyboardCameraControllerInput >( );
+    //pCamController = apemodevk::make_unique< FreeLookCameraController >( );
 }
 
 ViewerApp::~ViewerApp( ) {
@@ -111,12 +111,12 @@ bool ViewerApp::Initialize(  ) {
         mFileTracker.FilePatterns.push_back( interestingFilePattern );
         mFileTracker.ScanDirectory( assetsFolder, true );
 
-        pShaderFileReader = apemode::make_unique< apemode::ShaderFileReader >( );
+        pShaderFileReader = apemodevk::make_unique< apemode::ShaderFileReader >( );
         pShaderFileReader->mAssetManager = &mAssetManager;
 
-        pShaderFeedbackWriter = apemode::make_unique< apemode::ShaderFeedbackWriter >( );
+        pShaderFeedbackWriter = apemodevk::make_unique< apemode::ShaderFeedbackWriter >( );
 
-        pShaderCompiler = apemode::make_unique< apemodevk::ShaderCompiler >( );
+        pShaderCompiler = apemodevk::make_unique< apemodevk::ShaderCompiler >( );
         pShaderCompiler->SetShaderFileReader( pShaderFileReader.get( ) );
         pShaderCompiler->SetShaderFeedbackWriter( pShaderFeedbackWriter.get( ) );
 
@@ -182,6 +182,7 @@ bool ViewerApp::Initialize(  ) {
         NuklearRendererSdlVk::InitParametersVk initParamsNk;
         initParamsNk.pNode           = appSurface->pNode;
         initParamsNk.pShaderCompiler = pShaderCompiler.get( );
+        initParamsNk.pFontAsset      = mAssetManager.GetAsset( "fonts/iosevka-ss07-medium.ttf" );
         initParamsNk.pRenderPass     = hDbgRenderPass;
         initParamsNk.pDescPool       = DescriptorPool;
         initParamsNk.pQueue          = acquiredQueue.pQueue;
@@ -250,13 +251,13 @@ bool ViewerApp::Initialize(  ) {
         skyboxRendererRecreateParams.pDescPool       = DescriptorPool;
         skyboxRendererRecreateParams.FrameCount      = FrameCount;
 
-        pSkyboxRenderer = apemode::make_unique< apemodevk::SkyboxRenderer >( );
+        pSkyboxRenderer = apemodevk::make_unique< apemodevk::SkyboxRenderer >( );
         if ( false == pSkyboxRenderer->Recreate( &skyboxRendererRecreateParams ) ) {
             DebugBreak( );
             return false;
         }
 
-        pSamplerManager = apemode::make_unique< apemodevk::SamplerManager >( );
+        pSamplerManager = apemodevk::make_unique< apemodevk::SamplerManager >( );
         if ( false == pSamplerManager->Recreate( appSurface->pNode ) ) {
             DebugBreak( );
             return false;
@@ -293,7 +294,7 @@ bool ViewerApp::Initialize(  ) {
         auto samplerIndex = pSamplerManager->GetSamplerIndex( samplerCreateInfo );
         assert( SamplerManager::IsSamplerIndexValid( samplerIndex ) );
 
-        pSkybox                = apemode::make_unique< apemodevk::Skybox >( );
+        pSkybox                = apemodevk::make_unique< apemodevk::Skybox >( );
         pSkybox->pSampler      = pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
         pSkybox->pImgView      = pLoadedDDS->hImgView;
         pSkybox->Dimension     = pLoadedDDS->ImageCreateInfo.extent.width;
@@ -659,10 +660,10 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
 
         DebugRendererVk::RenderParametersVk renderParamsDbg;
-        renderParamsDbg.dims[ 0 ]  = (float) width;
-        renderParamsDbg.dims[ 1 ]  = (float) height;
-        renderParamsDbg.scale[ 0 ] = 1;
-        renderParamsDbg.scale[ 1 ] = 1;
+        renderParamsDbg.Dims[ 0 ]  = (float) width;
+        renderParamsDbg.Dims[ 1 ]  = (float) height;
+        renderParamsDbg.Scale[ 0 ] = 1;
+        renderParamsDbg.Scale[ 1 ] = 1;
         renderParamsDbg.FrameIndex = FrameIndex;
         renderParamsDbg.pCmdBuffer = cmdBuffer;
         renderParamsDbg.pFrameData = &frameData;

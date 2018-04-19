@@ -17,5 +17,5 @@ namespace apemodeos {
     struct IAssetManager {
         virtual ~IAssetManager( ) { }
         virtual const IAsset * GetAsset( const std::string& InAssetName ) const = 0;
-    };    
+    };
 }

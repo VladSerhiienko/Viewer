@@ -1,6 +1,7 @@
 #pragma once
 
 #include <AppSurfaceBase.h>
+#include <IAssetManager.h>
 #include <SDL.h>
 
 #define NK_INCLUDE_FIXED_TYPES
@@ -31,8 +32,11 @@ namespace apemode {
         struct InitParametersBase {
             typedef void ( *NkClipbardPasteFn )( nk_handle, struct nk_text_edit * );
             typedef void ( *NkClipbardCopyFn )( nk_handle, const char *, int );
+
             NkClipbardPasteFn pClipboardPasteCallback = SdlClipboardPaste; /* Ok */
             NkClipbardCopyFn  pClipboardCopyCallback  = SdlClipboardCopy;  /* Ok */
+
+            const apemodeos::IAsset *pFontAsset = nullptr; /* Required */
         };
 
         struct UploadFontAtlasParametersBase {};

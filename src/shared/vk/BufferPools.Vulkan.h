@@ -16,13 +16,13 @@ namespace apemodevk {
         struct Page {
             THandle< VkBuffer >       hBuffer;
             THandle< VkDeviceMemory > hMemory;
-            VkDevice                              pDevice              = VK_NULL_HANDLE;
-            uint8_t *                             pMapped              = nullptr;
-            uint32_t                              Alignment            = 0;
-            uint32_t                              TotalSize            = 0;
-            uint32_t                              CurrentOffsetIndex   = 0;
-            uint32_t                              TotalOffsetCount     = 0;
-            VkMemoryPropertyFlags                 eMemoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+            VkDevice                  pDevice              = VK_NULL_HANDLE;
+            uint8_t *                 pMapped              = nullptr;
+            uint32_t                  Alignment            = 0;
+            uint32_t                  TotalSize            = 0;
+            uint32_t                  CurrentOffsetIndex   = 0;
+            uint32_t                  TotalOffsetCount     = 0;
+            VkMemoryPropertyFlags     eMemoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
 #if _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges
             std::vector< VkMappedMemoryRange > Ranges;

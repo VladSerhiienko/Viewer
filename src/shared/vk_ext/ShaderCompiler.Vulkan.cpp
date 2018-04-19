@@ -51,11 +51,11 @@ public:
                                         const char*          pszRequestingSource,
                                         size_t               includeDepth ) {
 
-        auto userData = apemode::make_unique< UserData >( );
+        auto userData = apemodevk::make_unique< UserData >( );
         if ( userData && FileReader.ReadShaderTxtFile( pszRequestedSource, userData->Path, userData->Content ) ) {
             pIncludedFiles->InsertIncludedFile( userData->Path );
 
-            auto includeResult                = apemode::make_unique< shaderc_include_result >( );
+            auto includeResult                = apemodevk::make_unique< shaderc_include_result >( );
             includeResult->content            = userData->Content.data( );
             includeResult->content_length     = userData->Content.size( );
             includeResult->source_name        = userData->Path.data( );
@@ -210,7 +210,7 @@ static std::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
     dwords.resize( dwordCount );
     memcpy( dwords.data( ), spvCompilationResult.cbegin( ), byteCount );
 
-    return apemode::make_unique< CompiledShader >( dwords );
+    return apemodevk::make_unique< CompiledShader >( dwords );
 }
 
 std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile( const std::string& shaderName,
@@ -246,7 +246,7 @@ std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile
     options.SetSourceLanguage( shaderc_source_language_glsl );
     options.SetOptimizationLevel( shaderc_optimization_level_zero );
     options.SetTargetEnvironment( shaderc_target_env_vulkan, 0 );
-    options.SetIncluder( apemode::make_unique< Includer >( *pImpl->pShaderFileReader, pOutIncludedFiles ) );
+    options.SetIncluder( apemodevk::make_unique< Includer >( *pImpl->pShaderFileReader, pOutIncludedFiles ) );
 
     std::string fullPath;
     std::string fileContent;

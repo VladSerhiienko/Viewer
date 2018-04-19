@@ -81,7 +81,7 @@ bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode, HostBufferPool* 
 std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromData(
     const std::vector< uint8_t >& InFileContent, EImageFileFormat eFileFormat, bool bImgView, bool bAwaitLoading ) {
 
-    auto loadedImage = apemode::make_unique< LoadedImage >( );
+    auto loadedImage = apemodevk::make_unique< LoadedImage >( );
 
     std::vector< VkBufferImageCopy > bufferImageCopies;
     VkImageMemoryBarrier             writeImageMemoryBarrier;

@@ -30,8 +30,8 @@ namespace apemode {
         };
 
         struct RenderParametersVk {
-            float               dims[ 2 ]  = {};             /* Required */
-            float               scale[ 2 ] = {};             /* Required */
+            float               Dims[ 2 ]  = {};             /* Required */
+            float               Scale[ 2 ] = {};             /* Required */
             VkCommandBuffer     pCmdBuffer = VK_NULL_HANDLE; /* Required */
             uint32_t            FrameIndex = 0;              /* Required */
             FrameUniformBuffer *pFrameData = nullptr;        /* Required */
