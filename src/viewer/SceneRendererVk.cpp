@@ -72,14 +72,70 @@ namespace apemodevk {
         std::unique_ptr< LoadedImage > pEmissiveLoadedImg;
         std::unique_ptr< LoadedImage > pMetallicRoughnessLoadedImg;
     };
-}
 
-inline void DebugBreak( ) {
-    apemodevk::platform::DebugBreak( );
-}
+    /* calculate nearest power of 2 */
+    uint32_t NearestPow2( uint32_t v ) {
+        --v;
+        v |= v >> 1;
+        v |= v >> 2;
+        v |= v >> 4;
+        v |= v >> 8;
+        v |= v >> 16;
+        return v + 1;
+    }
 
-inline void OutputDebugStringA( const char* pDebugStringA ) {
-    // SDL_LogInfo( SDL_LOG_CATEGORY_RENDER, pDebugStringA );
+    bool AllocateStagingMemoryPool( GraphicsDevice*                pNode,
+                                    apemodevk::THandle< VmaPool >& stagingMemoryPool,
+                                    uint32_t                       stagingMemoryLimit,
+                                    uint32_t&                      maxBlockCount,
+                                    uint32_t&                      blockSize ) {
+
+        constexpr uint32_t dummyBufferSize    = 64;               /* 64 b */
+        constexpr uint32_t preferredBlockSize = 64 * 1024 * 1024; /* 64 mb */
+
+        if ( stagingMemoryLimit < preferredBlockSize ) {
+            blockSize  = NearestPow2( stagingMemoryLimit );
+            maxBlockCount = 1;
+        } else {
+            blockSize  = preferredBlockSize;
+            maxBlockCount = stagingMemoryLimit / preferredBlockSize;
+        }
+
+        assert( blockSize );
+        assert( maxBlockCount );
+
+        VkBufferCreateInfo bufferCreateInfo;
+        InitializeStruct( bufferCreateInfo );
+        bufferCreateInfo.size  = dummyBufferSize;
+        bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+        VmaAllocationCreateInfo allocationCreateInfo;
+        InitializeStruct( allocationCreateInfo );
+        allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+
+        VmaPoolCreateInfo poolCreateInfo;
+        InitializeStruct( poolCreateInfo );
+        poolCreateInfo.blockSize     = blockSize;
+        poolCreateInfo.maxBlockCount = maxBlockCount;
+
+        // clang-format off
+        if ( VK_SUCCESS != CheckedCall( vmaFindMemoryTypeIndexForBufferInfo( pNode->hAllocator,
+                                                                             &bufferCreateInfo,
+                                                                             &allocationCreateInfo,
+                                                                             &poolCreateInfo.memoryTypeIndex ) ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+        // clang-format on
+
+        if ( false != stagingMemoryPool.Recreate( pNode->hAllocator, poolCreateInfo ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        return true;
+    }
+
 }
 
 bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdateParametersBase* pParamsBase ) {
@@ -87,15 +143,15 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         return false;
     }
 
-    bool deviceChanged = false;
+    bool bDeviceChanged = false;
     auto pParams = (SceneUpdateParametersVk*) pParamsBase;
 
     if ( pNode != pParams->pNode ) {
         pNode = pParams->pNode;
-        deviceChanged |= true;
+        bDeviceChanged |= true;
     }
 
-    if ( deviceChanged ) {
+    if ( bDeviceChanged ) {
 
         /* Get queue from pool (only copying) */
         auto pQueuePool = pParams->pNode->GetQueuePool( );
@@ -111,6 +167,16 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         auto pCmdBufferPool = pParams->pNode->GetCommandBufferPool( );
         auto acquiredCmdBuffer = pCmdBufferPool->Acquire( false, acquiredQueue.queueFamilyId );
 
+        uint32_t blockSize;
+        uint32_t maxBlockCount;
+
+        apemodevk::THandle< VmaPool > hPool;
+
+        if ( false != apemodevk::AllocateStagingMemoryPool( pParams->pNode, hPool, 128 * 1024 * 1024, maxBlockCount, blockSize ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
         apemodevk::HostBufferPool bufferPool;
         bufferPool.Recreate( *pParams->pNode,
                              *pParams->pNode,
@@ -122,52 +188,71 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         auto & meshesFb = *pParamsBase->pSceneSrc->meshes( );
 
         if ( VK_SUCCESS != vkResetCommandPool( *pParams->pNode, acquiredCmdBuffer.pCmdPool, 0 ) ) {
-            DebugBreak( );
+            apemodevk::platform::DebugBreak( );
+            return false;
         }
 
         VkCommandBufferBeginInfo commandBufferBeginInfo;
         apemodevk::InitializeStruct( commandBufferBeginInfo );
         commandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
         if ( VK_SUCCESS != vkBeginCommandBuffer( acquiredCmdBuffer.pCmdBuffer, &commandBufferBeginInfo ) ) {
-            DebugBreak( );
+            apemodevk::platform::DebugBreak( );
         }
 
-        for ( auto meshFb : meshesFb ) {
-            /* Scene mesh. */
-            auto& mesh = pScene->meshes[ meshIndex++ ];
+        struct MeshResource {
+            apemodevk::SceneMeshDeviceAssetVk* pMeshDeviceAsset = nullptr;
+            const apemodefb::MeshFb*           pSrcMesh         = nullptr;
+        };
 
-            /* Create mesh device asset if needed. */
-            auto pMeshDeviceAsset = (apemodevk::SceneMeshDeviceAssetVk*) mesh.pDeviceAsset;
+        std::vector< MeshResource > meshResources;
+        for ( auto pSrcMesh : meshesFb ) {
+            /* Scene dstMesh. */
+            auto& dstMesh = pScene->meshes[ meshIndex++ ];
+
+            /* Create dstMesh device asset if needed. */
+            auto pMeshDeviceAsset = (apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset;
             if ( nullptr == pMeshDeviceAsset ) {
-                pMeshDeviceAsset  = apemode_new apemodevk::SceneMeshDeviceAssetVk( );
-                mesh.pDeviceAsset = pMeshDeviceAsset;
+                pMeshDeviceAsset = apemode_new apemodevk::SceneMeshDeviceAssetVk( );
+                dstMesh.pDeviceAsset = pMeshDeviceAsset;
             }
 
-            const uint32_t verticesByteSize = (uint32_t) meshFb->vertices( )->size( );
-            const uint32_t indicesByteSize  = (uint32_t) meshFb->indices( )->size( );
+            MeshResource& meshResource    = apemodevk::PushBackAndGet( meshResources );
+            meshResource.pMeshDeviceAsset = pMeshDeviceAsset;
+            meshResource.pSrcMesh         = pSrcMesh;
+        }
+
+        for ( auto pSrcMesh : meshesFb ) {
+            /* Scene dstMesh. */
+            auto& dstMesh = pScene->meshes[ meshIndex++ ];
+
+            /* Create dstMesh device asset if needed. */
+            auto pMeshDeviceAsset = (apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset;
+
+            const uint32_t verticesByteSize = (uint32_t) pSrcMesh->vertices( )->size( );
+            const uint32_t indicesByteSize  = (uint32_t) pSrcMesh->indices( )->size( );
 
             const uint32_t storageAlignment = (uint32_t) pNode->AdapterProps.limits.minStorageBufferOffsetAlignment;
             const uint32_t verticesStorageSize = apemodexm::AlignedOffset( verticesByteSize, storageAlignment );
             const uint32_t totalMeshSize = verticesStorageSize + indicesByteSize;
 
             pMeshDeviceAsset->IndexOffset = verticesStorageSize;
-            if ( meshFb->index_type( ) == apemodefb::EIndexTypeFb_UInt32 ) {
+            if ( pSrcMesh->index_type( ) == apemodefb::EIndexTypeFb_UInt32 ) {
                 pMeshDeviceAsset->IndexType = VK_INDEX_TYPE_UINT32;
             }
 
-            auto & offset = meshFb->submeshes( )->begin( )->position_offset( );
+            auto & offset = pSrcMesh->submeshes( )->begin( )->position_offset( );
             pMeshDeviceAsset->positionOffset.x = offset.x();
             pMeshDeviceAsset->positionOffset.y = offset.y();
             pMeshDeviceAsset->positionOffset.z = offset.z();
 
-            auto & scale = meshFb->submeshes( )->begin( )->position_scale( );
+            auto & scale = pSrcMesh->submeshes( )->begin( )->position_scale( );
             pMeshDeviceAsset->positionScale.x = scale.x();
             pMeshDeviceAsset->positionScale.y = scale.y();
             pMeshDeviceAsset->positionScale.z = scale.z();
-            pMeshDeviceAsset->VertexCount = meshFb->submeshes( )->begin( )->vertex_count( );
+            pMeshDeviceAsset->VertexCount = pSrcMesh->submeshes( )->begin( )->vertex_count( );
 
-            auto verticesSuballocResult = bufferPool.Suballocate( meshFb->vertices( )->Data( ), verticesByteSize );
-            auto indicesSuballocResult = bufferPool.Suballocate( meshFb->indices( )->Data( ), indicesByteSize );
+            auto verticesSuballocResult = bufferPool.Suballocate( pSrcMesh->vertices( )->Data( ), verticesByteSize );
+            auto indicesSuballocResult = bufferPool.Suballocate( pSrcMesh->indices( )->Data( ), indicesByteSize );
 
             static VkBufferUsageFlags eBufferUsage
                 = VK_BUFFER_USAGE_TRANSFER_DST_BIT  /* Copy data from staging buffers */
@@ -184,7 +269,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             allocationCreateInfo.flags = 0;
 
             if ( false == pMeshDeviceAsset->hBuffer.Recreate( pParams->pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
-                DebugBreak( );
+                apemodevk::platform::DebugBreak( );
             }
 
             VkBufferMemoryBarrier bufferMemoryBarrier[ 3 ];
@@ -241,13 +326,13 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
             vkCmdCopyBuffer( acquiredCmdBuffer.pCmdBuffer,                 /* Cmd */
                              verticesSuballocResult.descBufferInfo.buffer, /* Src */
-                             pMeshDeviceAsset->hBuffer.Handle.pBuffer,                    /* Dst */
+                             pMeshDeviceAsset->hBuffer.Handle.pBuffer,     /* Dst */
                              1,
                              &bufferCopy[ 0 ] );
 
             vkCmdCopyBuffer( acquiredCmdBuffer.pCmdBuffer,                /* Cmd */
                              indicesSuballocResult.descBufferInfo.buffer, /* Src */
-                             pMeshDeviceAsset->hBuffer.Handle.pBuffer,                   /* Dst */
+                             pMeshDeviceAsset->hBuffer.Handle.pBuffer,    /* Dst */
                              1,
                              &bufferCopy[ 1 ] );
         }
@@ -317,10 +402,10 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
         if ( node.meshId >= pScene->meshes.size( ) )
             continue;
 
-        auto& mesh = pScene->meshes[ node.meshId ];
+        auto& dstMesh = pScene->meshes[ node.meshId ];
 
-        if ( auto pMeshDeviceAsset = (const apemodevk::SceneMeshDeviceAssetVk*) mesh.pDeviceAsset ) {
-            for ( auto& subset : mesh.subsets ) {
+        if ( auto pMeshDeviceAsset = (const apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset ) {
+            for ( auto& subset : dstMesh.subsets ) {
                 auto& mat = pScene->materials[ node.materialIds[ subset.materialId ] ];
 
                 //frameData.color          = mat.baseColorFactor;
@@ -416,7 +501,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     apemodevk::THandle< VkShaderModule > hFragmentShaderModule;
     if ( false == hVertexShaderModule.Recreate( *pParams->pNode, vertexShaderCreateInfo ) ||
          false == hFragmentShaderModule.Recreate( *pParams->pNode, fragmentShaderCreateInfo ) ) {
-        DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
@@ -434,7 +519,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     descSetLayoutCreateInfo.pBindings    = bindings;
 
     if ( false == hDescSetLayout.Recreate( *pParams->pNode, descSetLayoutCreateInfo ) ) {
-        DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
@@ -444,7 +529,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     }
 
     if ( false == DescSets.RecreateResourcesFor( *pParams->pNode, pParams->pDescPool, descriptorSetLayouts ) ) {
-        DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
@@ -454,7 +539,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     pipelineLayoutCreateInfo.pSetLayouts    = descriptorSetLayouts;
 
     if ( false == hPipelineLayout.Recreate( *pParams->pNode, pipelineLayoutCreateInfo ) ) {
-        DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
@@ -631,12 +716,12 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     //
 
     if ( false == hPipelineCache.Recreate( *pParams->pNode, pipelineCacheCreateInfo ) ) {
-        DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
     if ( false == hPipeline.Recreate( *pParams->pNode, hPipelineCache, graphicsPipelineCreateInfo ) ) {
-        DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 

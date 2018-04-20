@@ -23,12 +23,12 @@ void apemode::NuklearRendererSdlBase::SdlClipboardCopy( nk_handle usr, const cha
     }
 }
 
-void *apemode::NuklearRendererSdlBase::DeviceUploadAtlas( InitParametersBase *initParamsBase,
-                                                          const void *        image,
+void *apemode::NuklearRendererSdlBase::DeviceUploadAtlas( InitParametersBase *pInitParamsBase,
+                                                          const void *        pImage,
                                                           uint32_t            width,
                                                           uint32_t            height ) {
-    (void) initParamsBase;
-    (void) image;
+    (void) pInitParamsBase;
+    (void) pImage;
     (void) width;
     (void) height;
 
@@ -37,7 +37,7 @@ void *apemode::NuklearRendererSdlBase::DeviceUploadAtlas( InitParametersBase *in
 
 bool apemode::NuklearRendererSdlBase::Init( InitParametersBase *pInitParamsBase ) {
     if ( nullptr == pInitParamsBase->pFontAsset ) {
-        return nullptr;
+        return false;
     }
 
     nk_init_default( &Context, nullptr /* User font */ );
@@ -72,15 +72,15 @@ void apemode::NuklearRendererSdlBase::FontStashBegin( nk_font_atlas **atlas ) {
     *atlas = &Atlas;
 }
 
-bool apemode::NuklearRendererSdlBase::FontStashEnd( InitParametersBase *initParamsBase ) {
+bool apemode::NuklearRendererSdlBase::FontStashEnd( InitParametersBase *pInitParamsBase ) {
     int imageWidth  = 0;
     int imageHeight = 0;
 
-    if ( const void *imageData = nk_font_atlas_bake( &Atlas, &imageWidth, &imageHeight, NK_FONT_ATLAS_RGBA32 ) ) {
-        assert( imageWidth && imageHeight && "Invalid font image dimensions." );
+    if ( const void *pImageData = nk_font_atlas_bake( &Atlas, &imageWidth, &imageHeight, NK_FONT_ATLAS_RGBA32 ) ) {
+        assert( imageWidth && imageHeight && "Invalid font pImage dimensions." );
 
         /* Overrided */
-        if ( auto atlasHandle = DeviceUploadAtlas( initParamsBase, imageData, imageWidth, imageHeight ) ) {
+        if ( auto atlasHandle = DeviceUploadAtlas( pInitParamsBase, pImageData, imageWidth, imageHeight ) ) {
             nk_font_atlas_end( &Atlas, nk_handle_ptr( atlasHandle ), &NullTexture );
 
             if ( pDefaultFont )
@@ -93,8 +93,8 @@ bool apemode::NuklearRendererSdlBase::FontStashEnd( InitParametersBase *initPara
     return false;
 }
 
-bool apemode::NuklearRendererSdlBase::Render( RenderParametersBase *renderParamsBase ) {
-    (void) renderParamsBase;
+bool apemode::NuklearRendererSdlBase::Render( RenderParametersBase *pRenderParamsBase ) {
+    (void) pRenderParamsBase;
     return true;
 }
 
@@ -111,14 +111,16 @@ void apemode::NuklearRendererSdlBase::Shutdown( ) {
 void apemode::NuklearRendererSdlBase::DeviceDestroy( ) {
 }
 
-bool apemode::NuklearRendererSdlBase::DeviceCreate( InitParametersBase *initParamsBase ) {
-    (void) initParamsBase;
+bool apemode::NuklearRendererSdlBase::DeviceCreate( InitParametersBase *pInitParamsBase ) {
+    (void) pInitParamsBase;
     return true;
 }
 
 void apemode::NuklearRendererSdlBase::SetStyle( Theme theme ) {
-    auto            ctx = &Context;
+
+    auto ctx = &Context;
     struct nk_color table[ NK_COLOR_COUNT ];
+
     if ( theme == White ) {
         table[ NK_COLOR_TEXT ]                    = nk_rgba( 70, 70, 70, 255 );
         table[ NK_COLOR_WINDOW ]                  = nk_rgba( 175, 175, 175, 255 );
