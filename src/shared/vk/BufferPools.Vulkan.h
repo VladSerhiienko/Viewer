@@ -106,6 +106,7 @@ namespace apemodevk {
 
         void operator( )( VmaPool &pPool ) {
             if ( nullptr == pPool || nullptr == pAllocator )
+                return;
 
             vmaDestroyPool( pAllocator, pPool );
 

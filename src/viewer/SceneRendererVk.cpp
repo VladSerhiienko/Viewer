@@ -84,12 +84,11 @@ namespace apemodevk {
         return v + 1;
     }
 
-    bool AllocateStagingMemoryPool( GraphicsDevice*                pNode,
-                                    apemodevk::THandle< VmaPool >& stagingMemoryPool,
-                                    uint32_t                       stagingMemoryLimit,
-                                    uint32_t&                      maxBlockCount,
-                                    uint32_t&                      blockSize ) {
-
+    bool AllocateStagingMemoryPool( GraphicsDevice*     pNode,
+                                    THandle< VmaPool >& stagingMemoryPool,
+                                    uint32_t            stagingMemoryLimit,
+                                    uint32_t&           maxBlockCount,
+                                    uint32_t&           blockSize ) {
         constexpr uint32_t dummyBufferSize    = 64;               /* 64 b */
         constexpr uint32_t preferredBlockSize = 64 * 1024 * 1024; /* 64 mb */
 
@@ -123,19 +122,34 @@ namespace apemodevk {
                                                                              &bufferCreateInfo,
                                                                              &allocationCreateInfo,
                                                                              &poolCreateInfo.memoryTypeIndex ) ) ) {
-            apemodevk::platform::DebugBreak( );
+            platform::DebugBreak( );
             return false;
         }
         // clang-format on
 
-        if ( false != stagingMemoryPool.Recreate( pNode->hAllocator, poolCreateInfo ) ) {
-            apemodevk::platform::DebugBreak( );
+        if ( false == stagingMemoryPool.Recreate( pNode->hAllocator, poolCreateInfo ) ) {
+            platform::DebugBreak( );
             return false;
         }
 
         return true;
     }
 
+    struct MeshResource {
+        SceneMeshDeviceAssetVk*  pDstAsset = nullptr;
+        const apemodefb::MeshFb* pSrcMesh  = nullptr;
+    };
+
+    /**
+     * Uploads resources from CPU to GPU with respect to staging memory limit.
+     */
+    MeshResource* UploadResources( GraphicsDevice*     pNode,
+                                   THandle< VmaPool >& pool,
+                                   uint32_t            blockSize,
+                                   MeshResource*       pResourceIt,
+                                   MeshResource*       pResourcesEndIt ) {
+        return nullptr;
+    }
 }
 
 bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdateParametersBase* pParamsBase ) {
@@ -199,26 +213,21 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             apemodevk::platform::DebugBreak( );
         }
 
-        struct MeshResource {
-            apemodevk::SceneMeshDeviceAssetVk* pMeshDeviceAsset = nullptr;
-            const apemodefb::MeshFb*           pSrcMesh         = nullptr;
-        };
-
-        std::vector< MeshResource > meshResources;
+        std::vector< apemodevk::MeshResource > meshResources;
         for ( auto pSrcMesh : meshesFb ) {
             /* Scene dstMesh. */
             auto& dstMesh = pScene->meshes[ meshIndex++ ];
 
-            /* Create dstMesh device asset if needed. */
-            auto pMeshDeviceAsset = (apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset;
-            if ( nullptr == pMeshDeviceAsset ) {
-                pMeshDeviceAsset = apemode_new apemodevk::SceneMeshDeviceAssetVk( );
-                dstMesh.pDeviceAsset = pMeshDeviceAsset;
+            /* Create mesh device asset if needed. */
+            auto pMeshAsset = (apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset;
+            if ( nullptr == pMeshAsset ) {
+                pMeshAsset = apemode_new apemodevk::SceneMeshDeviceAssetVk( );
+                dstMesh.pDeviceAsset = pMeshAsset;
             }
 
-            MeshResource& meshResource    = apemodevk::PushBackAndGet( meshResources );
-            meshResource.pMeshDeviceAsset = pMeshDeviceAsset;
-            meshResource.pSrcMesh         = pSrcMesh;
+            auto& meshResource     = apemodevk::PushBackAndGet( meshResources );
+            meshResource.pDstAsset = pMeshAsset;
+            meshResource.pSrcMesh  = pSrcMesh;
         }
 
         for ( auto pSrcMesh : meshesFb ) {

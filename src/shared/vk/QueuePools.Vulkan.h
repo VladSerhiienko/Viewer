@@ -1,6 +1,5 @@
 #pragma once
 
-#include <SceneRendererBase.h>
 #include <GraphicsDevice.Vulkan.h>
 
 namespace apemodevk {
@@ -44,7 +43,7 @@ namespace apemodevk {
         VkCommandBuffer  pCmdBuffer = VK_NULL_HANDLE; /* Handle */
         VkCommandPool    pCmdPool   = VK_NULL_HANDLE; /* Command pool handle (associated with the Handle) */
         VkFence          pFence     = VK_NULL_HANDLE; /* Last queue fence */
-        std::atomic_bool bInUse     ;//= false;          /* Indicates it is used by other thread */
+        std::atomic_bool bInUse;                      /* Indicates it is used by other thread */
 
         CommandBufferInPool( );
         CommandBufferInPool( const CommandBufferInPool& other );
@@ -81,12 +80,12 @@ namespace apemodevk {
     class CommandBufferPool {
         VkDevice                               pDevice         = VK_NULL_HANDLE;
         VkPhysicalDevice                       pPhysicalDevice = VK_NULL_HANDLE;
-        uint32_t                               queueFamilyId   = 0;
+        uint32_t                               QueueFamilyId   = 0;
         std::vector< CommandBufferFamilyPool > Pools;
 
         friend class GraphicsDevice;
-        CommandBufferPool( VkDevice                       pInDevice,
-                           VkPhysicalDevice               pInPhysicalDevice,
+        CommandBufferPool( VkDevice                       pDevice,
+                           VkPhysicalDevice               pPhysicalDevice,
                            const VkQueueFamilyProperties* pQueuePropsIt,
                            const VkQueueFamilyProperties* pQueuePropsEnd );
 
@@ -95,8 +94,8 @@ namespace apemodevk {
         ~CommandBufferPool( );
 
         uint32_t                       GetPoolCount( ) const;
-        CommandBufferFamilyPool*       GetPool( uint32_t QueueFamilyIndex );
-        const CommandBufferFamilyPool* GetPool( uint32_t QueueFamilyIndex ) const;
+        CommandBufferFamilyPool*       GetPool( uint32_t queueFamilyIndex );
+        const CommandBufferFamilyPool* GetPool( uint32_t queueFamilyIndex ) const;
         CommandBufferFamilyPool*       GetPool( VkQueueFlags eRequiredQueueFlags, bool bExactMatchByFlags );
         const CommandBufferFamilyPool* GetPool( VkQueueFlags eRequiredQueueFlags, bool bExactMatchByFlags ) const;
 
@@ -110,7 +109,7 @@ namespace apemodevk {
          * @note Release for reusing, @see Release().
          **/
         AcquiredCommandBuffer Acquire( bool bIgnoreFenceStatus, VkQueueFlags eRequiredQueueFlags, bool bExactMatchByFlags );
-        AcquiredCommandBuffer Acquire( bool bIgnoreFenceStatus, uint32_t QueueFamilyIndex );
+        AcquiredCommandBuffer Acquire( bool bIgnoreFenceStatus, uint32_t queueFamilyIndex );
 
         /**
          * Allows the command buffer to be reused.
@@ -123,8 +122,8 @@ namespace apemodevk {
 
     struct QueueInPool {
         VkQueue          hQueue = VK_NULL_HANDLE; /* Handle */
-        VkFence          hFence = VK_NULL_HANDLE; /* Indicates the execution is in progress */
-        std::atomic_bool bInUse ; //= false;          /* Indicates it is used by other thread */
+        VkFence          hFence = VK_NULL_HANDLE; /* Indicates that the execution is in progress */
+        std::atomic_bool bInUse;                  /* Indicates that it is used by other thread */
 
         QueueInPool( );
         QueueInPool( const QueueInPool& other );
