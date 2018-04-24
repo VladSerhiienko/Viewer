@@ -186,7 +186,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
         apemodevk::THandle< VmaPool > hPool;
 
-        if ( false != apemodevk::AllocateStagingMemoryPool( pParams->pNode, hPool, 128 * 1024 * 1024, maxBlockCount, blockSize ) ) {
+        if ( false == apemodevk::AllocateStagingMemoryPool( pParams->pNode, hPool, 128 * 1024 * 1024, maxBlockCount, blockSize ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
         }
@@ -230,6 +230,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             meshResource.pSrcMesh  = pSrcMesh;
         }
 
+        meshIndex = 0;
         for ( auto pSrcMesh : meshesFb ) {
             /* Scene dstMesh. */
             auto& dstMesh = pScene->meshes[ meshIndex++ ];
