@@ -10,7 +10,7 @@ namespace apemodevk {
         VkBuffer          pBuffer     = VK_NULL_HANDLE;
         VmaAllocator      pAllocator  = VK_NULL_HANDLE;
         VmaAllocation     pAllocation = VK_NULL_HANDLE;
-        VmaAllocationInfo allocInfo   = {};
+        VmaAllocationInfo AllocationInfo   = {};
     };
 
     template <>
@@ -53,7 +53,7 @@ namespace apemodevk {
                                                                &allocInfo,
                                                                &Handle.pBuffer,
                                                                &Handle.pAllocation,
-                                                               &Handle.allocInfo ) );
+                                                               &Handle.AllocationInfo ) );
         }
 
         inline THandle( ) = default;

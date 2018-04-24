@@ -58,8 +58,8 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
     void* elements = nullptr;
 
     /* Load vertices/elements directly into vertex/element buffer */
-    vertices = hVertexBuffer[ frameIndex ].Handle.allocInfo.pMappedData;
-    elements = hIndexBuffer[ frameIndex ].Handle.allocInfo.pMappedData;
+    vertices = hVertexBuffer[ frameIndex ].Handle.AllocationInfo.pMappedData;
+    elements = hIndexBuffer[ frameIndex ].Handle.AllocationInfo.pMappedData;
 
     /* Fill convert configuration */
     struct nk_convert_config config;
@@ -497,7 +497,7 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
     }
 
     // Upload to Buffer:
-    if ( auto mappedUploadBufferData = hUploadBuffer.Handle.allocInfo.pMappedData ) {
+    if ( auto mappedUploadBufferData = hUploadBuffer.Handle.AllocationInfo.pMappedData ) {
         memcpy( mappedUploadBufferData, fontImgPixels, uploadSize );
     }
 

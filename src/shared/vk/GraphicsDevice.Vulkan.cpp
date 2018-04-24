@@ -287,6 +287,14 @@ apemodevk::GraphicsDevice::operator VkInstance( ) const {
     return GetGraphicsManager( )->hInstance;
 }
 
+const VkPhysicalDeviceProperties& apemodevk::GraphicsDevice::GetPhysicalDeviceProperties( ) const {
+    return AdapterProps;
+}
+
+const VkPhysicalDeviceLimits& apemodevk::GraphicsDevice::GetPhysicalDeviceLimits( ) const {
+    return AdapterProps.limits;
+}
+
 bool apemodevk::GraphicsDevice::IsValid( ) const {
     return hLogicalDevice.IsNotNull( );
 }

@@ -701,7 +701,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         sceneRenderParameters.pNode      = appSurfaceVk->pNode;
         sceneRenderParameters.ViewMatrix = frameData.viewMatrix;
         sceneRenderParameters.ProjMatrix = frameData.projectionMatrix;
-        pSceneRendererBase->RenderScene( pScene.get( ), &sceneRenderParameters );
+        //pSceneRendererBase->RenderScene( pScene.get( ), &sceneRenderParameters );
 
         NuklearRendererSdlVk::RenderParametersVk renderParamsNk;
         renderParamsNk.dims[ 0 ]          = (float) width;

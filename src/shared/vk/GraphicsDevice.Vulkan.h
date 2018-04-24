@@ -39,9 +39,9 @@ namespace apemodevk {
         CommandBufferPool *      GetCommandBufferPool( );
         const CommandBufferPool *GetCommandBufferPool( ) const;
 
-        bool ScanDeviceQueues( std::vector< VkQueueFamilyProperties > &QueueProps,
-                               std::vector< VkDeviceQueueCreateInfo > &QueueReqs,
-                               std::vector< float > &                  QueuePriorities );
+        bool ScanDeviceQueues( std::vector< VkQueueFamilyProperties > &queueProps,
+                               std::vector< VkDeviceQueueCreateInfo > &queueReqs,
+                               std::vector< float > &                  queuePriorities );
 
         bool ScanDeviceLayerProperties( uint32_t flags );
         bool ScanFormatProperties( );
@@ -49,6 +49,9 @@ namespace apemodevk {
         operator VkDevice( ) const;
         operator VkPhysicalDevice( ) const;
         operator VkInstance( ) const;
+
+        const VkPhysicalDeviceProperties & GetPhysicalDeviceProperties( ) const;
+        const VkPhysicalDeviceLimits &     GetPhysicalDeviceLimits( ) const;
 
         THandle< VkDevice >                  hLogicalDevice;
         THandle< VmaAllocator >              hAllocator;

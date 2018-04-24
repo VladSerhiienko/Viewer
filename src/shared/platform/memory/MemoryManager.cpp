@@ -211,14 +211,16 @@ void *operator new[]( std::size_t           size,
                       std::nothrow_t const &nothrow,
                       const char *          sourceFile,
                       const unsigned int    sourceLine,
-                      const char *          sourceFunc ) noexcept {
+                      const char *          sourceFunc,
+                      apemode::apemode_tag_t ) noexcept {
     return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, sourceFile, sourceLine, sourceFunc, m_alloc_new_array );
 }
 
 void *operator new[]( std::size_t        size,
                       const char *       sourceFile,
                       const unsigned int sourceLine,
-                      const char *       sourceFunc ) throw( ) {
+                      const char *       sourceFunc,
+                      apemode::apemode_tag_t ) throw( ) {
     return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, sourceFile, sourceLine, sourceFunc, m_alloc_new_array );
 }
 
@@ -226,19 +228,32 @@ void *operator new( std::size_t           size,
                     std::nothrow_t const &nothrow,
                     const char *          sourceFile,
                     const unsigned int    sourceLine,
-                    const char *          sourceFunc ) noexcept {
+                    const char *          sourceFunc,
+                    apemode::apemode_tag_t ) noexcept {
     return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, __FUNCTION__, m_alloc_new );
 }
 
-void *operator new( std::size_t size, const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc ) throw( ) {
+void *operator new( std::size_t        size,
+                    const char *       sourceFile,
+                    const unsigned int sourceLine,
+                    const char *       sourceFunc,
+                    apemode::apemode_tag_t ) throw( ) {
     return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, __FUNCTION__, m_alloc_new );
 }
 
-void operator delete[]( void *p, const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc ) throw( ) {
+void operator delete[]( void *             p,
+                        const char *       sourceFile,
+                        const unsigned int sourceLine,
+                        const char *       sourceFunc,
+                        apemode::apemode_tag_t ) throw( ) {
     return apememext::aligned_free( p, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete_array );
 }
 
-void operator delete( void *p, const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc ) throw( ) {
+void operator delete( void *             p,
+                      const char *       sourceFile,
+                      const unsigned int sourceLine,
+                      const char *       sourceFunc,
+                      apemode::apemode_tag_t ) throw( ) {
     return apememext::aligned_free( p, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete );
 }
 

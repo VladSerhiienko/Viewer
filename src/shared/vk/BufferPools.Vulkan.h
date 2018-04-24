@@ -1,12 +1,7 @@
 #pragma once
 
-//#include <math.h>
-//#include <mathfu/matrix.h>
-//#include <mathfu/vector.h>
-//#include <mathfu/glsl_mappings.h>
-
 #include <GraphicsDevice.Vulkan.h>
-#include <DescriptorPool.Vulkan.h>
+#include <Buffer.Vulkan.h>
 
 #define _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges 1
 
@@ -14,15 +9,14 @@ namespace apemodevk {
 
     struct HostBufferPool {
         struct Page {
-            THandle< VkBuffer >       hBuffer;
-            THandle< VkDeviceMemory > hMemory;
-            VkDevice                  pDevice              = VK_NULL_HANDLE;
-            uint8_t *                 pMapped              = nullptr;
-            uint32_t                  Alignment            = 0;
-            uint32_t                  TotalSize            = 0;
-            uint32_t                  CurrentOffsetIndex   = 0;
-            uint32_t                  TotalOffsetCount     = 0;
-            VkMemoryPropertyFlags     eMemoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+            THandle< BufferComposite > hBuffer;
+            GraphicsDevice *           pNode = nullptr;
+            //uint8_t *                  pMappedData = nullptr;
+            uint32_t                   Alignment = 0;
+            uint32_t                   TotalSize = 0;
+            uint32_t                   CurrChunkIndex = 0;
+            uint32_t                   TotalChunkCount = 0;
+            VkMemoryPropertyFlags      eMemoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
 #if _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges
             std::vector< VkMappedMemoryRange > Ranges;
@@ -30,8 +24,7 @@ namespace apemodevk {
             VkMappedMemoryRange Range;
 #endif
 
-            bool Recreate( VkDevice              pInLogicalDevice,
-                           VkPhysicalDevice      pInPhysicalDevice,
+            bool Recreate( GraphicsDevice *      pNode,
                            uint32_t              alignment,
                            uint32_t              bufferRange,
                            VkBufferUsageFlags    bufferUsageFlags,
@@ -52,18 +45,19 @@ namespace apemodevk {
             }
         };
 
+        using PagePtr = std::unique_ptr< Page >;
+
         struct SuballocResult {
             VkDescriptorBufferInfo descBufferInfo;
             uint32_t               dynamicOffset;
         };
 
-        VkDevice              pLogicalDevice       = VK_NULL_HANDLE;
-        VkPhysicalDevice      pPhysicalDevice      = VK_NULL_HANDLE;
-        VkBufferUsageFlags    eBufferUsageFlags    = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-        VkMemoryPropertyFlags eMemoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-        uint32_t              MinAlignment         = 256;
-        uint32_t              MaxPageRange         = 65536; /* 256 * 256 */
-        std::vector< Page * > Pages;
+        GraphicsDevice *      pNode = nullptr;
+        VkBufferUsageFlags    eBufferUsageFlags = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        VkMemoryPropertyFlags eMemoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+        uint32_t              MinAlignment = 0;
+        uint32_t              MaxPageRange = 0;
+        std::vector< PagePtr > Pages;
 
         /**
          * @param pInLogicalDevice Logical device.
@@ -72,11 +66,7 @@ namespace apemodevk {
          * @param pInLimits Device limits (null is ok).
          * @param usageFlags Usually UNIFORM.
          **/
-        void Recreate( VkDevice                      pInLogicalDevice,
-                       VkPhysicalDevice              pInPhysicalDevice,
-                       const VkPhysicalDeviceLimits *pInLimits,
-                       VkBufferUsageFlags            bufferUsageFlags,
-                       bool                          bInHostCoherent );
+        void Recreate( GraphicsDevice *pNode, VkBufferUsageFlags bufferUsageFlags, bool bInHostCoherent );
 
         Page *FindPage( uint32_t dataStructureSize );
 

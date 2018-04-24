@@ -70,7 +70,7 @@ bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode, HostBufferPool* 
 
     if ( nullptr == pInHostBufferPool ) {
         pHostBufferPool = new HostBufferPool( );
-        pHostBufferPool->Recreate( *pNode, *pNode, &pNode->AdapterProps.limits, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, false );
+        pHostBufferPool->Recreate( pNode, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, false );
     } else {
         pHostBufferPool = pInHostBufferPool;
     }
@@ -347,16 +347,20 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
     submitInfo.pCommandBuffers    = &acquiredCmdBuffer.pCmdBuffer;
 
     /* Reset signaled fence */
-    if ( VK_SUCCESS == vkGetFenceStatus( *pNode, acquiredQueue.pFence ) )
+    /*if ( VK_SUCCESS == vkGetFenceStatus( *pNode, acquiredQueue.pFence ) )
         if ( VK_SUCCESS != CheckedCall( vkResetFences( *pNode, 1, &acquiredQueue.pFence ) ) ) {
             return nullptr;
         }
 
     if ( VK_SUCCESS != CheckedCall( vkQueueSubmit( acquiredQueue.pQueue, 1, &submitInfo, acquiredQueue.pFence ) ) ) {
         return nullptr;
-    }
+    }*/
 
-    if ( bAwaitLoading ) {
+    vkResetFences( pNode->hLogicalDevice, 1, &acquiredQueue.pFence );
+    vkQueueSubmit( acquiredQueue.pQueue, 1, &submitInfo, acquiredQueue.pFence );
+    vkWaitForFences( pNode->hLogicalDevice, 1, &acquiredQueue.pFence, true, UINT_MAX );
+
+    //if ( bAwaitLoading ) {
         /* No need to pass fence to command buffer pool */
         acquiredCmdBuffer.pFence = nullptr;
 
@@ -366,14 +370,14 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
 
         /* Ensure the image can be used right away */
         CheckedCall( vkWaitForFences( *pNode, 1, &acquiredQueue.pFence, true, UINT64_MAX ) );
-    } else {
-        /* Ensure the command buffer is synchronized */
-        acquiredCmdBuffer.pFence = acquiredQueue.pFence;
+    //} else {
+    //    /* Ensure the command buffer is synchronized */
+    //    acquiredCmdBuffer.pFence = acquiredQueue.pFence;
 
-        /* Ensure the image memory transfer can be synchronized */
-        loadedImage->QueueId = acquiredQueue.queueId;
-        loadedImage->QueueFamilyId = acquiredQueue.queueFamilyId;
-    }
+    //    /* Ensure the image memory transfer can be synchronized */
+    //    loadedImage->QueueId = acquiredQueue.queueId;
+    //    loadedImage->QueueFamilyId = acquiredQueue.queueFamilyId;
+    //}
 
     pNode->GetCommandBufferPool( )->Release( acquiredCmdBuffer );
     pNode->GetQueuePool( )->Release( acquiredQueue );

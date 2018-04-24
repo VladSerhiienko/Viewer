@@ -18,13 +18,12 @@ AllowShortBlocksOnASingleLine: false
 AllowShortFunctionsOnASingleLine: None
 AllowShortIfStatementsOnASingleLine: false
 AllowShortLoopsOnASingleLine: false
-AllowAllParametersOfDeclarationOnNextLine: true
 
 PointerAlignment: Middle
-AlignConsecutiveAssignments: true
+AlignConsecutiveAssignments: false
 AlignConsecutiveDeclarations: true
 
-# SpaceBeforeParens: Always 
+# SpaceBeforeParens: Always
 SpaceBeforeAssignmentOperators: true
 SpaceInEmptyParentheses: true
 SpaceAfterCStyleCast: true
@@ -34,8 +33,10 @@ SpacesInSquareBrackets: true
 
 BinPackArguments: false
 BinPackParameters: false
-
 AlignAfterOpenBracket: Align
+AllowAllParametersOfDeclarationOnNextLine: false
+AlwaysBreakBeforeMultilineStrings: true
+
 
 AlignTrailingComments: true
 SpacesBeforeTrailingComments: 1

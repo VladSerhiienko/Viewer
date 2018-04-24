@@ -61,31 +61,47 @@ namespace apemode {
 
 } // namespace apemode
 
+namespace apemode {
+    enum apemode_tag_t { e_apemode_tag };
+} // namespace apemode
+
 void* operator new[]( std::size_t s,
                       std::nothrow_t const&,
-                      const char*        sourceFile,
-                      const unsigned int sourceLine,
-                      const char*        sourceFunc ) noexcept;
+                      const char*            sourceFile,
+                      const unsigned int     sourceLine,
+                      const char*            sourceFunc,
+                      apemode::apemode_tag_t tag ) noexcept;
 
-void* operator new[]( std::size_t        s,
-                      const char*        sourceFile,
-                      const unsigned int sourceLine,
-                      const char*        sourceFunc ) throw( );
+void* operator new[]( std::size_t            s,
+                      const char*            sourceFile,
+                      const unsigned int     sourceLine,
+                      const char*            sourceFunc,
+                      apemode::apemode_tag_t tag ) throw( );
 
-void operator delete[]( void* p, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc ) throw( );
+void operator delete[]( void*                  p,
+                        const char*            sourceFile,
+                        const unsigned int     sourceLine,
+                        const char*            sourceFunc,
+                        apemode::apemode_tag_t tag ) throw( );
 
 void* operator new( std::size_t s,
                     std::nothrow_t const&,
-                    const char*        sourceFile,
-                    const unsigned int sourceLine,
-                    const char*        sourceFunc ) noexcept;
+                    const char*            sourceFile,
+                    const unsigned int     sourceLine,
+                    const char*            sourceFunc,
+                    apemode::apemode_tag_t tag ) noexcept;
 
-void* operator new( std::size_t        s,
-                    const char*        sourceFile,
-                    const unsigned int sourceLine,
-                    const char*        sourceFunc ) throw( );
+void* operator new( std::size_t            s,
+                    const char*            sourceFile,
+                    const unsigned int     sourceLine,
+                    const char*            sourceFunc,
+                    apemode::apemode_tag_t tag ) throw( );
 
-void operator delete( void* p, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc ) throw( );
+void operator delete( void*                  p,
+                      const char*            sourceFile,
+                      const unsigned int     sourceLine,
+                      const char*            sourceFunc,
+                      apemode::apemode_tag_t tag ) throw( );
 
 #if defined( APEMODE_USE_MEMORY_TRACKING )
 #include "FluidStudios/MemoryManager/mmgr.h"
@@ -104,5 +120,5 @@ void  apemode_free( void* p );
 
 #endif
 
-#define apemode_new new ( __FILE__, __LINE__, __FUNCTION__ )
-#define apemode_delete delete ( __FILE__, __LINE__, __FUNCTION__ )
+#define apemode_new new ( __FILE__, __LINE__, __FUNCTION__, apemode::e_apemode_tag )
+#define apemode_delete delete ( __FILE__, __LINE__, __FUNCTION__, apemode::e_apemode_tag )

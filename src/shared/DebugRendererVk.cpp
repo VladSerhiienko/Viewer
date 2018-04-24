@@ -122,7 +122,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     VkPipelineViewportStateCreateInfo      viewportStateCreateInfo;
     VkPipelineMultisampleStateCreateInfo   multisampleStateCreateInfo;
     VkDynamicState                         dynamicStateEnables[ 2 ];
-    VkPipelineDynamicStateCreateInfo       dynamicStateCreateInfo ;
+    VkPipelineDynamicStateCreateInfo       dynamicStateCreateInfo;
     VkPipelineShaderStageCreateInfo        shaderStageCreateInfo[ 2 ];
 
     InitializeStruct( graphicsPipelineCreateInfo );
@@ -251,7 +251,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
         // clang-format off
         const float vertexBufferData[] = {
             // -X side
-            -1.0f,-1.0f,-1.0f,  
+            -1.0f,-1.0f,-1.0f,
             -1.0f,-1.0f, 1.0f,
             -1.0f, 1.0f, 1.0f,
             -1.0f, 1.0f, 1.0f,
@@ -291,7 +291,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
             1.0f, 1.0f,-1.0f,
 
             // +Z side
-            -1.0f, 1.0f, 1.0f,  
+            -1.0f, 1.0f, 1.0f,
             -1.0f,-1.0f, 1.0f,
              1.0f, 1.0f, 1.0f,
             -1.0f,-1.0f, 1.0f,
@@ -316,7 +316,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
             return false;
         }
 
-        if ( auto mappedData = hVertexBuffer.Handle.allocInfo.pMappedData ) {
+        if ( auto mappedData = hVertexBuffer.Handle.AllocationInfo.pMappedData ) {
             memcpy( mappedData, vertexBufferData, vertexBufferSize );
         }
     }
@@ -325,7 +325,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     vkGetPhysicalDeviceProperties( pNode->pPhysicalDevice, &adapterProps );
 
     for (uint32_t i = 0; i < pInitParams->FrameCount; ++i) {
-        BufferPools[ i ].Recreate( pNode->hLogicalDevice, pNode->pPhysicalDevice, &adapterProps.limits, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
+        BufferPools[ i ].Recreate( pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
         DescSetPools[ i ].Recreate( pNode->hLogicalDevice, pInitParams->pDescPool, hDescSetLayout );
     }
 
@@ -337,6 +337,7 @@ void apemode::DebugRendererVk::Reset( uint32_t frameIndex ) {
 }
 
 bool apemode::DebugRendererVk::Render( RenderParametersVk* renderParams ) {
+    return true;
     auto frameIndex = ( renderParams->FrameIndex ) % kMaxFrameCount;
 
     auto suballocResult = BufferPools[ frameIndex ].TSuballocate( *renderParams->pFrameData );
