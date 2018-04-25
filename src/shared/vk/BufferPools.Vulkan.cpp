@@ -9,16 +9,17 @@ inline uint32_t AlignedOffset( uint32_t offset, uint32_t alignment ) {
     return alignment * ( offset / alignment + ( uint32_t ) !!( offset % alignment ) );
 }
 
-bool apemodevk::HostBufferPool::Page::Recreate( VkDevice              pInLogicalDevice,
-                                                VkPhysicalDevice      pInPhysicalDevice,
+bool apemodevk::HostBufferPool::Page::Recreate( GraphicsDevice *      pInNode,
                                                 uint32_t              alignment,
                                                 uint32_t              bufferRange,
                                                 VkBufferUsageFlags    bufferUsageFlags,
                                                 VkMemoryPropertyFlags memoryPropertyFlags ) {
-    pMapped              = nullptr;
-    pDevice              = pInLogicalDevice;
-    TotalOffsetCount     = bufferRange / alignment;
+    pNode                = pInNode;
     eMemoryPropertyFlags = memoryPropertyFlags;
+    TotalOffsetCount     = bufferRange / alignment;
+    TotalSize            = TotalOffsetCount * alignment;
+    Alignment            = alignment;
+    pMapped              = nullptr;
 
 #if _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges
     Ranges.reserve( std::min< uint32_t >( 64, TotalOffsetCount ) );
@@ -26,26 +27,17 @@ bool apemodevk::HostBufferPool::Page::Recreate( VkDevice              pInLogical
     InitializeStruct( Range );
 #endif
 
-    TotalSize = bufferRange;
-    Alignment = alignment;
-
     VkBufferCreateInfo bufferCreateInfo;
     InitializeStruct( bufferCreateInfo );
-    bufferCreateInfo.size  = bufferRange;
+    bufferCreateInfo.size  = TotalSize;
     bufferCreateInfo.usage = bufferUsageFlags;
 
-    if ( false == hBuffer.Recreate( pInLogicalDevice, pInPhysicalDevice, bufferCreateInfo ) ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
-    }
+    VmaAllocationCreateInfo allocationCreateInfo;
+    InitializeStruct( allocationCreateInfo );
+    allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-    auto memoryAllocateInfo = hBuffer.GetMemoryAllocateInfo( memoryPropertyFlags );
-    if ( false == hMemory.Recreate( pInLogicalDevice, memoryAllocateInfo ) ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
-    }
-
-    if ( false == hBuffer.BindMemory( hMemory, 0 ) ) {
+    if ( false == hBuffer.Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
         apemodevk::platform::DebugBreak( );
         return false;
     }
@@ -57,7 +49,7 @@ bool apemodevk::HostBufferPool::Page::Reset( ) {
     if ( false == HasFlagEq( eMemoryPropertyFlags, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) ) {
 #if _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges
         if ( nullptr != pMapped && false == Ranges.empty( ) ) {
-            if ( VK_SUCCESS != vkInvalidateMappedMemoryRanges( pDevice, (uint32_t) Ranges.size( ), Ranges.data( ) ) ) {
+            if ( VK_SUCCESS != vkInvalidateMappedMemoryRanges( pNode->hLogicalDevice, (uint32_t) Ranges.size( ), Ranges.data( ) ) ) {
                 apemodevk::platform::DebugBreak( );
             }
 
@@ -65,10 +57,10 @@ bool apemodevk::HostBufferPool::Page::Reset( ) {
         }
 #else
         if ( nullptr != pMapped && 0 != CurrentOffsetIndex ) {
-            Range.memory = hMemory;
+            Range.memory = hBuffer.Handle.allocInfo.deviceMemory;
             Range.size   = CurrentOffsetIndex * Alignment;
 
-            if ( VK_SUCCESS != vkInvalidateMappedMemoryRanges( pDevice, 1, &Range ) ) {
+            if ( VK_SUCCESS != vkInvalidateMappedMemoryRanges( pNode->hLogicalDevice, 1, &Range ) ) {
                 apemodevk::platform::DebugBreak( );
             }
         }
@@ -77,14 +69,22 @@ bool apemodevk::HostBufferPool::Page::Reset( ) {
 
     if ( nullptr == pMapped ) {
         CurrentOffsetIndex = 0;
-        pMapped = hMemory.Map( 0, TotalSize, 0 );
+
+        /* If it failed to map buffer upon the creation, try to map it here. Return false if failed. */
+        if ( hBuffer.Handle.allocInfo.pMappedData ) {
+            pMapped = reinterpret_cast< uint8_t * >( hBuffer.Handle.allocInfo.pMappedData );
+        } else if ( VK_SUCCESS != CheckedCall( vmaMapMemory( pNode->hAllocator, hBuffer.Handle.pAllocation, (void **) ( &pMapped ) ) ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        // pMapped = hMemory.Map( 0, TotalSize, 0 );
         if ( nullptr == pMapped ) {
             apemodevk::platform::DebugBreak( );
             return false;
         }
     }
 
-    /* TODO: Create descriptor set. */
     return true;
 }
 
@@ -93,17 +93,17 @@ bool apemodevk::HostBufferPool::Page::Flush( ) {
         if ( false == HasFlagEq( eMemoryPropertyFlags, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) ) {
 #if _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges
             if ( false == Ranges.empty( ) ) {
-                if ( VK_SUCCESS != vkFlushMappedMemoryRanges( pDevice, (uint32_t) Ranges.size( ), Ranges.data( ) ) ) {
+                if ( VK_SUCCESS != vkFlushMappedMemoryRanges( pNode->hLogicalDevice, (uint32_t) Ranges.size( ), Ranges.data( ) ) ) {
                     apemodevk::platform::DebugBreak( );
                     return false;
                 }
             }
 #else
             if ( 0 != CurrentOffsetIndex ) {
-                Range.memory = hMemory;
+                Range.memory = hBuffer.Handle.allocInfo.deviceMemory;
                 Range.size   = CurrentOffsetIndex * Alignment;
 
-                if ( VK_SUCCESS != vkFlushMappedMemoryRanges( pDevice, 1, &Range ) ) {
+                if ( VK_SUCCESS != vkFlushMappedMemoryRanges( pNode->hLogicalDevice, 1, &Range ) ) {
                     apemodevk::platform::DebugBreak( );
                     return false;
                 }
@@ -111,22 +111,20 @@ bool apemodevk::HostBufferPool::Page::Flush( ) {
 #endif
         }
 
-        hMemory.Unmap( );
+        if ( nullptr == hBuffer.Handle.allocInfo.pMappedData ) {
+            vmaUnmapMemory( pNode->hAllocator, hBuffer.Handle.pAllocation );
+        }
+
         pMapped = nullptr;
     }
 
     return true;
 }
 
-void apemodevk::HostBufferPool::Recreate( VkDevice                      pInLogicalDevice,
-                                          VkPhysicalDevice              pInPhysicalDevice,
-                                          const VkPhysicalDeviceLimits *pInLimits,
-                                          VkBufferUsageFlags            bufferUsageFlags,
-                                          bool                          bInHostCoherent ) {
+void apemodevk::HostBufferPool::Recreate( GraphicsDevice *pInNode, VkBufferUsageFlags bufferUsageFlags, bool bInHostCoherent ) {
     Destroy( );
 
-    pLogicalDevice  = pInLogicalDevice;
-    pPhysicalDevice = pInPhysicalDevice;
+    pNode = pInNode;
     eMemoryPropertyFlags |= bInHostCoherent ? VK_MEMORY_PROPERTY_HOST_COHERENT_BIT : 0;
 
     Pages.reserve( 16 );
@@ -134,20 +132,23 @@ void apemodevk::HostBufferPool::Recreate( VkDevice                      pInLogic
     if ( 0 != bufferUsageFlags )
         eBufferUsageFlags = bufferUsageFlags;
 
-    /* Use defaults otherwise. */
-    if ( nullptr != pInLimits ) {
-        if ( HasFlagEq( eBufferUsageFlags, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT ) ) {
-            MaxPageRange = pInLimits->maxUniformBufferRange;
-            MinAlignment = (uint32_t) pInLimits->minUniformBufferOffsetAlignment;
-        } else {
-            MaxPageRange = pInLimits->maxStorageBufferRange;
-            MinAlignment = (uint32_t) pInLimits->minStorageBufferOffsetAlignment;
-        }
+    const VkPhysicalDeviceLimits & limits = pNode->AdapterProps.limits;
 
-        /* Catch incorrectly initialized device limits. */
-        assert( 0 != MaxPageRange );
-        assert( 0 != MinAlignment );
+    /* Use defaults otherwise. */
+    if ( HasFlagEq( eBufferUsageFlags, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT ) ) {
+        MaxPageRange = limits.maxUniformBufferRange;
+        MinAlignment = (uint32_t) limits.minUniformBufferOffsetAlignment;
+    } else if ( HasFlagEq( eBufferUsageFlags, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT ) ) {
+        MaxPageRange = limits.maxStorageBufferRange; /* TODO: There is a limit for the number of texel elements */
+        MinAlignment = (uint32_t) limits.minTexelBufferOffsetAlignment;
+    } else /* VK_BUFFER_USAGE_STORAGE_BUFFER_BIT or other usages */ {
+        MaxPageRange = limits.maxStorageBufferRange;
+        MinAlignment = (uint32_t) limits.minStorageBufferOffsetAlignment;
     }
+
+    /* Catch incorrectly initialized device limits. */
+    assert( 0 != MaxPageRange );
+    assert( 0 != MinAlignment );
 }
 
 apemodevk::HostBufferPool::Page *apemodevk::HostBufferPool::FindPage( uint32_t dataStructureSize ) {
@@ -161,7 +162,7 @@ apemodevk::HostBufferPool::Page *apemodevk::HostBufferPool::FindPage( uint32_t d
     const uint32_t coveredOffsetCount = dataStructureSize / MinAlignment + ( uint32_t )( 0 != dataStructureSize % MinAlignment );
 
     /* Try to find an existing free page. */
-    auto pageIt = std::find_if( Pages.begin( ), Pages.end( ), [&]( Page *pPage ) {
+    auto pageIt = std::find_if( Pages.begin( ), Pages.end( ), [&]( PagePtr & pPage ) {
         assert( nullptr != pPage );
         const uint32_t availableOffsets = pPage->TotalOffsetCount - pPage->CurrentOffsetIndex;
         return availableOffsets >= coveredOffsetCount;
@@ -169,14 +170,13 @@ apemodevk::HostBufferPool::Page *apemodevk::HostBufferPool::FindPage( uint32_t d
 
     /* Return free page. */
     if ( pageIt != Pages.end( ) ) {
-        return *pageIt;
+        return pageIt->get();
     }
 
     /* Allocate new page and return. */
-    Pages.push_back( new Page( ) );
+    Pages.push_back( apemodevk::make_unique< Page >( ) );
 
-    Pages.back( )->Recreate( pLogicalDevice,
-                             pPhysicalDevice,
+    Pages.back( )->Recreate( pNode,
                              MinAlignment,
                              HasFlagEq( eBufferUsageFlags, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT )
                                  ? MaxPageRange
@@ -184,28 +184,28 @@ apemodevk::HostBufferPool::Page *apemodevk::HostBufferPool::FindPage( uint32_t d
                              eBufferUsageFlags,
                              eMemoryPropertyFlags );
 
-    return Pages.back( );
+    return Pages.back( ).get( );
 }
 
 void apemodevk::HostBufferPool::Flush( ) {
-    std::for_each( Pages.begin( ), Pages.end( ), [&]( Page *pPage ) {
+    std::for_each( Pages.begin( ), Pages.end( ), [&]( PagePtr & pPage ) {
         assert( nullptr != pPage );
         pPage->Flush( );
     } );
 }
 
 void apemodevk::HostBufferPool::Reset( ) {
-    std::for_each( Pages.begin( ), Pages.end( ), [&]( Page *pPage ) {
+    std::for_each( Pages.begin( ), Pages.end( ), [&]( PagePtr & pPage ) {
         assert( nullptr != pPage );
         pPage->Reset( );
     } );
 }
 
 void apemodevk::HostBufferPool::Destroy( ) {
-    std::for_each( Pages.begin( ), Pages.end( ), [&]( Page *pPage ) {
-        assert( nullptr != pPage );
-        delete pPage;
-    } );
+    // std::for_each( Pages.begin( ), Pages.end( ), [&]( PagePtr & pPage ) {
+    //     assert( nullptr != pPage );
+    //     delete pPage;
+    // } );
 
     Pages.clear( );
 }
@@ -228,7 +228,7 @@ uint32_t apemodevk::HostBufferPool::Page::Push( const void *pDataStructure, uint
         InitializeStruct( range );
         range.offset = currentMappedOffset;
         range.size   = ByteSize;
-        range.memory = hMemory;
+        range.memory = hBuffer.Handle.allocInfo.deviceMemory;
 #endif
     }
 

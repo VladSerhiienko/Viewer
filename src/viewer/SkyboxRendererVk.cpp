@@ -241,7 +241,7 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
     vkGetPhysicalDeviceProperties( *pParams->pNode, &adapterProps );
 
     for ( uint32_t i = 0; i < pParams->FrameCount; ++i ) {
-        BufferPools[ i ].Recreate( *pParams->pNode, *pParams->pNode, &adapterProps.limits, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
+        BufferPools[ i ].Recreate( pParams->pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
 
         if ( false == DescSetPools[ i ].Recreate( *pParams->pNode, pParams->pDescPool, hDescSetLayout ) ) {
             return false;

@@ -70,7 +70,7 @@ bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode, HostBufferPool* 
 
     if ( nullptr == pInHostBufferPool ) {
         pHostBufferPool = new HostBufferPool( );
-        pHostBufferPool->Recreate( *pNode, *pNode, &pNode->AdapterProps.limits, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, false );
+        pHostBufferPool->Recreate( pNode, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, false );
     } else {
         pHostBufferPool = pInHostBufferPool;
     }

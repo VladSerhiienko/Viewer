@@ -325,7 +325,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     vkGetPhysicalDeviceProperties( pNode->pPhysicalDevice, &adapterProps );
 
     for (uint32_t i = 0; i < pInitParams->FrameCount; ++i) {
-        BufferPools[ i ].Recreate( pNode->hLogicalDevice, pNode->pPhysicalDevice, &adapterProps.limits, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
+        BufferPools[ i ].Recreate( pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
         DescSetPools[ i ].Recreate( pNode->hLogicalDevice, pInitParams->pDescPool, hDescSetLayout );
     }
 
