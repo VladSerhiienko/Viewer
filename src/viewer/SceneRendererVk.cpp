@@ -151,6 +151,15 @@ namespace apemodevk {
                                    MeshResource*       pResourcesEndIt ) {
         return nullptr;
     }
+
+    /**
+     * Uploads resources from CPU to GPU with respect to staging memory limit.
+     */
+    struct BufferFillIntent {
+        VkBuffer       pDstBuffer     = VK_NULL_HANDLE;
+        const uint8_t* pSrcBufferData = nullptr;
+        size_t         SrcBufferSize  = 0;
+    };
 }
 
 bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdateParametersBase* pParamsBase ) {
@@ -182,15 +191,13 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         auto pCmdBufferPool = pParams->pNode->GetCommandBufferPool( );
         auto acquiredCmdBuffer = pCmdBufferPool->Acquire( false, acquiredQueue.queueFamilyId );
 
-        uint32_t blockSize;
-        uint32_t maxBlockCount;
-
-        apemodevk::THandle< VmaPool > hPool;
-
-        if ( false == apemodevk::AllocateStagingMemoryPool( pParams->pNode, hPool, 128 * 1024 * 1024, maxBlockCount, blockSize ) ) {
-            apemodevk::platform::DebugBreak( );
-            return false;
-        }
+        // uint32_t blockSize;
+        // uint32_t maxBlockCount;
+        // apemodevk::THandle< VmaPool > hPool;
+        // if ( false == apemodevk::AllocateStagingMemoryPool( pParams->pNode, hPool, 128 * 1024 * 1024, maxBlockCount, blockSize ) ) {
+        //     apemodevk::platform::DebugBreak( );
+        //     return false;
+        // }
 
         apemodevk::HostBufferPool bufferPool;
         bufferPool.Recreate( pParams->pNode,
@@ -212,7 +219,9 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             apemodevk::platform::DebugBreak( );
         }
 
-        std::vector< apemodevk::MeshResource > meshResources;
+        std::vector< apemodevk::MeshResource >     meshResources;
+        std::vector< apemodevk::BufferFillIntent > bufferFillIntents;
+
         for ( auto pSrcMesh : meshesFb ) {
             /* Scene dstMesh. */
             auto& dstMesh = pScene->meshes[ meshIndex++ ];
@@ -224,49 +233,23 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                 dstMesh.pDeviceAsset = pMeshAsset;
             }
 
-            auto& meshResource     = apemodevk::PushBackAndGet( meshResources );
-            meshResource.pDstAsset = pMeshAsset;
-            meshResource.pSrcMesh  = pSrcMesh;
-        }
+            auto pSubmesh = pSrcMesh->submeshes( )->begin( );
 
-        meshIndex = 0;
-        for ( auto pSrcMesh : meshesFb ) {
-            /* Scene dstMesh. */
-            auto& dstMesh = pScene->meshes[ meshIndex++ ];
+            pMeshAsset->VertexCount = pSubmesh->vertex_count( );
 
-            /* Create dstMesh device asset if needed. */
-            auto pMeshDeviceAsset = (apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset;
+            auto offset                  = pSubmesh->position_offset( );
+            pMeshAsset->PositionOffset.x = offset.x( );
+            pMeshAsset->PositionOffset.y = offset.y( );
+            pMeshAsset->PositionOffset.z = offset.z( );
 
-            const uint32_t verticesByteSize = (uint32_t) pSrcMesh->vertices( )->size( );
-            const uint32_t indicesByteSize  = (uint32_t) pSrcMesh->indices( )->size( );
+            auto scale                  = pSubmesh->position_scale( );
+            pMeshAsset->PositionScale.x = scale.x( );
+            pMeshAsset->PositionScale.y = scale.y( );
+            pMeshAsset->PositionScale.z = scale.z( );
 
-            const uint32_t storageAlignment = (uint32_t) pNode->AdapterProps.limits.minStorageBufferOffsetAlignment;
-            const uint32_t verticesStorageSize = apemodexm::AlignedOffset( verticesByteSize, storageAlignment );
-            const uint32_t totalMeshSize = verticesStorageSize + indicesByteSize;
-
-            // pMeshDeviceAsset->IndexOffset = verticesStorageSize;
             if ( pSrcMesh->index_type( ) == apemodefb::EIndexTypeFb_UInt32 ) {
-                pMeshDeviceAsset->IndexType = VK_INDEX_TYPE_UINT32;
+                pMeshAsset->IndexType = VK_INDEX_TYPE_UINT32;
             }
-
-            auto offset = pSrcMesh->submeshes( )->begin( )->position_offset( );
-            pMeshDeviceAsset->PositionOffset.x = offset.x();
-            pMeshDeviceAsset->PositionOffset.y = offset.y();
-            pMeshDeviceAsset->PositionOffset.z = offset.z();
-
-            auto scale = pSrcMesh->submeshes( )->begin( )->position_scale( );
-            pMeshDeviceAsset->PositionScale.x = scale.x();
-            pMeshDeviceAsset->PositionScale.y = scale.y();
-            pMeshDeviceAsset->PositionScale.z = scale.z();
-            pMeshDeviceAsset->VertexCount = pSrcMesh->submeshes( )->begin( )->vertex_count( );
-
-            auto verticesSuballocResult = bufferPool.Suballocate( pSrcMesh->vertices( )->Data( ), verticesByteSize );
-            auto indicesSuballocResult = bufferPool.Suballocate( pSrcMesh->indices( )->Data( ), indicesByteSize );
-
-            static VkBufferUsageFlags eBufferUsage
-                = VK_BUFFER_USAGE_TRANSFER_DST_BIT  /* Copy data from staging buffers */
-                | VK_BUFFER_USAGE_INDEX_BUFFER_BIT  /* Use it as index buffer */
-                | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT /* Use it as vertex buffer */;
 
             VkBufferCreateInfo bufferCreateInfo;
             apemodevk::InitializeStruct( bufferCreateInfo );
@@ -274,59 +257,80 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             VmaAllocationCreateInfo allocationCreateInfo;
             apemodevk::InitializeStruct( allocationCreateInfo );
 
-            bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-            bufferCreateInfo.size  = verticesByteSize;
+            bufferCreateInfo.usage     = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+            bufferCreateInfo.size      = pSrcMesh->vertices( )->size( );
             allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-            if ( false == pMeshDeviceAsset->hVertexBuffer.Recreate( pParams->pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
+            if ( false == pMeshAsset->hVertexBuffer.Recreate( pParams->pNode->hAllocator,
+                                                              bufferCreateInfo,
+                                                              allocationCreateInfo ) ) {
                 apemodevk::platform::DebugBreak( );
+                return false;
             }
 
-            bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-            bufferCreateInfo.size  = indicesByteSize;
+            bufferCreateInfo.usage     = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+            bufferCreateInfo.size      = pSrcMesh->indices( )->size( );
             allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
-            if ( false == pMeshDeviceAsset->hIndexBuffer.Recreate( pParams->pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
+            if ( false == pMeshAsset->hIndexBuffer.Recreate( pParams->pNode->hAllocator,
+                                                             bufferCreateInfo,
+                                                             allocationCreateInfo ) ) {
                 apemodevk::platform::DebugBreak( );
+                return false;
             }
 
-            VkBufferMemoryBarrier bufferMemoryBarrier[ 2 ];
-            apemodevk::InitializeStruct( bufferMemoryBarrier );
+            apemodevk::MeshResource meshResource;
+
+            meshResource.pDstAsset = pMeshAsset;
+            meshResource.pSrcMesh  = pSrcMesh;
+
+            meshResources.push_back( meshResource );
+
+            apemodevk::BufferFillIntent bufferFillIntent;
+
+            bufferFillIntent.pDstBuffer     = pMeshAsset->hVertexBuffer.Handle.pBuffer;
+            bufferFillIntent.pSrcBufferData = pSrcMesh->vertices( )->data( );
+            bufferFillIntent.SrcBufferSize  = pSrcMesh->vertices( )->size( );
+
+            bufferFillIntents.push_back( bufferFillIntent );
+            
+            bufferFillIntent.pDstBuffer     = pMeshAsset->hIndexBuffer.Handle.pBuffer;
+            bufferFillIntent.pSrcBufferData = pSrcMesh->indices( )->data( );
+            bufferFillIntent.SrcBufferSize  = pSrcMesh->indices( )->size( );
+
+            bufferFillIntents.push_back( bufferFillIntent );
+        }
+
+        std::sort( bufferFillIntents.begin( ),
+                   bufferFillIntents.end( ),
+                   []( const apemodevk::BufferFillIntent& a,
+                       const apemodevk::BufferFillIntent& b ) {
+                       return a.SrcBufferSize > b.SrcBufferSize;
+                   } );
+
+        meshIndex = 0;
+        for ( auto pSrcMesh : meshesFb ) {
+            /* Scene dstMesh. */
+            auto& dstMesh = pScene->meshes[ meshIndex++ ];
+
+            /* Create dstMesh device asset if needed. */
+            auto pMeshAsset = (apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset;
+
+            const uint32_t verticesByteSize = (uint32_t) pSrcMesh->vertices( )->size( );
+            const uint32_t indicesByteSize  = (uint32_t) pSrcMesh->indices( )->size( );
+
+            auto verticesSuballocResult = bufferPool.Suballocate( pSrcMesh->vertices( )->Data( ), verticesByteSize );
+            auto indicesSuballocResult  = bufferPool.Suballocate( pSrcMesh->indices( )->Data( ), indicesByteSize );
 
             VkBufferCopy bufferCopy;
             apemodevk::InitializeStruct( bufferCopy );
-
-            bufferMemoryBarrier[ 0 ].size                = bufferCreateInfo.size;
-            bufferMemoryBarrier[ 0 ].buffer              = pMeshDeviceAsset->hVertexBuffer.Handle.pBuffer;
-            bufferMemoryBarrier[ 0 ].srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
-            bufferMemoryBarrier[ 0 ].dstAccessMask       = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-            bufferMemoryBarrier[ 0 ].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            bufferMemoryBarrier[ 0 ].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-
-            bufferMemoryBarrier[ 1 ].size                = bufferCreateInfo.size;
-            bufferMemoryBarrier[ 1 ].buffer              = pMeshDeviceAsset->hIndexBuffer.Handle.pBuffer;
-            bufferMemoryBarrier[ 1 ].srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
-            bufferMemoryBarrier[ 1 ].dstAccessMask       = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-            bufferMemoryBarrier[ 1 ].srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-            bufferMemoryBarrier[ 1 ].dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-
-            vkCmdPipelineBarrier( acquiredCmdBuffer.pCmdBuffer,
-                                  VK_PIPELINE_STAGE_TRANSFER_BIT,
-                                  VK_PIPELINE_STAGE_VERTEX_INPUT_BIT,
-                                  0,
-                                  0,
-                                  nullptr,
-                                  GetArraySize( bufferMemoryBarrier ),
-                                  bufferMemoryBarrier,
-                                  0,
-                                  nullptr );
 
             bufferCopy.srcOffset = verticesSuballocResult.descBufferInfo.offset;
             bufferCopy.size      = verticesSuballocResult.descBufferInfo.range;
 
             vkCmdCopyBuffer( acquiredCmdBuffer.pCmdBuffer,                 /* Cmd */
                              verticesSuballocResult.descBufferInfo.buffer, /* Src */
-                             pMeshDeviceAsset->hVertexBuffer.Handle.pBuffer,     /* Dst */
+                             pMeshAsset->hVertexBuffer.Handle.pBuffer,     /* Dst */
                              1,
                              &bufferCopy );
 
@@ -335,7 +339,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
             vkCmdCopyBuffer( acquiredCmdBuffer.pCmdBuffer,                /* Cmd */
                              indicesSuballocResult.descBufferInfo.buffer, /* Src */
-                             pMeshDeviceAsset->hIndexBuffer.Handle.pBuffer,    /* Dst */
+                             pMeshAsset->hIndexBuffer.Handle.pBuffer,     /* Dst */
                              1,
                              &bufferCopy );
         }
@@ -407,13 +411,13 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
         auto& dstMesh = pScene->meshes[ node.meshId ];
 
-        if ( auto pMeshDeviceAsset = (const apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset ) {
+        if ( auto pMeshAsset = (const apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset ) {
             for ( auto& subset : dstMesh.subsets ) {
                 auto& mat = pScene->materials[ node.materialIds[ subset.materialId ] ];
 
                 //frameData.color          = mat.baseColorFactor;
-                frameData.PositionOffset = pMeshDeviceAsset->PositionOffset;
-                frameData.PositionScale  = pMeshDeviceAsset->PositionScale;
+                frameData.PositionOffset = pMeshAsset->PositionOffset;
+                frameData.PositionScale  = pMeshAsset->PositionScale;
                 XMStoreFloat4x4( &frameData.worldMatrix, pScene->worldMatrices[ node.id ] );
 
                 auto suballocResult = BufferPools[ FrameIndex ].TSuballocate( frameData );
@@ -437,14 +441,14 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
                                          1,
                                          &suballocResult.dynamicOffset );
 
-                VkBuffer     vertexBuffers[ 1 ] = {pMeshDeviceAsset->hVertexBuffer.Handle.pBuffer};
+                VkBuffer     vertexBuffers[ 1 ] = {pMeshAsset->hVertexBuffer.Handle.pBuffer};
                 VkDeviceSize vertexOffsets[ 1 ] = {0};
                 vkCmdBindVertexBuffers( pParams->pCmdBuffer, 0, 1, vertexBuffers, vertexOffsets );
 
                 vkCmdBindIndexBuffer( pParams->pCmdBuffer,
-                                      pMeshDeviceAsset->hIndexBuffer.Handle.pBuffer,
-                                      pMeshDeviceAsset->IndexOffset,
-                                      pMeshDeviceAsset->IndexType );
+                                      pMeshAsset->hIndexBuffer.Handle.pBuffer,
+                                      pMeshAsset->IndexOffset,
+                                      pMeshAsset->IndexType );
 
                 vkCmdDrawIndexed( pParams->pCmdBuffer,
                                   subset.indexCount, /* IndexCount */

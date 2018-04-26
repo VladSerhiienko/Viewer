@@ -361,8 +361,8 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
         acquiredCmdBuffer.pFence = nullptr;
 
         /* No need to pass queue info with the texture result */
-        loadedImage->QueueId = 0xffffffff;
-        loadedImage->QueueFamilyId = 0xffffffff;
+        loadedImage->QueueId = -1;
+        loadedImage->QueueFamilyId = -1;
 
         /* Ensure the image can be used right away */
         CheckedCall( vkWaitForFences( *pNode, 1, &acquiredQueue.pFence, true, UINT64_MAX ) );

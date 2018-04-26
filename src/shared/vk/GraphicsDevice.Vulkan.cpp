@@ -65,13 +65,18 @@ bool apemodevk::GraphicsDevice::ScanDeviceQueues( std::vector< VkQueueFamilyProp
         uint32_t QueuePrioritiesAssigned = 0;
         QueuePriorities.resize( TotalQueuePrioritiesCount );
         std::for_each( QueueProps.begin( ), QueueProps.end( ), [&]( VkQueueFamilyProperties& QueueProp ) {
-            auto& QueueReq             = apemodevk::PushBackAndGet( QueueReqs );
-            QueueReq.pNext            = NULL;
-            QueueReq.queueFamilyIndex = static_cast< uint32_t >( std::distance( QueueProps.data( ), &QueueProp ) );
-            QueueReq.queueCount       = QueueProp.queueCount;
-            QueueReq.pQueuePriorities = QueuePriorities.data( ) + QueuePrioritiesAssigned;
+
+            VkDeviceQueueCreateInfo queueCreateInfo;
+            InitializeStruct( queueCreateInfo );
+
+            queueCreateInfo.pNext            = NULL;
+            queueCreateInfo.queueFamilyIndex = static_cast< uint32_t >( std::distance( QueueProps.data( ), &QueueProp ) );
+            queueCreateInfo.queueCount       = QueueProp.queueCount;
+            queueCreateInfo.pQueuePriorities = QueuePriorities.data( ) + QueuePrioritiesAssigned;
 
             QueuePrioritiesAssigned += QueueProp.queueCount;
+
+            QueueReqs.push_back(queueCreateInfo);
         } );
     }
 
