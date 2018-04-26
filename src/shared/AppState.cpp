@@ -76,11 +76,11 @@ std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, s
     spdlog::set_pattern( "%v" );
 
     logger->info( "" );
-    logger->info( " _    ___" );
-    logger->info( "| |  / (_)__ _      _____  _____" );
-    logger->info( "| | / / / _ \\ | /| / / _ \\/ ___/" );
-    logger->info( "| |/ / /  __/ |/ |/ /  __/ /" );
-    logger->info( "|___/_/\\___/|__/|__/\\___/_/" );
+    logger->info( "\t _    ___" );
+    logger->info( "\t| |  / (_)__ _      _____  _____" );
+    logger->info( "\t| | / / / _ \\ | /| / / _ \\/ ___/" );
+    logger->info( "\t| |/ / /  __/ |/ |/ /  __/ /" );
+    logger->info( "\t|___/_/\\___/|__/|__/\\___/_/" );
     logger->info( "" );
 
     spdlog::set_pattern( "%c" );

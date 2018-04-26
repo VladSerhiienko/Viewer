@@ -243,12 +243,12 @@ uint32_t apemodevk::HostBufferPool::Page::Push( const void *pDataStructure, uint
 apemodevk::HostBufferPool::SuballocResult apemodevk::HostBufferPool::Suballocate( const void *pDataStructure,
                                                                                   uint32_t    ByteSize ) {
     SuballocResult suballocResult;
-    InitializeStruct( suballocResult.descBufferInfo );
+    InitializeStruct( suballocResult.DescriptorBufferInfo );
 
     if ( auto pPage = FindPage( ByteSize ) ) {
-        suballocResult.descBufferInfo.buffer = pPage->hBuffer;
-        suballocResult.descBufferInfo.range  = pPage->TotalSize;
-        suballocResult.dynamicOffset         = pPage->Push( pDataStructure, ByteSize );
+        suballocResult.DescriptorBufferInfo.buffer = pPage->hBuffer;
+        suballocResult.DescriptorBufferInfo.range  = pPage->TotalSize;
+        suballocResult.DynamicOffset         = pPage->Push( pDataStructure, ByteSize );
     }
 
     return suballocResult;

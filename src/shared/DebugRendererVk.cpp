@@ -340,14 +340,14 @@ bool apemode::DebugRendererVk::Render( RenderParametersVk* renderParams ) {
     auto frameIndex = ( renderParams->FrameIndex ) % kMaxFrameCount;
 
     auto suballocResult = BufferPools[ frameIndex ].TSuballocate( *renderParams->pFrameData );
-    assert( VK_NULL_HANDLE != suballocResult.descBufferInfo.buffer );
-    suballocResult.descBufferInfo.range = sizeof(FrameUniformBuffer);
+    assert( VK_NULL_HANDLE != suballocResult.DescriptorBufferInfo.buffer );
+    suballocResult.DescriptorBufferInfo.range = sizeof(FrameUniformBuffer);
 
     VkDescriptorSet descriptorSet[ 1 ]  = {nullptr};
 
     TDescriptorSet< 1 > descSet;
     descSet.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    descSet.pBinding[ 0 ].BufferInfo      = suballocResult.descBufferInfo;
+    descSet.pBinding[ 0 ].BufferInfo      = suballocResult.DescriptorBufferInfo;
 
     descriptorSet[ 0 ]  = DescSetPools[ frameIndex ].GetDescSet( &descSet );
 
@@ -359,7 +359,7 @@ bool apemode::DebugRendererVk::Render( RenderParametersVk* renderParams ) {
                              1,
                              descriptorSet,
                              1,
-                             &suballocResult.dynamicOffset );
+                             &suballocResult.DynamicOffset );
 
     VkBuffer     vertexBuffers[ 1 ] = {hVertexBuffer.Handle.pBuffer};
     VkDeviceSize vertexOffsets[ 1 ] = {0};

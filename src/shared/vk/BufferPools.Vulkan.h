@@ -53,8 +53,8 @@ namespace apemodevk {
         using PagePtr = std::unique_ptr< Page >;
 
         struct SuballocResult {
-            VkDescriptorBufferInfo descBufferInfo;
-            uint32_t               dynamicOffset;
+            VkDescriptorBufferInfo DescriptorBufferInfo;
+            uint32_t               DynamicOffset;
         };
 
         GraphicsDevice *       pNode                = nullptr;

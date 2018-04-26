@@ -267,8 +267,8 @@ bool apemodevk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPara
     frameData.params0.w = float( pSkybox->LevelOfDetail ); /* u_textureCubeLod0 */
 
     auto suballocResult = BufferPools[ FrameIndex ].TSuballocate( frameData );
-    assert( VK_NULL_HANDLE != suballocResult.descBufferInfo.buffer );
-    suballocResult.descBufferInfo.range = sizeof( FrameUniformBuffer );
+    assert( VK_NULL_HANDLE != suballocResult.DescriptorBufferInfo.buffer );
+    suballocResult.DescriptorBufferInfo.range = sizeof( FrameUniformBuffer );
 
     VkDescriptorImageInfo skyboxImageInfo;
     InitializeStruct( skyboxImageInfo );
@@ -281,12 +281,12 @@ bool apemodevk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPara
 
     TDescriptorSet< 2 > descSet;
     descSet.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    descSet.pBinding[ 0 ].BufferInfo      = suballocResult.descBufferInfo;
+    descSet.pBinding[ 0 ].BufferInfo      = suballocResult.DescriptorBufferInfo;
     descSet.pBinding[ 1 ].eDescriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descSet.pBinding[ 1 ].ImageInfo       = skyboxImageInfo;
 
     descriptorSet[ 0 ]  = DescSetPools[ FrameIndex ].GetDescSet( &descSet );
-    dynamicOffsets[ 0 ] = suballocResult.dynamicOffset;
+    dynamicOffsets[ 0 ] = suballocResult.DynamicOffset;
 
     vkCmdBindPipeline( pParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipeline );
     vkCmdBindDescriptorSets( pParams->pCmdBuffer,

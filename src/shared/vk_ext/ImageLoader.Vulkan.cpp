@@ -154,7 +154,7 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
                         uintptr_t    imgAddress    = (uintptr_t) texture.data( );
                         uintptr_t    subImgAddress = (uintptr_t) texture.data( 0, face, mipLevel );
                         VkDeviceSize imageOffset   = subImgAddress - imgAddress;
-                        VkDeviceSize bufferOffset  = imageBufferSuballocResult.dynamicOffset + imageOffset;
+                        VkDeviceSize bufferOffset  = imageBufferSuballocResult.DynamicOffset + imageOffset;
 
                         bufferImageCopy.imageSubresource.baseArrayLayer = 0;
                         bufferImageCopy.imageSubresource.mipLevel       = (uint32_t) mipLevel;
@@ -240,7 +240,7 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
                 bufferImageCopy.imageExtent.width = imageWidth;
                 bufferImageCopy.imageExtent.height = imageHeight;
                 bufferImageCopy.imageExtent.depth = 1;
-                bufferImageCopy.bufferOffset = imageBufferSuballocResult.dynamicOffset;
+                bufferImageCopy.bufferOffset = imageBufferSuballocResult.DynamicOffset;
                 bufferImageCopy.bufferImageHeight = 0; /* Tightly packed according to the imageExtent */
                 bufferImageCopy.bufferRowLength = 0; /* Tightly packed according to the imageExtent */
 
@@ -318,7 +318,7 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
                           &writeImageMemoryBarrier);
 
     vkCmdCopyBufferToImage( acquiredCmdBuffer.pCmdBuffer,
-                            imageBufferSuballocResult.descBufferInfo.buffer,
+                            imageBufferSuballocResult.DescriptorBufferInfo.buffer,
                             loadedImage->hImg.Handle.pImg,
                             VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
                             (uint32_t) bufferImageCopies.size( ),
