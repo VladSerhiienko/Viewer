@@ -522,7 +522,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     scissor.extent.width  = ( uint32_t )( pParams->Dims.x * pParams->Scale.x );
     scissor.extent.height = ( uint32_t )( pParams->Dims.y * pParams->Scale.y );
 
-    vkCmdSetScissor(pParams->pCmdBuffer, 0, 1, &scissor);
+    vkCmdSetScissor( pParams->pCmdBuffer, 0, 1, &scissor );
 
     auto FrameIndex = ( pParams->FrameIndex ) % kMaxFrameCount;
 
