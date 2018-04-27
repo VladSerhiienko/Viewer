@@ -16,15 +16,8 @@ namespace apemodevk {
         friend Swapchain;
         friend GraphicsManager;
 
-        typedef std::vector< float >                           FloatVector;
-        // typedef TInfoStruct< VkLayerProperties >::Vector       VkLayerPropertiesVector;
-        // typedef TInfoStruct< VkQueueFamilyProperties >::Vector VkQueueFamilyPropertiesVector;
-        // typedef TInfoStruct< VkDeviceQueueCreateInfo >::Vector VkDeviceQueueCreateInfoVector;
-        typedef GraphicsManager::NativeLayerWrapper            NativeLayerWrapper;
-        typedef VkFormatProperties                             VkFormatPropertiesArray[ VK_FORMAT_RANGE_SIZE ];
-
-        static std::unique_ptr< GraphicsDevice > MakeNewUnique( );
-        static std::unique_ptr< GraphicsDevice > MakeNullUnique( );
+        typedef GraphicsManager::NativeLayerWrapper NativeLayerWrapper;
+        typedef VkFormatProperties                  VkFormatPropertiesArray[ VK_FORMAT_RANGE_SIZE ];
 
         GraphicsDevice( );
         ~GraphicsDevice( );
@@ -33,6 +26,10 @@ namespace apemodevk {
 
         bool IsValid( ) const;
         bool Await( );
+
+        // void *GetUnusedObj( );
+        // bool  Acquire( void *pObj );
+        // bool  Release( void *pObj );
 
         QueuePool *              GetQueuePool( );
         const QueuePool *        GetQueuePool( ) const;
@@ -50,18 +47,24 @@ namespace apemodevk {
         operator VkPhysicalDevice( ) const;
         operator VkInstance( ) const;
 
-        THandle< VkDevice >                  hLogicalDevice;
-        THandle< VmaAllocator >              hAllocator;
-        VkPhysicalDevice                     pPhysicalDevice;
-        VkPhysicalDeviceProperties           AdapterProps;
-        VkPhysicalDeviceMemoryProperties     MemoryProps;
-        VkPhysicalDeviceFeatures             Features;
-        VkFormatPropertiesArray              FormatProperties;
-        std::vector< const char * >          DeviceLayers;
-        std::vector< const char * >          DeviceExtensions;
-        std::vector< VkLayerProperties >     DeviceLayerProps;
-        std::vector< VkExtensionProperties > DeviceExtensionProps;
-        std::unique_ptr< QueuePool >         pQueuePool;
-        std::unique_ptr< CommandBufferPool > pCmdBufferPool;
+        // struct ObjWithCounter {
+        //     void *   pObj       = nullptr;
+        //     uint32_t UseCounter = 0;
+        // };
+
+        THandle< VkDevice >                   hLogicalDevice;
+        THandle< VmaAllocator >               hAllocator;
+        VkPhysicalDevice                      pPhysicalDevice;
+        VkPhysicalDeviceProperties            AdapterProps;
+        VkPhysicalDeviceMemoryProperties      MemoryProps;
+        VkPhysicalDeviceFeatures              Features;
+        VkFormatPropertiesArray               FormatProperties;
+        std::vector< const char * >           DeviceLayers;
+        std::vector< const char * >           DeviceExtensions;
+        std::vector< VkLayerProperties >      DeviceLayerProps;
+        std::vector< VkExtensionProperties >  DeviceExtensionProps;
+        std::unique_ptr< QueuePool >          pQueuePool;
+        std::unique_ptr< CommandBufferPool >  pCmdBufferPool;
+        // std::vector< ObjWithCounter >         ObjPool;
     };
 }

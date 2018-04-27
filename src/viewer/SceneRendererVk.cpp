@@ -161,6 +161,58 @@ namespace apemodevk {
         uint32_t       SrcBufferSize   = 0;
         VkAccessFlags  eDstAccessFlags = 0;
     };
+
+    template < typename TFillCmdBufferFunc >
+    bool TSubmitCmdBuffer( GraphicsDevice*     pNode,
+                           VkQueueFlags        eQueueFlags,
+                           TFillCmdBufferFunc  fillCmdsFunc ) {
+
+        /* Get queue from pool (only copying) */
+        auto pQueuePool = pNode->GetQueuePool( );
+
+        auto acquiredQueue = pQueuePool->Acquire( false, eQueueFlags, false );
+        while ( acquiredQueue.pQueue == nullptr ) {
+            acquiredQueue = pQueuePool->Acquire( false, eQueueFlags, false );
+        }
+
+        /* Get command buffer from pool */
+        auto pCmdBufferPool = pNode->GetCommandBufferPool( );
+        auto acquiredCmdBuffer = pCmdBufferPool->Acquire( false, acquiredQueue.QueueFamilyId );
+
+        /* Reset command pool */
+        if ( VK_SUCCESS != vkResetCommandPool( pNode->hLogicalDevice, acquiredCmdBuffer.pCmdPool, 0 ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        /* Begin recording commands to command buffer */
+        VkCommandBufferBeginInfo commandBufferBeginInfo;
+        InitializeStruct( commandBufferBeginInfo );
+
+        commandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        if ( VK_SUCCESS != vkBeginCommandBuffer( acquiredCmdBuffer.pCmdBuffer, &commandBufferBeginInfo ) ) {
+            apemodevk::platform::DebugBreak( );
+        }
+
+        fillCmdsFunc( acquiredCmdBuffer.pCmdBuffer );
+
+        vkEndCommandBuffer( acquiredCmdBuffer.pCmdBuffer );
+
+        VkSubmitInfo submitInfo;
+        InitializeStruct( submitInfo );
+
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers    = &acquiredCmdBuffer.pCmdBuffer;
+
+        WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence );
+        vkResetFences( pNode->hLogicalDevice, 1, &acquiredQueue.pFence );
+        vkQueueSubmit( acquiredQueue.pQueue, 1, &submitInfo, acquiredQueue.pFence );
+        WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence );
+
+        acquiredCmdBuffer.pFence = acquiredQueue.pFence;
+        pCmdBufferPool->Release( acquiredCmdBuffer );
+        pQueuePool->Release( acquiredQueue );
+    }
 }
 
 bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdateParametersBase* pParamsBase ) {
@@ -178,53 +230,16 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
     if ( bDeviceChanged ) {
 
-        /* Get queue from pool (only copying) */
-        auto pQueuePool = pParams->pNode->GetQueuePool( );
-
-        auto acquiredQueue = pQueuePool->Acquire( false, VK_QUEUE_GRAPHICS_BIT, false );
-        // auto acquiredQueue = pQueuePool->Acquire( false, VK_QUEUE_TRANSFER_BIT, true );
-        while ( acquiredQueue.pQueue == nullptr ) {
-            acquiredQueue = pQueuePool->Acquire( false, VK_QUEUE_GRAPHICS_BIT, false );
-            // acquiredQueue = pQueuePool->Acquire( false, VK_QUEUE_TRANSFER_BIT, false );
-        }
-
-        /* Get command buffer from pool (only copying) */
-        auto pCmdBufferPool = pParams->pNode->GetCommandBufferPool( );
-        auto acquiredCmdBuffer = pCmdBufferPool->Acquire( false, acquiredQueue.queueFamilyId );
-
-        // uint32_t blockSize;
-        // uint32_t maxBlockCount;
-        // apemodevk::THandle< VmaPool > hPool;
-        // if ( false == apemodevk::AllocateStagingMemoryPool( pParams->pNode, hPool, 128 * 1024 * 1024, maxBlockCount, blockSize ) ) {
-        //     apemodevk::platform::DebugBreak( );
-        //     return false;
-        // }
-
-        apemodevk::HostBufferPool bufferPool;
-        bufferPool.Recreate( pParams->pNode,
-                             VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                             false );
-
         uint32_t meshIndex = 0;
         auto & meshesFb = *pParamsBase->pSceneSrc->meshes( );
-
-        if ( VK_SUCCESS != vkResetCommandPool( *pParams->pNode, acquiredCmdBuffer.pCmdPool, 0 ) ) {
-            apemodevk::platform::DebugBreak( );
-            return false;
-        }
-
-        VkCommandBufferBeginInfo commandBufferBeginInfo;
-        apemodevk::InitializeStruct( commandBufferBeginInfo );
-        commandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        if ( VK_SUCCESS != vkBeginCommandBuffer( acquiredCmdBuffer.pCmdBuffer, &commandBufferBeginInfo ) ) {
-            apemodevk::platform::DebugBreak( );
-        }
 
         std::vector< apemodevk::MeshResource >         meshResources;
         std::vector< apemodevk::MeshBufferFillIntent > bufferFillIntents;
 
         meshResources.reserve( meshesFb.size( ) );
         bufferFillIntents.reserve( meshesFb.size( ) << 1 );
+
+        uint64_t totalBytesRequired = 0;
 
         for ( auto pSrcMesh : meshesFb ) {
             /* Scene dstMesh. */
@@ -305,86 +320,91 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             bufferFillIntent.eDstAccessFlags = VK_ACCESS_INDEX_READ_BIT;
 
             bufferFillIntents.push_back( bufferFillIntent );
+
+            totalBytesRequired += pSrcMesh->vertices( )->size( );
+            totalBytesRequired += pSrcMesh->indices( )->size( );
         }
 
+        // clang-format off
         std::sort( bufferFillIntents.begin( ),
                    bufferFillIntents.end( ),
+                   /* Sort in descending order by buffer size. */
                    []( const apemodevk::MeshBufferFillIntent& a,
                        const apemodevk::MeshBufferFillIntent& b ) {
                        return a.SrcBufferSize > b.SrcBufferSize;
                    } );
+        // clang-format on
 
         const apemodevk::MeshBufferFillIntent* const pIntent    = bufferFillIntents.data( );
         const apemodevk::MeshBufferFillIntent* const pIntentEnd = pIntent + bufferFillIntents.size( );
 
-        if ( auto pCurrIntent = pIntent )
-            while ( pCurrIntent != pIntentEnd ) {
-                auto uploadBuffer = bufferPool.Suballocate( pCurrIntent->pSrcBufferData, pCurrIntent->SrcBufferSize );
+        apemodevk::TSubmitCmdBuffer( pNode, VK_QUEUE_GRAPHICS_BIT, [&]( VkCommandBuffer pCmdBuffer ) {
 
-                VkBufferCopy bufferCopy;
-                apemodevk::InitializeStruct( bufferCopy );
+            /* Stage buffers. */
+            if ( auto pCurrIntent = pIntent )
+                while ( pCurrIntent != pIntentEnd ) {
 
-                bufferCopy.srcOffset = uploadBuffer.DescriptorBufferInfo.offset;
-                bufferCopy.size      = uploadBuffer.DescriptorBufferInfo.range;
+                    VkBufferMemoryBarrier bufferMemoryBarrier;
+                    apemodevk::InitializeStruct( bufferMemoryBarrier );
 
-                vkCmdCopyBuffer( acquiredCmdBuffer.pCmdBuffer,             /* Cmd */
-                                 uploadBuffer.DescriptorBufferInfo.buffer, /* Src */
-                                 pCurrIntent->pDstBuffer,                  /* Dst */
-                                 1,                                        /* Region count*/
-                                 &bufferCopy );                            /* Regions */
+                    bufferMemoryBarrier.size                = VK_WHOLE_SIZE;
+                    bufferMemoryBarrier.buffer              = pCurrIntent->pDstBuffer;
+                    bufferMemoryBarrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+                    bufferMemoryBarrier.dstAccessMask       = pCurrIntent->eDstAccessFlags;
+                    bufferMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                    bufferMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
-                ++pCurrIntent;
-            }
+                    vkCmdPipelineBarrier( pCmdBuffer,                         /* Cmd */
+                                          VK_PIPELINE_STAGE_TRANSFER_BIT,     /* Src stage */
+                                          VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, /* Dst stage */
+                                          0,                                  /* Dependency flags */
+                                          0,                                  /* Memory barrier count */
+                                          nullptr,                            /* Memory barriers */
+                                          1,                                  /* Buffer barrier count */
+                                          &bufferMemoryBarrier,               /* Buffer barriers */
+                                          0,                                  /* Img barrier count */
+                                          nullptr );                          /* Img barriers */
 
-        if ( auto pCurrIntent = pIntent )
-            while ( pCurrIntent != pIntentEnd ) {
+                    ++pCurrIntent;
+                }
+        } );
 
-                VkBufferMemoryBarrier bufferMemoryBarrier;
-                apemodevk::InitializeStruct( bufferMemoryBarrier );
+        apemodevk::HostBufferPool bufferPool;
+        bufferPool.Recreate( pParams->pNode, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, false );
 
-                bufferMemoryBarrier.size                = VK_WHOLE_SIZE;
-                bufferMemoryBarrier.buffer              = pCurrIntent->pDstBuffer;
-                bufferMemoryBarrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
-                bufferMemoryBarrier.dstAccessMask       = pCurrIntent->eDstAccessFlags;
-                bufferMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-                bufferMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+        apemodevk::TSubmitCmdBuffer( pNode, VK_QUEUE_GRAPHICS_BIT, [&]( VkCommandBuffer pCmdBuffer ) {
 
-                vkCmdPipelineBarrier( acquiredCmdBuffer.pCmdBuffer,       /* Cmd */
-                                      VK_PIPELINE_STAGE_TRANSFER_BIT,     /* Src stage */
-                                      VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, /* Dst stage */
-                                      0,                                  /* Dependency flags */
-                                      0,                                  /* Memory barrier count */
-                                      nullptr,                            /* Memory barriers */
-                                      1,                                  /* Buffer barrier count */
-                                      &bufferMemoryBarrier,               /* Buffer barriers */
-                                      0,                                  /* Img barrier count */
-                                      nullptr );                          /* Img barriers */
+            /* Fill buffers. */
+            if ( auto pCurrIntent = pIntent )
+                while ( pCurrIntent != pIntentEnd ) {
+                    auto uploadBuffer = bufferPool.Suballocate( pCurrIntent->pSrcBufferData, pCurrIntent->SrcBufferSize );
 
-                ++pCurrIntent;
-            }
+                    VkBufferCopy bufferCopy;
+                    apemodevk::InitializeStruct( bufferCopy );
 
-        vkEndCommandBuffer( acquiredCmdBuffer.pCmdBuffer );
+                    bufferCopy.srcOffset = uploadBuffer.DescriptorBufferInfo.offset;
+                    bufferCopy.size      = uploadBuffer.DescriptorBufferInfo.range;
 
-        VkSubmitInfo submitInfo;
-        apemodevk::InitializeStruct( submitInfo );
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers    = &acquiredCmdBuffer.pCmdBuffer;
+                    vkCmdCopyBuffer( pCmdBuffer,                               /* Cmd */
+                                     uploadBuffer.DescriptorBufferInfo.buffer, /* Src */
+                                     pCurrIntent->pDstBuffer,                  /* Dst */
+                                     1,                                        /* Region count*/
+                                     &bufferCopy );                            /* Regions */
 
-        bufferPool.Flush( );
-
-        vkResetFences( *pParams->pNode, 1, &acquiredQueue.pFence );
-        vkQueueSubmit( acquiredQueue.pQueue, 1, &submitInfo, acquiredQueue.pFence );
-        vkWaitForFences( *pParams->pNode, 1, &acquiredQueue.pFence, true, UINT_MAX );
-
-        acquiredCmdBuffer.pFence = acquiredQueue.pFence;
-        pCmdBufferPool->Release( acquiredCmdBuffer );
-        pQueuePool->Release( acquiredQueue );
+                    ++pCurrIntent;
+                }
+            
+            bufferPool.Flush( );
+        } );
     }
 
     return true;
 }
 
 bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRenderParametersBase* pParamsBase ) {
+    
+    /* Scene was not provided.
+     * Render parameters were not provided. */
     if ( nullptr == pScene || nullptr == pParamsBase ) {
         return false;
     }
@@ -443,44 +463,43 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
                 assert( VK_NULL_HANDLE != suballocResult.DescriptorBufferInfo.buffer );
                 suballocResult.DescriptorBufferInfo.range = sizeof( apemodevk::FrameUniformBuffer );
 
-                VkDescriptorSet descriptorSet[ 1 ]  = {nullptr};
+                apemodevk::TDescriptorSet< 1 > descriptorSet;
+                descriptorSet.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+                descriptorSet.pBinding[ 0 ].BufferInfo      = suballocResult.DescriptorBufferInfo;
 
-                apemodevk::TDescriptorSet< 1 > descSet;
-                descSet.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-                descSet.pBinding[ 0 ].BufferInfo      = suballocResult.DescriptorBufferInfo;
+                VkDescriptorSet pDescriptorSet = DescSetPools[ FrameIndex ].GetDescSet( &descriptorSet );
 
-                descriptorSet[ 0 ]  = DescSetPools[ FrameIndex ].GetDescSet( &descSet );
+                vkCmdBindDescriptorSets( pParams->pCmdBuffer,             /* Cmd */
+                                         VK_PIPELINE_BIND_POINT_GRAPHICS, /* BindPoint */
+                                         hPipelineLayout,                 /* PipelineLayout */
+                                         0,                               /* FirstSet */
+                                         1,                               /* SetCount */
+                                         &pDescriptorSet,                 /* Sets */
+                                         1,                               /* DymamicOffsetCount */
+                                         &suballocResult.DynamicOffset ); /* DymamicOffsets */
 
-                vkCmdBindDescriptorSets( pParams->pCmdBuffer,
-                                         VK_PIPELINE_BIND_POINT_GRAPHICS,
-                                         hPipelineLayout,
-                                         0,
-                                         1,
-                                         descriptorSet,
-                                         1,
-                                         &suballocResult.DynamicOffset );
+                VkBuffer     ppVertexBuffers[ 1 ] = {pMeshAsset->hVertexBuffer.Handle.pBuffer};
+                VkDeviceSize pVertexOffsets[ 1 ]  = {0};
 
-                VkBuffer     vertexBuffers[ 1 ] = {pMeshAsset->hVertexBuffer.Handle.pBuffer};
-                VkDeviceSize vertexOffsets[ 1 ] = {0};
-                vkCmdBindVertexBuffers( pParams->pCmdBuffer, 0, 1, vertexBuffers, vertexOffsets );
+                vkCmdBindVertexBuffers( pParams->pCmdBuffer, /* Cmd */
+                                        0,                   /* FirstBinding */
+                                        1,                   /* BindingCount */
+                                        ppVertexBuffers,     /* Buffers */
+                                        pVertexOffsets );    /* Offsets */
 
-                vkCmdBindIndexBuffer( pParams->pCmdBuffer,
-                                      pMeshAsset->hIndexBuffer.Handle.pBuffer,
-                                      pMeshAsset->IndexOffset,
-                                      pMeshAsset->IndexType );
+                vkCmdBindIndexBuffer( pParams->pCmdBuffer,                     /* Cmd */
+                                      pMeshAsset->hIndexBuffer.Handle.pBuffer, /* IndexBuffer */
+                                      pMeshAsset->IndexOffset,                 /* Offset */
+                                      pMeshAsset->IndexType );                 /* UInt16/Uint32 */
 
-                vkCmdDrawIndexed( pParams->pCmdBuffer,
-                                  subset.indexCount, /* IndexCount */
-                                  1,                 /* InstanceCount */
-                                  subset.baseIndex,  /* FirstIndex */
-                                  0,                 /* VertexOffset */
-                                  0 );               /* FirstInstance */
+                vkCmdDrawIndexed( pParams->pCmdBuffer, /* Cmd */
+                                  subset.indexCount,   /* IndexCount */
+                                  1,                   /* InstanceCount */
+                                  subset.baseIndex,    /* FirstIndex */
+                                  0,                   /* VertexOffset */
+                                  0 );                 /* FirstInstance */
             }
         }
-
-
-
-
     }
 
     return true;

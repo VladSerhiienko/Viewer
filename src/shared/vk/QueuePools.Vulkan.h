@@ -132,8 +132,8 @@ namespace apemodevk {
     struct AcquiredQueue {
         VkQueue  pQueue        = VK_NULL_HANDLE; /* Free to use queue. */
         VkFence  pFence        = VK_NULL_HANDLE; /* Acquire() can optionally ignore fence status, so the user can await. */
-        uint32_t queueFamilyId = 0;              /* Queue family index */
-        uint32_t queueId       = 0;              /* Queue index in family pool */
+        uint32_t QueueFamilyId = 0;              /* Queue family index */
+        uint32_t QueueId       = 0;              /* Queue index in family pool */
     };
 
     class QueueFamilyPool : public QueueFamilyBased {
@@ -215,4 +215,11 @@ namespace apemodevk {
         void Release( const AcquiredQueue& acquiredQueue );
     };
 
-}
+    /**
+     * Checks the stage of fence
+     * Returns VK_SUCCESS if it is signaled.
+     * Waits for fence with the provided timeout otherwise.
+     **/
+    VkResult WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t timeout = ~0ULL );
+
+} // namespace apemodevk

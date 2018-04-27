@@ -288,7 +288,7 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
         }
     }
 
-    auto acquiredCmdBuffer = pNode->GetCommandBufferPool( )->Acquire( false, acquiredQueue.queueFamilyId );
+    auto acquiredCmdBuffer = pNode->GetCommandBufferPool( )->Acquire( false, acquiredQueue.QueueFamilyId );
     assert( acquiredCmdBuffer.pCmdBuffer != nullptr );
 
     if ( VK_SUCCESS != CheckedCall( vkResetCommandPool( *pNode, acquiredCmdBuffer.pCmdPool, 0 ) ) ) {
@@ -371,8 +371,8 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
         acquiredCmdBuffer.pFence = acquiredQueue.pFence;
 
         /* Ensure the image memory transfer can be synchronized */
-        loadedImage->QueueId = acquiredQueue.queueId;
-        loadedImage->QueueFamilyId = acquiredQueue.queueFamilyId;
+        loadedImage->QueueId = acquiredQueue.QueueId;
+        loadedImage->QueueFamilyId = acquiredQueue.QueueFamilyId;
     }
 
     pNode->GetCommandBufferPool( )->Release( acquiredCmdBuffer );

@@ -2,21 +2,15 @@
 
 using namespace apemode;
 
-#ifndef _WIN32
-
-inline void DebugBreak( ) {
-    apemodevk::platform::DebugBreak( );
-}
-
-inline void OutputDebugStringA( const char* pDebugStringA ) {
-    SDL_LogInfo( SDL_LOG_CATEGORY_RENDER, pDebugStringA );
-}
-
-#endif
-
 namespace apemode {
     using namespace apemodexm;
     using namespace apemodevk;
+
+    namespace platform {
+        static void DebugBreak( ) {
+            apemodevk::platform::DebugBreak( );
+        }
+    }
 }
 
 struct EFeedbackTypeWithOStream {
@@ -73,7 +67,7 @@ void ShaderFeedbackWriter::WriteFeedback( EFeedbackType                         
                                          EFeedbackTypeWithOStream( feedbackCompilationError ),
                                          FullFilePath );
         AppState::Get( )->Logger->error( "           Msg: {}", (const char*) pContent );
-        DebugBreak( );
+        apemode::platform::DebugBreak( );
     } else {
         AppState::Get( )->Logger->info( "ShaderCompiler: {} / {} / {}",
                                         EFeedbackTypeWithOStream( feedbackStage ),
@@ -141,7 +135,7 @@ bool ViewerApp::Initialize(  ) {
             cmdPoolCreateInfo.queueFamilyIndex = appSurface->PresentQueueFamilyIds[0];
 
             if ( false == hCmdPool[ i ].Recreate( *appSurface->pNode, cmdPoolCreateInfo ) ) {
-                DebugBreak( );
+                apemode::platform::DebugBreak( );
                 return false;
             }
 
@@ -152,7 +146,7 @@ bool ViewerApp::Initialize(  ) {
             cmdBufferAllocInfo.commandBufferCount = 1;
 
             if ( false == hCmdBuffers[ i ].Recreate( *appSurface->pNode, cmdBufferAllocInfo ) ) {
-                DebugBreak( );
+                apemode::platform::DebugBreak( );
                 return false;
             }
 
@@ -160,13 +154,13 @@ bool ViewerApp::Initialize(  ) {
             InitializeStruct( semaphoreCreateInfo );
             if ( false == hPresentCompleteSemaphores[ i ].Recreate( *appSurface->pNode, semaphoreCreateInfo ) ||
                  false == hRenderCompleteSemaphores[ i ].Recreate( *appSurface->pNode, semaphoreCreateInfo ) ) {
-                DebugBreak( );
+                apemode::platform::DebugBreak( );
                 return false;
             }
         }
 
         if ( false == DescriptorPool.RecreateResourcesFor( *appSurface->pNode, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256 ) ) {
-            DebugBreak( );
+            apemode::platform::DebugBreak( );
             return false;
         }
 
@@ -186,7 +180,7 @@ bool ViewerApp::Initialize(  ) {
         initParamsNk.pRenderPass     = hDbgRenderPass;
         initParamsNk.pDescPool       = DescriptorPool;
         initParamsNk.pQueue          = acquiredQueue.pQueue;
-        initParamsNk.QueueFamilyId   = acquiredQueue.queueFamilyId;
+        initParamsNk.QueueFamilyId   = acquiredQueue.QueueFamilyId;
         // initParamsNk.pRenderPass     = hNkRenderPass;
 
         pNkRenderer->Init( &initParamsNk );
@@ -226,7 +220,7 @@ bool ViewerApp::Initialize(  ) {
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/dreadroamer-free.fbxp"
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/warcraft-draenei-fanart.fbxp"
         if ( false == pSceneRendererBase->Recreate( &recreateParams ) ) {
-            DebugBreak( );
+            apemode::platform::DebugBreak( );
             return false;
         }
 
@@ -240,7 +234,7 @@ bool ViewerApp::Initialize(  ) {
 
         updateParams.pSceneSrc = pSceneSource.first;
         if ( false == pSceneRendererBase->UpdateScene( pScene.get( ), &updateParams ) ) {
-            DebugBreak( );
+            apemode::platform::DebugBreak( );
             return false;
         }
 
@@ -253,19 +247,19 @@ bool ViewerApp::Initialize(  ) {
 
         pSkyboxRenderer = apemodevk::make_unique< apemodevk::SkyboxRenderer >( );
         if ( false == pSkyboxRenderer->Recreate( &skyboxRendererRecreateParams ) ) {
-            DebugBreak( );
+            apemode::platform::DebugBreak( );
             return false;
         }
 
         pSamplerManager = apemodevk::make_unique< apemodevk::SamplerManager >( );
         if ( false == pSamplerManager->Recreate( appSurface->pNode ) ) {
-            DebugBreak( );
+            apemode::platform::DebugBreak( );
             return false;
         }
 
         apemodevk::ImageLoader imgLoader;
         if ( false == imgLoader.Recreate( appSurface->pNode, nullptr ) ) {
-            DebugBreak( );
+            apemode::platform::DebugBreak( );
             return false;
         }
 
@@ -343,7 +337,7 @@ bool apemode::ViewerApp::OnResized( ) {
 
             for ( uint32_t i = 0; i < FrameCount; ++i ) {
                 if ( false == hDepthImgs[ i ].Recreate( appSurface->pNode->hAllocator, depthImgCreateInfo, allocationCreateInfo ) ) {
-                    DebugBreak( );
+                    apemode::platform::DebugBreak( );
                     return false;
                 }
             }
@@ -351,7 +345,7 @@ bool apemode::ViewerApp::OnResized( ) {
             for ( uint32_t i = 0; i < FrameCount; ++i ) {
                 depthImgViewCreateInfo.image = hDepthImgs[ i ];
                 if ( false == hDepthImgViews[ i ].Recreate( *appSurface->pNode, depthImgViewCreateInfo ) ) {
-                    DebugBreak( );
+                    apemode::platform::DebugBreak( );
                     return false;
                 }
             }
@@ -415,12 +409,12 @@ bool apemode::ViewerApp::OnResized( ) {
             renderPassCreateInfoDbg.pSubpasses      = &subpassDbg;
 
             if ( false == hNkRenderPass.Recreate( *appSurface->pNode, renderPassCreateInfoNk ) ) {
-                DebugBreak( );
+                apemode::platform::DebugBreak( );
                 return false;
             }
 
             if ( false == hDbgRenderPass.Recreate( *appSurface->pNode, renderPassCreateInfoDbg ) ) {
-                DebugBreak( );
+                apemode::platform::DebugBreak( );
                 return false;
             }
 
@@ -445,7 +439,7 @@ bool apemode::ViewerApp::OnResized( ) {
                 framebufferCreateInfoNk.pAttachments = attachments;
 
                 if ( false == hNkFramebuffers[ i ].Recreate( *appSurface->pNode, framebufferCreateInfoNk ) ) {
-                    DebugBreak( );
+                    apemode::platform::DebugBreak( );
                     return false;
                 }
             }
@@ -455,7 +449,7 @@ bool apemode::ViewerApp::OnResized( ) {
                 framebufferCreateInfoDbg.pAttachments = attachments;
 
                 if ( false == hDbgFramebuffers[ i ].Recreate( *appSurface->pNode, framebufferCreateInfoDbg ) ) {
-                    DebugBreak( );
+                    apemode::platform::DebugBreak( );
                     return false;
                 }
             }

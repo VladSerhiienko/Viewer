@@ -15,21 +15,19 @@ namespace apemode {
 
     class NuklearRendererSdlVk : public NuklearRendererSdlBase {
     public:
+        /* User either provides a command buffer or a queue (with family id).
+         * In case the command buffer is null, it will be allocated,
+         * submitted to the queue and synchonized.
+         */
         struct InitParametersVk : InitParametersBase {
             apemodevk::GraphicsDevice *pNode           = nullptr;        /* Required */
             apemodevk::ShaderCompiler *pShaderCompiler = nullptr;        /* Required */
             VkDescriptorPool           pDescPool       = VK_NULL_HANDLE; /* Required */
             VkRenderPass               pRenderPass     = VK_NULL_HANDLE; /* Required */
-
-            /* User either provides a command buffer or a queue (with family id).
-             * In case the command buffer is null, it will be allocated
-             * and submitted to the queue and synchonized.
-             */
-
-            VkCommandBuffer pCmdBuffer    = VK_NULL_HANDLE; /* Optional (for uploading font img) */
-            VkQueue         pQueue        = VK_NULL_HANDLE; /* Optional (for uploading font img) */
-            uint32_t        QueueFamilyId = 0;              /* Optional (for uploading font img) */
-            uint32_t        FrameCount    = 0;              /* Required, swapchain img count typically */
+            VkCommandBuffer            pCmdBuffer      = VK_NULL_HANDLE; /* Optional (for uploading font img) */
+            VkQueue                    pQueue          = VK_NULL_HANDLE; /* Optional (for uploading font img) */
+            uint32_t                   QueueFamilyId   = 0;              /* Optional (for uploading font img) */
+            uint32_t                   FrameCount      = 0;              /* Required, swapchain img count typically */
         };
 
         struct RenderParametersVk : RenderParametersBase {
@@ -63,10 +61,10 @@ namespace apemode {
         std::vector< uint8_t > BufferContent;
 
     public:
-        bool  Render( RenderParametersBase *pRenderParamsBase ) override;
+        bool  Render( RenderParametersBase *pRenderParams ) override;   /* RenderParametersVk* */
+        bool  DeviceCreate( InitParametersBase *pInitParams ) override; /* InitParametersVk* */
         void  DeviceDestroy( ) override;
-        bool  DeviceCreate( InitParametersBase *pInitParamsBase ) override;
-        void *DeviceUploadAtlas( InitParametersBase *pInitParamsBase,
+        void *DeviceUploadAtlas( InitParametersBase *pInitParams, /* InitParametersVk* */
                                  const void *        pImgData,
                                  uint32_t            imgWidth,
                                  uint32_t            imgHeight ) override;

@@ -96,7 +96,7 @@ apemodevk::AcquiredQueue apemodevk::QueuePool::Acquire( bool bIgnoreFenceStatus,
 }
 
 void apemodevk::QueuePool::Release( const apemodevk::AcquiredQueue& acquiredQueue ) {
-    Pools[ acquiredQueue.queueFamilyId ].Release( acquiredQueue );
+    Pools[ acquiredQueue.QueueFamilyId ].Release( acquiredQueue );
 }
 
 apemodevk::QueueFamilyPool::QueueFamilyPool( VkDevice                       pInDevice,
@@ -200,8 +200,8 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
                 AcquiredQueue acquiredQueue;
                 acquiredQueue.pQueue        = queue.hQueue;
                 acquiredQueue.pFence        = queue.hFence;
-                acquiredQueue.queueFamilyId = queueFamilyId;
-                acquiredQueue.queueId       = queueIndex;
+                acquiredQueue.QueueFamilyId = queueFamilyId;
+                acquiredQueue.QueueId       = queueIndex;
                 return acquiredQueue;
             }
 
@@ -222,7 +222,7 @@ bool apemodevk::QueueFamilyPool::Release( const apemodevk::AcquiredQueue& acquir
     if ( VK_NULL_HANDLE != acquiredQueue.pQueue ) {
 
         /* No longer used, ok */
-        const bool previouslyUsed = Queues[ acquiredQueue.queueId ].bInUse.exchange( false, std::memory_order_release );
+        const bool previouslyUsed = Queues[ acquiredQueue.QueueId ].bInUse.exchange( false, std::memory_order_release );
 
         /* Try to track incorrect usage or atomic mess. */
         if ( false == previouslyUsed )
@@ -425,4 +425,26 @@ apemodevk::CommandBufferInPool::CommandBufferInPool( const CommandBufferInPool& 
     , pCmdPool( other.pCmdPool )
     , pFence( other.pFence )
     , bInUse( other.bInUse.load( std::memory_order_relaxed ) ) {
+}
+
+VkResult apemodevk::WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t timeout ) {
+    switch ( CheckedCall( vkGetFenceStatus( pDevice, pFence ) ) ) {
+        case VK_NOT_READY:
+            switch ( VkResult err = CheckedCall( vkWaitForFences( pDevice, 1, &pFence, true, timeout ) ) ) {
+                case VK_ERROR_OUT_OF_HOST_MEMORY:
+                case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+                case VK_ERROR_DEVICE_LOST:
+                    platform::DebugBreak( );
+                    return err;
+
+                case VK_TIMEOUT:
+                    return VK_TIMEOUT;
+            }
+
+        case VK_ERROR_DEVICE_LOST:
+            platform::DebugBreak( );
+            return VK_ERROR_DEVICE_LOST;
+    }
+
+    return VK_SUCCESS;
 }
