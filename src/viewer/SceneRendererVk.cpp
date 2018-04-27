@@ -369,9 +369,92 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                 }
         } );
 
+        /* Host storage pool */
         apemodevk::HostBufferPool bufferPool;
         bufferPool.Recreate( pParams->pNode, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, false );
 
+#define APEMODE_SCENERENDERERVK_PORTIONED_UPLOADING
+#ifdef APEMODE_SCENERENDERERVK_PORTIONED_UPLOADING
+
+        /* This piece of code is a bit complicated, so I added comments.
+         * The purpose is to get some control over the memory allocation from CPU heap
+         * and make it efficient, manageable and easy to understand.
+         * The idea is to allocated some reasonable amount of staging memory in the first iteration,
+         * and than reuse it in the next iterations.
+         */
+        if ( auto pCurrIntent = pIntent ) {
+
+            /* Lets start from 1/4 from total required.
+             * Do not allocate less than 64 kb.
+             * Do not allocate more than 64 mb.
+             */
+            uint64_t heuristicTotalBytesAllowed = totalBytesRequired >> 2;
+            heuristicTotalBytesAllowed = std::max< uint64_t >( pNode->AdapterProps.limits.maxUniformBufferRange, heuristicTotalBytesAllowed );
+            heuristicTotalBytesAllowed = std::min< uint64_t >( 64 * 1024 * 1024, heuristicTotalBytesAllowed );
+
+            /* A limit that the code is trying NOT to reach. */
+            const uint64_t totalBytesAllowed = heuristicTotalBytesAllowed;
+
+            /* Tracks the amount of allocated host memory (approx). */
+            uint64_t totalBytesAllocated = 0;
+
+            /* While there are elements that need to be uploaded. */
+            while ( pCurrIntent != pIntentEnd ) {
+
+                /* Get the queue pool and acquire a queue.
+                 * Allocated a command buffer and give it to the lambda that pushes copy commands into it.
+                 * Allocated a command buffer and give it to the lambda that pushes commands into it.
+                 */
+                apemodevk::TSubmitCmdBuffer( pNode, VK_QUEUE_GRAPHICS_BIT, [&]( VkCommandBuffer pCmdBuffer ) {
+                    
+                    /* While there are elements that need to be uploaded. */
+                    while ( pCurrIntent != pIntentEnd ) {
+
+                        /* Allocate some host storage and copy the src buffer data to it. */
+                        auto uploadBuffer = bufferPool.Suballocate( pCurrIntent->pSrcBufferData, pCurrIntent->SrcBufferSize );
+
+                        /* A copy command. */
+                        VkBufferCopy bufferCopy;
+                        apemodevk::InitializeStruct( bufferCopy );
+
+                        bufferCopy.srcOffset = uploadBuffer.DescriptorBufferInfo.offset;
+                        bufferCopy.size      = uploadBuffer.DescriptorBufferInfo.range;
+
+                        /* Add the copy command. */
+                        vkCmdCopyBuffer( pCmdBuffer,                               /* Cmd */
+                                         uploadBuffer.DescriptorBufferInfo.buffer, /* Src */
+                                         pCurrIntent->pDstBuffer,                  /* Dst */
+                                         1,                                        /* Region count*/
+                                         &bufferCopy );                            /* Regions */
+
+                        /* Move to the next item. */
+                        ++pCurrIntent;
+
+                        totalBytesAllocated += pCurrIntent->SrcBufferSize;
+                        if ( totalBytesAllocated >= totalBytesAllowed ) {
+                            
+                            /* The limit is reached. Flush and submit. */
+                            break;
+                        }
+                    }  /* while */
+            
+                    /* Make memory visible if needed. */
+                    bufferPool.Flush( );
+                    totalBytesAllocated = 0;
+
+                    /* End command buffer.
+                     * Submit and sync.
+                     */
+
+                } ); /* TSubmitCmdBuffer */
+            }
+        }
+
+#else /* ! APEMODE_SCENERENDERERVK_PORTIONED_UPLOADING */
+
+        /* This piece of code is easier to understand.
+         * It allocates all staging buffers, fills it with src data and copies to the GPU buffers.
+         */
         apemodevk::TSubmitCmdBuffer( pNode, VK_QUEUE_GRAPHICS_BIT, [&]( VkCommandBuffer pCmdBuffer ) {
 
             /* Fill buffers. */
@@ -396,6 +479,9 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             
             bufferPool.Flush( );
         } );
+
+#endif /* APEMODE_SCENERENDERERVK_PORTIONED_UPLOADING */
+
     }
 
     return true;
@@ -769,9 +855,6 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
         apemodevk::platform::DebugBreak( );
         return false;
     }
-
-    VkPhysicalDeviceProperties adapterProps;
-    vkGetPhysicalDeviceProperties( *pParams->pNode, &adapterProps );
 
     for ( uint32_t i = 0; i < pParams->FrameCount; ++i ) {
         BufferPools[ i ].Recreate( pParams->pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
