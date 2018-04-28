@@ -136,22 +136,6 @@ namespace apemodevk {
         return true;
     }
 
-    struct MeshResource {
-        SceneMeshDeviceAssetVk*  pDstAsset = nullptr;
-        const apemodefb::MeshFb* pSrcMesh  = nullptr;
-    };
-
-    /**
-     * Uploads resources from CPU to GPU with respect to staging memory limit.
-     */
-    MeshResource* UploadResources( GraphicsDevice*     pNode,
-                                   THandle< VmaPool >& pool,
-                                   uint32_t            blockSize,
-                                   MeshResource*       pResourceIt,
-                                   MeshResource*       pResourcesEndIt ) {
-        return nullptr;
-    }
-
     /**
      * Uploads resources from CPU to GPU with respect to staging memory limit.
      */
@@ -180,8 +164,7 @@ namespace apemodevk {
         auto acquiredCmdBuffer = pCmdBufferPool->Acquire( false, acquiredQueue.QueueFamilyId );
 
         /* Reset command pool */
-        if ( VK_SUCCESS != vkResetCommandPool( pNode->hLogicalDevice, acquiredCmdBuffer.pCmdPool, 0 ) ) {
-            apemodevk::platform::DebugBreak( );
+        if ( VK_SUCCESS != CheckedCall( vkResetCommandPool( pNode->hLogicalDevice, acquiredCmdBuffer.pCmdPool, 0 ) ) ) {
             return false;
         }
 
@@ -190,21 +173,25 @@ namespace apemodevk {
         InitializeStruct( commandBufferBeginInfo );
 
         commandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        if ( VK_SUCCESS != vkBeginCommandBuffer( acquiredCmdBuffer.pCmdBuffer, &commandBufferBeginInfo ) ) {
+        if ( VK_SUCCESS != CheckedCall( vkBeginCommandBuffer( acquiredCmdBuffer.pCmdBuffer, &commandBufferBeginInfo ) ) ) {
             apemodevk::platform::DebugBreak( );
+            return false;
         }
 
         fillCmdsFunc( acquiredCmdBuffer.pCmdBuffer );
 
         vkEndCommandBuffer( acquiredCmdBuffer.pCmdBuffer );
 
+        if ( VK_SUCCESS != WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence ) ) {
+            return false;
+        }
+
         VkSubmitInfo submitInfo;
         InitializeStruct( submitInfo );
 
+        submitInfo.pCommandBuffers = &acquiredCmdBuffer.pCmdBuffer;
         submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers    = &acquiredCmdBuffer.pCmdBuffer;
 
-        WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence );
         vkResetFences( pNode->hLogicalDevice, 1, &acquiredQueue.pFence );
         vkQueueSubmit( acquiredQueue.pQueue, 1, &submitInfo, acquiredQueue.pFence );
         WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence );
@@ -212,6 +199,8 @@ namespace apemodevk {
         acquiredCmdBuffer.pFence = acquiredQueue.pFence;
         pCmdBufferPool->Release( acquiredCmdBuffer );
         pQueuePool->Release( acquiredQueue );
+
+        return true;
     }
 }
 
@@ -228,40 +217,37 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         bDeviceChanged |= true;
     }
 
-    if ( bDeviceChanged ) {
+    auto pMeshesFb = pParamsBase->pSceneSrc->meshes( );
+    if ( bDeviceChanged && pMeshesFb ) {
+
+        std::vector< apemodevk::MeshBufferFillIntent > bufferFillIntents;
+        bufferFillIntents.reserve( pMeshesFb->size( ) << 1 );
 
         uint32_t meshIndex = 0;
-        auto & meshesFb = *pParamsBase->pSceneSrc->meshes( );
-
-        std::vector< apemodevk::MeshResource >         meshResources;
-        std::vector< apemodevk::MeshBufferFillIntent > bufferFillIntents;
-
-        meshResources.reserve( meshesFb.size( ) );
-        bufferFillIntents.reserve( meshesFb.size( ) << 1 );
-
         uint64_t totalBytesRequired = 0;
 
-        for ( auto pSrcMesh : meshesFb ) {
+        for ( auto pSrcMesh : *pMeshesFb ) {
+
             /* Scene dstMesh. */
-            auto& dstMesh = pScene->meshes[ meshIndex++ ];
+            auto pDstMesh = &pScene->meshes[ meshIndex++ ];
 
             /* Create mesh device asset if needed. */
-            auto pMeshAsset = (apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset;
+            auto pMeshAsset = (apemodevk::SceneMeshDeviceAssetVk*) pDstMesh->pDeviceAsset;
             if ( nullptr == pMeshAsset ) {
                 pMeshAsset = apemode_new apemodevk::SceneMeshDeviceAssetVk( );
-                dstMesh.pDeviceAsset = pMeshAsset;
+                pDstMesh->pDeviceAsset = pMeshAsset;
             }
 
             auto pSubmesh = pSrcMesh->submeshes( )->begin( );
 
             pMeshAsset->VertexCount = pSubmesh->vertex_count( );
 
-            auto offset                  = pSubmesh->position_offset( );
+            auto offset = pSubmesh->position_offset( );
             pMeshAsset->PositionOffset.x = offset.x( );
             pMeshAsset->PositionOffset.y = offset.y( );
             pMeshAsset->PositionOffset.z = offset.z( );
 
-            auto scale                  = pSubmesh->position_scale( );
+            auto scale = pSubmesh->position_scale( );
             pMeshAsset->PositionScale.x = scale.x( );
             pMeshAsset->PositionScale.y = scale.y( );
             pMeshAsset->PositionScale.z = scale.z( );
@@ -297,13 +283,6 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                 apemodevk::platform::DebugBreak( );
                 return false;
             }
-
-            apemodevk::MeshResource meshResource;
-
-            meshResource.pDstAsset = pMeshAsset;
-            meshResource.pSrcMesh  = pSrcMesh;
-
-            meshResources.push_back( meshResource );
 
             apemodevk::MeshBufferFillIntent bufferFillIntent;
 
@@ -406,7 +385,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                  * Allocated a command buffer and give it to the lambda that pushes commands into it.
                  */
                 apemodevk::TSubmitCmdBuffer( pNode, VK_QUEUE_GRAPHICS_BIT, [&]( VkCommandBuffer pCmdBuffer ) {
-                    
+
                     /* While there are elements that need to be uploaded. */
                     while ( pCurrIntent != pIntentEnd ) {
 
@@ -432,12 +411,12 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
                         totalBytesAllocated += pCurrIntent->SrcBufferSize;
                         if ( totalBytesAllocated >= totalBytesAllowed ) {
-                            
+
                             /* The limit is reached. Flush and submit. */
                             break;
                         }
                     }  /* while */
-            
+
                     /* Make memory visible if needed. */
                     bufferPool.Flush( );
                     totalBytesAllocated = 0;
@@ -476,7 +455,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
                     ++pCurrIntent;
                 }
-            
+
             bufferPool.Flush( );
         } );
 
@@ -488,7 +467,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 }
 
 bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRenderParametersBase* pParamsBase ) {
-    
+
     /* Scene was not provided.
      * Render parameters were not provided. */
     if ( nullptr == pScene || nullptr == pParamsBase ) {
