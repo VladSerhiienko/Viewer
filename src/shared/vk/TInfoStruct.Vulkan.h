@@ -4,75 +4,14 @@
 
 namespace apemodevk
 {
-    /* Utilities to help to resolve the sType member in structs.
-     * All the structures are listed in TInfoStructHasStructType.Vulkan.inl
-     * All the sType values are defined in TInfoStructResolveStructType.Vulkan.inl
-     */
-    namespace traits
-    {
-        template < typename TStruct >
-        inline bool HasStructureType( ) {
-#define APEMODEVK_SAME_STRUCT( T )           \
-    if ( std::is_same< TStruct, T >::value ) \
-        return true;
-
-            APEMODEVK_SAME_STRUCT( VkCommandBufferBeginInfo );
-            APEMODEVK_SAME_STRUCT( VkRenderPassBeginInfo );
-            APEMODEVK_SAME_STRUCT( VkBufferMemoryBarrier );
-            APEMODEVK_SAME_STRUCT( VkImageMemoryBarrier );
-            APEMODEVK_SAME_STRUCT( VkFenceCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkSemaphoreCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkSubmitInfo );
-            APEMODEVK_SAME_STRUCT( VkPresentInfoKHR );
-            APEMODEVK_SAME_STRUCT( VkSwapchainCreateInfoKHR );
-            APEMODEVK_SAME_STRUCT( VkImageViewCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkImageCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkMemoryAllocateInfo );
-            APEMODEVK_SAME_STRUCT( VkSamplerCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkBufferCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkRenderPassCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkShaderModuleCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkPipelineLayoutCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkPipelineCacheCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkDescriptorSetAllocateInfo );
-            APEMODEVK_SAME_STRUCT( VkWriteDescriptorSet );
-            APEMODEVK_SAME_STRUCT( VkFramebufferCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkCommandPoolCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkCommandBufferAllocateInfo );
-            APEMODEVK_SAME_STRUCT( VkApplicationInfo );
-            APEMODEVK_SAME_STRUCT( VkDeviceQueueCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkDeviceCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkCommandBufferInheritanceInfo );
-            APEMODEVK_SAME_STRUCT( VkMappedMemoryRange );
-            APEMODEVK_SAME_STRUCT( VkPipelineShaderStageCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkInstanceCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkPipelineInputAssemblyStateCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkPipelineRasterizationStateCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkPipelineDepthStencilStateCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkPipelineMultisampleStateCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkPipelineVertexInputStateCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkPipelineColorBlendStateCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkPipelineViewportStateCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkPipelineDynamicStateCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkDescriptorSetLayoutCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkGraphicsPipelineCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkDescriptorPoolCreateInfo );
-            APEMODEVK_SAME_STRUCT( VkDebugReportCallbackCreateInfoEXT );
-
-#if defined( VK_USE_PLATFORM_WIN32_KHR ) && VK_USE_PLATFORM_WIN32_KHR == 1
-            APEMODEVK_SAME_STRUCT( VkWin32SurfaceCreateInfoKHR );
-#endif
-#if defined( VK_USE_PLATFORM_XLIB_KHR ) && VK_USE_PLATFORM_XLIB_KHR == 1
-            APEMODEVK_SAME_STRUCT( VkXlibSurfaceCreateInfoKHR );
-#endif
-            return false;
-        }
-    }
-
     namespace traits {
 
+        /* Returns VkStructureType for the template argument.
+         * Returns VK_STRUCTURE_TYPE_MAX_ENUM if it failed to relate a template argument with the listed structure.
+         */
         template< typename TStruct>
         inline VkStructureType GetStructureType( ) {
+#pragma region Relating structures with their struct type.
 #define APEMODEVK_MAP_TYPE_TO_STRUCT( T, V ) \
     if ( std::is_same< TStruct, T >::value ) \
         return V;
@@ -128,12 +67,21 @@ namespace apemodevk
             APEMODEVK_MAP_TYPE_TO_STRUCT( VkXlibSurfaceCreateInfoKHR, VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR );
 #endif
             return VK_STRUCTURE_TYPE_MAX_ENUM;
+#pragma endregion
+        }
+
+        /* Returns true if there is a valid VkStructureType value for the template argument.
+         * Returns false otherwise.
+         */
+        template < typename TStruct >
+        inline bool HasStructureType( ) {
+            return GetStructureType< TStruct >( ) != VK_STRUCTURE_TYPE_MAX_ENUM;
         }
     }
 
     /* Sets sType structure member if applicable.
-     * All the structures are listed in TInfoStructHasStructType.Vulkan.inl
-     * All the sType values are defined in TInfoStructResolveStructType.Vulkan.inl
+     * @see GetStructureType(), HasStructureType().
+     * @note Map a missing type in GetStructureType().
      */
     template < typename TStruct >
     inline void SetStructType( TStruct &uninitializedStruct ) {
@@ -145,8 +93,8 @@ namespace apemodevk
     }
 
     /* Sets sType structure members if applicable.
-     * All the structures are listed in TInfoStructHasStructType.Vulkan.inl
-     * All the sType values are defined in TInfoStructResolveStructType.Vulkan.inl
+     * @see GetStructureType(), HasStructureType().
+     * @note Map a missing type in GetStructureType().
      */
     template < typename TStruct, size_t TArraySize >
     inline void SetStructType( TStruct ( &uninitializedStructs )[ TArraySize ] ) {
@@ -161,8 +109,8 @@ namespace apemodevk
     }
 
     /* Sets sType structure members if applicable.
-     * All the structures are listed in TInfoStructHasStructType.Vulkan.inl
-     * All the sType values are defined in TInfoStructResolveStructType.Vulkan.inl
+     * @see GetStructureType(), HasStructureType().
+     * @note Map a missing type in GetStructureType().
      */
     template < typename TStruct >
     inline void SetStructType( TStruct *pUninitializedStructs, size_t count ) {
@@ -177,8 +125,8 @@ namespace apemodevk
     }
 
     /* Zeros all the provided memory, and sets sType structure members if applicable.
-     * All the structures are listed in TInfoStructHasStructType.Vulkan.inl
-     * All the sType values are defined in TInfoStructResolveStructType.Vulkan.inl
+     * @see GetStructureType(), HasStructureType().
+     * @note Map a missing type in GetStructureType().
      */
     template < typename TStruct >
     inline void InitializeStruct( TStruct &uninitializedStruct ) {
@@ -187,8 +135,8 @@ namespace apemodevk
     }
 
     /* Zeros all the provided memory, and sets sType structure members if applicable.
-     * All the structures are listed in TInfoStructHasStructType.Vulkan.inl
-     * All the sType values are defined in TInfoStructResolveStructType.Vulkan.inl
+     * @see GetStructureType(), HasStructureType().
+     * @note Map a missing type in GetStructureType().
      */
     template < typename TStruct, size_t TArraySize >
     inline void InitializeStruct( TStruct ( &uninitializedStructs )[ TArraySize ] ) {
@@ -197,8 +145,8 @@ namespace apemodevk
     }
 
     /* Zeros all the provided memory, and sets sType structure members if applicable.
-     * All the structures are listed in TInfoStructHasStructType.Vulkan.inl
-     * All the sType values are defined in TInfoStructResolveStructType.Vulkan.inl
+     * @see GetStructureType(), HasStructureType().
+     * @note Map a missing type in GetStructureType().
      */
     template < typename TStruct >
     inline void InitializeStruct( TStruct *pUninitializedStructs, size_t count ) {
@@ -206,7 +154,11 @@ namespace apemodevk
             SetStructType( pUninitializedStructs, count );
     }
 
-    /* Please, see also InitializeStruct( ) */
+    /* Returns initialized structure (zeroed members, correct sType if applicable.
+     * @see GetStructureType(), HasStructureType(), map a missing type there.
+     * @note Map a missing type in GetStructureType().
+     * @seealso InitializeStruct()
+     */
     template < typename TStruct >
     TStruct TNewInitializedStruct( ) {
         TStruct uninitializedStruct;
