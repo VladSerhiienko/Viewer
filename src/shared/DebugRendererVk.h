@@ -11,14 +11,14 @@ namespace apemode {
 
     struct DebugRendererVk {
         struct PositionVertex {
-            float pos[ 3 ];
+            float Position[ 3 ];
         };
 
         struct FrameUniformBuffer {
-            XMFLOAT4X4 worldMatrix;
-            XMFLOAT4X4 viewMatrix;
-            XMFLOAT4X4 projectionMatrix;
-            XMFLOAT4   color;
+            XMFLOAT4X4 WorldMatrix;
+            XMFLOAT4X4 ViewMatrix;
+            XMFLOAT4X4 ProjMatrix;
+            XMFLOAT4   Color;
         };
 
         struct InitParametersVk {
@@ -48,10 +48,10 @@ namespace apemode {
         apemodevk::HostBufferPool                        BufferPools[ kMaxFrameCount ];
         apemodevk::DescriptorSetPool                     DescSetPools[ kMaxFrameCount ];
 
-        bool RecreateResources( InitParametersVk *initParams );
+        bool RecreateResources( InitParametersVk *pInitParams );
 
-        void Reset( uint32_t FrameIndex );
-        bool Render( RenderParametersVk *renderParams );
-        void Flush( uint32_t FrameIndex );
+        void Reset( uint32_t frameIndex );
+        bool Render( RenderParametersVk *pRenderParams );
+        void Flush( uint32_t frameIndex );
     };
 } // namespace apemode

@@ -168,7 +168,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     vertexInputAttributeDescription[ 0 ].location = 0;
     vertexInputAttributeDescription[ 0 ].binding  = vertexInputBindingDescription[ 0 ].binding;
     vertexInputAttributeDescription[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    vertexInputAttributeDescription[ 0 ].offset   = ( size_t )( &( (PositionVertex*) 0 )->pos );
+    vertexInputAttributeDescription[ 0 ].offset   = ( size_t )( &( (PositionVertex*) 0 )->Position );
 
     vertexInputStateCreateInfo.vertexBindingDescriptionCount   = GetArraySizeU( vertexInputBindingDescription );
     vertexInputStateCreateInfo.pVertexBindingDescriptions      = vertexInputBindingDescription;
@@ -251,7 +251,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
         // clang-format off
         const float vertexBufferData[] = {
             // -X side
-            -1.0f,-1.0f,-1.0f,  
+            -1.0f,-1.0f,-1.0f,
             -1.0f,-1.0f, 1.0f,
             -1.0f, 1.0f, 1.0f,
             -1.0f, 1.0f, 1.0f,
@@ -291,7 +291,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
             1.0f, 1.0f,-1.0f,
 
             // +Z side
-            -1.0f, 1.0f, 1.0f,  
+            -1.0f, 1.0f, 1.0f,
             -1.0f,-1.0f, 1.0f,
              1.0f, 1.0f, 1.0f,
             -1.0f,-1.0f, 1.0f,

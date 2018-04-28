@@ -564,8 +564,8 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         VkFence         fence                    = acquiredQueue.pFence;
         VkSemaphore     presentCompleteSemaphore = hPresentCompleteSemaphores[ FrameIndex ];
         VkSemaphore     renderCompleteSemaphore  = hRenderCompleteSemaphores[ FrameIndex ];
-        VkCommandPool   cmdPool                  = hCmdPool[ FrameIndex ];
-        VkCommandBuffer cmdBuffer                = hCmdBuffers[ FrameIndex ];
+        VkCommandPool   pCmdPool                 = hCmdPool[ FrameIndex ];
+        VkCommandBuffer pCmdBuffer               = hCmdBuffers[ FrameIndex ];
 
         const uint32_t width  = appSurfaceVk->GetWidth( );
         const uint32_t height = appSurfaceVk->GetHeight( );
@@ -597,12 +597,12 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
             VK_NULL_HANDLE,
             &BackbufferIndices[ FrameIndex ] ) );
 
-        CheckedCall( vkResetCommandPool( device, cmdPool, 0 ) );
+        CheckedCall( vkResetCommandPool( device, pCmdPool, 0 ) );
 
         VkCommandBufferBeginInfo commandBufferBeginInfo;
         InitializeStruct( commandBufferBeginInfo );
         commandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        CheckedCall( vkBeginCommandBuffer( cmdBuffer, &commandBufferBeginInfo ) );
+        CheckedCall( vkBeginCommandBuffer( pCmdBuffer, &commandBufferBeginInfo ) );
 
         VkClearValue clearValue[ 2 ];
         clearValue[ 0 ].color.float32[ 0 ]   = clearColor[ 0 ];
@@ -621,7 +621,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         renderPassBeginInfo.clearValueCount          = 2;
         renderPassBeginInfo.pClearValues             = clearValue;
 
-        vkCmdBeginRenderPass( cmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
+        vkCmdBeginRenderPass( pCmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 
         auto View    = pCamController->ViewMatrix( );
         auto InvView = XMMatrixInverse( nullptr, View );
@@ -629,9 +629,9 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         auto InvProj = XMMatrixInverse( nullptr, Proj );
 
         DebugRendererVk::FrameUniformBuffer frameData;
-        XMStoreFloat4x4( &frameData.projectionMatrix, Proj );
-        XMStoreFloat4x4( &frameData.viewMatrix, pCamController->ViewMatrix( ) );
-        frameData.color = {1, 0, 0, 1};
+        XMStoreFloat4x4( &frameData.ProjMatrix, Proj );
+        XMStoreFloat4x4( &frameData.ViewMatrix, pCamController->ViewMatrix( ) );
+        frameData.Color = {1, 0, 0, 1};
 
         pSkyboxRenderer->Reset( FrameIndex );
         pDebugRenderer->Reset( FrameIndex );
@@ -646,9 +646,8 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         skyboxRenderParams.Scale.x     = 1;
         skyboxRenderParams.Scale.y     = 1;
         skyboxRenderParams.FrameIndex  = FrameIndex;
-        skyboxRenderParams.pCmdBuffer  = cmdBuffer;
+        skyboxRenderParams.pCmdBuffer  = pCmdBuffer;
         skyboxRenderParams.pNode       = appSurfaceVk->pNode;
-        skyboxRenderParams.FieldOfView = apemodexm::DegreesToRadians( 67 );
         skyboxRenderParams.FieldOfView = apemodexm::DegreesToRadians( 67 );
 
         pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
@@ -659,7 +658,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         renderParamsDbg.Scale[ 0 ] = 1;
         renderParamsDbg.Scale[ 1 ] = 1;
         renderParamsDbg.FrameIndex = FrameIndex;
-        renderParamsDbg.pCmdBuffer = cmdBuffer;
+        renderParamsDbg.pCmdBuffer = pCmdBuffer;
         renderParamsDbg.pFrameData = &frameData;
 
         const float scale = 0.5f;
@@ -667,22 +666,22 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         XMMATRIX worldMatrix;
 
         worldMatrix = XMMatrixScaling( scale, scale * 2, scale ) * XMMatrixTranslation( 0, scale * 3, 0 );
-        XMStoreFloat4x4( &frameData.worldMatrix, worldMatrix );
-        frameData.color = {0, 1, 0, 1};
+        XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
+        frameData.Color = {0, 1, 0, 1};
         pDebugRenderer->Render( &renderParamsDbg );
 
         worldMatrix = XMMatrixScaling( scale, scale, scale * 2 ) * XMMatrixTranslation( 0, 0, scale * 3 );
-        XMStoreFloat4x4( &frameData.worldMatrix, worldMatrix );
-        frameData.color = {0, 0, 1, 1};
+        XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
+        frameData.Color = {0, 0, 1, 1};
         pDebugRenderer->Render( &renderParamsDbg );
 
 
         worldMatrix = XMMatrixScaling( scale * 2, scale, scale ) * XMMatrixTranslation( scale * 3, 0, 0 );
-        XMStoreFloat4x4( &frameData.worldMatrix, worldMatrix );
-        frameData.color = { 1, 0, 0, 1 };
+        XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
+        frameData.Color = { 1, 0, 0, 1 };
         pDebugRenderer->Render( &renderParamsDbg );
 
-        frameData.color = { 1, 0, 0, 1 };
+        frameData.Color = { 1, 0, 0, 1 };
         pDebugRenderer->Render(&renderParamsDbg);
 
         apemode::SceneRendererVk::SceneRenderParametersVk sceneRenderParameters;
@@ -691,27 +690,27 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         sceneRenderParameters.Scale.x    = 1;
         sceneRenderParameters.Scale.y    = 1;
         sceneRenderParameters.FrameIndex = FrameIndex;
-        sceneRenderParameters.pCmdBuffer = cmdBuffer;
+        sceneRenderParameters.pCmdBuffer = pCmdBuffer;
         sceneRenderParameters.pNode      = appSurfaceVk->pNode;
-        sceneRenderParameters.ViewMatrix = frameData.viewMatrix;
-        sceneRenderParameters.ProjMatrix = frameData.projectionMatrix;
+        sceneRenderParameters.ViewMatrix = frameData.ViewMatrix;
+        sceneRenderParameters.ProjMatrix = frameData.ProjMatrix;
         pSceneRendererBase->RenderScene( pScene.get( ), &sceneRenderParameters );
 
         NuklearRendererSdlVk::RenderParametersVk renderParamsNk;
-        renderParamsNk.dims[ 0 ]          = (float) width;
-        renderParamsNk.dims[ 1 ]          = (float) height;
-        renderParamsNk.scale[ 0 ]         = 1;
-        renderParamsNk.scale[ 1 ]         = 1;
-        renderParamsNk.aa                 = NK_ANTI_ALIASING_ON;
-        renderParamsNk.max_vertex_buffer  = 64 * 1024;
-        renderParamsNk.max_element_buffer = 64 * 1024;
-        renderParamsNk.FrameIndex         = FrameIndex;
-        renderParamsNk.pCmdBuffer         = cmdBuffer;
+        renderParamsNk.Dims[ 0 ]            = (float) width;
+        renderParamsNk.Dims[ 1 ]            = (float) height;
+        renderParamsNk.Scale[ 0 ]           = 1;
+        renderParamsNk.Scale[ 1 ]           = 1;
+        renderParamsNk.eAntiAliasing        = NK_ANTI_ALIASING_ON;
+        renderParamsNk.MaxVertexBufferSize  = 64 * 1024;
+        renderParamsNk.MaxElementBufferSize = 64 * 1024;
+        renderParamsNk.FrameIndex           = FrameIndex;
+        renderParamsNk.pCmdBuffer           = pCmdBuffer;
 
         pNkRenderer->Render( &renderParamsNk );
         nk_clear( &pNkRenderer->Context );
 
-        vkCmdEndRenderPass( cmdBuffer );
+        vkCmdEndRenderPass( pCmdBuffer );
 
         pDebugRenderer->Flush( FrameIndex );
         pSceneRendererBase->Flush( pScene.get( ), FrameIndex );
@@ -727,9 +726,9 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         submitInfo.pWaitSemaphores      = &presentCompleteSemaphore;
         submitInfo.pWaitDstStageMask    = &waitPipelineStage;
         submitInfo.commandBufferCount   = 1;
-        submitInfo.pCommandBuffers      = &cmdBuffer;
+        submitInfo.pCommandBuffers      = &pCmdBuffer;
 
-        CheckedCall( vkEndCommandBuffer( cmdBuffer ) );
+        CheckedCall( vkEndCommandBuffer( pCmdBuffer ) );
         CheckedCall( vkResetFences( device, 1, &fence ) );
         CheckedCall( vkQueueSubmit( queue, 1, &submitInfo, fence ) );
 

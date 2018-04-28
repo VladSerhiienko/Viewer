@@ -9,13 +9,13 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
     auto pRenderParams = (RenderParametersVk*) pRenderParamsBase;
     auto frameIndex   = ( pRenderParams->FrameIndex ) % kMaxFrameCount;
 
-    if ( hVertexBuffer[ frameIndex ].IsNull( ) || ( VertexBufferSize[ frameIndex ] < pRenderParamsBase->max_vertex_buffer ) ) {
+    if ( hVertexBuffer[ frameIndex ].IsNull( ) || ( VertexBufferSize[ frameIndex ] < pRenderParamsBase->MaxVertexBufferSize ) ) {
         hVertexBuffer[ frameIndex ].Destroy( );
 
         VkBufferCreateInfo bufferCreateInfo;
         InitializeStruct( bufferCreateInfo );
 
-        bufferCreateInfo.size        = pRenderParamsBase->max_vertex_buffer;
+        bufferCreateInfo.size        = pRenderParamsBase->MaxVertexBufferSize;
         bufferCreateInfo.usage       = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
         bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -28,16 +28,16 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
             return false;
         }
 
-        VertexBufferSize[ frameIndex ] = pRenderParamsBase->max_vertex_buffer;
+        VertexBufferSize[ frameIndex ] = pRenderParamsBase->MaxVertexBufferSize;
     }
 
-    if ( hIndexBuffer[ frameIndex ].IsNull( ) || IndexBufferSize[ frameIndex ] < pRenderParamsBase->max_element_buffer ) {
+    if ( hIndexBuffer[ frameIndex ].IsNull( ) || IndexBufferSize[ frameIndex ] < pRenderParamsBase->MaxElementBufferSize ) {
         hIndexBuffer[ frameIndex ].Destroy( );
 
         VkBufferCreateInfo bufferCreateInfo;
         InitializeStruct( bufferCreateInfo );
 
-        bufferCreateInfo.size        = pRenderParamsBase->max_element_buffer;
+        bufferCreateInfo.size        = pRenderParamsBase->MaxElementBufferSize;
         bufferCreateInfo.usage       = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
         bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -50,7 +50,7 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
             return false;
         }
 
-        IndexBufferSize[ frameIndex ] = pRenderParamsBase->max_element_buffer;
+        IndexBufferSize[ frameIndex ] = pRenderParamsBase->MaxElementBufferSize;
     }
 
     /* Convert from command queue into draw list and draw to screen */
@@ -78,13 +78,13 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
     config.curve_segment_count  = 22;
     config.arc_segment_count    = 22;
     config.global_alpha         = 1.0f;
-    config.shape_AA             = pRenderParamsBase->aa;
-    config.line_AA              = pRenderParamsBase->aa;
+    config.shape_AA             = pRenderParamsBase->eAntiAliasing;
+    config.line_AA              = pRenderParamsBase->eAntiAliasing;
 
     /* Setup buffers to load vertices and elements */
     nk_buffer vbuf, ebuf;
-    nk_buffer_init_fixed( &vbuf, vertices, (nk_size) pRenderParamsBase->max_vertex_buffer );
-    nk_buffer_init_fixed( &ebuf, elements, (nk_size) pRenderParamsBase->max_element_buffer );
+    nk_buffer_init_fixed( &vbuf, vertices, (nk_size) pRenderParamsBase->MaxVertexBufferSize );
+    nk_buffer_init_fixed( &ebuf, elements, (nk_size) pRenderParamsBase->MaxElementBufferSize );
     nk_convert( &Context, &RenderCmds, &vbuf, &ebuf, &config );
 
     /* Bind pipeline and descriptor sets */
@@ -105,8 +105,8 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
     VkViewport viewport;
     viewport.x        = 0;
     viewport.y        = 0;
-    viewport.width    = pRenderParamsBase->dims[ 0 ] * pRenderParamsBase->scale[ 0 ];
-    viewport.height   = pRenderParamsBase->dims[ 1 ] * pRenderParamsBase->scale[ 1 ];
+    viewport.width    = pRenderParamsBase->Dims[ 0 ] * pRenderParamsBase->Scale[ 0 ];
+    viewport.height   = pRenderParamsBase->Dims[ 1 ] * pRenderParamsBase->Scale[ 1 ];
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
     vkCmdSetViewport( pRenderParams->pCmdBuffer, 0, 1, &viewport );
@@ -116,8 +116,8 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
         float offsetScale[ 4 ] = {
             -1.0f,               /* Translation X */
             -1.0f,               /* Translation Y */
-            2.0f / pRenderParamsBase->dims[ 0 ], /* Scaling X */
-            2.0f / pRenderParamsBase->dims[ 1 ], /* Scaling Y */
+            2.0f / pRenderParamsBase->Dims[ 0 ], /* Scaling X */
+            2.0f / pRenderParamsBase->Dims[ 1 ], /* Scaling Y */
         };
 
         vkCmdPushConstants(
@@ -135,10 +135,10 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
 
         VkRect2D scissor;
 
-        scissor.offset.x      = (  int32_t )( cmd->clip_rect.x * pRenderParamsBase->scale[ 0 ] );
-        scissor.offset.y      = (  int32_t )( cmd->clip_rect.y * pRenderParamsBase->scale[ 1 ] );
-        scissor.extent.width  = ( uint32_t )( cmd->clip_rect.w * pRenderParamsBase->scale[ 0 ] );
-        scissor.extent.height = ( uint32_t )( cmd->clip_rect.h * pRenderParamsBase->scale[ 1 ] );
+        scissor.offset.x      = (  int32_t )( cmd->clip_rect.x * pRenderParamsBase->Scale[ 0 ] );
+        scissor.offset.y      = (  int32_t )( cmd->clip_rect.y * pRenderParamsBase->Scale[ 1 ] );
+        scissor.extent.width  = ( uint32_t )( cmd->clip_rect.w * pRenderParamsBase->Scale[ 0 ] );
+        scissor.extent.height = ( uint32_t )( cmd->clip_rect.h * pRenderParamsBase->Scale[ 1 ] );
 
         scissor.offset.x      = std::max< int32_t >( 0, scissor.offset.x );
         scissor.offset.y      = std::max< int32_t >( 0, scissor.offset.y );
@@ -486,7 +486,8 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
         bufferCreateInfo.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
         bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-        VmaAllocationCreateInfo allocationCreateInfo = {};
+        VmaAllocationCreateInfo allocationCreateInfo;
+        InitializeStruct( allocationCreateInfo );
         allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
         allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
@@ -503,9 +504,9 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
 
     THandle< VkCommandPool >   cmdPool;
     THandle< VkCommandBuffer > cmdBuffer;
-    VkCommandBuffer            finalCmdBuffer = pInitParams->pCmdBuffer;
+    VkCommandBuffer            pFinalCmdBuffer = pInitParams->pCmdBuffer;
 
-    if ( VK_NULL_HANDLE == finalCmdBuffer ) {
+    if ( VK_NULL_HANDLE == pFinalCmdBuffer ) {
 
         VkCommandPoolCreateInfo cmdPoolCreateInfo;
         InitializeStruct( cmdPoolCreateInfo );
@@ -530,7 +531,7 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
             return nullptr;
         }
 
-        finalCmdBuffer = cmdBuffer;
+        pFinalCmdBuffer = cmdBuffer;
 
         if ( false == cmdPool.Reset( false ) ) {
             apemodevk::platform::DebugBreak( );
@@ -560,7 +561,7 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
         copyBarrier.subresourceRange.levelCount = 1;
         copyBarrier.subresourceRange.layerCount = 1;
 
-        vkCmdPipelineBarrier( finalCmdBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1, &copyBarrier );
+        vkCmdPipelineBarrier( pFinalCmdBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1, &copyBarrier );
 
         VkBufferImageCopy region;
         InitializeStruct( region );
@@ -571,7 +572,7 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
         region.imageExtent.height          = height;
         region.imageExtent.depth           = 1;
 
-        vkCmdCopyBufferToImage( finalCmdBuffer, hUploadBuffer, hFontImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
+        vkCmdCopyBufferToImage( pFinalCmdBuffer, hUploadBuffer, hFontImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
 
         VkImageMemoryBarrier useBarrier;
         InitializeStruct( useBarrier );

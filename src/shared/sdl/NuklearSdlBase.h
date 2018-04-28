@@ -42,11 +42,11 @@ namespace apemode {
         struct UploadFontAtlasParametersBase {};
 
         struct RenderParametersBase {
-            float            dims[ 2 ]          = {};                  /* Required */
-            float            scale[ 2 ]         = {};                  /* Required */
-            nk_anti_aliasing aa                 = NK_ANTI_ALIASING_ON; /* Ok */
-            uint32_t         max_vertex_buffer  = 65536;               /* Ok */
-            uint32_t         max_element_buffer = 65536;               /* Ok */
+            float            Dims[ 2 ]            = {};                  /* Required */
+            float            Scale[ 2 ]           = {};                  /* Required */
+            nk_anti_aliasing eAntiAliasing        = NK_ANTI_ALIASING_ON; /* Ok */
+            uint32_t         MaxVertexBufferSize  = 65536;               /* Ok */
+            uint32_t         MaxElementBufferSize = 65536;               /* Ok */
         };
 
     public:
@@ -58,17 +58,20 @@ namespace apemode {
         nk_context           Context;
 
     public:
-        void FontStashBegin( nk_font_atlas **atlas );
-        bool FontStashEnd( InitParametersBase *init_params );
-        int  HandleEvent( SDL_Event *evt );
+        void FontStashBegin( nk_font_atlas **ppAtlas );
+        bool FontStashEnd( InitParametersBase *pInitParams );
+        int  HandleEvent( SDL_Event *pEvent );
         void Shutdown( );
-        void SetStyle( Theme theme );
+        void SetStyle( Theme eTheme );
 
     public:
-        virtual bool  Init( InitParametersBase *init_params );
-        virtual bool  Render( RenderParametersBase *render_params );
+        virtual bool  Init( InitParametersBase *pInitParams );
+        virtual bool  Render( RenderParametersBase *pRenderParams );
         virtual void  DeviceDestroy( );
-        virtual bool  DeviceCreate( InitParametersBase *init_params );
-        virtual void *DeviceUploadAtlas( InitParametersBase *init_params, const void *pImgData, uint32_t width, uint32_t height );
+        virtual bool  DeviceCreate( InitParametersBase *pInitParams );
+        virtual void *DeviceUploadAtlas( InitParametersBase *pInitParams,
+                                         const void *        pImgData,
+                                         uint32_t            width,
+                                         uint32_t            height );
     };
 }
