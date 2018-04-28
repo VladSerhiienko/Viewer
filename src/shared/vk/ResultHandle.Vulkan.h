@@ -31,7 +31,7 @@ namespace apemodevk {
             case VK_ERROR_VALIDATION_FAILED_EXT: return "VK_ERROR_VALIDATION_FAILED_EXT";
             case VK_ERROR_INVALID_SHADER_NV: return "VK_ERROR_INVALID_SHADER_NV";
             case VK_ERROR_OUT_OF_POOL_MEMORY_KHR: return "VK_ERROR_OUT_OF_POOL_MEMORY_KHR";
-            // case VK_ERROR_INVALID_EXTERNAL_HANDLE_KHX: return "VK_ERROR_INVALID_EXTERNAL_HANDLE_KHX";
+            case VK_ERROR_INVALID_EXTERNAL_HANDLE_KHX: return "VK_ERROR_INVALID_EXTERNAL_HANDLE_KHX";
             default: return "UNKNOWN";
         }
     }
@@ -39,8 +39,8 @@ namespace apemodevk {
     /* Breaks on failures in debug and prints the error */
     inline VkResult CheckedCall( VkResult eResult ) {
 #ifdef _DEBUG
-        if ( VK_SUCCESS != eResult ) {
-            platform::DebugTrace( platform::LogLevel::Err, " (ERROR) %u %s.", eResult, ToString( eResult ) );
+        if ( VK_SUCCESS > eResult ) {
+            platform::DebugTrace( platform::LogLevel::Err, __FUNCTION__ ": (ERROR) %u %s.", eResult, ToString( eResult ) );
             platform::DebugBreak( );
         }
 #endif

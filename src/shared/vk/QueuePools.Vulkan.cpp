@@ -428,23 +428,22 @@ apemodevk::CommandBufferInPool::CommandBufferInPool( const CommandBufferInPool& 
 }
 
 VkResult apemodevk::WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t timeout ) {
-    switch ( CheckedCall( vkGetFenceStatus( pDevice, pFence ) ) ) {
+
+    VkResult err;
+    switch ( err = CheckedCall( vkGetFenceStatus( pDevice, pFence ) ) ) {
         case VK_NOT_READY:
-            switch ( VkResult err = CheckedCall( vkWaitForFences( pDevice, 1, &pFence, true, timeout ) ) ) {
+            switch ( err = CheckedCall( vkWaitForFences( pDevice, 1, &pFence, true, timeout ) ) ) {
                 case VK_ERROR_OUT_OF_HOST_MEMORY:
                 case VK_ERROR_OUT_OF_DEVICE_MEMORY:
                 case VK_ERROR_DEVICE_LOST:
                     platform::DebugBreak( );
-                    return err;
-
-                case VK_TIMEOUT:
-                    return VK_TIMEOUT;
-            }
+                    break;
+            } break;
 
         case VK_ERROR_DEVICE_LOST:
             platform::DebugBreak( );
-            return VK_ERROR_DEVICE_LOST;
+            break;
     }
 
-    return VK_SUCCESS;
+    return err;
 }
