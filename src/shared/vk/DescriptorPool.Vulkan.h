@@ -122,7 +122,7 @@ namespace apemodevk
 
     struct DescriptorSetBase {
         struct Binding {
-            uint32_t         DstBinding      = 0xffffffff;
+            uint32_t         DstBinding      = uint32_t( -1 );
             VkDescriptorType eDescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 
             union {
@@ -155,7 +155,7 @@ namespace apemodevk
 
     struct DescriptorSetPool {
         struct DescriptorSetItem {
-            uint64_t        Hash           = 0xffffffffffffffff;
+            uint64_t        Hash           = uint64_t( -1 );
             VkDescriptorSet pDescriptorSet = VK_NULL_HANDLE;
         };
 

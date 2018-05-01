@@ -47,16 +47,16 @@ namespace apemodevk {
         uint32_t indices;
     };
 
-    struct FrameUniformBuffer {
-        XMFLOAT4X4 worldMatrix;
-        XMFLOAT4X4 viewMatrix;
-        XMFLOAT4X4 projectionMatrix;
-        XMFLOAT4   color;
+    struct FrameUniformBufferData {
+        XMFLOAT4X4 WorldMatrix;
+        XMFLOAT4X4 ViewMatrix;
+        XMFLOAT4X4 ProjMatrix;
+        XMFLOAT4   Color;
         XMFLOAT4   PositionOffset;
         XMFLOAT4   PositionScale;
     };
 
-    struct SceneMeshDeviceAssetVk {
+    struct SceneMeshDeviceAssetVk : apemode::SceneDeviceAsset {
         THandle< BufferComposite > hVertexBuffer;
         THandle< BufferComposite > hIndexBuffer;
         uint32_t                   VertexCount = 0;
@@ -66,7 +66,7 @@ namespace apemodevk {
         XMFLOAT4                   PositionScale;
     };
 
-    struct SceneMaterialDeviceAssetVk {
+    struct SceneMaterialDeviceAssetVk : apemode::SceneDeviceAsset {
         std::unique_ptr< LoadedImage > pBaseColorLoadedImg;
         std::unique_ptr< LoadedImage > pNormalLoadedImg;
         std::unique_ptr< LoadedImage > pOcclusionLoadedImg;
@@ -194,7 +194,10 @@ namespace apemodevk {
 
         vkResetFences( pNode->hLogicalDevice, 1, &acquiredQueue.pFence );
         vkQueueSubmit( acquiredQueue.pQueue, 1, &submitInfo, acquiredQueue.pFence );
-        WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence );
+
+        if ( VK_SUCCESS != WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence ) ) {
+            return false;
+        }
 
         acquiredCmdBuffer.pFence = acquiredQueue.pFence;
         pCmdBufferPool->Release( acquiredCmdBuffer );
@@ -229,7 +232,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         for ( auto pSrcMesh : *pMeshesFb ) {
 
             /* Scene dstMesh. */
-            auto pDstMesh = &pScene->meshes[ meshIndex++ ];
+            auto pDstMesh = &pScene->Meshes[ meshIndex++ ];
 
             /* Create mesh device asset if needed. */
             auto pMeshAsset = (apemodevk::SceneMeshDeviceAssetVk*) pDstMesh->pDeviceAsset;
@@ -381,8 +384,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             while ( pCurrIntent != pIntentEnd ) {
 
                 /* Get the queue pool and acquire a queue.
-                 * Allocated a command buffer and give it to the lambda that pushes copy commands into it.
-                 * Allocated a command buffer and give it to the lambda that pushes commands into it.
+                 * Allocate a command buffer and give it to the lambda that pushes copy commands into it.
                  */
                 apemodevk::TSubmitCmdBuffer( pNode, VK_QUEUE_GRAPHICS_BIT, [&]( VkCommandBuffer pCmdBuffer ) {
 
@@ -505,28 +507,38 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
     auto FrameIndex = ( pParams->FrameIndex ) % kMaxFrameCount;
 
-    apemodevk::FrameUniformBuffer frameData;
-    frameData.projectionMatrix = pParams->ProjMatrix;
-    frameData.viewMatrix       = pParams->ViewMatrix;
+    apemodevk::FrameUniformBufferData frameUniformBufferData;
+    frameUniformBufferData.ProjMatrix = pParams->ProjMatrix;
+    frameUniformBufferData.ViewMatrix = pParams->ViewMatrix;
 
-    for ( auto& node : pScene->nodes ) {
-        if ( node.meshId >= pScene->meshes.size( ) )
+    for ( auto& node : pScene->Nodes ) {
+        if ( node.MeshId >= pScene->Meshes.size( ) )
             continue;
 
-        auto& dstMesh = pScene->meshes[ node.meshId ];
+        auto& dstMesh = pScene->Meshes[ node.MeshId ];
 
         if ( auto pMeshAsset = (const apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset ) {
-            for ( auto& subset : dstMesh.subsets ) {
-                auto& mat = pScene->materials[ node.materialIds[ subset.materialId ] ];
 
-                //frameData.color          = mat.baseColorFactor;
-                frameData.PositionOffset = pMeshAsset->PositionOffset;
-                frameData.PositionScale  = pMeshAsset->PositionScale;
-                XMStoreFloat4x4( &frameData.worldMatrix, pScene->worldMatrices[ node.id ] );
+            auto pSubsetIt    = pScene->Subsets.data( ) + dstMesh.BaseSubset;
+            auto pSubsetItEnd = pSubsetIt + dstMesh.SubsetCount;
 
-                auto suballocResult = BufferPools[ FrameIndex ].TSuballocate( frameData );
+            for ( ; pSubsetIt != pSubsetItEnd; ++pSubsetIt ) {
+
+                const SceneMaterial* pMaterial = nullptr;
+                if ( pSubsetIt->MaterialId != uint32_t( -1 ) ) {
+                    assert( pSubsetIt->MaterialId < pScene->Materials.size( ) );
+                    pMaterial = &pScene->Materials[ pSubsetIt->MaterialId ];
+                }
+
+                frameUniformBufferData.Color          = pMaterial ? pMaterial->BaseColorFactor : XMFLOAT4{1, 0, 1, 1};
+                frameUniformBufferData.PositionOffset = pMeshAsset->PositionOffset;
+                frameUniformBufferData.PositionScale  = pMeshAsset->PositionScale;
+
+                XMStoreFloat4x4( &frameUniformBufferData.WorldMatrix, pScene->WorldMatrices[ node.Id ] );
+
+                auto suballocResult = BufferPools[ FrameIndex ].TSuballocate( frameUniformBufferData );
                 assert( VK_NULL_HANDLE != suballocResult.DescriptorBufferInfo.buffer );
-                suballocResult.DescriptorBufferInfo.range = sizeof( apemodevk::FrameUniformBuffer );
+                suballocResult.DescriptorBufferInfo.range = sizeof( apemodevk::FrameUniformBufferData );
 
                 apemodevk::TDescriptorSet< 1 > descriptorSet;
                 descriptorSet.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
@@ -557,12 +569,12 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
                                       pMeshAsset->IndexOffset,                 /* Offset */
                                       pMeshAsset->IndexType );                 /* UInt16/Uint32 */
 
-                vkCmdDrawIndexed( pParams->pCmdBuffer, /* Cmd */
-                                  subset.indexCount,   /* IndexCount */
-                                  1,                   /* InstanceCount */
-                                  subset.baseIndex,    /* FirstIndex */
-                                  0,                   /* VertexOffset */
-                                  0 );                 /* FirstInstance */
+                vkCmdDrawIndexed( pParams->pCmdBuffer,   /* Cmd */
+                                  pSubsetIt->IndexCount, /* IndexCount */
+                                  1,                     /* InstanceCount */
+                                  pSubsetIt->BaseIndex,  /* FirstIndex */
+                                  0,                     /* VertexOffset */
+                                  0 );                   /* FirstInstance */
             }
         }
     }

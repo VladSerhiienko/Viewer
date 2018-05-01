@@ -179,12 +179,18 @@ bool apemodevk::Surface::SetSurfaceProperties( ) {
 }
 
 #ifdef _WINDOWS_
-bool apemodevk::Surface::Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, HINSTANCE hInstance, HWND hWindow ) {
+bool apemodevk::Surface::Recreate( VkPhysicalDevice pInPhysicalDevice,
+                                   VkInstance       pInInstance,
+                                   HINSTANCE        hInstance,
+                                   HWND             hWindow ) {
+
+    assert( nullptr != hWindow );
+    assert( nullptr != pInPhysicalDevice );
+    assert( nullptr != hInstance );
+    assert( nullptr != pInInstance );
+
     pInstance       = pInInstance;
     pPhysicalDevice = pInPhysicalDevice;
-
-    assert( nullptr != pInstance );
-    assert( nullptr != pPhysicalDevice );
 
     VkWin32SurfaceCreateInfoKHR win32SurfaceCreateInfoKHR;
     InitializeStruct( win32SurfaceCreateInfoKHR );

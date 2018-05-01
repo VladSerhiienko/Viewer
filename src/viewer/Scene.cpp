@@ -22,6 +22,12 @@ apemodefb::EValueTypeFb MaterialPropertyGetType( uint32_t packed ) {
 }
 
 template < typename T >
+typename bool FlatbuffersTVectorIsNotNullAndNotEmptyAssert( const flatbuffers::Vector< T > *pVector ) {
+    assert( pVector && pVector->size( ) );
+    return pVector && pVector->size( );
+}
+
+template < typename T >
 typename flatbuffers::Vector< T >::return_type FlatbuffersTVectorGetAtIndex( const flatbuffers::Vector< T > *pVector,
                                                                              const size_t                    itemIndex ) {
     assert( pVector );
@@ -103,17 +109,17 @@ XMFLOAT4 GetVec4Property( const apemodefb::SceneFb *pScene, uint32_t valueId, fl
 
 bool apemode::SceneNodeTransform::Validate( ) const {
     return false ==
-           ( isnan( translation.x ) || isnan( translation.y ) || isnan( translation.z ) || isnan( rotationOffset.x ) ||
-             isnan( rotationOffset.y ) || isnan( rotationOffset.z ) || isnan( rotationPivot.x ) || isnan( rotationPivot.y ) ||
-             isnan( rotationPivot.z ) || isnan( preRotation.x ) || isnan( preRotation.y ) || isnan( preRotation.z ) ||
-             isnan( postRotation.x ) || isnan( postRotation.y ) || isnan( postRotation.z ) || isnan( rotation.x ) ||
-             isnan( rotation.y ) || isnan( rotation.z ) || isnan( scalingOffset.x ) || isnan( scalingOffset.y ) ||
-             isnan( scalingOffset.z ) || isnan( scalingPivot.x ) || isnan( scalingPivot.y ) || isnan( scalingPivot.z ) ||
-             isnan( scaling.x ) || isnan( scaling.y ) || isnan( scaling.z ) || isnan( geometricTranslation.x ) ||
-             isnan( geometricTranslation.y ) || isnan( geometricTranslation.z ) || isnan( geometricRotation.x ) ||
-             isnan( geometricRotation.y ) || isnan( geometricRotation.z ) || isnan( geometricScaling.x ) ||
-             isnan( geometricScaling.y ) || isnan( geometricScaling.z ) || scaling.x == 0 || scaling.y == 0 || scaling.z == 0 ||
-             geometricScaling.x == 0 || geometricScaling.y == 0 || geometricScaling.z == 0 );
+           ( isnan( Translation.x ) || isnan( Translation.y ) || isnan( Translation.z ) || isnan( RotationOffset.x ) ||
+             isnan( RotationOffset.y ) || isnan( RotationOffset.z ) || isnan( RotationPivot.x ) || isnan( RotationPivot.y ) ||
+             isnan( RotationPivot.z ) || isnan( PreRotation.x ) || isnan( PreRotation.y ) || isnan( PreRotation.z ) ||
+             isnan( PostRotation.x ) || isnan( PostRotation.y ) || isnan( PostRotation.z ) || isnan( Rotation.x ) ||
+             isnan( Rotation.y ) || isnan( Rotation.z ) || isnan( ScalingOffset.x ) || isnan( ScalingOffset.y ) ||
+             isnan( ScalingOffset.z ) || isnan( ScalingPivot.x ) || isnan( ScalingPivot.y ) || isnan( ScalingPivot.z ) ||
+             isnan( Scaling.x ) || isnan( Scaling.y ) || isnan( Scaling.z ) || isnan( GeometricTranslation.x ) ||
+             isnan( GeometricTranslation.y ) || isnan( GeometricTranslation.z ) || isnan( GeometricRotation.x ) ||
+             isnan( GeometricRotation.y ) || isnan( GeometricRotation.z ) || isnan( GeometricScaling.x ) ||
+             isnan( GeometricScaling.y ) || isnan( GeometricScaling.z ) || Scaling.x == 0 || Scaling.y == 0 || Scaling.z == 0 ||
+             GeometricScaling.x == 0 || GeometricScaling.y == 0 || GeometricScaling.z == 0 );
 }
 
 /**
@@ -123,19 +129,23 @@ bool apemode::SceneNodeTransform::Validate( ) const {
  **/
 
 XMMATRIX XMMatrixRotationZYX( const XMFLOAT3 *v ) {
-    return XMMatrixRotationX( v->x ) * XMMatrixRotationY( v->y ) * XMMatrixRotationZ( v->z );
+    return XMMatrixRotationX( v->x ) *
+           XMMatrixRotationY( v->y ) *
+           XMMatrixRotationZ( v->z );
 }
 
 XMMATRIX apemode::SceneNodeTransform::CalculateLocalMatrix( ) const {
-    return XMMatrixTranslationFromVector( XMVectorNegate( XMLoadFloat3( &scalingPivot ) ) ) *
-           XMMatrixScalingFromVector( XMLoadFloat3( &scaling ) ) *
-           XMMatrixTranslationFromVector( XMLoadFloat3( &scalingPivot ) ) *
-           XMMatrixTranslationFromVector( XMLoadFloat3( &scalingOffset ) ) *
-           XMMatrixTranslationFromVector( XMVectorNegate( XMLoadFloat3( &rotationPivot ) ) ) *
-           XMMatrixRotationZYX( &postRotation ) * XMMatrixRotationZYX( &rotation ) * XMMatrixRotationZYX( &preRotation ) *
-           XMMatrixTranslationFromVector( XMLoadFloat3( &rotationPivot ) ) *
-           XMMatrixTranslationFromVector( XMLoadFloat3( &rotationOffset ) ) *
-           XMMatrixTranslationFromVector( XMLoadFloat3( &translation ) );
+    return XMMatrixTranslationFromVector( XMVectorNegate( XMLoadFloat3( &ScalingPivot ) ) ) *
+           XMMatrixScalingFromVector( XMLoadFloat3( &Scaling ) ) *
+           XMMatrixTranslationFromVector( XMLoadFloat3( &ScalingPivot ) ) *
+           XMMatrixTranslationFromVector( XMLoadFloat3( &ScalingOffset ) ) *
+           XMMatrixTranslationFromVector( XMVectorNegate( XMLoadFloat3( &RotationPivot ) ) ) *
+           XMMatrixRotationZYX( &PostRotation ) *
+           XMMatrixRotationZYX( &Rotation ) *
+           XMMatrixRotationZYX( &PreRotation ) *
+           XMMatrixTranslationFromVector( XMLoadFloat3( &RotationPivot ) ) *
+           XMMatrixTranslationFromVector( XMLoadFloat3( &RotationOffset ) ) *
+           XMMatrixTranslationFromVector( XMLoadFloat3( &Translation ) );
 }
 
 /**
@@ -147,8 +157,9 @@ XMMATRIX apemode::SceneNodeTransform::CalculateLocalMatrix( ) const {
  **/
 
 XMMATRIX apemode::SceneNodeTransform::CalculateGeometricMatrix( ) const {
-    return XMMatrixScalingFromVector( XMLoadFloat3( &geometricScaling ) ) * XMMatrixRotationZYX( &geometricRotation ) *
-           XMMatrixTranslationFromVector( XMLoadFloat3( &geometricTranslation ) );
+    return XMMatrixScalingFromVector( XMLoadFloat3( &GeometricScaling ) ) *
+           XMMatrixRotationZYX( &GeometricRotation ) *
+           XMMatrixTranslationFromVector( XMLoadFloat3( &GeometricTranslation ) );
 }
 
 /**
@@ -159,14 +170,14 @@ XMMATRIX apemode::SceneNodeTransform::CalculateGeometricMatrix( ) const {
 
 void apemode::Scene::UpdateChildWorldMatrices( const uint32_t nodeId ) {
 
-    for ( const auto childId : nodes[ nodeId ].childIds ) {
+    for ( const auto childId : Nodes[ nodeId ].ChildIds ) {
 
-        localMatrices[ childId ]        = transforms[ childId ].CalculateLocalMatrix( );
-        geometricMatrices[ childId ]    = transforms[ childId ].CalculateGeometricMatrix( );
-        hierarchicalMatrices[ childId ] = localMatrices[ childId ] * hierarchicalMatrices[ nodes[ childId ].parentId ];
-        worldMatrices[ childId ]        = geometricMatrices[ childId ] * hierarchicalMatrices[ childId ];
+        LocalMatrices[ childId ]        = Transforms[ childId ].CalculateLocalMatrix( );
+        GeometricalMatrices[ childId ]  = Transforms[ childId ].CalculateGeometricMatrix( );
+        HierarchicalMatrices[ childId ] = LocalMatrices[ childId ] * HierarchicalMatrices[ Nodes[ childId ].ParentId ];
+        WorldMatrices[ childId ]        = GeometricalMatrices[ childId ] * HierarchicalMatrices[ childId ];
 
-        if ( false == nodes[ childId ].childIds.empty( ) )
+        if ( false == Nodes[ childId ].ChildIds.empty( ) )
             UpdateChildWorldMatrices( childId );
     }
 }
@@ -176,18 +187,18 @@ void apemode::Scene::UpdateChildWorldMatrices( const uint32_t nodeId ) {
  **/
 
 void apemode::Scene::UpdateMatrices( ) {
-    if ( transforms.empty( ) || nodes.empty( ) )
+    if ( Transforms.empty( ) || Nodes.empty( ) )
         return;
 
     //
     // Resize matrices storage if needed
     //
 
-    if ( localMatrices.size( ) < transforms.size( ) ) {
-        localMatrices.resize( transforms.size( ) );
-        worldMatrices.resize( transforms.size( ) );
-        geometricMatrices.resize( transforms.size( ) );
-        hierarchicalMatrices.resize( transforms.size( ) );
+    if ( LocalMatrices.size( ) < Transforms.size( ) ) {
+        LocalMatrices.resize( Transforms.size( ) );
+        WorldMatrices.resize( Transforms.size( ) );
+        GeometricalMatrices.resize( Transforms.size( ) );
+        HierarchicalMatrices.resize( Transforms.size( ) );
     }
 
     //
@@ -195,10 +206,10 @@ void apemode::Scene::UpdateMatrices( ) {
     // Start recursive updates from the root node.
     //
 
-    localMatrices[ 0 ]        = transforms[ 0 ].CalculateLocalMatrix( );
-    geometricMatrices[ 0 ]    = transforms[ 0 ].CalculateGeometricMatrix( );
-    hierarchicalMatrices[ 0 ] = localMatrices[ 0 ];
-    worldMatrices[ 0 ]        = geometricMatrices[ 0 ] * localMatrices[ 0 ];
+    LocalMatrices[ 0 ]        = Transforms[ 0 ].CalculateLocalMatrix( );
+    GeometricalMatrices[ 0 ]  = Transforms[ 0 ].CalculateGeometricMatrix( );
+    HierarchicalMatrices[ 0 ] = LocalMatrices[ 0 ];
+    WorldMatrices[ 0 ]        = GeometricalMatrices[ 0 ] * LocalMatrices[ 0 ];
 
     UpdateChildWorldMatrices( 0 );
 }
@@ -207,6 +218,16 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
 
     const apemodefb::SceneFb * pSrcScene = apemodefb::GetSceneFb( pData );
     if ( nullptr == pSrcScene ) {
+        LogError( "Failed to reinterpret the buffer to scene." );
+
+        return UniqueScenePtrPair( nullptr, nullptr );
+    }
+
+    if ( apemodefb::EVersionFb_Value != pSrcScene->version( ) ) {
+        LogError( "Library version \"{}\" does not match to file version \"{}\"",
+                  apemodefb::EVersionFb_Value,
+                  pSrcScene->version( ) );
+
         return UniqueScenePtrPair( nullptr, nullptr );
     }
 
@@ -215,133 +236,150 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
     std::set< uint32_t >     materialIds;
 
     if ( auto nodesFb = pSrcScene->nodes( ) ) {
-        pScene->nodes.resize( nodesFb->size( ) );
-        pScene->transforms.resize( nodesFb->size( ) );
+        pScene->Nodes.resize( nodesFb->size( ) );
+        pScene->Transforms.resize( nodesFb->size( ) );
 
         const float toRadsFactor = float( PI ) / 180.0f;
 
         for ( auto nodeFb : *nodesFb ) {
             assert( nodeFb );
 
-            auto &node = pScene->nodes[ nodeFb->id( ) ];
+            auto &node = pScene->Nodes[ nodeFb->id( ) ];
 
-            node.id = nodeFb->id( );
-            node.meshId = nodeFb->mesh_id( );
+            node.Id = nodeFb->id( );
+            node.MeshId = nodeFb->mesh_id( );
 
             LogInfo( "Processing node: {}", GetStringProperty( pSrcScene, nodeFb->name_id( ) ).c_str( ) );
 
             if ( nodeFb->child_ids( ) && nodeFb->child_ids( )->size( ) )
-                node.childIds.reserve( nodeFb->child_ids( )->size( ) );
-
-            if ( nodeFb->material_ids( ) && nodeFb->material_ids( )->size( ) )
-                node.materialIds.reserve( nodeFb->material_ids( )->size( ) );
+                node.ChildIds.reserve( nodeFb->child_ids( )->size( ) );
 
             auto childIdsIt = nodeFb->child_ids( )->data( );
             auto childIdsEndIt = childIdsIt + nodeFb->child_ids( )->size( );
-            std::transform( childIdsIt, childIdsEndIt, std::back_inserter( node.childIds ), [&]( uint32_t id ) {
-                auto &childNode = pScene->nodes[ id ];
-                childNode.parentId = node.id;
+            std::transform( childIdsIt, childIdsEndIt, std::back_inserter( node.ChildIds ), [&]( uint32_t id ) {
+                auto &childNode = pScene->Nodes[ id ];
+                childNode.ParentId = node.Id;
                 return id;
             } );
 
-            if ( nodeFb->mesh_id( ) != -1 ) {
+            if ( nodeFb->mesh_id( ) != uint32_t( -1 ) ) {
                 meshIds.insert( nodeFb->mesh_id( ) );
             }
 
-            if ( nodeFb->material_ids( ) && nodeFb->material_ids( )->size( ) ) {
-                auto matIdsIt = nodeFb->material_ids( )->data( );
-                auto matIdsEndIt = matIdsIt + nodeFb->material_ids( )->size( );
-                std::transform( matIdsIt, matIdsEndIt, std::back_inserter( node.materialIds ), [&]( uint32_t id ) { return id; } );
-                materialIds.insert( matIdsIt, matIdsEndIt );
-            }
-
-            auto &transform = pScene->transforms[ nodeFb->id( ) ];
+            auto &transform = pScene->Transforms[ nodeFb->id( ) ];
             auto transformFb = ( *pSrcScene->transforms( ) )[ nodeFb->id( ) ];
 
-            transform.translation.x          = ( transformFb->translation( ).x( ) );
-            transform.translation.y          = ( transformFb->translation( ).y( ) );
-            transform.translation.z          = ( transformFb->translation( ).z( ) );
-            transform.rotationOffset.x       = ( transformFb->rotation_offset( ).x( ) );
-            transform.rotationOffset.y       = ( transformFb->rotation_offset( ).y( ) );
-            transform.rotationOffset.z       = ( transformFb->rotation_offset( ).z( ) );
-            transform.rotationPivot.x        = ( transformFb->rotation_pivot( ).x( ) );
-            transform.rotationPivot.y        = ( transformFb->rotation_pivot( ).y( ) );
-            transform.rotationPivot.z        = ( transformFb->rotation_pivot( ).z( ) );
-            transform.preRotation.x          = ( transformFb->pre_rotation( ).x( ) * toRadsFactor );
-            transform.preRotation.y          = ( transformFb->pre_rotation( ).y( ) * toRadsFactor );
-            transform.preRotation.z          = ( transformFb->pre_rotation( ).z( ) * toRadsFactor );
-            transform.rotation.x             = ( transformFb->rotation( ).x( ) * toRadsFactor );
-            transform.rotation.y             = ( transformFb->rotation( ).y( ) * toRadsFactor );
-            transform.rotation.z             = ( transformFb->rotation( ).z( ) * toRadsFactor );
-            transform.postRotation.x         = ( transformFb->post_rotation( ).x( ) * toRadsFactor );
-            transform.postRotation.y         = ( transformFb->post_rotation( ).y( ) * toRadsFactor );
-            transform.postRotation.z         = ( transformFb->post_rotation( ).z( ) * toRadsFactor );
-            transform.scalingOffset.x        = ( transformFb->scaling_offset( ).x( ) );
-            transform.scalingOffset.y        = ( transformFb->scaling_offset( ).y( ) );
-            transform.scalingOffset.z        = ( transformFb->scaling_offset( ).z( ) );
-            transform.scalingPivot.x         = ( transformFb->scaling_pivot( ).x( ) );
-            transform.scalingPivot.y         = ( transformFb->scaling_pivot( ).y( ) );
-            transform.scalingPivot.z         = ( transformFb->scaling_pivot( ).z( ) );
-            transform.scaling.x              = ( transformFb->scaling( ).x( ) );
-            transform.scaling.y              = ( transformFb->scaling( ).y( ) );
-            transform.scaling.z              = ( transformFb->scaling( ).z( ) );
-            transform.geometricTranslation.x = ( transformFb->geometric_translation( ).x( ) );
-            transform.geometricTranslation.y = ( transformFb->geometric_translation( ).y( ) );
-            transform.geometricTranslation.z = ( transformFb->geometric_translation( ).z( ) );
-            transform.geometricRotation.x    = ( transformFb->geometric_rotation( ).x( ) * toRadsFactor );
-            transform.geometricRotation.y    = ( transformFb->geometric_rotation( ).y( ) * toRadsFactor );
-            transform.geometricRotation.z    = ( transformFb->geometric_rotation( ).z( ) * toRadsFactor );
-            transform.geometricScaling.x     = ( transformFb->geometric_scaling( ).x( ) );
-            transform.geometricScaling.y     = ( transformFb->geometric_scaling( ).y( ) );
-            transform.geometricScaling.z     = ( transformFb->geometric_scaling( ).z( ) );
+            transform.Translation.x          = ( transformFb->translation( ).x( ) );
+            transform.Translation.y          = ( transformFb->translation( ).y( ) );
+            transform.Translation.z          = ( transformFb->translation( ).z( ) );
+            transform.RotationOffset.x       = ( transformFb->rotation_offset( ).x( ) );
+            transform.RotationOffset.y       = ( transformFb->rotation_offset( ).y( ) );
+            transform.RotationOffset.z       = ( transformFb->rotation_offset( ).z( ) );
+            transform.RotationPivot.x        = ( transformFb->rotation_pivot( ).x( ) );
+            transform.RotationPivot.y        = ( transformFb->rotation_pivot( ).y( ) );
+            transform.RotationPivot.z        = ( transformFb->rotation_pivot( ).z( ) );
+            transform.PreRotation.x          = ( transformFb->pre_rotation( ).x( ) * toRadsFactor );
+            transform.PreRotation.y          = ( transformFb->pre_rotation( ).y( ) * toRadsFactor );
+            transform.PreRotation.z          = ( transformFb->pre_rotation( ).z( ) * toRadsFactor );
+            transform.Rotation.x             = ( transformFb->rotation( ).x( ) * toRadsFactor );
+            transform.Rotation.y             = ( transformFb->rotation( ).y( ) * toRadsFactor );
+            transform.Rotation.z             = ( transformFb->rotation( ).z( ) * toRadsFactor );
+            transform.PostRotation.x         = ( transformFb->post_rotation( ).x( ) * toRadsFactor );
+            transform.PostRotation.y         = ( transformFb->post_rotation( ).y( ) * toRadsFactor );
+            transform.PostRotation.z         = ( transformFb->post_rotation( ).z( ) * toRadsFactor );
+            transform.ScalingOffset.x        = ( transformFb->scaling_offset( ).x( ) );
+            transform.ScalingOffset.y        = ( transformFb->scaling_offset( ).y( ) );
+            transform.ScalingOffset.z        = ( transformFb->scaling_offset( ).z( ) );
+            transform.ScalingPivot.x         = ( transformFb->scaling_pivot( ).x( ) );
+            transform.ScalingPivot.y         = ( transformFb->scaling_pivot( ).y( ) );
+            transform.ScalingPivot.z         = ( transformFb->scaling_pivot( ).z( ) );
+            transform.Scaling.x              = ( transformFb->scaling( ).x( ) );
+            transform.Scaling.y              = ( transformFb->scaling( ).y( ) );
+            transform.Scaling.z              = ( transformFb->scaling( ).z( ) );
+            transform.GeometricTranslation.x = ( transformFb->geometric_translation( ).x( ) );
+            transform.GeometricTranslation.y = ( transformFb->geometric_translation( ).y( ) );
+            transform.GeometricTranslation.z = ( transformFb->geometric_translation( ).z( ) );
+            transform.GeometricRotation.x    = ( transformFb->geometric_rotation( ).x( ) * toRadsFactor );
+            transform.GeometricRotation.y    = ( transformFb->geometric_rotation( ).y( ) * toRadsFactor );
+            transform.GeometricRotation.z    = ( transformFb->geometric_rotation( ).z( ) * toRadsFactor );
+            transform.GeometricScaling.x     = ( transformFb->geometric_scaling( ).x( ) );
+            transform.GeometricScaling.y     = ( transformFb->geometric_scaling( ).y( ) );
+            transform.GeometricScaling.z     = ( transformFb->geometric_scaling( ).z( ) );
 
-            assert( transform.Validate( ) );
+            const bool bValidTransform = transform.Validate( );
+            if ( !bValidTransform ) {
+                LogError( "Found invalid transform, node id {}", nodeFb->id( ) );
+            }
         }
 
         pScene->UpdateMatrices( );
     }
 
-    if ( auto meshesFb = pSrcScene->meshes( ) ) {
-        pScene->meshes.reserve( meshIds.size( ) );
+    if ( auto pMeshesFb = pSrcScene->meshes( ) ) {
+        pScene->Meshes.reserve( meshIds.size( ) );
+
+        {   /* All the subsets are stored in Scene instance, and can be referenced
+             * by the BaseSubset and SubsetCount values in SceneMeshSubset struct.
+             */
+
+            size_t totalSubsetCount = 0;
+            for ( auto meshId : meshIds ) {
+                auto pMeshFb = FlatbuffersTVectorGetAtIndex( pMeshesFb, meshId );
+                totalSubsetCount += pMeshFb->subsets( ) ? pMeshFb->subsets( )->size( ) : 0;
+            }
+
+            pScene->Subsets.reserve( totalSubsetCount );
+        }
 
         for ( auto meshId : meshIds ) {
-            auto meshFb = FlatbuffersTVectorGetAtIndex( meshesFb, meshId );
+            auto pMeshFb = FlatbuffersTVectorGetAtIndex( pMeshesFb, meshId );
 
-            assert( meshFb );
-            assert( meshFb->vertices( ) && meshFb->vertices( )->size( ) );
-            assert( meshFb->subsets( ) && meshFb->subsets( )->size( ) > 0 );
-            assert( meshFb->submeshes( ) && meshFb->submeshes( )->size( ) == 1 );
+            assert( pMeshFb );
+            if ( pMeshFb &&
+                 FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->vertices( ) ) &&
+                 FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->indices( ) ) &&
+                 FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->subsets( ) ) &&
+                 FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->submeshes( ) ) ) {
 
-            if ( meshFb->vertices( ) && meshFb->vertices( )->size( ) && meshFb->submeshes( ) &&
-                 meshFb->submeshes( )->size( ) == 1 ) {
-                pScene->meshes.emplace_back( );
-                auto &mesh = pScene->meshes.back( );
+                pScene->Meshes.emplace_back( );
+                auto &mesh = pScene->Meshes.back( );
 
-                auto submeshesFb = meshFb->submeshes( );
+                auto submeshesFb = pMeshFb->submeshes( );
                 auto submeshFb   = submeshesFb->Get( 0 );
 
-                mesh.positionOffset.x = ( submeshFb->position_offset( ).x( ) );
-                mesh.positionOffset.y = ( submeshFb->position_offset( ).y( ) );
-                mesh.positionOffset.z = ( submeshFb->position_offset( ).z( ) );
-                mesh.positionScale.x  = ( submeshFb->position_scale( ).x( ) );
-                mesh.positionScale.y  = ( submeshFb->position_scale( ).y( ) );
-                mesh.positionScale.z  = ( submeshFb->position_scale( ).z( ) );
-                mesh.texcoordOffset.x = ( submeshFb->uv_offset( ).x( ) );
-                mesh.texcoordOffset.y = ( submeshFb->uv_offset( ).y( ) );
-                mesh.texcoordScale.x  = ( submeshFb->uv_scale( ).x( ) );
-                mesh.texcoordScale.y  = ( submeshFb->uv_scale( ).y( ) );
+                mesh.PositionOffset.x = ( submeshFb->position_offset( ).x( ) );
+                mesh.PositionOffset.y = ( submeshFb->position_offset( ).y( ) );
+                mesh.PositionOffset.z = ( submeshFb->position_offset( ).z( ) );
+                mesh.PositionScale.x  = ( submeshFb->position_scale( ).x( ) );
+                mesh.PositionScale.y  = ( submeshFb->position_scale( ).y( ) );
+                mesh.PositionScale.z  = ( submeshFb->position_scale( ).z( ) );
+                mesh.TexcoordOffset.x = ( submeshFb->uv_offset( ).x( ) );
+                mesh.TexcoordOffset.y = ( submeshFb->uv_offset( ).y( ) );
+                mesh.TexcoordScale.x  = ( submeshFb->uv_scale( ).x( ) );
+                mesh.TexcoordScale.y  = ( submeshFb->uv_scale( ).y( ) );
 
-                mesh.subsets.reserve( meshFb->subsets( )->size( ) );
-                std::transform( meshFb->subsets( )->begin( ),
-                                meshFb->subsets( )->end( ),
-                                std::back_inserter( mesh.subsets ),
-                                [&]( const apemodefb::SubsetFb *subsetFb ) {
-                                    assert( subsetFb && subsetFb->index_count( ) );
+                mesh.SubsetCount = static_cast< uint32_t >( pMeshFb->subsets( )->size( ) );
+                mesh.BaseSubset  = static_cast< uint32_t >( pScene->Subsets.size( ) );
+
+                // clang-format off
+                std::for_each( pMeshFb->subsets( )->begin( ),
+                               pMeshFb->subsets( )->end( ),
+                               [&]( const apemodefb::SubsetFb *pSubsetFb ) {
+                                   if ( pSubsetFb && ( uint32_t( -1 ) != pSubsetFb->material_id( ) ) ) {
+                                       materialIds.insert( pSubsetFb->material_id( ) );
+                                   }
+                               } );
+                // clang-format on
+
+                std::transform( pMeshFb->subsets( )->begin( ),
+                                pMeshFb->subsets( )->end( ),
+                                std::back_inserter( pScene->Subsets ),
+                                [&]( const apemodefb::SubsetFb *pSubsetFb ) {
 
                                     SceneMeshSubset subset;
-                                    subset.materialId = subsetFb->material_id( );
-                                    subset.baseIndex  = subsetFb->base_index( );
-                                    subset.indexCount = subsetFb->index_count( );
+                                    subset.MaterialId = pSubsetFb->material_id( );
+                                    subset.BaseIndex  = pSubsetFb->base_index( );
+                                    subset.IndexCount = pSubsetFb->index_count( );
 
                                     return subset;
                                 } );
@@ -350,27 +388,28 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
     }
 
     if ( auto pMaterialsFb = pSrcScene->materials( ) ) {
-        pScene->materials.reserve( pMaterialsFb->size( ) );
+        pScene->Materials.reserve( materialIds.size( ) );
 
         for ( auto materialId : materialIds ) {
+
             auto pMaterialFb = FlatbuffersTVectorGetAtIndex( pMaterialsFb, materialId );
             assert( pMaterialFb );
 
             LogInfo( "Processing material {}", GetCStringProperty( pSrcScene, pMaterialFb->name_id( ) ) );
 
-            pScene->materials.emplace_back( );
-            auto &material = pScene->materials.back( );
+            pScene->Materials.emplace_back( );
+            auto &material = pScene->Materials.back( );
 
             if ( auto pPropertiesFb = pMaterialFb->properties( ) ) {
                 for ( auto pMaterialPropFb : *pPropertiesFb ) {
                     if ( strcmp( "baseColorFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
-                        material.baseColorFactor = GetVec4Property( pSrcScene, pMaterialPropFb->value_id( ) );
+                        material.BaseColorFactor = GetVec4Property( pSrcScene, pMaterialPropFb->value_id( ) );
                     } else if ( strcmp( "metallicFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
-                        material.metallicFactor = GetScalarProperty( pSrcScene, pMaterialPropFb->value_id( ) );
+                        material.MetallicFactor = GetScalarProperty( pSrcScene, pMaterialPropFb->value_id( ) );
                     } else if ( strcmp( "emissiveFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
-                        material.emissiveFactor = GetVec3Property( pSrcScene, pMaterialPropFb->value_id( ) );
+                        material.EmissiveFactor = GetVec3Property( pSrcScene, pMaterialPropFb->value_id( ) );
                     } else if ( strcmp( "roughnessFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
-                        material.roughnessFactor = GetScalarProperty( pSrcScene, pMaterialPropFb->value_id( ) );
+                        material.RoughnessFactor = GetScalarProperty( pSrcScene, pMaterialPropFb->value_id( ) );
                     } else if ( strcmp( "doubleSided", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
                         material.bDoubleSided = GetBoolProperty( pSrcScene, pMaterialPropFb->value_id( ) );
                     }

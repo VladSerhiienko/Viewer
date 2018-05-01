@@ -120,11 +120,11 @@ bool ViewerApp::Initialize(  ) {
         if ( appSurfaceBase->GetImpl( ) != kAppSurfaceImpl_SdlVk )
             return false;
 
-        auto appSurface = (AppSurfaceSdlVk*) appSurfaceBase;
+        auto pAppSurface = (AppSurfaceSdlVk*) appSurfaceBase;
 
         FrameId    = 0;
         FrameIndex = 0;
-        FrameCount = appSurface->Swapchain.ImgCount;
+        FrameCount = pAppSurface->Swapchain.ImgCount;
 
         OnResized();
 
@@ -132,9 +132,9 @@ bool ViewerApp::Initialize(  ) {
             VkCommandPoolCreateInfo cmdPoolCreateInfo;
             InitializeStruct( cmdPoolCreateInfo );
             cmdPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-            cmdPoolCreateInfo.queueFamilyIndex = appSurface->PresentQueueFamilyIds[0];
+            cmdPoolCreateInfo.queueFamilyIndex = pAppSurface->PresentQueueFamilyIds[0];
 
-            if ( false == hCmdPool[ i ].Recreate( *appSurface->pNode, cmdPoolCreateInfo ) ) {
+            if ( false == hCmdPool[ i ].Recreate( *pAppSurface->pNode, cmdPoolCreateInfo ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
@@ -145,28 +145,28 @@ bool ViewerApp::Initialize(  ) {
             cmdBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
             cmdBufferAllocInfo.commandBufferCount = 1;
 
-            if ( false == hCmdBuffers[ i ].Recreate( *appSurface->pNode, cmdBufferAllocInfo ) ) {
+            if ( false == hCmdBuffers[ i ].Recreate( *pAppSurface->pNode, cmdBufferAllocInfo ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
 
             VkSemaphoreCreateInfo semaphoreCreateInfo;
             InitializeStruct( semaphoreCreateInfo );
-            if ( false == hPresentCompleteSemaphores[ i ].Recreate( *appSurface->pNode, semaphoreCreateInfo ) ||
-                 false == hRenderCompleteSemaphores[ i ].Recreate( *appSurface->pNode, semaphoreCreateInfo ) ) {
+            if ( false == hPresentCompleteSemaphores[ i ].Recreate( *pAppSurface->pNode, semaphoreCreateInfo ) ||
+                 false == hRenderCompleteSemaphores[ i ].Recreate( *pAppSurface->pNode, semaphoreCreateInfo ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
         }
 
-        if ( false == DescriptorPool.RecreateResourcesFor( *appSurface->pNode, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256 ) ) {
+        if ( false == DescriptorPool.RecreateResourcesFor( *pAppSurface->pNode, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256 ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
 
         pNkRenderer = new NuklearRendererSdlVk();
 
-        auto queueFamilyPool = appSurface->pNode->GetQueuePool( )->GetPool( appSurface->PresentQueueFamilyIds[ 0 ] );
+        auto queueFamilyPool = pAppSurface->pNode->GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
         apemodevk::AcquiredQueue acquiredQueue;
 
         while ( acquiredQueue.pQueue == nullptr ) {
@@ -174,7 +174,7 @@ bool ViewerApp::Initialize(  ) {
         }
 
         NuklearRendererSdlVk::InitParametersVk initParamsNk;
-        initParamsNk.pNode           = appSurface->pNode;
+        initParamsNk.pNode           = pAppSurface->pNode;
         initParamsNk.pShaderCompiler = pShaderCompiler.get( );
         initParamsNk.pFontAsset      = mAssetManager.GetAsset( "fonts/iosevka-ss07-medium.ttf" );
         initParamsNk.pRenderPass     = hDbgRenderPass;
@@ -188,7 +188,7 @@ bool ViewerApp::Initialize(  ) {
         queueFamilyPool->Release( acquiredQueue );
 
         DebugRendererVk::InitParametersVk initParamsDbg;
-        initParamsDbg.pNode           = appSurface->pNode;
+        initParamsDbg.pNode           = pAppSurface->pNode;
         initParamsDbg.pShaderCompiler = pShaderCompiler.get( );
         initParamsDbg.pRenderPass     = hDbgRenderPass;
         initParamsDbg.pDescPool       = DescriptorPool;
@@ -197,22 +197,23 @@ bool ViewerApp::Initialize(  ) {
         pDebugRenderer = new DebugRendererVk();
         pDebugRenderer->RecreateResources( &initParamsDbg );
 
-        pSceneRendererBase = appSurface->CreateSceneRenderer( );
+        pSceneRendererBase = pAppSurface->CreateSceneRenderer( );
 
         SceneRendererVk::RecreateParametersVk recreateParams;
-        recreateParams.pNode           = appSurface->pNode;
+        recreateParams.pNode           = pAppSurface->pNode;
         recreateParams.pShaderCompiler = pShaderCompiler.get( );
         recreateParams.pRenderPass     = hDbgRenderPass;
         recreateParams.pDescPool       = DescriptorPool;
         recreateParams.FrameCount      = FrameCount;
 
         SceneRendererVk::SceneUpdateParametersVk updateParams;
-        updateParams.pNode           = appSurface->pNode;
+        updateParams.pNode           = pAppSurface->pNode;
         updateParams.pShaderCompiler = pShaderCompiler.get( );
         updateParams.pRenderPass     = hDbgRenderPass;
         updateParams.pDescPool       = DescriptorPool;
         updateParams.FrameCount      = FrameCount;
 
+        // --assets "..\..\assets\**" --scene "C:/Sources/Models/rainier-ak-3ds.fbxp"
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/bristleback-dota-fan-art.fbxp"
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/skull_salazar.fbxp"
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/1972-datsun-240k-gt.fbxp"
@@ -239,7 +240,7 @@ bool ViewerApp::Initialize(  ) {
         }
 
         apemodevk::SkyboxRenderer::RecreateParameters skyboxRendererRecreateParams;
-        skyboxRendererRecreateParams.pNode           = appSurface->pNode;
+        skyboxRendererRecreateParams.pNode           = pAppSurface->pNode;
         skyboxRendererRecreateParams.pShaderCompiler = pShaderCompiler.get();
         skyboxRendererRecreateParams.pRenderPass     = hDbgRenderPass;
         skyboxRendererRecreateParams.pDescPool       = DescriptorPool;
@@ -252,13 +253,13 @@ bool ViewerApp::Initialize(  ) {
         }
 
         pSamplerManager = apemodevk::make_unique< apemodevk::SamplerManager >( );
-        if ( false == pSamplerManager->Recreate( appSurface->pNode ) ) {
+        if ( false == pSamplerManager->Recreate( pAppSurface->pNode ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
 
         apemodevk::ImageLoader imgLoader;
-        if ( false == imgLoader.Recreate( appSurface->pNode, nullptr ) ) {
+        if ( false == imgLoader.Recreate( pAppSurface->pNode, nullptr ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
