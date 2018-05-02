@@ -22,7 +22,7 @@ apemodefb::EValueTypeFb MaterialPropertyGetType( uint32_t packed ) {
 }
 
 template < typename T >
-typename bool FlatbuffersTVectorIsNotNullAndNotEmptyAssert( const flatbuffers::Vector< T > *pVector ) {
+bool FlatbuffersTVectorIsNotNullAndNotEmptyAssert( const flatbuffers::Vector< T > *pVector ) {
     assert( pVector && pVector->size( ) );
     return pVector && pVector->size( );
 }
