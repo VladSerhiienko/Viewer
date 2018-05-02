@@ -9,102 +9,6 @@
 
 using namespace apemode;
 
-uint32_t MaterialPropertyGetIndex( uint32_t packed ) {
-    const uint32_t valueIndex = ( packed >> 8 ) & 0x0fff;
-    return valueIndex;
-}
-
-apemodefb::EValueTypeFb MaterialPropertyGetType( uint32_t packed ) {
-    const uint32_t valueType = packed & 0x000f;
-    return apemodefb::EValueTypeFb( valueType );
-}
-
-template < typename T >
-bool FlatbuffersTVectorIsNotNullAndNotEmptyAssert( const flatbuffers::Vector< T > *pVector ) {
-    assert( pVector && pVector->size( ) );
-    return pVector && pVector->size( );
-}
-
-template < typename T >
-typename flatbuffers::Vector< T >::return_type FlatbuffersTVectorGetAtIndex( const flatbuffers::Vector< T > *pVector,
-                                                                             const size_t                    itemIndex ) {
-    assert( pVector );
-    const size_t vectorSize = pVector->size( );
-
-    assert( vectorSize > itemIndex );
-    return pVector->operator[]( static_cast< flatbuffers::uoffset_t >( itemIndex ) );
-}
-
-std::string GetStringProperty( const apemodefb::SceneFb *pScene, uint32_t valueId ) {
-    assert( pScene );
-    assert( apemodefb::EValueTypeFb_String == MaterialPropertyGetType( valueId ) );
-
-    const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
-    return FlatbuffersTVectorGetAtIndex( pScene->string_values( ), valueIndex )->str( );
-}
-
-const char *GetCStringProperty( const apemodefb::SceneFb *pScene, uint32_t valueId ) {
-    assert( pScene );
-    assert( apemodefb::EValueTypeFb_String == MaterialPropertyGetType( valueId ) );
-
-    const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
-    return FlatbuffersTVectorGetAtIndex( pScene->string_values( ), valueIndex )->c_str( );
-}
-
-bool GetBoolProperty( const apemodefb::SceneFb *pScene, uint32_t valueId ) {
-    assert( pScene );
-    assert( apemodefb::EValueTypeFb_Bool == MaterialPropertyGetType( valueId ) );
-
-    const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
-    return FlatbuffersTVectorGetAtIndex( pScene->bool_values( ), valueIndex );
-}
-
-float GetScalarProperty( const apemodefb::SceneFb *pScene, uint32_t valueId ) {
-    assert( pScene );
-    assert( apemodefb::EValueTypeFb_Float == MaterialPropertyGetType( valueId ) );
-
-    const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
-    return FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex );
-}
-
-XMFLOAT2 GetVec2Property( const apemodefb::SceneFb *pScene, uint32_t valueId ) {
-    assert( pScene );
-
-    const auto valueType = MaterialPropertyGetType( valueId );
-    assert( apemodefb::EValueTypeFb_Float2 == valueType );
-
-    const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
-    return XMFLOAT2( FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex ),
-                     FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex + 1 ) );
-}
-
-XMFLOAT3 GetVec3Property( const apemodefb::SceneFb *pScene, uint32_t valueId ) {
-    assert( pScene );
-
-    const auto valueType = MaterialPropertyGetType( valueId );
-    assert( apemodefb::EValueTypeFb_Float3 == valueType );
-
-    const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
-    return XMFLOAT3( FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex ),
-                     FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex + 1 ),
-                     FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex + 2 ) );
-}
-
-XMFLOAT4 GetVec4Property( const apemodefb::SceneFb *pScene, uint32_t valueId, float defaultW = 1.0f ) {
-    assert( pScene );
-
-    const auto valueType = MaterialPropertyGetType( valueId );
-    assert( apemodefb::EValueTypeFb_Float3 == valueType || apemodefb::EValueTypeFb_Float4 == valueType );
-
-    const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
-    return XMFLOAT4( FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex ),
-                     FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex + 1 ),
-                     FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex + 2 ),
-                     apemodefb::EValueTypeFb_Float4 == valueType
-                         ? FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex + 3 )
-                         : defaultW );
-}
-
 bool apemode::SceneNodeTransform::Validate( ) const {
     return false ==
            ( isnan( Translation.x ) || isnan( Translation.y ) || isnan( Translation.z ) || isnan( RotationOffset.x ) ||
@@ -221,7 +125,11 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
             auto &node = pScene->Nodes[ nodeFb->id( ) ];
 
             node.Id = nodeFb->id( );
-            node.MeshId = nodeFb->mesh_id( );
+
+            if ( nodeFb->mesh_id( ) != uint32_t( -1 ) ) {
+                node.MeshId = nodeFb->mesh_id( );
+                meshIds.insert( nodeFb->mesh_id( ) );
+            }
 
             LogInfo( "Processing node: {}", GetStringProperty( pSrcScene, nodeFb->name_id( ) ).c_str( ) );
 
@@ -235,10 +143,6 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
                 childNode.ParentId = node.Id;
                 return id;
             } );
-
-            if ( nodeFb->mesh_id( ) != uint32_t( -1 ) ) {
-                meshIds.insert( nodeFb->mesh_id( ) );
-            }
 
             auto &transform = pScene->Transforms[ nodeFb->id( ) ];
             auto transformFb = ( *pSrcScene->transforms( ) )[ nodeFb->id( ) ];
@@ -290,8 +194,6 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
     }
 
     if ( auto pMeshesFb = pSrcScene->meshes( ) ) {
-        pScene->Meshes.reserve( meshIds.size( ) );
-
         {   /* All the subsets are stored in Scene instance, and can be referenced
              * by the BaseSubset and SubsetCount values in SceneMeshSubset struct.
              */
@@ -305,59 +207,59 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
             pScene->Subsets.reserve( totalSubsetCount );
         }
 
+        pScene->Meshes.reserve( meshIds.size( ) );
         for ( auto meshId : meshIds ) {
             auto pMeshFb = FlatbuffersTVectorGetAtIndex( pMeshesFb, meshId );
 
             assert( pMeshFb );
-            if ( pMeshFb &&
-                 FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->vertices( ) ) &&
-                 FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->indices( ) ) &&
-                 FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->subsets( ) ) &&
-                 FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->submeshes( ) ) ) {
+            FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->vertices( ) );
+            FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->indices( ) );
+            FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->subsets( ) );
+            FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->submeshes( ) );
 
-                pScene->Meshes.emplace_back( );
-                auto &mesh = pScene->Meshes.back( );
+            pScene->Meshes.emplace_back( );
+            auto &mesh = pScene->Meshes.back( );
+            mesh.SrcId = meshId;
 
-                auto submeshesFb = pMeshFb->submeshes( );
-                auto submeshFb   = submeshesFb->Get( 0 );
+            auto pSubmeshesFb = pMeshFb->submeshes( );
+            auto pSubmeshFb   = pSubmeshesFb->Get( 0 );
 
-                mesh.PositionOffset.x = ( submeshFb->position_offset( ).x( ) );
-                mesh.PositionOffset.y = ( submeshFb->position_offset( ).y( ) );
-                mesh.PositionOffset.z = ( submeshFb->position_offset( ).z( ) );
-                mesh.PositionScale.x  = ( submeshFb->position_scale( ).x( ) );
-                mesh.PositionScale.y  = ( submeshFb->position_scale( ).y( ) );
-                mesh.PositionScale.z  = ( submeshFb->position_scale( ).z( ) );
-                mesh.TexcoordOffset.x = ( submeshFb->uv_offset( ).x( ) );
-                mesh.TexcoordOffset.y = ( submeshFb->uv_offset( ).y( ) );
-                mesh.TexcoordScale.x  = ( submeshFb->uv_scale( ).x( ) );
-                mesh.TexcoordScale.y  = ( submeshFb->uv_scale( ).y( ) );
+            mesh.PositionOffset.x = ( pSubmeshFb->position_offset( ).x( ) );
+            mesh.PositionOffset.y = ( pSubmeshFb->position_offset( ).y( ) );
+            mesh.PositionOffset.z = ( pSubmeshFb->position_offset( ).z( ) );
+            mesh.PositionScale.x  = ( pSubmeshFb->position_scale( ).x( ) );
+            mesh.PositionScale.y  = ( pSubmeshFb->position_scale( ).y( ) );
+            mesh.PositionScale.z  = ( pSubmeshFb->position_scale( ).z( ) );
+            mesh.TexcoordOffset.x = ( pSubmeshFb->uv_offset( ).x( ) );
+            mesh.TexcoordOffset.y = ( pSubmeshFb->uv_offset( ).y( ) );
+            mesh.TexcoordScale.x  = ( pSubmeshFb->uv_scale( ).x( ) );
+            mesh.TexcoordScale.y  = ( pSubmeshFb->uv_scale( ).y( ) );
 
-                mesh.SubsetCount = static_cast< uint32_t >( pMeshFb->subsets( )->size( ) );
-                mesh.BaseSubset  = static_cast< uint32_t >( pScene->Subsets.size( ) );
+            mesh.SubsetCount = static_cast< uint32_t >( pMeshFb->subsets( )->size( ) );
+            mesh.BaseSubset  = static_cast< uint32_t >( pScene->Subsets.size( ) );
 
-                // clang-format off
-                std::for_each( pMeshFb->subsets( )->begin( ),
-                               pMeshFb->subsets( )->end( ),
-                               [&]( const apemodefb::SubsetFb *pSubsetFb ) {
-                                   if ( pSubsetFb && ( uint32_t( -1 ) != pSubsetFb->material_id( ) ) ) {
-                                       materialIds.insert( pSubsetFb->material_id( ) );
-                                   }
-                               } );
-                // clang-format on
+            // clang-format off
+            std::for_each( pMeshFb->subsets( )->begin( ),
+                           pMeshFb->subsets( )->end( ),
+                           [&]( const apemodefb::SubsetFb *pSubsetFb ) {
+                               if ( pSubsetFb && ( uint32_t( -1 ) != pSubsetFb->material_id( ) ) ) {
+                                   materialIds.insert( pSubsetFb->material_id( ) );
+                               }
+                           } );
+            // clang-format on
 
-                std::transform( pMeshFb->subsets( )->begin( ),
-                                pMeshFb->subsets( )->end( ),
-                                std::back_inserter( pScene->Subsets ),
-                                [&]( const apemodefb::SubsetFb *pSubsetFb ) {
+            std::transform( pMeshFb->subsets( )->begin( ),
+                            pMeshFb->subsets( )->end( ),
+                            std::back_inserter( pScene->Subsets ),
+                            [&]( const apemodefb::SubsetFb *pSubsetFb ) {
 
-                                    SceneMeshSubset subset;
-                                    subset.MaterialId = pSubsetFb->material_id( );
-                                    subset.BaseIndex  = pSubsetFb->base_index( );
-                                    subset.IndexCount = pSubsetFb->index_count( );
+                                SceneMeshSubset subset;
+                                subset.MaterialId = pSubsetFb->material_id( );
+                                subset.BaseIndex  = pSubsetFb->base_index( );
+                                subset.IndexCount = pSubsetFb->index_count( );
 
-                                    return subset;
-                                } );
-            }
+                                return subset;
+                            } );
         }
     }
 
@@ -376,6 +278,7 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
 
             pScene->Materials.emplace_back( );
             auto &material = pScene->Materials.back( );
+            material.SrcId = materialId;
 
             if ( auto pPropertiesFb = pMaterialFb->properties( ) ) {
                 for ( auto pMaterialPropFb : *pPropertiesFb ) {
@@ -399,52 +302,8 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
 
                 } /* pMaterialPropFb */
             }     /* pPropertiesFb */
-
-            if ( auto pTexturesFb = pSrcScene->textures( ) ) {
-                if ( auto pFilesFb = pSrcScene->files( ) ) {
-                    if ( auto pTexturePropertiesFb = pMaterialFb->texture_properties( ) ) {
-                        for ( auto pTexturePropFb : *pTexturePropertiesFb ) {
-                            if ( auto pTextureFb = FlatbuffersTVectorGetAtIndex( pTexturesFb, pTexturePropFb->value_id( ) ) ) {
-                                auto pFileFb = FlatbuffersTVectorGetAtIndex( pFilesFb, pTextureFb->file_id( ) );
-                                assert( pFileFb );
-
-                                auto pszFileName        = GetCStringProperty( pSrcScene, pFileFb->name_id( ) );
-                                auto pszTextureName     = GetCStringProperty( pSrcScene, pTextureFb->name_id( ) );
-                                auto pszTexturePropName = GetCStringProperty( pSrcScene, pTexturePropFb->name_id( ) );
-
-                                LogInfo( "Loading texture: \"{}\", name: {}", pszTexturePropName, pszTextureName );
-
-                                if ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) {
-                                    material.BaseColorImgAsset.AssetId     = pTextureFb->file_id( );
-                                    material.BaseColorImgAsset.pBufferData = pFileFb->buffer( )->data( );
-                                    material.BaseColorImgAsset.BufferSize  = pFileFb->buffer( )->size( );
-                                } else if ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) {
-                                    material.NormalImgAsset.AssetId     = pTextureFb->file_id( );
-                                    material.NormalImgAsset.pBufferData = pFileFb->buffer( )->data( );
-                                    material.NormalImgAsset.BufferSize  = pFileFb->buffer( )->size( );
-                                } else if ( strcmp( "occlusionTexture", pszTexturePropName ) == 0 ) {
-                                    material.OcclusionImgAsset.AssetId     = pTextureFb->file_id( );
-                                    material.OcclusionImgAsset.pBufferData = pFileFb->buffer( )->data( );
-                                    material.OcclusionImgAsset.BufferSize  = pFileFb->buffer( )->size( );
-                                } else if ( strcmp( "metallicRoughnessTexture", pszTexturePropName ) == 0 ) {
-                                    material.MetallicRoughnessImgAsset.AssetId     = pTextureFb->file_id( );
-                                    material.MetallicRoughnessImgAsset.pBufferData = pFileFb->buffer( )->data( );
-                                    material.MetallicRoughnessImgAsset.BufferSize  = pFileFb->buffer( )->size( );
-                                } else if ( strcmp( "emissiveTexture", pszTexturePropName ) == 0 ) {
-                                    material.EmissiveImgAsset.AssetId     = pTextureFb->file_id( );
-                                    material.EmissiveImgAsset.pBufferData = pFileFb->buffer( )->data( );
-                                    material.EmissiveImgAsset.BufferSize  = pFileFb->buffer( )->size( );
-                                } else {
-                                    LogError( "Failed to map the texture to the available slot" );
-                                }
-
-                            } /* pTextureFb */
-                        }     /* pTexturePropFb */
-                    }         /* pTexturePropertiesFb */
-                }             /* pFilesFb */
-            }                 /* pTexturesFb */
-        }                     /* pMaterialFb */
-    }                         /* pMaterialsFb */
+        }         /* pMaterialFb */
+    }             /* pMaterialsFb */
 
     return UniqueScenePtrPair( std::move( pScene ), pSrcScene );
 }

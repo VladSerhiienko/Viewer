@@ -7,6 +7,7 @@
 #include <ShaderCompiler.Vulkan.h>
 #include <ImageLoader.Vulkan.h>
 #include <Buffer.Vulkan.h>
+#include <ImageLoader.Vulkan.h>
 
 #include <SceneRendererVk.h>
 #include <Scene.h>
@@ -62,8 +63,6 @@ namespace apemodevk {
         uint32_t                   VertexCount = 0;
         uint32_t                   IndexOffset = 0;
         VkIndexType                IndexType   = VK_INDEX_TYPE_UINT16;
-        XMFLOAT4                   PositionOffset;
-        XMFLOAT4                   PositionScale;
     };
 
     struct SceneMaterialDeviceAssetVk : apemode::SceneDeviceAsset {
@@ -164,34 +163,20 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         std::vector< apemodevk::MeshBufferFillIntent > bufferFillIntents;
         bufferFillIntents.reserve( pMeshesFb->size( ) << 1 );
 
-        uint32_t meshIndex = 0;
         uint64_t totalBytesRequired = 0;
 
-        for ( auto pSrcMesh : *pMeshesFb ) {
-
-            /* Scene dstMesh. */
-            auto pDstMesh = &pScene->Meshes[ meshIndex++ ];
+        for ( auto & mesh : pScene->Meshes ) {
+            auto pSrcMesh = pParamsBase->pSceneSrc->meshes( )->operator[]( mesh.SrcId );
 
             /* Create mesh device asset if needed. */
-            auto pMeshAsset = static_cast< apemodevk::SceneMeshDeviceAssetVk* >( pDstMesh->pDeviceAsset.get( ) );
+            auto pMeshAsset = static_cast< apemodevk::SceneMeshDeviceAssetVk* >( mesh.pDeviceAsset.get( ) );
             if ( nullptr == pMeshAsset ) {
                 pMeshAsset = apemode_new apemodevk::SceneMeshDeviceAssetVk( );
-                pDstMesh->pDeviceAsset.reset( pMeshAsset );
+                mesh.pDeviceAsset.reset( pMeshAsset );
             }
 
             auto pSubmesh = pSrcMesh->submeshes( )->begin( );
-
             pMeshAsset->VertexCount = pSubmesh->vertex_count( );
-
-            auto offset = pSubmesh->position_offset( );
-            pMeshAsset->PositionOffset.x = offset.x( );
-            pMeshAsset->PositionOffset.y = offset.y( );
-            pMeshAsset->PositionOffset.z = offset.z( );
-
-            auto scale = pSubmesh->position_scale( );
-            pMeshAsset->PositionScale.x = scale.x( );
-            pMeshAsset->PositionScale.y = scale.y( );
-            pMeshAsset->PositionScale.z = scale.z( );
 
             if ( pSrcMesh->index_type( ) == apemodefb::EIndexTypeFb_UInt32 ) {
                 pMeshAsset->IndexType = VK_INDEX_TYPE_UINT32;
@@ -403,6 +388,83 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
     }
 
+    auto pMaterialsFb = pParamsBase->pSceneSrc->materials( );
+    if ( bDeviceChanged && pMaterialsFb ) {
+
+        apemodevk::ImageLoader imgLoader;
+        if ( false == imgLoader.Recreate( pParams->pNode, nullptr ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        for ( auto& material : pScene->Materials ) {
+
+            /* Create material device asset if needed. */
+            auto pMaterialAsset = static_cast< apemodevk::SceneMaterialDeviceAssetVk* >( material.pDeviceAsset.get( ) );
+            if ( nullptr == pMaterialAsset ) {
+                pMaterialAsset = apemode_new apemodevk::SceneMaterialDeviceAssetVk( );
+                material.pDeviceAsset.reset( pMaterialAsset );
+            }
+
+            auto pMaterialFb = pMaterialsFb->operator[]( material.SrcId );
+            assert( pMaterialFb );
+
+            auto pTexturesFb          = pParamsBase->pSceneSrc->textures( );
+            auto pFilesFb             = pParamsBase->pSceneSrc->files( );
+            auto pTexturePropertiesFb = pMaterialFb->texture_properties( );
+
+            for ( auto pTexturePropFb : *pTexturePropertiesFb ) {
+                if ( auto pTextureFb = FlatbuffersTVectorGetAtIndex( pTexturesFb, pTexturePropFb->value_id( ) ) ) {
+                    auto pFileFb = FlatbuffersTVectorGetAtIndex( pFilesFb, pTextureFb->file_id( ) );
+                    assert( pFileFb );
+
+                    auto pszFileName        = GetCStringProperty( pParamsBase->pSceneSrc, pFileFb->name_id( ) );
+                    auto pszTextureName     = GetCStringProperty( pParamsBase->pSceneSrc, pTextureFb->name_id( ) );
+                    auto pszTexturePropName = GetCStringProperty( pParamsBase->pSceneSrc, pTexturePropFb->name_id( ) );
+
+                    apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Info,
+                                                     "Loading texture: \"%s\" <- %s",
+                                                     pszTexturePropName,
+                                                     pszTextureName );
+
+                    if ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) {
+                        pMaterialAsset->pBaseColorLoadedImg =
+                            imgLoader.LoadImageFromData( pFileFb->buffer( )->data( ),
+                                                         pFileFb->buffer( )->size( ),
+                                                         apemodevk::ImageLoader::eImageFileFormat_PNG,
+                                                         true,
+                                                         true );
+                    }
+
+                    // if ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) {
+                    //     material.BaseColorImgAsset.AssetId     = pTextureFb->file_id( );
+                    //     material.BaseColorImgAsset.pBufferData = pFileFb->buffer( )->data( );
+                    //     material.BaseColorImgAsset.BufferSize  = pFileFb->buffer( )->size( );
+                    // } else if ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) {
+                    //     material.NormalImgAsset.AssetId     = pTextureFb->file_id( );
+                    //     material.NormalImgAsset.pBufferData = pFileFb->buffer( )->data( );
+                    //     material.NormalImgAsset.BufferSize  = pFileFb->buffer( )->size( );
+                    // } else if ( strcmp( "occlusionTexture", pszTexturePropName ) == 0 ) {
+                    //     material.OcclusionImgAsset.AssetId     = pTextureFb->file_id( );
+                    //     material.OcclusionImgAsset.pBufferData = pFileFb->buffer( )->data( );
+                    //     material.OcclusionImgAsset.BufferSize  = pFileFb->buffer( )->size( );
+                    // } else if ( strcmp( "metallicRoughnessTexture", pszTexturePropName ) == 0 ) {
+                    //     material.MetallicRoughnessImgAsset.AssetId     = pTextureFb->file_id( );
+                    //     material.MetallicRoughnessImgAsset.pBufferData = pFileFb->buffer( )->data( );
+                    //     material.MetallicRoughnessImgAsset.BufferSize  = pFileFb->buffer( )->size( );
+                    // } else if ( strcmp( "emissiveTexture", pszTexturePropName ) == 0 ) {
+                    //     material.EmissiveImgAsset.AssetId     = pTextureFb->file_id( );
+                    //     material.EmissiveImgAsset.pBufferData = pFileFb->buffer( )->data( );
+                    //     material.EmissiveImgAsset.BufferSize  = pFileFb->buffer( )->size( );
+                    // } else {
+                    //     LogError( "Failed to map the texture to the available slot" );
+                    // }
+
+                } /* pTextureFb */
+            }     /* pTexturePropFb */
+        }
+    }
+
     return true;
 }
 
@@ -468,9 +530,13 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
                     pMaterial = &pScene->Materials[ pSubsetIt->MaterialId ];
                 }
 
-                frameUniformBufferData.Color          = pMaterial ? pMaterial->BaseColorFactor : XMFLOAT4{1, 0, 1, 1};
-                frameUniformBufferData.PositionOffset = pMeshAsset->PositionOffset;
-                frameUniformBufferData.PositionScale  = pMeshAsset->PositionScale;
+                frameUniformBufferData.Color            = pMaterial ? pMaterial->BaseColorFactor : XMFLOAT4{1, 0, 1, 1};
+                frameUniformBufferData.PositionOffset.x = dstMesh.PositionOffset.x;
+                frameUniformBufferData.PositionOffset.y = dstMesh.PositionOffset.y;
+                frameUniformBufferData.PositionOffset.z = dstMesh.PositionOffset.z;
+                frameUniformBufferData.PositionScale.x  = dstMesh.PositionScale.x;
+                frameUniformBufferData.PositionScale.y  = dstMesh.PositionScale.y;
+                frameUniformBufferData.PositionScale.z  = dstMesh.PositionScale.z;
 
                 XMStoreFloat4x4( &frameUniformBufferData.WorldMatrix, pScene->WorldMatrices[ node.Id ] );
 

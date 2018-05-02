@@ -79,7 +79,7 @@ bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode, HostBufferPool* 
 }
 
 std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromData(
-    const std::vector< uint8_t >& InFileContent, EImageFileFormat eFileFormat, bool bImgView, bool bAwaitLoading ) {
+    const uint8_t* pFileContent, size_t fileContentSize, EImageFileFormat eFileFormat, bool bImgView, bool bAwaitLoading ) {
 
     auto loadedImage = apemodevk::make_unique< LoadedImage >( );
 
@@ -103,7 +103,7 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
     switch ( eFileFormat ) {
         case apemodevk::ImageLoader::eImageFileFormat_DDS:
         case apemodevk::ImageLoader::eImageFileFormat_KTX: {
-            auto texture = gli::load( (const char*) InFileContent.data( ), InFileContent.size( ) );
+            auto texture = gli::load( (const char*) pFileContent, fileContentSize );
 
             if ( false == texture.empty( ) ) {
 
@@ -206,8 +206,8 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
                                       &imageWidth,
                                       &imageHeight,
                                       &stateWrapper.state,
-                                      InFileContent.data( ),
-                                      InFileContent.size( ) ) ) {
+                                      pFileContent,
+                                      fileContentSize ) ) {
 
                 loadedImage->ImageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
                 loadedImage->ImageCreateInfo.format        = VK_FORMAT_R8G8B8A8_UNORM;

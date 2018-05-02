@@ -25,7 +25,6 @@ namespace apemode {
     /* Represents the material asset class.
      */
     struct SceneMaterialAsset {
-        uint32_t       AssetId     = -1;
         const uint8_t *pBufferData = nullptr;
         size_t         BufferSize  = 0;
     };
@@ -33,20 +32,15 @@ namespace apemode {
     /* Represents the material class.
      */
     struct SceneMaterial {
+        uint32_t SrcId = uint32_t(-1);
         SceneDeviceAssetPtr pDeviceAsset;
 
-        SceneMaterialAsset BaseColorImgAsset;
-        SceneMaterialAsset NormalImgAsset;
-        SceneMaterialAsset OcclusionImgAsset;
-        SceneMaterialAsset EmissiveImgAsset;
-        SceneMaterialAsset MetallicRoughnessImgAsset;
-
-        float    AlphaCutoff     = 0;
-        bool     bDoubleSided    = false;
-        XMFLOAT3 EmissiveFactor  = XMFLOAT3{0, 0, 0};
         XMFLOAT4 BaseColorFactor = XMFLOAT4{0, 0, 0, 1};
+        XMFLOAT3 EmissiveFactor  = XMFLOAT3{0, 0, 0};
         float    MetallicFactor  = 0;
         float    RoughnessFactor = 0;
+        float    AlphaCutoff     = 0;
+        bool     bDoubleSided    = false;
     };
 
     /* Represents the mesh subset class.
@@ -59,7 +53,9 @@ namespace apemode {
     };
 
     struct SceneMesh {
+        uint32_t SrcId = uint32_t(-1);
         SceneDeviceAssetPtr pDeviceAsset;
+        
         uint32_t            BaseSubset     = -1;
         uint32_t            SubsetCount    = 0;
         XMFLOAT3            PositionOffset = XMFLOAT3{0, 0, 0};
@@ -174,4 +170,100 @@ namespace apemode {
      * @note A pointer to source scene reinterprets the data from .FBXP file and depends on it.
      */
     UniqueScenePtrPair LoadSceneFromBin( const uint8_t *pData, size_t dataSize );
+
+    inline uint32_t MaterialPropertyGetIndex( uint32_t packed ) {
+        const uint32_t valueIndex = ( packed >> 8 ) & 0x0fff;
+        return valueIndex;
+    }
+
+    inline apemodefb::EValueTypeFb MaterialPropertyGetType( uint32_t packed ) {
+        const uint32_t valueType = packed & 0x000f;
+        return apemodefb::EValueTypeFb( valueType );
+    }
+
+    template < typename T >
+    inline bool FlatbuffersTVectorIsNotNullAndNotEmptyAssert( const flatbuffers::Vector< T > *pVector ) {
+        assert( pVector && pVector->size( ) );
+        return pVector && pVector->size( );
+    }
+
+    template < typename T >
+    inline typename flatbuffers::Vector< T >::return_type FlatbuffersTVectorGetAtIndex( const flatbuffers::Vector< T > *pVector,
+                                                                                 const size_t                    itemIndex ) {
+        assert( pVector );
+        const size_t vectorSize = pVector->size( );
+
+        assert( vectorSize > itemIndex );
+        return pVector->operator[]( static_cast< flatbuffers::uoffset_t >( itemIndex ) );
+    }
+
+    inline std::string GetStringProperty( const apemodefb::SceneFb *pScene, uint32_t valueId ) {
+        assert( pScene );
+        assert( apemodefb::EValueTypeFb_String == MaterialPropertyGetType( valueId ) );
+
+        const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
+        return FlatbuffersTVectorGetAtIndex( pScene->string_values( ), valueIndex )->str( );
+    }
+
+    inline const char *GetCStringProperty( const apemodefb::SceneFb *pScene, uint32_t valueId ) {
+        assert( pScene );
+        assert( apemodefb::EValueTypeFb_String == MaterialPropertyGetType( valueId ) );
+
+        const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
+        return FlatbuffersTVectorGetAtIndex( pScene->string_values( ), valueIndex )->c_str( );
+    }
+
+    inline bool GetBoolProperty( const apemodefb::SceneFb *pScene, uint32_t valueId ) {
+        assert( pScene );
+        assert( apemodefb::EValueTypeFb_Bool == MaterialPropertyGetType( valueId ) );
+
+        const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
+        return FlatbuffersTVectorGetAtIndex( pScene->bool_values( ), valueIndex );
+    }
+
+    inline float GetScalarProperty( const apemodefb::SceneFb *pScene, uint32_t valueId ) {
+        assert( pScene );
+        assert( apemodefb::EValueTypeFb_Float == MaterialPropertyGetType( valueId ) );
+
+        const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
+        return FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex );
+    }
+
+    inline XMFLOAT2 GetVec2Property( const apemodefb::SceneFb *pScene, uint32_t valueId ) {
+        assert( pScene );
+
+        const auto valueType = MaterialPropertyGetType( valueId );
+        assert( apemodefb::EValueTypeFb_Float2 == valueType );
+
+        const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
+        return XMFLOAT2( FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex ),
+                         FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex + 1 ) );
+    }
+
+    inline XMFLOAT3 GetVec3Property( const apemodefb::SceneFb *pScene, uint32_t valueId ) {
+        assert( pScene );
+
+        const auto valueType = MaterialPropertyGetType( valueId );
+        assert( apemodefb::EValueTypeFb_Float3 == valueType );
+
+        const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
+        return XMFLOAT3( FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex ),
+                         FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex + 1 ),
+                         FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex + 2 ) );
+    }
+
+    inline XMFLOAT4 GetVec4Property( const apemodefb::SceneFb *pScene, uint32_t valueId, float defaultW = 1.0f ) {
+        assert( pScene );
+
+        const auto valueType = MaterialPropertyGetType( valueId );
+        assert( apemodefb::EValueTypeFb_Float3 == valueType || apemodefb::EValueTypeFb_Float4 == valueType );
+
+        const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
+        return XMFLOAT4( FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex ),
+                         FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex + 1 ),
+                         FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex + 2 ),
+                         apemodefb::EValueTypeFb_Float4 == valueType
+                             ? FlatbuffersTVectorGetAtIndex( pScene->float_values( ), valueIndex + 3 )
+                             : defaultW );
+    }
 }

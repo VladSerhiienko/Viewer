@@ -136,9 +136,13 @@ namespace apememext {
                            const unsigned int sourceLine,
                            const char *       sourceFunc,
                            const unsigned int allocationType ) {
+                               
+        if ( nullptr == p )
+            return aligned_malloc( size, requestedAlignment, sourceFile, sourceLine, sourceFunc, allocationType );
 
         const size_t alignment = calculate_alignment( requestedAlignment );
         void *ptr = *( (void **) ( (size_t) p - sizeof( void * ) ) );
+
         if ( p = apemode_internal_realloc( ptr, calculate_size( size, alignment ) ) ) {
             /* Address of the aligned memory according to the align parameter*/
             ptr = (void *) ( ( (size_t) p + ptr_size + ( alignment - 1 ) ) & ~( alignment - 1 ) );

@@ -266,7 +266,12 @@ bool ViewerApp::Initialize(  ) {
 
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/PaperMill/Specular_HDR.dds" ) ) {
         if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/Canyon/Unfiltered_HDR.dds" ) ) {
-            pLoadedDDS = imgLoader.LoadImageFromData( pTexAsset->AsBin( ), apemodevk::ImageLoader::eImageFileFormat_DDS, true, true );
+            const auto texAssetBin = pTexAsset->AsBin( );
+            pLoadedDDS = imgLoader.LoadImageFromData( texAssetBin.data( ),
+                                                      texAssetBin.size( ),
+                                                      apemodevk::ImageLoader::eImageFileFormat_DDS,
+                                                      true,   /* ImgVIew */
+                                                      true ); /* Await */
         }
 
         VkSamplerCreateInfo samplerCreateInfo;
