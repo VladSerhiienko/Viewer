@@ -33,7 +33,8 @@
             "program": "${workspaceRoot}/build_linux_x86_64/Viewer",
             "args": [
                 "--assets", "\"../assets/**\"",
-                "--scene", "/home/user/vserhiienko/models_v3/warmonger_sword.fbxp",
+                "--scene", "/home/user/vserhiienko/models_v3/rainier-ak-3d.fbxp",
+                // "--scene", "/home/user/vserhiienko/models_v3/warmonger_sword.fbxp",
             ],
             "stopAtEntry": false,
             "cwd": "${workspaceRoot}/build_linux_x86_64",

@@ -7,8 +7,6 @@
 #define PI 3.14159265358979323846264338327950288
 #endif
 
-#define DirectOrder 1
-
 using namespace apemode;
 
 uint32_t MaterialPropertyGetIndex( uint32_t packed ) {
@@ -122,12 +120,6 @@ bool apemode::SceneNodeTransform::Validate( ) const {
              GeometricScaling.x == 0 || GeometricScaling.y == 0 || GeometricScaling.z == 0 );
 }
 
-/**
- * Calculates local matrix.
- * @note Contributes node world matrix.
- * @return Node local matrix.
- **/
-
 XMMATRIX XMMatrixRotationZYX( const XMFLOAT3 *v ) {
     return XMMatrixRotationX( v->x ) *
            XMMatrixRotationY( v->y ) *
@@ -148,25 +140,11 @@ XMMATRIX apemode::SceneNodeTransform::CalculateLocalMatrix( ) const {
            XMMatrixTranslationFromVector( XMLoadFloat3( &Translation ) );
 }
 
-/**
- * Calculate geometric transform.
- * @note That is an object-offset 3ds Max concept,
- *       it does not influence scene hierarchy, though
- *       it contributes to node world transform.
- * @return Node geometric transform.
- **/
-
 XMMATRIX apemode::SceneNodeTransform::CalculateGeometricMatrix( ) const {
     return XMMatrixScalingFromVector( XMLoadFloat3( &GeometricScaling ) ) *
            XMMatrixRotationZYX( &GeometricRotation ) *
            XMMatrixTranslationFromVector( XMLoadFloat3( &GeometricTranslation ) );
 }
-
-/**
- * Internal usage only.
- * @see UpdateMatrices().
- * @todo Safety assertions.
- **/
 
 void apemode::Scene::UpdateChildWorldMatrices( const uint32_t nodeId ) {
 
@@ -181,10 +159,6 @@ void apemode::Scene::UpdateChildWorldMatrices( const uint32_t nodeId ) {
             UpdateChildWorldMatrices( childId );
     }
 }
-
-/**
- * Update matrices storage with up-to-date values.
- **/
 
 void apemode::Scene::UpdateMatrices( ) {
     if ( Transforms.empty( ) || Nodes.empty( ) )
@@ -395,13 +369,20 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
             auto pMaterialFb = FlatbuffersTVectorGetAtIndex( pMaterialsFb, materialId );
             assert( pMaterialFb );
 
-            LogInfo( "Processing material {}", GetCStringProperty( pSrcScene, pMaterialFb->name_id( ) ) );
+            LogInfo( "Processing material \"{}\": properties: {}, textures: {}",
+                     GetCStringProperty( pSrcScene, pMaterialFb->name_id( ) ),
+                     pMaterialFb->properties( ) ? pMaterialFb->properties( )->size( ) : 0,
+                     pMaterialFb->texture_properties( ) ? pMaterialFb->texture_properties( )->size( ) : 0 );
 
             pScene->Materials.emplace_back( );
             auto &material = pScene->Materials.back( );
 
             if ( auto pPropertiesFb = pMaterialFb->properties( ) ) {
                 for ( auto pMaterialPropFb : *pPropertiesFb ) {
+
+                    auto pszMaterialPropName = GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) );
+                    LogInfo( "Loading property: \"{}\"", pszMaterialPropName );
+
                     if ( strcmp( "baseColorFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
                         material.BaseColorFactor = GetVec4Property( pSrcScene, pMaterialPropFb->value_id( ) );
                     } else if ( strcmp( "metallicFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
@@ -412,31 +393,58 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
                         material.RoughnessFactor = GetScalarProperty( pSrcScene, pMaterialPropFb->value_id( ) );
                     } else if ( strcmp( "doubleSided", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
                         material.bDoubleSided = GetBoolProperty( pSrcScene, pMaterialPropFb->value_id( ) );
+                    } else {
+                        LogError( "Failed to map the property to the available slot" );
                     }
-                }
-            }
 
-            if ( auto pTexturePropertiesFb = pMaterialFb->texture_properties( ) ) {
-                for ( auto pMaterialPropFb : *pTexturePropertiesFb ) {
-                    LogInfo( "\t{} -> {}",
-                             GetStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ).c_str( ),
-                             pMaterialPropFb->value_id( ) );
+                } /* pMaterialPropFb */
+            }     /* pPropertiesFb */
 
-                    if ( auto pTexturesFb = pSrcScene->textures( ) )
-                        if ( auto pFilesFb = pSrcScene->files( ) ) {
-                            if ( auto pTextureFb = FlatbuffersTVectorGetAtIndex( pTexturesFb, pMaterialPropFb->value_id( ) ) ) {
-                                auto pFileFb  = FlatbuffersTVectorGetAtIndex( pFilesFb, pTextureFb->file_id( ) );
-                                auto fileName = FlatbuffersTVectorGetAtIndex( pSrcScene->string_values( ),
-                                                                              MaterialPropertyGetIndex( pFileFb->name_id( ) ) );
+            if ( auto pTexturesFb = pSrcScene->textures( ) ) {
+                if ( auto pFilesFb = pSrcScene->files( ) ) {
+                    if ( auto pTexturePropertiesFb = pMaterialFb->texture_properties( ) ) {
+                        for ( auto pTexturePropFb : *pTexturePropertiesFb ) {
+                            if ( auto pTextureFb = FlatbuffersTVectorGetAtIndex( pTexturesFb, pTexturePropFb->value_id( ) ) ) {
+                                auto pFileFb = FlatbuffersTVectorGetAtIndex( pFilesFb, pTextureFb->file_id( ) );
+                                assert( pFileFb );
 
-                                LogInfo( "Loading texture: {}", GetStringProperty( pSrcScene, pTextureFb->name_id( ) ).c_str( ) );
-                                LogInfo( "Loading texture from file: {}", fileName->c_str( ) );
-                            }
-                        }
-                }
-            }
-        }
-    }
+                                auto pszFileName        = GetCStringProperty( pSrcScene, pFileFb->name_id( ) );
+                                auto pszTextureName     = GetCStringProperty( pSrcScene, pTextureFb->name_id( ) );
+                                auto pszTexturePropName = GetCStringProperty( pSrcScene, pTexturePropFb->name_id( ) );
+
+                                LogInfo( "Loading texture: \"{}\", name: {}", pszTexturePropName, pszTextureName );
+
+                                if ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) {
+                                    material.BaseColorImgAsset.AssetId     = pTextureFb->file_id( );
+                                    material.BaseColorImgAsset.pBufferData = pFileFb->buffer( )->data( );
+                                    material.BaseColorImgAsset.BufferSize  = pFileFb->buffer( )->size( );
+                                } else if ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) {
+                                    material.NormalImgAsset.AssetId     = pTextureFb->file_id( );
+                                    material.NormalImgAsset.pBufferData = pFileFb->buffer( )->data( );
+                                    material.NormalImgAsset.BufferSize  = pFileFb->buffer( )->size( );
+                                } else if ( strcmp( "occlusionTexture", pszTexturePropName ) == 0 ) {
+                                    material.OcclusionImgAsset.AssetId     = pTextureFb->file_id( );
+                                    material.OcclusionImgAsset.pBufferData = pFileFb->buffer( )->data( );
+                                    material.OcclusionImgAsset.BufferSize  = pFileFb->buffer( )->size( );
+                                } else if ( strcmp( "metallicRoughnessTexture", pszTexturePropName ) == 0 ) {
+                                    material.MetallicRoughnessImgAsset.AssetId     = pTextureFb->file_id( );
+                                    material.MetallicRoughnessImgAsset.pBufferData = pFileFb->buffer( )->data( );
+                                    material.MetallicRoughnessImgAsset.BufferSize  = pFileFb->buffer( )->size( );
+                                } else if ( strcmp( "emissiveTexture", pszTexturePropName ) == 0 ) {
+                                    material.EmissiveImgAsset.AssetId     = pTextureFb->file_id( );
+                                    material.EmissiveImgAsset.pBufferData = pFileFb->buffer( )->data( );
+                                    material.EmissiveImgAsset.BufferSize  = pFileFb->buffer( )->size( );
+                                } else {
+                                    LogError( "Failed to map the texture to the available slot" );
+                                }
+
+                            } /* pTextureFb */
+                        }     /* pTexturePropFb */
+                    }         /* pTexturePropertiesFb */
+                }             /* pFilesFb */
+            }                 /* pTexturesFb */
+        }                     /* pMaterialFb */
+    }                         /* pMaterialsFb */
 
     return UniqueScenePtrPair( std::move( pScene ), pSrcScene );
 }

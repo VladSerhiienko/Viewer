@@ -11,20 +11,47 @@
 
 namespace apemode {
 
+    /* Base class for device asset.
+     * Allows renderer to assign concrete device resources to scene items (meshes).
+     */
     struct SceneDeviceAsset {
         virtual ~SceneDeviceAsset( ) = default;
     };
 
-    struct SceneMaterial {
-        SceneDeviceAsset *pDeviceAsset = nullptr;
-        float             AlphaCutoff  = 0;
-        bool              bDoubleSided = false;
-        XMFLOAT3          EmissiveFactor;
-        XMFLOAT4          BaseColorFactor;
-        float             MetallicFactor  = 0;
-        float             RoughnessFactor = 0;
+    /* Shortcut for the device asset pointer.
+     */
+    using SceneDeviceAssetPtr = std::unique_ptr< SceneDeviceAsset >;
+
+    /* Represents the material asset class.
+     */
+    struct SceneMaterialAsset {
+        uint32_t       AssetId     = -1;
+        const uint8_t *pBufferData = nullptr;
+        size_t         BufferSize  = 0;
     };
 
+    /* Represents the material class.
+     */
+    struct SceneMaterial {
+        SceneDeviceAssetPtr pDeviceAsset;
+
+        SceneMaterialAsset BaseColorImgAsset;
+        SceneMaterialAsset NormalImgAsset;
+        SceneMaterialAsset OcclusionImgAsset;
+        SceneMaterialAsset EmissiveImgAsset;
+        SceneMaterialAsset MetallicRoughnessImgAsset;
+
+        float    AlphaCutoff     = 0;
+        bool     bDoubleSided    = false;
+        XMFLOAT3 EmissiveFactor  = XMFLOAT3{0, 0, 0};
+        XMFLOAT4 BaseColorFactor = XMFLOAT4{0, 0, 0, 1};
+        float    MetallicFactor  = 0;
+        float    RoughnessFactor = 0;
+    };
+
+    /* Represents the mesh subset class.
+     * Indicates a part of mesh and a material id for the pointed part of a mesh.
+     */
     struct SceneMeshSubset {
         uint32_t MaterialId = -1;
         uint32_t BaseIndex  = 0;
@@ -32,32 +59,31 @@ namespace apemode {
     };
 
     struct SceneMesh {
-        SceneDeviceAsset *pDeviceAsset = nullptr;
-        uint32_t          BaseSubset   = -1;
-        uint32_t          SubsetCount  = 0;
-        XMFLOAT3          PositionOffset;
-        XMFLOAT3          PositionScale;
-        XMFLOAT2          TexcoordOffset;
-        XMFLOAT2          TexcoordScale;
+        SceneDeviceAssetPtr pDeviceAsset;
+        uint32_t            BaseSubset     = -1;
+        uint32_t            SubsetCount    = 0;
+        XMFLOAT3            PositionOffset = XMFLOAT3{0, 0, 0};
+        XMFLOAT3            PositionScale  = XMFLOAT3{1, 1, 1};
+        XMFLOAT2            TexcoordOffset = XMFLOAT2{0, 0};
+        XMFLOAT2            TexcoordScale  = XMFLOAT2{1, 1};
     };
 
     /* Transfrom class that stores main FBX SDK transform properties
      * and calculates local and geometric matrices.
      */
     struct SceneNodeTransform {
-
-        XMFLOAT3 Translation;
-        XMFLOAT3 RotationOffset;
-        XMFLOAT3 RotationPivot;
-        XMFLOAT3 PreRotation;
-        XMFLOAT3 PostRotation;
-        XMFLOAT3 Rotation;
-        XMFLOAT3 ScalingOffset;
-        XMFLOAT3 ScalingPivot;
-        XMFLOAT3 Scaling;
-        XMFLOAT3 GeometricTranslation;
-        XMFLOAT3 GeometricRotation;
-        XMFLOAT3 GeometricScaling;
+        XMFLOAT3 Translation          = XMFLOAT3{0, 0, 0};
+        XMFLOAT3 RotationOffset       = XMFLOAT3{0, 0, 0};
+        XMFLOAT3 RotationPivot        = XMFLOAT3{0, 0, 0};
+        XMFLOAT3 PreRotation          = XMFLOAT3{0, 0, 0};
+        XMFLOAT3 PostRotation         = XMFLOAT3{0, 0, 0};
+        XMFLOAT3 Rotation             = XMFLOAT3{0, 0, 0};
+        XMFLOAT3 ScalingOffset        = XMFLOAT3{0, 0, 0};
+        XMFLOAT3 ScalingPivot         = XMFLOAT3{0, 0, 0};
+        XMFLOAT3 Scaling              = XMFLOAT3{0, 0, 0};
+        XMFLOAT3 GeometricTranslation = XMFLOAT3{0, 0, 0};
+        XMFLOAT3 GeometricRotation    = XMFLOAT3{0, 0, 0};
+        XMFLOAT3 GeometricScaling     = XMFLOAT3{0, 0, 0};
 
         /**
          * Checks for nans and zero scales.
@@ -83,15 +109,15 @@ namespace apemode {
     };
 
     struct SceneNode {
-        SceneDeviceAsset *      pDeviceAsset = nullptr;
-        uint32_t                Id           = -1;
-        uint32_t                ParentId     = -1;
-        uint32_t                MeshId       = -1;
+        SceneDeviceAssetPtr     pDeviceAsset;
+        uint32_t                Id       = -1;
+        uint32_t                ParentId = -1;
+        uint32_t                MeshId   = -1;
         std::vector< uint32_t > ChildIds;
     };
 
     struct Scene {
-        SceneDeviceAsset *pDeviceAsset = nullptr;
+        SceneDeviceAssetPtr pDeviceAsset;
 
         //
         // Scene components

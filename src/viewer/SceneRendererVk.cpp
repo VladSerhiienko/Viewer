@@ -74,68 +74,6 @@ namespace apemodevk {
         std::unique_ptr< LoadedImage > pMetallicRoughnessLoadedImg;
     };
 
-    /* calculate nearest power of 2 */
-    uint32_t NearestPow2( uint32_t v ) {
-        --v;
-        v |= v >> 1;
-        v |= v >> 2;
-        v |= v >> 4;
-        v |= v >> 8;
-        v |= v >> 16;
-        return v + 1;
-    }
-
-    bool AllocateStagingMemoryPool( GraphicsDevice*     pNode,
-                                    THandle< VmaPool >& stagingMemoryPool,
-                                    uint32_t            stagingMemoryLimit,
-                                    uint32_t&           maxBlockCount,
-                                    uint32_t&           blockSize ) {
-        constexpr uint32_t dummyBufferSize    = 64;               /* 64 b */
-        constexpr uint32_t preferredBlockSize = 64 * 1024 * 1024; /* 64 mb */
-
-        if ( stagingMemoryLimit < preferredBlockSize ) {
-            blockSize  = NearestPow2( stagingMemoryLimit );
-            maxBlockCount = 1;
-        } else {
-            blockSize  = preferredBlockSize;
-            maxBlockCount = stagingMemoryLimit / preferredBlockSize;
-        }
-
-        assert( blockSize );
-        assert( maxBlockCount );
-
-        VkBufferCreateInfo bufferCreateInfo;
-        InitializeStruct( bufferCreateInfo );
-        bufferCreateInfo.size  = dummyBufferSize;
-        bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-
-        VmaAllocationCreateInfo allocationCreateInfo;
-        InitializeStruct( allocationCreateInfo );
-        allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-
-        VmaPoolCreateInfo poolCreateInfo;
-        InitializeStruct( poolCreateInfo );
-        poolCreateInfo.blockSize     = blockSize;
-        poolCreateInfo.maxBlockCount = maxBlockCount;
-
-        // clang-format off
-        if ( VK_SUCCESS != CheckedCall( vmaFindMemoryTypeIndexForBufferInfo( pNode->hAllocator,
-                                                                             &bufferCreateInfo,
-                                                                             &allocationCreateInfo,
-                                                                             &poolCreateInfo.memoryTypeIndex ) ) ) {
-            platform::DebugBreak( );
-            return false;
-        }
-        // clang-format on
-
-        if ( false == stagingMemoryPool.Recreate( pNode->hAllocator, poolCreateInfo ) ) {
-            platform::DebugBreak( );
-            return false;
-        }
-
-        return true;
-    }
-
     /**
      * Uploads resources from CPU to GPU with respect to staging memory limit.
      */
@@ -235,10 +173,10 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             auto pDstMesh = &pScene->Meshes[ meshIndex++ ];
 
             /* Create mesh device asset if needed. */
-            auto pMeshAsset = (apemodevk::SceneMeshDeviceAssetVk*) pDstMesh->pDeviceAsset;
+            auto pMeshAsset = static_cast< apemodevk::SceneMeshDeviceAssetVk* >( pDstMesh->pDeviceAsset.get( ) );
             if ( nullptr == pMeshAsset ) {
                 pMeshAsset = apemode_new apemodevk::SceneMeshDeviceAssetVk( );
-                pDstMesh->pDeviceAsset = pMeshAsset;
+                pDstMesh->pDeviceAsset.reset( pMeshAsset );
             }
 
             auto pSubmesh = pSrcMesh->submeshes( )->begin( );
@@ -517,7 +455,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
         auto& dstMesh = pScene->Meshes[ node.MeshId ];
 
-        if ( auto pMeshAsset = (const apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset ) {
+        if ( auto pMeshAsset = (const apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset.get() ) {
 
             auto pSubsetIt    = pScene->Subsets.data( ) + dstMesh.BaseSubset;
             auto pSubsetItEnd = pSubsetIt + dstMesh.SubsetCount;

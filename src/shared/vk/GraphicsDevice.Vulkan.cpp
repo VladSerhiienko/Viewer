@@ -310,44 +310,6 @@ const apemodevk::CommandBufferPool* apemodevk::GraphicsDevice::GetCommandBufferP
     return pCmdBufferPool.get( );
 }
 
-// void* apemodevk::GraphicsDevice::GetUnusedObj( ) {
-//     for ( auto o : ObjPool ) {
-//         if ( o.UseCounter == 0 )
-//             return o.pObj;
-//     }
-
-//     return nullptr;
-// }
-
-// bool apemodevk::GraphicsDevice::Acquire( void* pObj ) {
-//     for ( auto o : ObjPool ) {
-//         if ( o.pObj == pObj ) {
-//             ++o.UseCounter;
-//             return true;
-//         }
-//     }
-
-//     ObjWithCounter o;
-//     o.pObj       = pObj;
-//     o.UseCounter = 1;
-
-//     ObjPool.push_back( o );
-//     return true;
-// }
-
-// bool apemodevk::GraphicsDevice::Release( void* pFence ) {
-//     for ( auto o : ObjPool ) {
-//         if ( o.pObj == pFence ) {
-//             assert( o.UseCounter > 0 );
-//             --o.UseCounter;
-//             return o.UseCounter == 0;
-//         }
-//     }
-
-//     assert( false );
-//     return false;
-// }
-
 #pragma warning(push, 4)
 #pragma warning(disable: 4127) // warning C4127: conditional expression is constant
 #pragma warning(disable: 4100) // warning C4100: '...': unreferenced formal parameter
