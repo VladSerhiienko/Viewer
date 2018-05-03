@@ -471,7 +471,6 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                     if ( loadedImageIt != pSceneAsset->LoadedImgs.end( ) ) {
                         LogInfo( "Assigning loaded texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
                         *ppLoadedImg = loadedImageIt->second.get( );
-
                     } else {
                         LogInfo( "Loading texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
                         
