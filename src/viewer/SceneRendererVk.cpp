@@ -485,6 +485,9 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                     auto pszFileName    = GetCStringProperty( pParamsBase->pSceneSrc, pFileFb->name_id( ) );
                     auto pszTextureName = GetCStringProperty( pParamsBase->pSceneSrc, pTextureFb->name_id( ) );
 
+                    assert( pszFileName );
+                    assert( pszTextureName );
+
                     if ( auto pLoadedImg = pSceneAsset->FindLoadedImage( pFileFb->id( ) ) ) {
                         
                         LogInfo( "Assigning loaded texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
