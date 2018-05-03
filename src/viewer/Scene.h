@@ -189,7 +189,7 @@ namespace apemode {
 
     template < typename T >
     inline typename flatbuffers::Vector< T >::return_type FlatbuffersTVectorGetAtIndex( const flatbuffers::Vector< T > *pVector,
-                                                                                 const size_t                    itemIndex ) {
+                                                                                        const size_t itemIndex ) {
         assert( pVector );
         const size_t vectorSize = pVector->size( );
 

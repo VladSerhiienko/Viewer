@@ -11,6 +11,7 @@
 
 #include <SceneRendererVk.h>
 #include <Scene.h>
+#include <AppState.h>
 #include <ArrayUtils.h>
 
 namespace apemodevk {
@@ -66,11 +67,33 @@ namespace apemodevk {
     };
 
     struct SceneMaterialDeviceAssetVk : apemode::SceneDeviceAsset {
-        std::unique_ptr< LoadedImage > pBaseColorLoadedImg;
-        std::unique_ptr< LoadedImage > pNormalLoadedImg;
-        std::unique_ptr< LoadedImage > pOcclusionLoadedImg;
-        std::unique_ptr< LoadedImage > pEmissiveLoadedImg;
-        std::unique_ptr< LoadedImage > pMetallicRoughnessLoadedImg;
+        const LoadedImage* pBaseColorLoadedImg;
+        const LoadedImage* pNormalLoadedImg;
+        const LoadedImage* pOcclusionLoadedImg;
+        const LoadedImage* pEmissiveLoadedImg;
+        const LoadedImage* pMetallicRoughnessLoadedImg;
+    };
+
+    const LoadedImage** GetLoadedImageSlotForPropertyName( SceneMaterialDeviceAssetVk* pMaterialAsset,
+                                                           const char*                 pszTexturePropName ) {
+
+        if ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) {
+            return &pMaterialAsset->pBaseColorLoadedImg;
+        } else if ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) {
+            return &pMaterialAsset->pNormalLoadedImg;
+        } else if ( strcmp( "occlusionTexture", pszTexturePropName ) == 0 ) {
+            return &pMaterialAsset->pOcclusionLoadedImg;
+        } else if ( strcmp( "metallicRoughnessTexture", pszTexturePropName ) == 0 ) {
+            return &pMaterialAsset->pMetallicRoughnessLoadedImg;
+        } else if ( strcmp( "emissiveTexture", pszTexturePropName ) == 0 ) {
+            return &pMaterialAsset->pEmissiveLoadedImg;
+        }
+
+        return nullptr;
+    }
+
+    struct SceneDeviceAssetVk : apemode::SceneDeviceAsset {
+        std::vector< std::pair< uint32_t, std::unique_ptr< LoadedImage > > > LoadedImgs;
     };
 
     /**
@@ -166,7 +189,8 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         uint64_t totalBytesRequired = 0;
 
         for ( auto & mesh : pScene->Meshes ) {
-            auto pSrcMesh = pParamsBase->pSceneSrc->meshes( )->operator[]( mesh.SrcId );
+            auto pSrcMesh = FlatbuffersTVectorGetAtIndex( pParamsBase->pSceneSrc->meshes( ), mesh.SrcId );
+            assert( pSrcMesh );
 
             /* Create mesh device asset if needed. */
             auto pMeshAsset = static_cast< apemodevk::SceneMeshDeviceAssetVk* >( mesh.pDeviceAsset.get( ) );
@@ -391,11 +415,18 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
     auto pMaterialsFb = pParamsBase->pSceneSrc->materials( );
     if ( bDeviceChanged && pMaterialsFb ) {
 
+        /* Create material device asset if needed. */
+        auto pSceneAsset = static_cast< apemodevk::SceneDeviceAssetVk* >( pScene->pDeviceAsset.get( ) );
+        if ( nullptr == pSceneAsset ) {
+            pSceneAsset = apemode_new apemodevk::SceneDeviceAssetVk( );
+            pScene->pDeviceAsset.reset( pSceneAsset );
+        }
+
         apemodevk::ImageLoader imgLoader;
         if ( false == imgLoader.Recreate( pParams->pNode, nullptr ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
-        }
+        } 
 
         for ( auto& material : pScene->Materials ) {
 
@@ -406,7 +437,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                 material.pDeviceAsset.reset( pMaterialAsset );
             }
 
-            auto pMaterialFb = pMaterialsFb->operator[]( material.SrcId );
+            auto pMaterialFb = FlatbuffersTVectorGetAtIndex( pMaterialsFb, material.SrcId );
             assert( pMaterialFb );
 
             auto pTexturesFb          = pParamsBase->pSceneSrc->textures( );
@@ -414,53 +445,48 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             auto pTexturePropertiesFb = pMaterialFb->texture_properties( );
 
             for ( auto pTexturePropFb : *pTexturePropertiesFb ) {
-                if ( auto pTextureFb = FlatbuffersTVectorGetAtIndex( pTexturesFb, pTexturePropFb->value_id( ) ) ) {
+
+                auto pszTexturePropName = GetCStringProperty( pParamsBase->pSceneSrc, pTexturePropFb->name_id( ) );
+                auto ppLoadedImg        = GetLoadedImageSlotForPropertyName( pMaterialAsset, pszTexturePropName );
+
+                if ( nullptr == ppLoadedImg ) {
+                    LogError( "Cannot map texture property: \"{}\"", pszTexturePropName );
+                } else {
+                    auto pTextureFb = FlatbuffersTVectorGetAtIndex( pTexturesFb, pTexturePropFb->value_id( ) );
+                    assert( pTextureFb );
+
                     auto pFileFb = FlatbuffersTVectorGetAtIndex( pFilesFb, pTextureFb->file_id( ) );
                     assert( pFileFb );
 
-                    auto pszFileName        = GetCStringProperty( pParamsBase->pSceneSrc, pFileFb->name_id( ) );
-                    auto pszTextureName     = GetCStringProperty( pParamsBase->pSceneSrc, pTextureFb->name_id( ) );
-                    auto pszTexturePropName = GetCStringProperty( pParamsBase->pSceneSrc, pTexturePropFb->name_id( ) );
+                    auto pszFileName    = GetCStringProperty( pParamsBase->pSceneSrc, pFileFb->name_id( ) );
+                    auto pszTextureName = GetCStringProperty( pParamsBase->pSceneSrc, pTextureFb->name_id( ) );
 
-                    apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Info,
-                                                     "Loading texture: \"%s\" <- %s",
-                                                     pszTexturePropName,
-                                                     pszTextureName );
+                    auto loadedImageIt =
+                        std::find_if( pSceneAsset->LoadedImgs.begin( ),
+                                      pSceneAsset->LoadedImgs.end( ),
+                                      [&]( std::pair< uint32_t, std::unique_ptr< apemodevk::LoadedImage > >& loadedImgPair ) {
+                                          return loadedImgPair.first == pFileFb->id( );
+                                      } );
 
-                    if ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) {
-                        pMaterialAsset->pBaseColorLoadedImg =
-                            imgLoader.LoadImageFromData( pFileFb->buffer( )->data( ),
-                                                         pFileFb->buffer( )->size( ),
-                                                         apemodevk::ImageLoader::eImageFileFormat_PNG,
-                                                         true,
-                                                         true );
+                    if ( loadedImageIt != pSceneAsset->LoadedImgs.end( ) ) {
+                        LogInfo( "Assigning loaded texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
+                        *ppLoadedImg = loadedImageIt->second.get( );
+
+                    } else {
+                        LogInfo( "Loading texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
+                        
+                        auto img = imgLoader.LoadImageFromData( pFileFb->buffer( )->data( ),
+                                                                pFileFb->buffer( )->size( ),
+                                                                apemodevk::ImageLoader::eImageFileFormat_PNG,
+                                                                false,
+                                                                true );
+                        *ppLoadedImg = img.get( );
+
+                        auto loadedImgPair = std::make_pair( pFileFb->id( ), std::move( img ) );
+                        pSceneAsset->LoadedImgs.push_back( std::move( loadedImgPair ) );
                     }
 
-                    // if ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) {
-                    //     material.BaseColorImgAsset.AssetId     = pTextureFb->file_id( );
-                    //     material.BaseColorImgAsset.pBufferData = pFileFb->buffer( )->data( );
-                    //     material.BaseColorImgAsset.BufferSize  = pFileFb->buffer( )->size( );
-                    // } else if ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) {
-                    //     material.NormalImgAsset.AssetId     = pTextureFb->file_id( );
-                    //     material.NormalImgAsset.pBufferData = pFileFb->buffer( )->data( );
-                    //     material.NormalImgAsset.BufferSize  = pFileFb->buffer( )->size( );
-                    // } else if ( strcmp( "occlusionTexture", pszTexturePropName ) == 0 ) {
-                    //     material.OcclusionImgAsset.AssetId     = pTextureFb->file_id( );
-                    //     material.OcclusionImgAsset.pBufferData = pFileFb->buffer( )->data( );
-                    //     material.OcclusionImgAsset.BufferSize  = pFileFb->buffer( )->size( );
-                    // } else if ( strcmp( "metallicRoughnessTexture", pszTexturePropName ) == 0 ) {
-                    //     material.MetallicRoughnessImgAsset.AssetId     = pTextureFb->file_id( );
-                    //     material.MetallicRoughnessImgAsset.pBufferData = pFileFb->buffer( )->data( );
-                    //     material.MetallicRoughnessImgAsset.BufferSize  = pFileFb->buffer( )->size( );
-                    // } else if ( strcmp( "emissiveTexture", pszTexturePropName ) == 0 ) {
-                    //     material.EmissiveImgAsset.AssetId     = pTextureFb->file_id( );
-                    //     material.EmissiveImgAsset.pBufferData = pFileFb->buffer( )->data( );
-                    //     material.EmissiveImgAsset.BufferSize  = pFileFb->buffer( )->size( );
-                    // } else {
-                    //     LogError( "Failed to map the texture to the available slot" );
-                    // }
-
-                } /* pTextureFb */
+                } /* ppLoadedImg */
             }     /* pTexturePropFb */
         }
     }
