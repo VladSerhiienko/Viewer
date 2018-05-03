@@ -93,7 +93,27 @@ namespace apemodevk {
     }
 
     struct SceneDeviceAssetVk : apemode::SceneDeviceAsset {
-        std::vector< std::pair< uint32_t, std::unique_ptr< LoadedImage > > > LoadedImgs;
+        using LoadedImagePtrPair = std::pair< uint32_t, std::unique_ptr< LoadedImage > >;
+        std::vector< LoadedImagePtrPair > LoadedImgs;
+
+        void AddLoadedImage( uint32_t fileId, std::unique_ptr< LoadedImage > loadedImg ) {
+            LoadedImgs.push_back( std::make_pair( fileId, std::move( loadedImg ) ) );
+        }
+
+        const LoadedImage* FindLoadedImage( uint32_t fileId ) {
+            auto loadedImageIt =
+                std::find_if( LoadedImgs.begin( ),
+                              LoadedImgs.end( ),
+                              [&]( LoadedImagePtrPair & loadedImgPair ) {
+                                  return loadedImgPair.first == fileId;
+                              } );
+
+            if ( loadedImageIt != LoadedImgs.end( ) ) {
+                return loadedImageIt->second.get();
+            }
+
+            return nullptr;
+        }
     };
 
     /**
@@ -420,6 +440,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         if ( nullptr == pSceneAsset ) {
             pSceneAsset = apemode_new apemodevk::SceneDeviceAssetVk( );
             pScene->pDeviceAsset.reset( pSceneAsset );
+            assert( pSceneAsset );
         }
 
         apemodevk::ImageLoader imageLoader;
@@ -440,9 +461,14 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             auto pMaterialFb = FlatbuffersTVectorGetAtIndex( pMaterialsFb, material.SrcId );
             assert( pMaterialFb );
 
-            auto pTexturesFb          = pParamsBase->pSceneSrc->textures( );
-            auto pFilesFb             = pParamsBase->pSceneSrc->files( );
+            auto pTexturesFb = pParamsBase->pSceneSrc->textures( );
+            assert( pTexturesFb );
+
+            auto pFilesFb = pParamsBase->pSceneSrc->files( );
+            assert( pFilesFb );
+
             auto pTexturePropertiesFb = pMaterialFb->texture_properties( );
+            assert( pTexturePropertiesFb );
 
             for ( auto pTexturePropFb : *pTexturePropertiesFb ) {
 
@@ -461,29 +487,26 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                     auto pszFileName    = GetCStringProperty( pParamsBase->pSceneSrc, pFileFb->name_id( ) );
                     auto pszTextureName = GetCStringProperty( pParamsBase->pSceneSrc, pTextureFb->name_id( ) );
 
-                    auto loadedImageIt =
-                        std::find_if( pSceneAsset->LoadedImgs.begin( ),
-                                      pSceneAsset->LoadedImgs.end( ),
-                                      [&]( std::pair< uint32_t, std::unique_ptr< apemodevk::LoadedImage > >& loadedImgPair ) {
-                                          return loadedImgPair.first == pFileFb->id( );
-                                      } );
-
-                    if ( loadedImageIt != pSceneAsset->LoadedImgs.end( ) ) {
+                    if ( auto pLoadedImg = pSceneAsset->FindLoadedImage( pFileFb->id( ) ) ) {
                         LogInfo( "Assigning loaded texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
-                        *ppLoadedImg = loadedImageIt->second.get( );
+                        ( *ppLoadedImg ) = pLoadedImg;
+
                     } else {
                         LogInfo( "Loading texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
-                        
-                        auto img = imageLoader.LoadImageFromData( pFileFb->buffer( )->data( ),
+                        auto loadedImg = imageLoader.LoadImageFromData( pFileFb->buffer( )->data( ),
                                                                 pFileFb->buffer( )->size( ),
                                                                 apemodevk::ImageLoader::eImageFileFormat_PNG,
                                                                 false,
                                                                 true );
-                        *ppLoadedImg = img.get( );
 
-                        auto loadedImgPair = std::make_pair( pFileFb->id( ), std::move( img ) );
-                        pSceneAsset->LoadedImgs.push_back( std::move( loadedImgPair ) );
-                    }
+                        if ( loadedImg ) {
+                            LogInfo( "Loaded texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
+
+                            ( *ppLoadedImg ) = loadedImg.get( );
+                            pSceneAsset->AddLoadedImage( pFileFb->id( ), std::move( loadedImg ) );
+                            
+                        } /* loadedImg */
+                    }     /* pLoadedImg */
 
                 } /* ppLoadedImg */
             }     /* pTexturePropFb */
