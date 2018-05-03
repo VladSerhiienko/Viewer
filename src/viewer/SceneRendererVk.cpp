@@ -458,20 +458,18 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                 material.pDeviceAsset.reset( pMaterialAsset );
             }
 
-            auto pMaterialFb = FlatbuffersTVectorGetAtIndex( pMaterialsFb, material.SrcId );
-            assert( pMaterialFb );
-
-            auto pTexturesFb = pParamsBase->pSceneSrc->textures( );
-            assert( pTexturesFb );
-
-            auto pFilesFb = pParamsBase->pSceneSrc->files( );
-            assert( pFilesFb );
-
+            auto pMaterialFb          = FlatbuffersTVectorGetAtIndex( pMaterialsFb, material.SrcId );
+            auto pTexturesFb          = pParamsBase->pSceneSrc->textures( );
+            auto pFilesFb             = pParamsBase->pSceneSrc->files( );
             auto pTexturePropertiesFb = pMaterialFb->texture_properties( );
+
+            assert( pMaterialFb );
+            assert( pTexturesFb );
+            assert( pFilesFb );
             assert( pTexturePropertiesFb );
 
             for ( auto pTexturePropFb : *pTexturePropertiesFb ) {
-                
+
                 auto pszTexturePropName      = GetCStringProperty( pParamsBase->pSceneSrc, pTexturePropFb->name_id( ) );
                 auto ppLoadedImgMaterialSlot = GetLoadedImageSlotForPropertyName( pMaterialAsset, pszTexturePropName );
 
@@ -488,10 +486,12 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                     auto pszTextureName = GetCStringProperty( pParamsBase->pSceneSrc, pTextureFb->name_id( ) );
 
                     if ( auto pLoadedImg = pSceneAsset->FindLoadedImage( pFileFb->id( ) ) ) {
+                        
                         LogInfo( "Assigning loaded texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
                         ( *ppLoadedImgMaterialSlot ) = pLoadedImg;
 
                     } else {
+                        
                         LogInfo( "Loading texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
                         auto loadedImg = imageLoader.LoadImageFromData( pFileFb->buffer( )->data( ),
                                                                 pFileFb->buffer( )->size( ),
@@ -500,8 +500,8 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                                                                 true );
 
                         if ( loadedImg ) {
+                            
                             LogInfo( "Loaded texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
-
                             ( *ppLoadedImgMaterialSlot ) = loadedImg.get( );
                             pSceneAsset->AddLoadedImage( pFileFb->id( ), std::move( loadedImg ) );
                             
