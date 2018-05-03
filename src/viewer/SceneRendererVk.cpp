@@ -422,8 +422,8 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             pScene->pDeviceAsset.reset( pSceneAsset );
         }
 
-        apemodevk::ImageLoader imgLoader;
-        if ( false == imgLoader.Recreate( pParams->pNode, nullptr ) ) {
+        apemodevk::ImageLoader imageLoader;
+        if ( false == imageLoader.Recreate( pParams->pNode, nullptr ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
         } 
@@ -474,7 +474,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                     } else {
                         LogInfo( "Loading texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
                         
-                        auto img = imgLoader.LoadImageFromData( pFileFb->buffer( )->data( ),
+                        auto img = imageLoader.LoadImageFromData( pFileFb->buffer( )->data( ),
                                                                 pFileFb->buffer( )->size( ),
                                                                 apemodevk::ImageLoader::eImageFileFormat_PNG,
                                                                 false,
