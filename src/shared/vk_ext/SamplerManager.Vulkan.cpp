@@ -6,6 +6,15 @@ bool apemodevk::SamplerManager::Recreate( apemodevk::GraphicsDevice* pInNode ) {
     return nullptr != pNode;
 }
 
+void apemodevk::SamplerManager::Release( apemodevk::GraphicsDevice* pNode ) {
+    THandle< VkSampler > hSampler;
+    for ( auto& storedSampler : StoredSamplers ) {
+        hSampler.Handle = storedSampler.pSampler;
+        hSampler.Deleter.hLogicalDevice = pNode->hLogicalDevice;
+        hSampler.Destroy( );
+    }
+}
+
 constexpr uint32_t kInvalidSamplerIndex = 0xffffffff;
 
 uint32_t apemodevk::SamplerManager::GetSamplerIndex( const VkSamplerCreateInfo& samplerCreateInfo ) {

@@ -15,6 +15,7 @@ namespace apemodevk {
         std::vector< StoredSampler > StoredSamplers;
 
         bool     Recreate( apemodevk::GraphicsDevice* pNode );
+        void     Release( apemodevk::GraphicsDevice* pNode );
         uint32_t GetSamplerIndex( const VkSamplerCreateInfo& SamplerCreateInfo );
 
         static bool IsSamplerIndexValid( uint32_t samplerIndex );

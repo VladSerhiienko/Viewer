@@ -132,7 +132,7 @@ namespace apemodevk
         void operator( )( VkEvent &Handle ) {
             if ( Handle == nullptr )
                 return;
-                
+
             apemode_assert( hLogicalDevice != nullptr, "Device is required." );
             vkDestroyEvent( hLogicalDevice, Handle, GetAllocationCallbacks( ) );
             Handle = VK_NULL_HANDLE;
@@ -161,9 +161,8 @@ namespace apemodevk
     template <>
     struct THandleDeleter< VkSampler > {
         VkDevice         hLogicalDevice;
-        VkPhysicalDevice PhysicalDeviceHandle;
 
-        THandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ), PhysicalDeviceHandle( VK_NULL_HANDLE ) {
+        THandleDeleter( ) : hLogicalDevice( VK_NULL_HANDLE ) {
         }
 
         void operator( )( VkSampler &Handle ) {
@@ -508,7 +507,7 @@ namespace apemodevk
             if ( InLogicalDeviceHandle != nullptr ) {
                 Deleter.hLogicalDevice = InLogicalDeviceHandle;
                 if ( VK_SUCCESS == CheckedCall( vkCreateSwapchainKHR( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) ) ) {
-                    
+
                     /* If we just re-created an existing swapchain, we should destroy the old swapchain at this point.
                      * @note Destroying the swapchain also cleans up all its associated presentable images
                      * once the platform is done with them.

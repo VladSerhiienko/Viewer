@@ -32,15 +32,18 @@ namespace apemode {
     /* Represents the material class.
      */
     struct SceneMaterial {
+        enum EAlphaMode { eAlphaMode_Blend, eAlphaMode_Unknown };
+
         uint32_t SrcId = uint32_t(-1);
         SceneDeviceAssetPtr pDeviceAsset;
 
-        XMFLOAT4 BaseColorFactor = XMFLOAT4{0, 0, 0, 1};
-        XMFLOAT3 EmissiveFactor  = XMFLOAT3{0, 0, 0};
-        float    MetallicFactor  = 0;
-        float    RoughnessFactor = 0;
-        float    AlphaCutoff     = 0;
-        bool     bDoubleSided    = false;
+        XMFLOAT4   BaseColorFactor = XMFLOAT4{0, 0, 0, 1};
+        XMFLOAT3   EmissiveFactor  = XMFLOAT3{0, 0, 0};
+        float      MetallicFactor  = 0;
+        float      RoughnessFactor = 0;
+        float      AlphaCutoff     = 0;
+        bool       bDoubleSided    = false;
+        EAlphaMode eAlphaMode      = eAlphaMode_Unknown;
     };
 
     /* Represents the mesh subset class.
@@ -55,7 +58,7 @@ namespace apemode {
     struct SceneMesh {
         uint32_t SrcId = uint32_t(-1);
         SceneDeviceAssetPtr pDeviceAsset;
-        
+
         uint32_t            BaseSubset     = -1;
         uint32_t            SubsetCount    = 0;
         XMFLOAT3            PositionOffset = XMFLOAT3{0, 0, 0};

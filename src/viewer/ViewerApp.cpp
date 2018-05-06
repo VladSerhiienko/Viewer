@@ -164,6 +164,18 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
+        pSamplerManager = apemodevk::make_unique< apemodevk::SamplerManager >( );
+        if ( false == pSamplerManager->Recreate( pAppSurface->pNode ) ) {
+            apemode::platform::DebugBreak( );
+            return false;
+        }
+
+        apemodevk::ImageLoader imgLoader;
+        if ( false == imgLoader.Recreate( pAppSurface->pNode, nullptr ) ) {
+            apemode::platform::DebugBreak( );
+            return false;
+        }
+
         pNkRenderer = new NuklearRendererSdlVk();
 
         auto queueFamilyPool = pAppSurface->pNode->GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
@@ -208,10 +220,12 @@ bool ViewerApp::Initialize(  ) {
 
         SceneRendererVk::SceneUpdateParametersVk updateParams;
         updateParams.pNode           = pAppSurface->pNode;
-        updateParams.pShaderCompiler = pShaderCompiler.get( );
         updateParams.pRenderPass     = hDbgRenderPass;
         updateParams.pDescPool       = DescriptorPool;
         updateParams.FrameCount      = FrameCount;
+        updateParams.pImgLoader      = &imgLoader;
+        updateParams.pSamplerManager = pSamplerManager.get( );
+        updateParams.pShaderCompiler = pShaderCompiler.get( );
 
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/rainier-ak-3ds.fbxp"
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/bristleback-dota-fan-art.fbxp"
@@ -233,7 +247,7 @@ bool ViewerApp::Initialize(  ) {
             pSceneSource = SceneSourceData( loadedScene.second, std::move( sceneFileContent ) );
         }
 
-        updateParams.pSceneSrc = pSceneSource.first;
+        updateParams.pSrcScene = pSceneSource.first;
         if ( false == pSceneRendererBase->UpdateScene( pScene.get( ), &updateParams ) ) {
             apemode::platform::DebugBreak( );
             return false;
@@ -252,20 +266,11 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        pSamplerManager = apemodevk::make_unique< apemodevk::SamplerManager >( );
-        if ( false == pSamplerManager->Recreate( pAppSurface->pNode ) ) {
-            apemode::platform::DebugBreak( );
-            return false;
-        }
-
-        apemodevk::ImageLoader imgLoader;
-        if ( false == imgLoader.Recreate( pAppSurface->pNode, nullptr ) ) {
-            apemode::platform::DebugBreak( );
-            return false;
-        }
-
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/PaperMill/Specular_HDR.dds" ) ) {
-        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/Canyon/Unfiltered_HDR.dds" ) ) {
+        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/Canyon/Unfiltered_HDR.dds" ) ) {
+        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_iem.dds" ) ) {
+        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_skybox.dds" ) ) {
+        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/bolonga_irr.dds" ) ) {
             const auto texAssetBin = pTexAsset->AsBin( );
             pLoadedDDS = imgLoader.LoadImageFromData( texAssetBin.data( ),
                                                       texAssetBin.size( ),

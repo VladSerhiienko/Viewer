@@ -49,13 +49,26 @@ namespace apemodevk {
         uint32_t indices;
     };
 
-    struct FrameUniformBufferData {
+    struct ObjectUBO {
         XMFLOAT4X4 WorldMatrix;
-        XMFLOAT4X4 ViewMatrix;
-        XMFLOAT4X4 ProjMatrix;
-        XMFLOAT4   Color;
         XMFLOAT4   PositionOffset;
         XMFLOAT4   PositionScale;
+    };
+
+    struct CameraUBO {
+        XMFLOAT4X4 ViewMatrix;
+        XMFLOAT4X4 ProjMatrix;
+    };
+
+    struct MaterialUBO {
+        XMFLOAT4 BaseColorFactor;
+        XMFLOAT4 EmissiveFactor;
+        XMFLOAT4 MetallicRoughnessFactor;
+    };
+
+    struct LightUBO {
+        XMFLOAT4 LightDirection;
+        XMFLOAT4 LightColor;
     };
 
     struct SceneMeshDeviceAssetVk : apemode::SceneDeviceAsset {
@@ -67,11 +80,25 @@ namespace apemodevk {
     };
 
     struct SceneMaterialDeviceAssetVk : apemode::SceneDeviceAsset {
-        const LoadedImage* pBaseColorLoadedImg;
-        const LoadedImage* pNormalLoadedImg;
-        const LoadedImage* pOcclusionLoadedImg;
-        const LoadedImage* pEmissiveLoadedImg;
-        const LoadedImage* pMetallicRoughnessLoadedImg;
+        const LoadedImage* pBaseColorLoadedImg         = nullptr;
+        const LoadedImage* pNormalLoadedImg            = nullptr;
+        const LoadedImage* pOcclusionLoadedImg         = nullptr;
+        const LoadedImage* pEmissiveLoadedImg          = nullptr;
+        const LoadedImage* pMetallicRoughnessLoadedImg = nullptr;
+
+        VkSampler pBaseColorSampler = VK_NULL_HANDLE;
+        VkSampler pNormalSampler    = VK_NULL_HANDLE;
+        VkSampler pOcclusionSampler = VK_NULL_HANDLE;
+        VkSampler pEmissiveSampler  = VK_NULL_HANDLE;
+        VkSampler pMetallicSampler  = VK_NULL_HANDLE;
+        VkSampler pRoughnessSampler = VK_NULL_HANDLE;
+
+        THandle< VkImageView > hBaseColorImgView;
+        THandle< VkImageView > hNormalImgView;
+        THandle< VkImageView > hOcclusionImgView;
+        THandle< VkImageView > hEmissiveImgView;
+        THandle< VkImageView > hMetallicImgView;
+        THandle< VkImageView > hRoughnessImgView;
     };
 
     const LoadedImage** GetLoadedImageSlotForPropertyName( SceneMaterialDeviceAssetVk* pMaterialAsset,
@@ -185,6 +212,26 @@ namespace apemodevk {
 
         return true;
     }
+
+    VkSamplerCreateInfo GetDefaultSamplerCreateInfo( const float maxLod ) {
+        VkSamplerCreateInfo samplerCreateInfo;
+        InitializeStruct( samplerCreateInfo );
+        samplerCreateInfo.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        samplerCreateInfo.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        samplerCreateInfo.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+        samplerCreateInfo.anisotropyEnable        = true;
+        samplerCreateInfo.maxAnisotropy           = 16;
+        samplerCreateInfo.compareEnable           = false;
+        samplerCreateInfo.compareOp               = VK_COMPARE_OP_NEVER;
+        samplerCreateInfo.magFilter               = VK_FILTER_LINEAR;
+        samplerCreateInfo.minFilter               = VK_FILTER_LINEAR;
+        samplerCreateInfo.minLod                  = 0;
+        samplerCreateInfo.maxLod                  = maxLod;
+        samplerCreateInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+        samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+        samplerCreateInfo.unnormalizedCoordinates = false;
+        return samplerCreateInfo;
+    }
 }
 
 bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdateParametersBase* pParamsBase ) {
@@ -200,7 +247,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         bDeviceChanged |= true;
     }
 
-    auto pMeshesFb = pParamsBase->pSceneSrc->meshes( );
+    auto pMeshesFb = pParamsBase->pSrcScene->meshes( );
     if ( bDeviceChanged && pMeshesFb ) {
 
         std::vector< apemodevk::MeshBufferFillIntent > bufferFillIntents;
@@ -209,7 +256,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         uint64_t totalBytesRequired = 0;
 
         for ( auto & mesh : pScene->Meshes ) {
-            auto pSrcMesh = FlatbuffersTVectorGetAtIndex( pParamsBase->pSceneSrc->meshes( ), mesh.SrcId );
+            auto pSrcMesh = FlatbuffersTVectorGetAtIndex( pParamsBase->pSrcScene->meshes( ), mesh.SrcId );
             assert( pSrcMesh );
 
             /* Create mesh device asset if needed. */
@@ -432,8 +479,11 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
     }
 
-    auto pMaterialsFb = pParamsBase->pSceneSrc->materials( );
-    if ( bDeviceChanged && pMaterialsFb ) {
+    auto pMaterialsFb = pParamsBase->pSrcScene->materials( );
+    auto pTexturesFb  = pParamsBase->pSrcScene->textures( );
+    auto pFilesFb     = pParamsBase->pSrcScene->files( );
+
+    if ( bDeviceChanged && pMaterialsFb && pTexturesFb && pFilesFb ) {
 
         /* Create material device asset if needed. */
         auto pSceneAsset = static_cast< apemodevk::SceneDeviceAssetVk* >( pScene->pDeviceAsset.get( ) );
@@ -447,7 +497,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         if ( false == imageLoader.Recreate( pParams->pNode, nullptr ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
-        } 
+        }
 
         for ( auto& material : pScene->Materials ) {
 
@@ -459,62 +509,179 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             }
 
             auto pMaterialFb          = FlatbuffersTVectorGetAtIndex( pMaterialsFb, material.SrcId );
-            auto pTexturesFb          = pParamsBase->pSceneSrc->textures( );
-            auto pFilesFb             = pParamsBase->pSceneSrc->files( );
             auto pTexturePropertiesFb = pMaterialFb->texture_properties( );
 
             assert( pMaterialFb );
-            assert( pTexturesFb );
-            assert( pFilesFb );
             assert( pTexturePropertiesFb );
 
             for ( auto pTexturePropFb : *pTexturePropertiesFb ) {
 
-                auto pszTexturePropName      = GetCStringProperty( pParamsBase->pSceneSrc, pTexturePropFb->name_id( ) );
+                auto pszTexturePropName      = GetCStringProperty( pParamsBase->pSrcScene, pTexturePropFb->name_id( ) );
                 auto ppLoadedImgMaterialSlot = GetLoadedImageSlotForPropertyName( pMaterialAsset, pszTexturePropName );
 
                 if ( nullptr == ppLoadedImgMaterialSlot ) {
+
                     LogError( "Cannot map texture property: \"{}\"", pszTexturePropName );
+
                 } else {
+
                     auto pTextureFb = FlatbuffersTVectorGetAtIndex( pTexturesFb, pTexturePropFb->value_id( ) );
                     assert( pTextureFb );
 
                     auto pFileFb = FlatbuffersTVectorGetAtIndex( pFilesFb, pTextureFb->file_id( ) );
                     assert( pFileFb );
 
-                    auto pszFileName    = GetCStringProperty( pParamsBase->pSceneSrc, pFileFb->name_id( ) );
-                    auto pszTextureName = GetCStringProperty( pParamsBase->pSceneSrc, pTextureFb->name_id( ) );
+                    auto pszFileName    = GetCStringProperty( pParamsBase->pSrcScene, pFileFb->name_id( ) );
+                    auto pszTextureName = GetCStringProperty( pParamsBase->pSrcScene, pTextureFb->name_id( ) );
 
                     assert( pszFileName );
                     assert( pszTextureName );
 
                     if ( auto pLoadedImg = pSceneAsset->FindLoadedImage( pFileFb->id( ) ) ) {
-                        
+
                         LogInfo( "Assigning loaded texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
                         ( *ppLoadedImgMaterialSlot ) = pLoadedImg;
 
                     } else {
-                        
+
                         LogInfo( "Loading texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
                         auto loadedImg = imageLoader.LoadImageFromData( pFileFb->buffer( )->data( ),
-                                                                pFileFb->buffer( )->size( ),
-                                                                apemodevk::ImageLoader::eImageFileFormat_PNG,
-                                                                false,
-                                                                true );
+                                                                        pFileFb->buffer( )->size( ),
+                                                                        apemodevk::ImageLoader::eImageFileFormat_PNG,
+                                                                        false,
+                                                                        true );
 
                         if ( loadedImg ) {
-                            
-                            LogInfo( "Loaded texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
+
                             ( *ppLoadedImgMaterialSlot ) = loadedImg.get( );
                             pSceneAsset->AddLoadedImage( pFileFb->id( ), std::move( loadedImg ) );
-                            
-                        } /* loadedImg */
-                    }     /* pLoadedImg */
+
+                        }
+                    }
 
                 } /* ppLoadedImgMaterialSlot */
             }     /* pTexturePropFb */
-        }
-    }
+
+            if ( pMaterialAsset->pBaseColorLoadedImg ) {
+                const float maxLod = pMaterialAsset->pBaseColorLoadedImg->ImageCreateInfo.mipLevels;
+
+                VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
+                const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
+                assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
+                pMaterialAsset->pBaseColorSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+
+                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pBaseColorLoadedImg->ImgViewCreateInfo;
+                imgViewCreateInfo.image = pMaterialAsset->pBaseColorLoadedImg->hImg;
+
+                if ( !pMaterialAsset->hBaseColorImgView.Recreate( pParams->pNode->hLogicalDevice, imgViewCreateInfo ) ) {
+                    return false;
+                }
+
+            } /* pBaseColorLoadedImg */
+
+            if ( pMaterialAsset->pNormalLoadedImg ) {
+
+                const float maxLod = pMaterialAsset->pNormalLoadedImg->ImageCreateInfo.mipLevels;
+
+                VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
+                const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
+                assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
+                pMaterialAsset->pNormalSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+
+                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pNormalLoadedImg->ImgViewCreateInfo;
+                imgViewCreateInfo.image = pMaterialAsset->pNormalLoadedImg->hImg;
+
+                if ( !pMaterialAsset->hNormalImgView.Recreate( pParams->pNode->hLogicalDevice, imgViewCreateInfo ) ) {
+                    return false;
+                }
+
+            } /* pNormalLoadedImg */
+
+            if ( pMaterialAsset->pEmissiveLoadedImg ) {
+
+                const float maxLod = pMaterialAsset->pEmissiveLoadedImg->ImageCreateInfo.mipLevels;
+
+                VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
+                const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
+                assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
+                pMaterialAsset->pEmissiveSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+
+                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pEmissiveLoadedImg->ImgViewCreateInfo;
+                imgViewCreateInfo.image = pMaterialAsset->pEmissiveLoadedImg->hImg;
+                imgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ONE;
+
+                if ( !pMaterialAsset->hEmissiveImgView.Recreate( pParams->pNode->hLogicalDevice, imgViewCreateInfo ) ) {
+                    return false;
+                }
+
+            } /* pEmissiveLoadedImg */
+
+            if ( pMaterialAsset->pMetallicRoughnessLoadedImg ) {
+
+                const float maxLod = pMaterialAsset->pMetallicRoughnessLoadedImg->ImageCreateInfo.mipLevels;
+
+                VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
+                const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
+                assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
+                pMaterialAsset->pMetallicSampler  = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+                pMaterialAsset->pRoughnessSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+
+                VkImageViewCreateInfo metallicImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessLoadedImg->ImgViewCreateInfo;
+                metallicImgViewCreateInfo.image        = pMaterialAsset->pMetallicRoughnessLoadedImg->hImg;
+                metallicImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_R;
+                metallicImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ONE;
+                metallicImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ONE;
+                metallicImgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ONE;
+
+                VkImageViewCreateInfo roughnessImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessLoadedImg->ImgViewCreateInfo;
+                roughnessImgViewCreateInfo.image        = pMaterialAsset->pMetallicRoughnessLoadedImg->hImg;
+                roughnessImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_G;
+                roughnessImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ONE;
+                roughnessImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ONE;
+                roughnessImgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ONE;
+
+                if ( !pMaterialAsset->hMetallicImgView.Recreate( pParams->pNode->hLogicalDevice, metallicImgViewCreateInfo ) ) {
+                    return false;
+                }
+
+                if ( !pMaterialAsset->hRoughnessImgView.Recreate( pParams->pNode->hLogicalDevice, roughnessImgViewCreateInfo ) ) {
+                    return false;
+                }
+
+            } /* pMetallicRoughnessLoadedImg */
+
+            if ( pMaterialAsset->pOcclusionLoadedImg ) {
+
+                const float maxLod = pMaterialAsset->pOcclusionLoadedImg->ImageCreateInfo.mipLevels;
+
+                VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
+                const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
+                assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
+                pMaterialAsset->pOcclusionSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+
+                VkImageViewCreateInfo occlusionImgViewCreateInfo = pMaterialAsset->pOcclusionLoadedImg->ImgViewCreateInfo;
+                occlusionImgViewCreateInfo.image                 = pMaterialAsset->pOcclusionLoadedImg->hImg;
+
+                if ( pMaterialAsset->pOcclusionLoadedImg == pMaterialAsset->pMetallicRoughnessLoadedImg ) {
+                    occlusionImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_B;
+                    occlusionImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ZERO;
+                    occlusionImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ZERO;
+                    occlusionImgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ZERO;
+                } else {
+                    occlusionImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_R;
+                    occlusionImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ZERO;
+                    occlusionImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ZERO;
+                    occlusionImgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ZERO;
+                }
+
+                if ( !pMaterialAsset->hOcclusionImgView.Recreate( pParams->pNode->hLogicalDevice, occlusionImgViewCreateInfo ) ) {
+                    return false;
+                }
+
+            } /* pOcclusionLoadedImg */
+
+        } /* pMaterialFb */
+    }     /* pMaterialsFb */
 
     return true;
 }
@@ -556,22 +723,67 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
     vkCmdSetScissor( pParams->pCmdBuffer, 0, 1, &scissor );
 
-    auto FrameIndex = ( pParams->FrameIndex ) % kMaxFrameCount;
+    const uint32_t FrameIndex = ( pParams->FrameIndex ) % kMaxFrameCount;
 
-    apemodevk::FrameUniformBufferData frameUniformBufferData;
-    frameUniformBufferData.ProjMatrix = pParams->ProjMatrix;
-    frameUniformBufferData.ViewMatrix = pParams->ViewMatrix;
+    apemodevk::CameraUBO cameraData;
+    cameraData.ProjMatrix = pParams->ProjMatrix;
+    cameraData.ViewMatrix = pParams->ViewMatrix;
+
+    apemodevk::LightUBO lightData;
+    lightData.LightDirection = XMFLOAT4( 0, -1, 0, 1 );
+    lightData.LightColor     = XMFLOAT4( 1, 0, 0, 1 );
+
+    auto cameraDataUploadBufferRange = BufferPools[ FrameIndex ].TSuballocate( cameraData );
+    assert( VK_NULL_HANDLE != cameraDataUploadBufferRange.DescriptorBufferInfo.buffer );
+    cameraDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( apemodevk::CameraUBO );
+
+    auto lightDataUploadBufferRange = BufferPools[ FrameIndex ].TSuballocate( cameraData );
+    assert( VK_NULL_HANDLE != lightDataUploadBufferRange.DescriptorBufferInfo.buffer );
+    lightDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( apemodevk::LightUBO );
+
+    uint32_t dynamicOffsets[3] = {0};
+    dynamicOffsets[0] = cameraDataUploadBufferRange.DynamicOffset;
+    dynamicOffsets[1] = lightDataUploadBufferRange.DynamicOffset;
+
+    apemodevk::TDescriptorSet< 4 > descriptorSetForPass;
+    descriptorSetForPass.pBinding[ 0 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 0 */
+    descriptorSetForPass.pBinding[ 0 ].BufferInfo            = cameraDataUploadBufferRange.DescriptorBufferInfo;
+    descriptorSetForPass.pBinding[ 1 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 1 */
+    descriptorSetForPass.pBinding[ 1 ].BufferInfo            = lightDataUploadBufferRange.DescriptorBufferInfo;
+    descriptorSetForPass.pBinding[ 2 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER; /* 2 */
+    descriptorSetForPass.pBinding[ 2 ].ImageInfo.imageLayout = pParams->RadianceMap.eImgLayout;
+    descriptorSetForPass.pBinding[ 2 ].ImageInfo.imageView   = pParams->RadianceMap.pImgView;
+    descriptorSetForPass.pBinding[ 2 ].ImageInfo.sampler     = pParams->RadianceMap.pSampler;
+    descriptorSetForPass.pBinding[ 3 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER; /* 3 */
+    descriptorSetForPass.pBinding[ 3 ].ImageInfo.imageLayout = pParams->IrradianceMap.eImgLayout;
+    descriptorSetForPass.pBinding[ 3 ].ImageInfo.imageView   = pParams->IrradianceMap.pImgView;
+    descriptorSetForPass.pBinding[ 3 ].ImageInfo.sampler     = pParams->IrradianceMap.pSampler;
+
+    VkDescriptorSet pDescriptorSetForPass = DescSetPools[ FrameIndex ].GetDescSet( &descriptorSetForPass );
 
     for ( auto& node : pScene->Nodes ) {
         if ( node.MeshId >= pScene->Meshes.size( ) )
             continue;
 
-        auto& dstMesh = pScene->Meshes[ node.MeshId ];
+        auto& mesh = pScene->Meshes[ node.MeshId ];
 
-        if ( auto pMeshAsset = (const apemodevk::SceneMeshDeviceAssetVk*) dstMesh.pDeviceAsset.get() ) {
+        apemodevk::ObjectUBO objectData;
+        objectData.PositionOffset.x = mesh.PositionOffset.x;
+        objectData.PositionOffset.y = mesh.PositionOffset.y;
+        objectData.PositionOffset.z = mesh.PositionOffset.z;
+        objectData.PositionScale.x  = mesh.PositionScale.x;
+        objectData.PositionScale.y  = mesh.PositionScale.y;
+        objectData.PositionScale.z  = mesh.PositionScale.z;
+        XMStoreFloat4x4( &objectData.WorldMatrix, pScene->WorldMatrices[ node.Id ] );
 
-            auto pSubsetIt    = pScene->Subsets.data( ) + dstMesh.BaseSubset;
-            auto pSubsetItEnd = pSubsetIt + dstMesh.SubsetCount;
+        auto objectDataUploadBufferRange = BufferPools[ FrameIndex ].TSuballocate( objectData );
+        assert( VK_NULL_HANDLE != objectDataUploadBufferRange.DescriptorBufferInfo.buffer );
+        objectDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( apemodevk::ObjectUBO );
+
+        if ( auto pMeshAsset = (const apemodevk::SceneMeshDeviceAssetVk*) mesh.pDeviceAsset.get() ) {
+
+            auto pSubsetIt    = pScene->Subsets.data( ) + mesh.BaseSubset;
+            auto pSubsetItEnd = pSubsetIt + mesh.SubsetCount;
 
             for ( ; pSubsetIt != pSubsetItEnd; ++pSubsetIt ) {
 
@@ -581,23 +793,9 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
                     pMaterial = &pScene->Materials[ pSubsetIt->MaterialId ];
                 }
 
-                frameUniformBufferData.Color            = pMaterial ? pMaterial->BaseColorFactor : XMFLOAT4{1, 0, 1, 1};
-                frameUniformBufferData.PositionOffset.x = dstMesh.PositionOffset.x;
-                frameUniformBufferData.PositionOffset.y = dstMesh.PositionOffset.y;
-                frameUniformBufferData.PositionOffset.z = dstMesh.PositionOffset.z;
-                frameUniformBufferData.PositionScale.x  = dstMesh.PositionScale.x;
-                frameUniformBufferData.PositionScale.y  = dstMesh.PositionScale.y;
-                frameUniformBufferData.PositionScale.z  = dstMesh.PositionScale.z;
-
-                XMStoreFloat4x4( &frameUniformBufferData.WorldMatrix, pScene->WorldMatrices[ node.Id ] );
-
-                auto suballocResult = BufferPools[ FrameIndex ].TSuballocate( frameUniformBufferData );
-                assert( VK_NULL_HANDLE != suballocResult.DescriptorBufferInfo.buffer );
-                suballocResult.DescriptorBufferInfo.range = sizeof( apemodevk::FrameUniformBufferData );
-
                 apemodevk::TDescriptorSet< 1 > descriptorSet;
                 descriptorSet.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-                descriptorSet.pBinding[ 0 ].BufferInfo      = suballocResult.DescriptorBufferInfo;
+                descriptorSet.pBinding[ 0 ].BufferInfo      = objectDataUploadBufferRange.DescriptorBufferInfo;
 
                 VkDescriptorSet pDescriptorSet = DescSetPools[ FrameIndex ].GetDescSet( &descriptorSet );
 
@@ -607,8 +805,8 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
                                          0,                               /* FirstSet */
                                          1,                               /* SetCount */
                                          &pDescriptorSet,                 /* Sets */
-                                         1,                               /* DymamicOffsetCount */
-                                         &suballocResult.DynamicOffset ); /* DymamicOffsets */
+                                         GetArraySize( dynamicOffsets ),  /* DymamicOffsetCount */
+                                         dynamicOffsets );                /* DymamicOffsets */
 
                 VkBuffer     ppVertexBuffers[ 1 ] = {pMeshAsset->hVertexBuffer.Handle.pBuffer};
                 VkDeviceSize pVertexOffsets[ 1 ]  = {0};

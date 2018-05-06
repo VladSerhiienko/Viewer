@@ -286,16 +286,20 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
                     auto pszMaterialPropName = GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) );
                     LogInfo( "Loading property: \"{}\"", pszMaterialPropName );
 
-                    if ( strcmp( "baseColorFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
+                    if ( strcmp( "baseColorFactor", pszMaterialPropName ) == 0 ) {
                         material.BaseColorFactor = GetVec4Property( pSrcScene, pMaterialPropFb->value_id( ) );
-                    } else if ( strcmp( "metallicFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
+                    } else if ( strcmp( "metallicFactor", pszMaterialPropName ) == 0 ) {
                         material.MetallicFactor = GetScalarProperty( pSrcScene, pMaterialPropFb->value_id( ) );
-                    } else if ( strcmp( "emissiveFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
+                    } else if ( strcmp( "emissiveFactor", pszMaterialPropName ) == 0 ) {
                         material.EmissiveFactor = GetVec3Property( pSrcScene, pMaterialPropFb->value_id( ) );
-                    } else if ( strcmp( "roughnessFactor", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
+                    } else if ( strcmp( "roughnessFactor", pszMaterialPropName ) == 0 ) {
                         material.RoughnessFactor = GetScalarProperty( pSrcScene, pMaterialPropFb->value_id( ) );
-                    } else if ( strcmp( "doubleSided", GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) ) ) == 0 ) {
+                    } else if ( strcmp( "doubleSided", pszMaterialPropName ) == 0 ) {
                         material.bDoubleSided = GetBoolProperty( pSrcScene, pMaterialPropFb->value_id( ) );
+                    } else if ( strcmp( "alphaMode", pszMaterialPropName ) == 0 ) {
+                        auto pszAlphaMode   = GetCStringProperty( pSrcScene, pMaterialPropFb->value_id( ) );
+                        bool bBlendMode     = strcmp( "BLEND", pszAlphaMode ) == 0;
+                        material.eAlphaMode = bBlendMode ? SceneMaterial::eAlphaMode_Blend : SceneMaterial::eAlphaMode_Unknown;
                     } else {
                         LogError( "Failed to map the property to the available slot" );
                     }

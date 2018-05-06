@@ -6,6 +6,8 @@
 #include <DescriptorPool.Vulkan.h>
 #include <BufferPools.Vulkan.h>
 #include <SceneRendererBase.h>
+#include <ImageLoader.Vulkan.h>
+#include <SamplerManager.Vulkan.h>
 
 #ifndef kMaxFrameCount
 #define kMaxFrameCount 3
@@ -30,6 +32,8 @@ namespace apemode {
             VkDescriptorPool           pDescPool       = VK_NULL_HANDLE; /* Required */
             VkRenderPass               pRenderPass     = VK_NULL_HANDLE; /* Required */
             uint32_t                   FrameCount      = 0;              /* Required */
+            apemodevk::ImageLoader*    pImgLoader      = nullptr;        /* Required */
+            apemodevk::SamplerManager* pSamplerManager = nullptr;        /* Required */
         };
 
         SceneRendererVk() {}
@@ -39,6 +43,13 @@ namespace apemode {
         virtual bool UpdateScene( Scene* pScene, const SceneUpdateParametersBase* pParams ) override;
 
         struct SceneRenderParametersVk : SceneRenderParametersBase {
+            class EnvMap {
+            public:
+                VkSampler     pSampler;
+                VkImageView   pImgView;
+                VkImageLayout eImgLayout;
+            };
+
             apemodevk::GraphicsDevice* pNode = nullptr;             /* Required */
             XMFLOAT2                   Dims;                        /* Required */
             XMFLOAT2                   Scale;                       /* Required */
@@ -46,6 +57,8 @@ namespace apemode {
             VkCommandBuffer            pCmdBuffer = VK_NULL_HANDLE; /* Required */
             XMFLOAT4X4                 ViewMatrix;                  /* Required */
             XMFLOAT4X4                 ProjMatrix;                  /* Required */
+            EnvMap                     RadianceMap;                 /* Required */
+            EnvMap                     IrradianceMap;               /* Required */
         };
 
         virtual bool Reset( const Scene* pScene, uint32_t FrameIndex ) override;
