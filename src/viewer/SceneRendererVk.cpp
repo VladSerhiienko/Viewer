@@ -825,7 +825,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
             objectData.PositionScale.z  = mesh.PositionScale.z;
             XMStoreFloat4x4( &objectData.WorldMatrix, pScene->WorldMatrices[ node.Id ] );
 
-            apemdoevk::MaterialUBO materialData;
+            apemodevk::MaterialUBO materialData;
             materialData.BaseColorFactor.x         = pMaterial->BaseColorFactor.x;
             materialData.BaseColorFactor.y         = pMaterial->BaseColorFactor.y;
             materialData.BaseColorFactor.z         = pMaterial->BaseColorFactor.z;
@@ -833,8 +833,8 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
             materialData.EmissiveFactor.x          = pMaterial->EmissiveFactor.x;
             materialData.EmissiveFactor.y          = pMaterial->EmissiveFactor.y;
             materialData.EmissiveFactor.z          = pMaterial->EmissiveFactor.z;
-            materialData.MetallicRoughnessFactor.x = pMaterial->MetallicRoughnessFactor.x;
-            materialData.MetallicRoughnessFactor.y = pMaterial->MetallicRoughnessFactor.y;
+            materialData.MetallicRoughnessFactor.x = pMaterial->MetallicFactor;
+            materialData.MetallicRoughnessFactor.y = pMaterial->RoughnessFactor;
 
             auto objectDataUploadBufferRange = BufferPools[ FrameIndex ].TSuballocate( objectData );
             assert( VK_NULL_HANDLE != objectDataUploadBufferRange.DescriptorBufferInfo.buffer );
