@@ -857,37 +857,37 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
             uint32_t objectSetBindingCount = 2;
 
-            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = objectSetBindingCount;
+            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 2;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
                                                                     pMaterialAsset->hBaseColorImgView,
                                                                     pMaterialAsset->pBaseColorSampler,
                                                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
 
-            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = objectSetBindingCount;
+            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 3;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
                                                                     pMaterialAsset->hNormalImgView,
                                                                     pMaterialAsset->pNormalSampler,
                                                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
 
-            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = objectSetBindingCount;
+            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 4;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
                                                                     pMaterialAsset->hEmissiveImgView,
                                                                     pMaterialAsset->pEmissiveSampler,
                                                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
 
-            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = objectSetBindingCount;
+            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 5;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
                                                                     pMaterialAsset->hMetallicImgView,
                                                                     pMaterialAsset->pMetallicSampler,
                                                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
 
-            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = objectSetBindingCount;
+            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 6;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
                                                                     pMaterialAsset->hRoughnessImgView,
                                                                     pMaterialAsset->pRoughnessSampler,
                                                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
 
-            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = objectSetBindingCount;
+            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 7;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
                                                                     pMaterialAsset->hOcclusionImgView,
                                                                     pMaterialAsset->pOcclusionSampler,
