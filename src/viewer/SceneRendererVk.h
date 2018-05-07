@@ -9,10 +9,6 @@
 #include <ImageLoader.Vulkan.h>
 #include <SamplerManager.Vulkan.h>
 
-#ifndef kMaxFrameCount
-#define kMaxFrameCount 3
-#endif
-
 namespace apemode {
     struct Scene;
 
@@ -65,13 +61,15 @@ namespace apemode {
         virtual bool RenderScene( const Scene* pScene, const SceneRenderParametersBase* pParams ) override;
         virtual bool Flush( const Scene* pScene, uint32_t FrameIndex ) override;
 
-        apemodevk::GraphicsDevice*                   pNode = nullptr;
-        apemodevk::THandle< VkDescriptorSetLayout >  hDescSetLayout;
-        apemodevk::THandle< VkPipelineLayout >       hPipelineLayout;
-        apemodevk::THandle< VkPipelineCache >        hPipelineCache;
-        apemodevk::THandle< VkPipeline >             hPipeline;
-        apemodevk::TDescriptorSets< kMaxFrameCount > DescSets;
-        apemodevk::HostBufferPool                    BufferPools[ kMaxFrameCount ];
-        apemodevk::DescriptorSetPool                 DescSetPools[ kMaxFrameCount ];
+        static constexpr uint32_t kMaxFrameCount         = 3;
+        static constexpr uint32_t kMaxDescriptorSetCount = 2;
+
+        apemodevk::GraphicsDevice*                  pNode = nullptr;
+        apemodevk::THandle< VkDescriptorSetLayout > hDescriptorSetLayouts[ kMaxDescriptorSetCount ];
+        apemodevk::THandle< VkPipelineLayout >      hPipelineLayout;
+        apemodevk::THandle< VkPipelineCache >       hPipelineCache;
+        apemodevk::THandle< VkPipeline >            hPipeline;
+        apemodevk::HostBufferPool                   BufferPools[ kMaxFrameCount ];
+        apemodevk::DescriptorSetPool                DescriptorSetPools[ kMaxFrameCount ][ kMaxDescriptorSetCount ];
     };
 }

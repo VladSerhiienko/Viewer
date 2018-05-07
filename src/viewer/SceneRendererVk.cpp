@@ -702,9 +702,8 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                 }
 
             } /* pOcclusionLoadedImg */
-
-        } /* pMaterialFb */
-    }     /* pMaterialsFb */
+        }     /* pMaterialFb */
+    }         /* pMaterialsFb */
 
     return true;
 }
@@ -788,7 +787,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     descriptorSetForPass.pBinding[ 3 ].ImageInfo.imageView   = pParams->IrradianceMap.pImgView;
     descriptorSetForPass.pBinding[ 3 ].ImageInfo.sampler     = pParams->IrradianceMap.pSampler;
 
-    ppDescriptorSets[ 0 ] = DescSetPools[ FrameIndex ].GetDescSet( &descriptorSetForPass );
+    ppDescriptorSets[ 0 ] = DescriptorSetPools[ FrameIndex ][ 0 ].GetDescSet( &descriptorSetForPass );
 
     pDynamicOffsets[ 0 ] = cameraDataUploadBufferRange.DynamicOffset;
     pDynamicOffsets[ 1 ] = lightDataUploadBufferRange.DynamicOffset;
@@ -897,7 +896,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
             descriptorSetForObject.BindingCount = objectSetBindingCount;
 
-            ppDescriptorSets[ 1 ] = DescSetPools[ FrameIndex ].GetDescSet( &descriptorSetForObject );
+            ppDescriptorSets[ 1 ] = DescriptorSetPools[ FrameIndex ][ 1 ].GetDescSet( &descriptorSetForObject );
 
             pDynamicOffsets[ 2 ] = objectDataUploadBufferRange.DynamicOffset;
             pDynamicOffsets[ 3 ] = materialDataUploadBufferRange.DynamicOffset;
@@ -982,38 +981,95 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
         return false;
     }
 
-    VkDescriptorSetLayoutBinding bindings[ 1 ];
-    apemodevk::InitializeStruct( bindings );
+    //
+    // Set 0 (Pass)
+    //
+    // layout( std140, set = 0, binding = 0 ) uniform CameraUBO;
+    // layout( std140, set = 0, binding = 1 ) uniform LightUBO;
+    // layout( set = 0, binding = 2 ) uniform samplerCube SkyboxCubeMap;
+    // layout( set = 0, binding = 3 ) uniform samplerCube IrradianceCubeMap;
 
-    bindings[ 0 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT;
-    bindings[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    bindings[ 0 ].descriptorCount = 1;
+    VkDescriptorSetLayoutBinding descriptorSetLayoutBindingsForPass[ 4 ];
+    apemodevk::InitializeStruct( descriptorSetLayoutBindingsForPass );
 
-    VkDescriptorSetLayoutCreateInfo descSetLayoutCreateInfo;
-    apemodevk::InitializeStruct( descSetLayoutCreateInfo );
+    descriptorSetLayoutBindingsForPass[ 0 ].binding         = 0;
+    descriptorSetLayoutBindingsForPass[ 0 ].descriptorCount = 1;
+    descriptorSetLayoutBindingsForPass[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    descriptorSetLayoutBindingsForPass[ 0 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT;
 
-    descSetLayoutCreateInfo.bindingCount = 1;
-    descSetLayoutCreateInfo.pBindings    = bindings;
+    descriptorSetLayoutBindingsForPass[ 1 ].binding         = 1;
+    descriptorSetLayoutBindingsForPass[ 1 ].descriptorCount = 1;
+    descriptorSetLayoutBindingsForPass[ 1 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    descriptorSetLayoutBindingsForPass[ 1 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT;
 
-    if ( false == hDescSetLayout.Recreate( *pParams->pNode, descSetLayoutCreateInfo ) ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
+    descriptorSetLayoutBindingsForPass[ 2 ].binding         = 2;
+    descriptorSetLayoutBindingsForPass[ 2 ].descriptorCount = 1;
+    descriptorSetLayoutBindingsForPass[ 2 ].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorSetLayoutBindingsForPass[ 2 ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    descriptorSetLayoutBindingsForPass[ 3 ].binding         = 3;
+    descriptorSetLayoutBindingsForPass[ 3 ].descriptorCount = 1;
+    descriptorSetLayoutBindingsForPass[ 3 ].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    descriptorSetLayoutBindingsForPass[ 3 ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    //
+    // Set 1 (Object)
+    //
+    // layout( std140, set = 1, binding = 0 ) uniform ObjectUBO;
+    // layout( std140, set = 1, binding = 1 ) uniform MaterialUBO;
+    // layout( set = 1, binding = 2 ) uniform sampler2D BaseColorMap;
+    // layout( set = 1, binding = 3 ) uniform sampler2D NormalMap;
+    // layout( set = 1, binding = 4 ) uniform sampler2D OcclusionMap;
+    // layout( set = 1, binding = 5 ) uniform sampler2D EmissiveMap;
+    // layout( set = 1, binding = 6 ) uniform sampler2D MetallicMap;
+    // layout( set = 1, binding = 7 ) uniform sampler2D RoughnessMap;
+
+    VkDescriptorSetLayoutBinding descriptorSetLayoutBindingsForObj[ 8 ];
+    apemodevk::InitializeStruct( descriptorSetLayoutBindingsForObj );
+
+    descriptorSetLayoutBindingsForObj[ 0 ].binding         = 0;
+    descriptorSetLayoutBindingsForObj[ 0 ].descriptorCount = 1;
+    descriptorSetLayoutBindingsForObj[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    descriptorSetLayoutBindingsForObj[ 0 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT;
+
+    descriptorSetLayoutBindingsForObj[ 1 ].binding         = 1;
+    descriptorSetLayoutBindingsForObj[ 1 ].descriptorCount = 1;
+    descriptorSetLayoutBindingsForObj[ 1 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    descriptorSetLayoutBindingsForObj[ 1 ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    for ( uint32_t i = 2; i < 8; ++i ) {
+        descriptorSetLayoutBindingsForObj[ i ].binding         = i;
+        descriptorSetLayoutBindingsForObj[ i ].descriptorCount = 1;
+        descriptorSetLayoutBindingsForObj[ i ].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorSetLayoutBindingsForObj[ i ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
     }
 
-    VkDescriptorSetLayout descriptorSetLayouts[ kMaxFrameCount ];
-    for ( auto& descriptorSetLayout : descriptorSetLayouts ) {
-        descriptorSetLayout = hDescSetLayout;
-    }
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfos[ kMaxDescriptorSetCount ];
+    apemodevk::InitializeStruct( descriptorSetLayoutCreateInfos );
 
-    if ( false == DescSets.RecreateResourcesFor( *pParams->pNode, pParams->pDescPool, descriptorSetLayouts ) ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
+    VkDescriptorSetLayout ppDescriptorSetLayouts[ kMaxFrameCount * kMaxDescriptorSetCount ] = {nullptr};
+
+    descriptorSetLayoutCreateInfos[ 0 ].bindingCount = apemode::GetArraySize( descriptorSetLayoutBindingsForPass );
+    descriptorSetLayoutCreateInfos[ 0 ].pBindings    = descriptorSetLayoutBindingsForPass;
+
+    descriptorSetLayoutCreateInfos[ 1 ].bindingCount = apemode::GetArraySize( descriptorSetLayoutBindingsForObj );
+    descriptorSetLayoutCreateInfos[ 1 ].pBindings    = descriptorSetLayoutBindingsForObj;
+
+    for ( uint32_t i = 0; i < kMaxDescriptorSetCount; ++i ) {
+        apemodevk::THandle< VkDescriptorSetLayout >& hDescriptorSetLayout = hDescriptorSetLayouts[ i ];
+        if ( false == hDescriptorSetLayout.Recreate( *pParams->pNode, descriptorSetLayoutCreateInfos[ i ] ) ) {
+            return false;
+        }
+
+        ppDescriptorSetLayouts[ i * kMaxFrameCount + 0 ] = hDescriptorSetLayout;
+        ppDescriptorSetLayouts[ i * kMaxFrameCount + 1 ] = hDescriptorSetLayout;
+        ppDescriptorSetLayouts[ i * kMaxFrameCount + 2 ] = hDescriptorSetLayout;
     }
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
     apemodevk::InitializeStruct( pipelineLayoutCreateInfo );
-    pipelineLayoutCreateInfo.setLayoutCount = apemodevk::GetArraySizeU( descriptorSetLayouts );
-    pipelineLayoutCreateInfo.pSetLayouts    = descriptorSetLayouts;
+    pipelineLayoutCreateInfo.setLayoutCount = GetArraySize( ppDescriptorSetLayouts );
+    pipelineLayoutCreateInfo.pSetLayouts    = ppDescriptorSetLayouts;
 
     if ( false == hPipelineLayout.Recreate( *pParams->pNode, pipelineLayoutCreateInfo ) ) {
         apemodevk::platform::DebugBreak( );
@@ -1204,7 +1260,8 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
 
     for ( uint32_t i = 0; i < pParams->FrameCount; ++i ) {
         BufferPools[ i ].Recreate( pParams->pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
-        DescSetPools[ i ].Recreate( *pParams->pNode, pParams->pDescPool, hDescSetLayout );
+        DescriptorSetPools[ i ][ 0 ].Recreate( *pParams->pNode, pParams->pDescPool, hDescriptorSetLayouts[ 0 ] );
+        DescriptorSetPools[ i ][ 1 ].Recreate( *pParams->pNode, pParams->pDescPool, hDescriptorSetLayouts[ 1 ] );
     }
 
     return true;

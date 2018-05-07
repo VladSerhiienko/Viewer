@@ -664,7 +664,9 @@ static	void	dumpLeakReport()
 
 	char* allMemoryLog = log("----All Allocations and Deallocations----");
 
+	#pragma GCC diagnostic ignored "-Wformat-security"
 	fprintf(fp, allMemoryLog);
+	#pragma GCC diagnostic warning "-Wformat-security"
 
 	fclose(fp);
 }

@@ -11,14 +11,13 @@ namespace apemode
     template <typename TArray>
     struct TArrayTraits;
 
-    template <typename TArray, size_t N>
-    struct TArrayTraits<TArray[ N ]>
-    {
-        static const size_t ArrayLength = N;
+    template < typename TArray, size_t N >
+    struct TArrayTraits< TArray[ N ] > {
+        static constexpr size_t ArrayLength = N;
     };
 
     template < typename TArray, uint32_t N >
-    uint32_t GetArraySize( TArray ( & )[ N ] ) {
+    constexpr uint32_t GetArraySize( TArray ( & )[ N ] ) {
         return N;
     }
 
