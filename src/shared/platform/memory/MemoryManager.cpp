@@ -113,6 +113,10 @@ namespace apememext {
                           const char *       sourceFunc,
                           const unsigned int allocationType ) {
 
+        if ( 0 == size ) {
+            return nullptr;
+        }
+
         const size_t alignment = calculate_alignment( requestedAlignment );
         if ( void *p = apemode_internal_malloc( calculate_size( size, alignment ) ) ) {
             /* Address of the aligned memory according to the align parameter*/
@@ -136,9 +140,14 @@ namespace apememext {
                            const unsigned int sourceLine,
                            const char *       sourceFunc,
                            const unsigned int allocationType ) {
-                               
-        if ( nullptr == p )
+                              
+        if ( 0 == size ) {
+            return nullptr;
+        }
+
+        if ( nullptr == p ) {
             return aligned_malloc( size, requestedAlignment, sourceFile, sourceLine, sourceFunc, allocationType );
+        }
 
         const size_t alignment = calculate_alignment( requestedAlignment );
         void *ptr = *( (void **) ( (size_t) p - sizeof( void * ) ) );
