@@ -336,44 +336,11 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/PaperMill/Specular_HDR.dds" ) ) {
-        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/Canyon/Unfiltered_HDR.dds" ) ) {
-        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_iem.dds" ) ) {
-        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_skybox.dds" ) ) {
-        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/bolonga_irr.dds" ) ) {
-            const auto texAssetBin = pTexAsset->AsBin( );
-            pLoadedDDS = imgLoader.LoadImageFromData( texAssetBin.data( ),
-                                                      texAssetBin.size( ),
-                                                      apemodevk::ImageLoader::eImageFileFormat_DDS,
-                                                      true,   /* ImgVIew */
-                                                      true ); /* Await */
-        }
-
-        VkSamplerCreateInfo samplerCreateInfo;
-        apemodevk::InitializeStruct( samplerCreateInfo );
-        samplerCreateInfo.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        samplerCreateInfo.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        samplerCreateInfo.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-        samplerCreateInfo.anisotropyEnable        = true;
-        samplerCreateInfo.maxAnisotropy           = 16;
-        samplerCreateInfo.compareEnable           = false;
-        samplerCreateInfo.compareOp               = VK_COMPARE_OP_NEVER;
-        samplerCreateInfo.magFilter               = VK_FILTER_LINEAR;
-        samplerCreateInfo.minFilter               = VK_FILTER_LINEAR;
-        samplerCreateInfo.minLod                  = 0;
-        samplerCreateInfo.maxLod                  = (float) pLoadedDDS->ImageCreateInfo.mipLevels;
-        samplerCreateInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
-        samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
-        samplerCreateInfo.unnormalizedCoordinates = false;
-
-        auto samplerIndex = pSamplerManager->GetSamplerIndex( samplerCreateInfo );
-        assert( SamplerManager::IsSamplerIndexValid( samplerIndex ) );
-
         pSkybox                = apemodevk::make_unique< apemodevk::Skybox >( );
-        pSkybox->pSampler      = pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
-        pSkybox->pImgView      = pLoadedDDS->hImgView;
-        pSkybox->Dimension     = pLoadedDDS->ImageCreateInfo.extent.width;
-        pSkybox->eImgLayout    = pLoadedDDS->eImgLayout;
+        pSkybox->pSampler      = pRadianceCubeMapSampler;
+        pSkybox->pImgView      = RadianceLoadedImg->hImgView;
+        pSkybox->Dimension     = RadianceLoadedImg->ImageCreateInfo.extent.width;
+        pSkybox->eImgLayout    = RadianceLoadedImg->eImgLayout;
         pSkybox->Exposure      = 3;
         pSkybox->LevelOfDetail = 0;
 
@@ -627,7 +594,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
     }
     nk_end(ctx);
 
-    pCamInput->Update( deltaSecs, inputState, {(float) width, (float) height} );
+    pCamInput->Update( deltaSecs, inputState, {float( width ), float( height )} );
     pCamController->Orbit( pCamInput->OrbitDelta );
     pCamController->Dolly( pCamInput->DollyDelta );
     pCamController->Update( deltaSecs );
@@ -706,7 +673,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 
         auto View    = pCamController->ViewMatrix( );
         auto InvView = XMMatrixInverse( nullptr, View );
-        auto Proj    = CamProjController.ProjMatrix( 55, (float) width, (float) height, 0.1f, 1000.0f );
+        auto Proj    = CamProjController.ProjMatrix( 55, float( width ), float( height ), 0.1f, 1000.0f );
         auto InvProj = XMMatrixInverse( nullptr, Proj );
 
         DebugRendererVk::FrameUniformBuffer frameData;
@@ -722,8 +689,8 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         XMStoreFloat4x4( &skyboxRenderParams.InvViewMatrix, InvView );
         XMStoreFloat4x4( &skyboxRenderParams.InvProjMatrix, InvProj );
         XMStoreFloat4x4( &skyboxRenderParams.ProjBiasMatrix, CamProjController.ProjBiasMatrix( ) );
-        skyboxRenderParams.Dims.x      = (float) width;
-        skyboxRenderParams.Dims.y      = (float) height;
+        skyboxRenderParams.Dims.x      = float( width );
+        skyboxRenderParams.Dims.y      = float( height );
         skyboxRenderParams.Scale.x     = 1;
         skyboxRenderParams.Scale.y     = 1;
         skyboxRenderParams.FrameIndex  = FrameIndex;
@@ -734,8 +701,8 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
 
         DebugRendererVk::RenderParametersVk renderParamsDbg;
-        renderParamsDbg.Dims[ 0 ]  = (float) width;
-        renderParamsDbg.Dims[ 1 ]  = (float) height;
+        renderParamsDbg.Dims[ 0 ]  = float( width );
+        renderParamsDbg.Dims[ 1 ]  = float( height );
         renderParamsDbg.Scale[ 0 ] = 1;
         renderParamsDbg.Scale[ 1 ] = 1;
         renderParamsDbg.FrameIndex = FrameIndex;
@@ -784,8 +751,8 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         pSceneRendererBase->RenderScene( pScene.get( ), &sceneRenderParameters );
 
         NuklearRendererSdlVk::RenderParametersVk renderParamsNk;
-        renderParamsNk.Dims[ 0 ]            = (float) width;
-        renderParamsNk.Dims[ 1 ]            = (float) height;
+        renderParamsNk.Dims[ 0 ]            = float( width );
+        renderParamsNk.Dims[ 1 ]            = float( height );
         renderParamsNk.Scale[ 0 ]           = 1;
         renderParamsNk.Scale[ 1 ]           = 1;
         renderParamsNk.eAntiAliasing        = NK_ANTI_ALIASING_ON;

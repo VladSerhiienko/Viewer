@@ -121,7 +121,17 @@ namespace apemodevk {
 
     struct SceneDeviceAssetVk : apemode::SceneDeviceAsset {
         using LoadedImagePtrPair = std::pair< uint32_t, std::unique_ptr< LoadedImage > >;
-        std::vector< LoadedImagePtrPair > LoadedImgs;
+
+        std::vector< LoadedImagePtrPair >     LoadedImgs;
+        apemode::SceneMaterial                MissingMaterial;
+        apemodevk::SceneMaterialDeviceAssetVk MissingMaterialAsset;
+
+        SceneDeviceAssetVk( ) {
+            InitializeStruct( MissingMaterial );
+            InitializeStruct( MissingMaterialAsset );
+            MissingMaterial.BaseColorFactor = XMFLOAT4( 1, 0, 1, 1 ); // Magenta
+            MissingMaterial.EmissiveFactor  = XMFLOAT3( 1, 0, 1 );    // Magenta
+        }
 
         void AddLoadedImage( uint32_t fileId, std::unique_ptr< LoadedImage > loadedImg ) {
             LoadedImgs.push_back( std::make_pair( fileId, std::move( loadedImg ) ) );
@@ -709,6 +719,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 }
 
 bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRenderParametersBase* pParamsBase ) {
+    using namespace apemodevk;
 
     /* Scene was not provided.
      * Render parameters were not provided. */
@@ -726,7 +737,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     vkCmdBindPipeline( pParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipeline );
 
     VkViewport viewport;
-    apemodevk::InitializeStruct( viewport );
+    InitializeStruct( viewport );
     viewport.x        = 0;
     viewport.y        = 0;
     viewport.width    = pParams->Dims.x * pParams->Scale.x;
@@ -737,7 +748,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     vkCmdSetViewport( pParams->pCmdBuffer, 0, 1, &viewport );
 
     VkRect2D scissor;
-    apemodevk::InitializeStruct( scissor );
+    InitializeStruct( scissor );
     scissor.offset.x      = 0;
     scissor.offset.y      = 0;
     scissor.extent.width  = ( uint32_t )( pParams->Dims.x * pParams->Scale.x );
@@ -750,26 +761,23 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     VkDescriptorSet ppDescriptorSets[ 2 ] = {nullptr};
     uint32_t pDynamicOffsets[ 4 ] = {0};
 
-    apemodevk::CameraUBO cameraData;
+    CameraUBO cameraData;
     cameraData.ProjMatrix = pParams->ProjMatrix;
     cameraData.ViewMatrix = pParams->ViewMatrix;
 
-    apemodevk::LightUBO lightData;
+    LightUBO lightData;
     lightData.LightDirection = XMFLOAT4( 0, -1, 0, 1 );
     lightData.LightColor     = XMFLOAT4( 1, 0, 0, 1 );
 
     auto cameraDataUploadBufferRange = BufferPools[ FrameIndex ].TSuballocate( cameraData );
     assert( VK_NULL_HANDLE != cameraDataUploadBufferRange.DescriptorBufferInfo.buffer );
-    cameraDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( apemodevk::CameraUBO );
+    cameraDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( CameraUBO );
 
     auto lightDataUploadBufferRange = BufferPools[ FrameIndex ].TSuballocate( cameraData );
     assert( VK_NULL_HANDLE != lightDataUploadBufferRange.DescriptorBufferInfo.buffer );
-    lightDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( apemodevk::LightUBO );
+    lightDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( LightUBO );
 
-    pDynamicOffsets[ 0 ] = cameraDataUploadBufferRange.DynamicOffset;
-    pDynamicOffsets[ 1 ] = lightDataUploadBufferRange.DynamicOffset;
-
-    apemodevk::TDescriptorSet< 4 > descriptorSetForPass;
+    TDescriptorSet< 4 > descriptorSetForPass;
     
     descriptorSetForPass.pBinding[ 0 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 0 */
     descriptorSetForPass.pBinding[ 0 ].BufferInfo            = cameraDataUploadBufferRange.DescriptorBufferInfo;
@@ -787,7 +795,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     descriptorSetForPass.pBinding[ 3 ].ImageInfo.imageView   = pParams->IrradianceMap.pImgView;
     descriptorSetForPass.pBinding[ 3 ].ImageInfo.sampler     = pParams->IrradianceMap.pSampler;
 
-    ppDescriptorSets[ 0 ] = DescriptorSetPools[ FrameIndex ][ 0 ].GetDescSet( &descriptorSetForPass );
+    ppDescriptorSets[ kDescriptorSetForPass ] = DescriptorSetPools[ FrameIndex ][ 0 ].GetDescSet( &descriptorSetForPass );
 
     pDynamicOffsets[ 0 ] = cameraDataUploadBufferRange.DynamicOffset;
     pDynamicOffsets[ 1 ] = lightDataUploadBufferRange.DynamicOffset;
@@ -798,33 +806,37 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
         auto& mesh = pScene->Meshes[ node.MeshId ];
 
-        auto pMeshAsset = (const apemodevk::SceneMeshDeviceAssetVk*) mesh.pDeviceAsset.get( );
+        auto pMeshAsset = (const SceneMeshDeviceAssetVk*) mesh.pDeviceAsset.get( );
         assert( pMeshAsset );
+
+        ObjectUBO objectData;
+        objectData.PositionOffset.x = mesh.PositionOffset.x;
+        objectData.PositionOffset.y = mesh.PositionOffset.y;
+        objectData.PositionOffset.z = mesh.PositionOffset.z;
+        objectData.PositionScale.x  = mesh.PositionScale.x;
+        objectData.PositionScale.y  = mesh.PositionScale.y;
+        objectData.PositionScale.z  = mesh.PositionScale.z;
+        XMStoreFloat4x4( &objectData.WorldMatrix, pScene->WorldMatrices[ node.Id ] );
 
         auto pSubsetIt    = pScene->Subsets.data( ) + mesh.BaseSubset;
         auto pSubsetItEnd = pSubsetIt + mesh.SubsetCount;
 
         for ( ; pSubsetIt != pSubsetItEnd; ++pSubsetIt ) {
 
-            const SceneMaterial*                         pMaterial      = nullptr;
-            const apemodevk::SceneMaterialDeviceAssetVk* pMaterialAsset = nullptr;
+            const SceneMaterial*              pMaterial      = nullptr;
+            const SceneMaterialDeviceAssetVk* pMaterialAsset = nullptr;
 
             if ( pSubsetIt->MaterialId != uint32_t( -1 ) ) {
                 assert( pSubsetIt->MaterialId < pScene->Materials.size( ) );
-                pMaterial = &pScene->Materials[ pSubsetIt->MaterialId ];
-                pMaterialAsset = static_cast< apemodevk::SceneMaterialDeviceAssetVk const* >( pMaterial->pDeviceAsset.get( ) );
+                pMaterial      = &pScene->Materials[ pSubsetIt->MaterialId ];
+                pMaterialAsset = static_cast< SceneMaterialDeviceAssetVk const* >( pMaterial->pDeviceAsset.get( ) );
+            } else {
+                auto pSceneAsset = static_cast< SceneDeviceAssetVk* >( pScene->pDeviceAsset.get( ) );
+                pMaterial        = &pSceneAsset->MissingMaterial;
+                pMaterialAsset   = &pSceneAsset->MissingMaterialAsset;
             }
 
-            apemodevk::ObjectUBO objectData;
-            objectData.PositionOffset.x = mesh.PositionOffset.x;
-            objectData.PositionOffset.y = mesh.PositionOffset.y;
-            objectData.PositionOffset.z = mesh.PositionOffset.z;
-            objectData.PositionScale.x  = mesh.PositionScale.x;
-            objectData.PositionScale.y  = mesh.PositionScale.y;
-            objectData.PositionScale.z  = mesh.PositionScale.z;
-            XMStoreFloat4x4( &objectData.WorldMatrix, pScene->WorldMatrices[ node.Id ] );
-
-            apemodevk::MaterialUBO materialData;
+            MaterialUBO materialData;
             materialData.BaseColorFactor.x         = pMaterial->BaseColorFactor.x;
             materialData.BaseColorFactor.y         = pMaterial->BaseColorFactor.y;
             materialData.BaseColorFactor.z         = pMaterial->BaseColorFactor.z;
@@ -837,16 +849,13 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
             auto objectDataUploadBufferRange = BufferPools[ FrameIndex ].TSuballocate( objectData );
             assert( VK_NULL_HANDLE != objectDataUploadBufferRange.DescriptorBufferInfo.buffer );
-            objectDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( apemodevk::ObjectUBO );
+            objectDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( ObjectUBO );
 
             auto materialDataUploadBufferRange = BufferPools[ FrameIndex ].TSuballocate( materialData );
             assert( VK_NULL_HANDLE != materialDataUploadBufferRange.DescriptorBufferInfo.buffer );
-            materialDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( apemodevk::MaterialUBO );
+            materialDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( MaterialUBO );
 
-            pDynamicOffsets[ 0 ] = cameraDataUploadBufferRange.DynamicOffset;
-            pDynamicOffsets[ 1 ] = lightDataUploadBufferRange.DynamicOffset;
-
-            apemodevk::TDescriptorSet< 8 > descriptorSetForObject( apemodevk::eTDescriptorSetNoInit );
+            TDescriptorSet< 8 > descriptorSetForObject( eTDescriptorSetNoInit );
 
             descriptorSetForObject.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
             descriptorSetForObject.pBinding[ 0 ].BufferInfo      = objectDataUploadBufferRange.DescriptorBufferInfo;
@@ -896,7 +905,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
             descriptorSetForObject.BindingCount = objectSetBindingCount;
 
-            ppDescriptorSets[ 1 ] = DescriptorSetPools[ FrameIndex ][ 1 ].GetDescSet( &descriptorSetForObject );
+            ppDescriptorSets[ kDescriptorSetForObj ] = DescriptorSetPools[ FrameIndex ][ 1 ].GetDescSet( &descriptorSetForObject );
 
             pDynamicOffsets[ 2 ] = objectDataUploadBufferRange.DynamicOffset;
             pDynamicOffsets[ 3 ] = materialDataUploadBufferRange.DynamicOffset;
@@ -1035,7 +1044,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     descriptorSetLayoutBindingsForObj[ 1 ].binding         = 1;
     descriptorSetLayoutBindingsForObj[ 1 ].descriptorCount = 1;
     descriptorSetLayoutBindingsForObj[ 1 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    descriptorSetLayoutBindingsForObj[ 1 ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
+    descriptorSetLayoutBindingsForObj[ 1 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
     for ( uint32_t i = 2; i < 8; ++i ) {
         descriptorSetLayoutBindingsForObj[ i ].binding         = i;
@@ -1044,10 +1053,10 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
         descriptorSetLayoutBindingsForObj[ i ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
     }
 
-    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfos[ kMaxDescriptorSetCount ];
+    VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfos[ kDescriptorSetCount ];
     apemodevk::InitializeStruct( descriptorSetLayoutCreateInfos );
 
-    VkDescriptorSetLayout ppDescriptorSetLayouts[ kMaxFrameCount * kMaxDescriptorSetCount ] = {nullptr};
+    VkDescriptorSetLayout ppDescriptorSetLayouts[ kDescriptorSetCount ] = {nullptr};
 
     descriptorSetLayoutCreateInfos[ 0 ].bindingCount = apemode::GetArraySize( descriptorSetLayoutBindingsForPass );
     descriptorSetLayoutCreateInfos[ 0 ].pBindings    = descriptorSetLayoutBindingsForPass;
@@ -1055,15 +1064,16 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     descriptorSetLayoutCreateInfos[ 1 ].bindingCount = apemode::GetArraySize( descriptorSetLayoutBindingsForObj );
     descriptorSetLayoutCreateInfos[ 1 ].pBindings    = descriptorSetLayoutBindingsForObj;
 
-    for ( uint32_t i = 0; i < kMaxDescriptorSetCount; ++i ) {
+    for ( uint32_t i = 0; i < kDescriptorSetCount; ++i ) {
         apemodevk::THandle< VkDescriptorSetLayout >& hDescriptorSetLayout = hDescriptorSetLayouts[ i ];
-        if ( false == hDescriptorSetLayout.Recreate( *pParams->pNode, descriptorSetLayoutCreateInfos[ i ] ) ) {
+        if ( !hDescriptorSetLayout.Recreate( *pParams->pNode, descriptorSetLayoutCreateInfos[ i ] ) ) {
             return false;
         }
 
-        ppDescriptorSetLayouts[ i * kMaxFrameCount + 0 ] = hDescriptorSetLayout;
-        ppDescriptorSetLayouts[ i * kMaxFrameCount + 1 ] = hDescriptorSetLayout;
-        ppDescriptorSetLayouts[ i * kMaxFrameCount + 2 ] = hDescriptorSetLayout;
+        // []
+        // kDescriptorSetForPass
+        // kDescriptorSetForObj
+        ppDescriptorSetLayouts[ i ] = hDescriptorSetLayout;
     }
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
@@ -1072,7 +1082,6 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     pipelineLayoutCreateInfo.pSetLayouts    = ppDescriptorSetLayouts;
 
     if ( false == hPipelineLayout.Recreate( *pParams->pNode, pipelineLayoutCreateInfo ) ) {
-        apemodevk::platform::DebugBreak( );
         return false;
     }
 
@@ -1260,8 +1269,8 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
 
     for ( uint32_t i = 0; i < pParams->FrameCount; ++i ) {
         BufferPools[ i ].Recreate( pParams->pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
-        DescriptorSetPools[ i ][ 0 ].Recreate( *pParams->pNode, pParams->pDescPool, hDescriptorSetLayouts[ 0 ] );
-        DescriptorSetPools[ i ][ 1 ].Recreate( *pParams->pNode, pParams->pDescPool, hDescriptorSetLayouts[ 1 ] );
+        DescriptorSetPools[ i ][ kDescriptorSetForPass ].Recreate( *pParams->pNode, pParams->pDescPool, hDescriptorSetLayouts[ 0 ] );
+        DescriptorSetPools[ i ][ kDescriptorSetForObj ].Recreate( *pParams->pNode, pParams->pDescPool, hDescriptorSetLayouts[ 1 ] );
     }
 
     return true;

@@ -61,15 +61,17 @@ namespace apemode {
         virtual bool RenderScene( const Scene* pScene, const SceneRenderParametersBase* pParams ) override;
         virtual bool Flush( const Scene* pScene, uint32_t FrameIndex ) override;
 
-        static constexpr uint32_t kMaxFrameCount         = 3;
-        static constexpr uint32_t kMaxDescriptorSetCount = 2;
+        static constexpr uint32_t kMaxFrameCount        = 3;
+        static constexpr uint32_t kDescriptorSetCount   = 2;
+        static constexpr uint32_t kDescriptorSetForPass = 0;
+        static constexpr uint32_t kDescriptorSetForObj  = 1;
 
         apemodevk::GraphicsDevice*                  pNode = nullptr;
-        apemodevk::THandle< VkDescriptorSetLayout > hDescriptorSetLayouts[ kMaxDescriptorSetCount ];
+        apemodevk::THandle< VkDescriptorSetLayout > hDescriptorSetLayouts[ kDescriptorSetCount ];
         apemodevk::THandle< VkPipelineLayout >      hPipelineLayout;
         apemodevk::THandle< VkPipelineCache >       hPipelineCache;
         apemodevk::THandle< VkPipeline >            hPipeline;
         apemodevk::HostBufferPool                   BufferPools[ kMaxFrameCount ];
-        apemodevk::DescriptorSetPool                DescriptorSetPools[ kMaxFrameCount ][ kMaxDescriptorSetCount ];
+        apemodevk::DescriptorSetPool                DescriptorSetPools[ kMaxFrameCount ][ kDescriptorSetCount ];
     };
 }

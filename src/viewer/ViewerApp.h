@@ -102,7 +102,6 @@ namespace apemode {
         std::unique_ptr< apemodevk::ShaderFeedbackWriter > pShaderFeedbackWriter;
         std::unique_ptr< apemodevk::Skybox >               pSkybox;
         std::unique_ptr< apemodevk::SkyboxRenderer >       pSkyboxRenderer;
-        std::unique_ptr< apemodevk::LoadedImage >          pLoadedDDS;
         std::unique_ptr< apemodevk::SamplerManager >       pSamplerManager;
         std::unique_ptr< apemodevk::LoadedImage >          RadianceLoadedImg;
         std::unique_ptr< apemodevk::LoadedImage >          IrradianceLoadedImg;
