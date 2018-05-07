@@ -849,11 +849,13 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
             apemodevk::TDescriptorSet< 8 > descriptorSetForObject( apemodevk::eTDescriptorSetNoInit );
 
-            descriptorSetForObject.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 0 */
+            descriptorSetForObject.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
             descriptorSetForObject.pBinding[ 0 ].BufferInfo      = objectDataUploadBufferRange.DescriptorBufferInfo;
-            
-            descriptorSetForObject.pBinding[ 1 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 1 */
+            descriptorSetForObject.pBinding[ 0 ].DstBinding      = 0;
+
+            descriptorSetForObject.pBinding[ 1 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
             descriptorSetForObject.pBinding[ 1 ].BufferInfo      = materialDataUploadBufferRange.DescriptorBufferInfo;
+            descriptorSetForObject.pBinding[ 1 ].DstBinding      = 1;
 
             uint32_t objectSetBindingCount = 2;
 

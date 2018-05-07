@@ -176,6 +176,76 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
+        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_skybox.dds" ) ) {
+            {
+                const std::vector< uint8_t > texAssetBin = pTexAsset->AsBin( );
+
+                RadianceLoadedImg = imgLoader.LoadImageFromData( texAssetBin.data( ),
+                                                                 texAssetBin.size( ),
+                                                                 apemodevk::ImageLoader::eImageFileFormat_DDS,
+                                                                 true,   /* ImgView */
+                                                                 true ); /* Await */
+            }
+
+            VkSamplerCreateInfo samplerCreateInfo;
+            apemodevk::InitializeStruct( samplerCreateInfo );
+
+            samplerCreateInfo.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            samplerCreateInfo.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            samplerCreateInfo.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            samplerCreateInfo.anisotropyEnable        = true;
+            samplerCreateInfo.maxAnisotropy           = 16;
+            samplerCreateInfo.compareEnable           = false;
+            samplerCreateInfo.compareOp               = VK_COMPARE_OP_NEVER;
+            samplerCreateInfo.magFilter               = VK_FILTER_LINEAR;
+            samplerCreateInfo.minFilter               = VK_FILTER_LINEAR;
+            samplerCreateInfo.minLod                  = 0;
+            samplerCreateInfo.maxLod                  = float( RadianceLoadedImg->ImageCreateInfo.mipLevels );
+            samplerCreateInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+            samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+            samplerCreateInfo.unnormalizedCoordinates = false;
+
+            const uint32_t samplerIndex = pSamplerManager->GetSamplerIndex( samplerCreateInfo );
+            assert( SamplerManager::IsSamplerIndexValid( samplerIndex ) );
+
+            pRadianceCubeMapSampler = pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+        }
+
+        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_iem.dds" ) ) {
+            {
+                const std::vector< uint8_t > texAssetBin = pTexAsset->AsBin( );
+
+                IrradianceLoadedImg = imgLoader.LoadImageFromData( texAssetBin.data( ),
+                                                                   texAssetBin.size( ),
+                                                                   apemodevk::ImageLoader::eImageFileFormat_DDS,
+                                                                   true,   /* ImgView */
+                                                                   true ); /* Await */
+            }
+
+            VkSamplerCreateInfo samplerCreateInfo;
+            apemodevk::InitializeStruct( samplerCreateInfo );
+
+            samplerCreateInfo.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            samplerCreateInfo.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            samplerCreateInfo.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+            samplerCreateInfo.anisotropyEnable        = true;
+            samplerCreateInfo.maxAnisotropy           = 16;
+            samplerCreateInfo.compareEnable           = false;
+            samplerCreateInfo.compareOp               = VK_COMPARE_OP_NEVER;
+            samplerCreateInfo.magFilter               = VK_FILTER_LINEAR;
+            samplerCreateInfo.minFilter               = VK_FILTER_LINEAR;
+            samplerCreateInfo.minLod                  = 0;
+            samplerCreateInfo.maxLod                  = float( IrradianceLoadedImg->ImageCreateInfo.mipLevels );
+            samplerCreateInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+            samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+            samplerCreateInfo.unnormalizedCoordinates = false;
+
+            const uint32_t samplerIndex = pSamplerManager->GetSamplerIndex( samplerCreateInfo );
+            assert( SamplerManager::IsSamplerIndexValid( samplerIndex ) );
+
+            pIrradianceCubeMapSampler = pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+        }
+
         pNkRenderer = new NuklearRendererSdlVk();
 
         auto queueFamilyPool = pAppSurface->pNode->GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
@@ -562,24 +632,24 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
     pCamController->Dolly( pCamInput->DollyDelta );
     pCamController->Update( deltaSecs );
 
-    if ( auto appSurfaceVk = (AppSurfaceSdlVk*) GetSurface( ) ) {
-        auto queueFamilyPool = appSurfaceVk->pNode->GetQueuePool( )->GetPool( appSurfaceVk->PresentQueueFamilyIds[ 0 ] );
+    if ( auto pAppSurface = (AppSurfaceSdlVk*) GetSurface( ) ) {
+        auto queueFamilyPool = pAppSurface->pNode->GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
         auto acquiredQueue   = queueFamilyPool->Acquire( true );
         while ( acquiredQueue.pQueue == nullptr ) {
             acquiredQueue = queueFamilyPool->Acquire( true );
         }
 
-        VkDevice        device                   = *appSurfaceVk->pNode;
+        VkDevice        device                   = pAppSurface->pNode->hLogicalDevice;
         VkQueue         queue                    = acquiredQueue.pQueue;
-        VkSwapchainKHR  swapchain                = appSurfaceVk->Swapchain.hSwapchain;
+        VkSwapchainKHR  swapchain                = pAppSurface->Swapchain.hSwapchain;
         VkFence         fence                    = acquiredQueue.pFence;
         VkSemaphore     presentCompleteSemaphore = hPresentCompleteSemaphores[ FrameIndex ];
         VkSemaphore     renderCompleteSemaphore  = hRenderCompleteSemaphores[ FrameIndex ];
         VkCommandPool   pCmdPool                 = hCmdPool[ FrameIndex ];
         VkCommandBuffer pCmdBuffer               = hCmdBuffers[ FrameIndex ];
 
-        const uint32_t width  = appSurfaceVk->GetWidth( );
-        const uint32_t height = appSurfaceVk->GetHeight( );
+        const uint32_t width  = pAppSurface->GetWidth( );
+        const uint32_t height = pAppSurface->GetHeight( );
 
         if ( width != width || height != height ) {
             CheckedCall( vkDeviceWaitIdle( device ) );
@@ -627,8 +697,8 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         InitializeStruct( renderPassBeginInfo );
         renderPassBeginInfo.renderPass               = hDbgRenderPass;
         renderPassBeginInfo.framebuffer              = hDbgFramebuffers[ FrameIndex ];
-        renderPassBeginInfo.renderArea.extent.width  = appSurfaceVk->GetWidth( );
-        renderPassBeginInfo.renderArea.extent.height = appSurfaceVk->GetHeight( );
+        renderPassBeginInfo.renderArea.extent.width  = pAppSurface->GetWidth( );
+        renderPassBeginInfo.renderArea.extent.height = pAppSurface->GetHeight( );
         renderPassBeginInfo.clearValueCount          = 2;
         renderPassBeginInfo.pClearValues             = clearValue;
 
@@ -658,7 +728,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         skyboxRenderParams.Scale.y     = 1;
         skyboxRenderParams.FrameIndex  = FrameIndex;
         skyboxRenderParams.pCmdBuffer  = pCmdBuffer;
-        skyboxRenderParams.pNode       = appSurfaceVk->pNode;
+        skyboxRenderParams.pNode       = pAppSurface->pNode;
         skyboxRenderParams.FieldOfView = apemodexm::DegreesToRadians( 67 );
 
         pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
@@ -696,15 +766,21 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         pDebugRenderer->Render(&renderParamsDbg);
 
         apemode::SceneRendererVk::SceneRenderParametersVk sceneRenderParameters;
-        sceneRenderParameters.Dims.x     = (float) width;
-        sceneRenderParameters.Dims.y     = (float) height;
-        sceneRenderParameters.Scale.x    = 1;
-        sceneRenderParameters.Scale.y    = 1;
-        sceneRenderParameters.FrameIndex = FrameIndex;
-        sceneRenderParameters.pCmdBuffer = pCmdBuffer;
-        sceneRenderParameters.pNode      = appSurfaceVk->pNode;
-        sceneRenderParameters.ViewMatrix = frameData.ViewMatrix;
-        sceneRenderParameters.ProjMatrix = frameData.ProjMatrix;
+        sceneRenderParameters.Dims.x                   = float( width );
+        sceneRenderParameters.Dims.y                   = float( height );
+        sceneRenderParameters.Scale.x                  = 1;
+        sceneRenderParameters.Scale.y                  = 1;
+        sceneRenderParameters.FrameIndex               = FrameIndex;
+        sceneRenderParameters.pCmdBuffer               = pCmdBuffer;
+        sceneRenderParameters.pNode                    = pAppSurface->pNode;
+        sceneRenderParameters.ViewMatrix               = frameData.ViewMatrix;
+        sceneRenderParameters.ProjMatrix               = frameData.ProjMatrix;
+        sceneRenderParameters.RadianceMap.eImgLayout   = RadianceLoadedImg->eImgLayout;
+        sceneRenderParameters.RadianceMap.pImgView     = RadianceLoadedImg->hImgView;
+        sceneRenderParameters.RadianceMap.pSampler     = pRadianceCubeMapSampler;
+        sceneRenderParameters.IrradianceMap.eImgLayout = IrradianceLoadedImg->eImgLayout;
+        sceneRenderParameters.IrradianceMap.pImgView   = IrradianceLoadedImg->hImgView;
+        sceneRenderParameters.IrradianceMap.pSampler   = pIrradianceCubeMapSampler;
         pSceneRendererBase->RenderScene( pScene.get( ), &sceneRenderParameters );
 
         NuklearRendererSdlVk::RenderParametersVk renderParamsNk;

@@ -104,6 +104,10 @@ namespace apemode {
         std::unique_ptr< apemodevk::SkyboxRenderer >       pSkyboxRenderer;
         std::unique_ptr< apemodevk::LoadedImage >          pLoadedDDS;
         std::unique_ptr< apemodevk::SamplerManager >       pSamplerManager;
+        std::unique_ptr< apemodevk::LoadedImage >          RadianceLoadedImg;
+        std::unique_ptr< apemodevk::LoadedImage >          IrradianceLoadedImg;
+        VkSampler                                          pRadianceCubeMapSampler   = nullptr;
+        VkSampler                                          pIrradianceCubeMapSampler = nullptr;
 
     public:
         ViewerApp( );
