@@ -727,7 +727,8 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
         return false;
     }
 
-    auto pParams = (const SceneRenderParametersVk*) pParamsBase;
+    auto pSceneAsset = static_cast< const SceneDeviceAssetVk* >( pScene->pDeviceAsset.get( ) );
+    auto pParams     = static_cast< const SceneRenderParametersVk* >( pParamsBase );
 
     /* Device change was not handled, cannot render the scene. */
     if ( pNode != pParams->pNode ) {
@@ -756,7 +757,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
     vkCmdSetScissor( pParams->pCmdBuffer, 0, 1, &scissor );
 
-    const uint32_t FrameIndex = ( pParams->FrameIndex ) % kMaxFrameCount;
+    const uint32_t frameIndex = pParams->FrameIndex % kMaxFrameCount;
 
     VkDescriptorSet ppDescriptorSets[ 2 ] = {nullptr};
     uint32_t pDynamicOffsets[ 4 ] = {0};
@@ -769,11 +770,11 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     lightData.LightDirection = XMFLOAT4( 0, -1, 0, 1 );
     lightData.LightColor     = XMFLOAT4( 1, 0, 0, 1 );
 
-    auto cameraDataUploadBufferRange = BufferPools[ FrameIndex ].TSuballocate( cameraData );
+    auto cameraDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( cameraData );
     assert( VK_NULL_HANDLE != cameraDataUploadBufferRange.DescriptorBufferInfo.buffer );
     cameraDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( CameraUBO );
 
-    auto lightDataUploadBufferRange = BufferPools[ FrameIndex ].TSuballocate( cameraData );
+    auto lightDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( cameraData );
     assert( VK_NULL_HANDLE != lightDataUploadBufferRange.DescriptorBufferInfo.buffer );
     lightDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( LightUBO );
 
@@ -795,7 +796,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     descriptorSetForPass.pBinding[ 3 ].ImageInfo.imageView   = pParams->IrradianceMap.pImgView;
     descriptorSetForPass.pBinding[ 3 ].ImageInfo.sampler     = pParams->IrradianceMap.pSampler;
 
-    ppDescriptorSets[ kDescriptorSetForPass ] = DescriptorSetPools[ FrameIndex ][ 0 ].GetDescSet( &descriptorSetForPass );
+    ppDescriptorSets[ kDescriptorSetForPass ] = DescriptorSetPools[ frameIndex ][ 0 ].GetDescSet( &descriptorSetForPass );
 
     pDynamicOffsets[ 0 ] = cameraDataUploadBufferRange.DynamicOffset;
     pDynamicOffsets[ 1 ] = lightDataUploadBufferRange.DynamicOffset;
@@ -831,7 +832,6 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
                 pMaterial      = &pScene->Materials[ pSubsetIt->MaterialId ];
                 pMaterialAsset = static_cast< SceneMaterialDeviceAssetVk const* >( pMaterial->pDeviceAsset.get( ) );
             } else {
-                auto pSceneAsset = static_cast< SceneDeviceAssetVk* >( pScene->pDeviceAsset.get( ) );
                 pMaterial        = &pSceneAsset->MissingMaterial;
                 pMaterialAsset   = &pSceneAsset->MissingMaterialAsset;
             }
@@ -847,11 +847,11 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
             materialData.MetallicRoughnessFactor.x = pMaterial->MetallicFactor;
             materialData.MetallicRoughnessFactor.y = pMaterial->RoughnessFactor;
 
-            auto objectDataUploadBufferRange = BufferPools[ FrameIndex ].TSuballocate( objectData );
+            auto objectDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( objectData );
             assert( VK_NULL_HANDLE != objectDataUploadBufferRange.DescriptorBufferInfo.buffer );
             objectDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( ObjectUBO );
 
-            auto materialDataUploadBufferRange = BufferPools[ FrameIndex ].TSuballocate( materialData );
+            auto materialDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( materialData );
             assert( VK_NULL_HANDLE != materialDataUploadBufferRange.DescriptorBufferInfo.buffer );
             materialDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( MaterialUBO );
 
@@ -905,7 +905,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
             descriptorSetForObject.BindingCount = objectSetBindingCount;
 
-            ppDescriptorSets[ kDescriptorSetForObj ] = DescriptorSetPools[ FrameIndex ][ 1 ].GetDescSet( &descriptorSetForObject );
+            ppDescriptorSets[ kDescriptorSetForObj ] = DescriptorSetPools[ frameIndex ][ 1 ].GetDescSet( &descriptorSetForObject );
 
             pDynamicOffsets[ 2 ] = objectDataUploadBufferRange.DynamicOffset;
             pDynamicOffsets[ 3 ] = materialDataUploadBufferRange.DynamicOffset;
@@ -1123,12 +1123,10 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
 
     //
 
-    shaderStageCreateInfo[ 0 ].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStageCreateInfo[ 0 ].stage  = VK_SHADER_STAGE_VERTEX_BIT;
     shaderStageCreateInfo[ 0 ].module = hVertexShaderModule;
     shaderStageCreateInfo[ 0 ].pName  = "main";
 
-    shaderStageCreateInfo[ 1 ].sType  = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     shaderStageCreateInfo[ 1 ].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
     shaderStageCreateInfo[ 1 ].module = hFragmentShaderModule;
     shaderStageCreateInfo[ 1 ].pName  = "main";
@@ -1210,12 +1208,11 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
 
     //
 
-    rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_NONE;
     // rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
     // rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE; /* CW */
-    rasterizationStateCreateInfo.sType                   = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    rasterizationStateCreateInfo.polygonMode             = VK_POLYGON_MODE_FILL;
+    rasterizationStateCreateInfo.cullMode                = VK_CULL_MODE_NONE;
     rasterizationStateCreateInfo.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE; /* CCW */
+    rasterizationStateCreateInfo.polygonMode             = VK_POLYGON_MODE_FILL;
     rasterizationStateCreateInfo.depthClampEnable        = VK_FALSE;
     rasterizationStateCreateInfo.rasterizerDiscardEnable = VK_FALSE;
     rasterizationStateCreateInfo.depthBiasEnable         = VK_FALSE;
