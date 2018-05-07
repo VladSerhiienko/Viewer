@@ -252,23 +252,24 @@ namespace apemodevk {
 #define _Aux_TArrayTraits_Has_array_traits 1
 
 namespace apemodevk {
-    template < typename TArray >
-    struct TArrayTraits;
+    namespace utils {
+        template < typename TArray >
+        struct TArrayTraits;
 
-    template < typename TArray, size_t N >
-    struct TArrayTraits< TArray[ N ] > {
-        static const size_t ArrayLength = N;
-    };
+        template < typename TArray, size_t N >
+        struct TArrayTraits< TArray[ N ] > {
+            static const size_t ArrayLength = N;
+        };
 
-    template < typename TArray, size_t TArraySize >
-    constexpr size_t GetArraySize( TArray ( & )[ TArraySize ] ) {
-        return TArraySize;
-    }
+        template < typename TArray, size_t TArraySize >
+        constexpr size_t GetArraySize( TArray ( & )[ TArraySize ] ) {
+            return TArraySize;
+        }
 
-    template < typename TArray, uint32_t TArraySize >
-    constexpr uint32_t GetArraySizeU( TArray ( & )[ TArraySize ] ) {
-        return TArraySize;
-    }
+        template < typename TArray, uint32_t TArraySize >
+        constexpr uint32_t GetArraySizeU( TArray ( & )[ TArraySize ] ) {
+            return TArraySize;
+        }
 
 #ifdef ARRAYSIZE
 #undef ARRAYSIZE
@@ -285,26 +286,27 @@ namespace apemodevk {
 #undef ZeroMemory
 #endif
 
-    template < typename T >
-    inline void ZeroMemory( T &pObj ) {
-        memset( &pObj, 0, sizeof( T ) );
-    }
+        template < typename T >
+        inline void ZeroMemory( T &pObj ) {
+            memset( &pObj, 0, sizeof( T ) );
+        }
 
-    template < typename T, size_t TCount >
-    inline void ZeroMemory( T ( &pObj )[ TCount ] ) {
-        memset( &pObj[ 0 ], 0, sizeof( T ) * TCount );
-    }
+        template < typename T, size_t TCount >
+        inline void ZeroMemory( T ( &pObj )[ TCount ] ) {
+            memset( &pObj[ 0 ], 0, sizeof( T ) * TCount );
+        }
 
-    template < typename T >
-    inline void ZeroMemory( T *pObj, size_t Count ) {
-        memset( pObj, 0, sizeof( T ) * Count );
-    }
+        template < typename T >
+        inline void ZeroMemory( T *pObj, size_t Count ) {
+            memset( pObj, 0, sizeof( T ) * Count );
+        }
 
-    template < typename T, typename... TArgs >
-    inline T &PushBackAndGet( std::vector< T > &_collection, TArgs... args ) {
-        _collection.emplace_back( std::forward< TArgs >( args )... );
-        return _collection.back( );
-    }
+        template < typename T, typename... TArgs >
+        inline T &PushBackAndGet( std::vector< T > &_collection, TArgs... args ) {
+            _collection.emplace_back( std::forward< TArgs >( args )... );
+            return _collection.back( );
+        }
+    } // namespace utils
 } // namespace apemodevk
 
 namespace apemodevk {

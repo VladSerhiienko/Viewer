@@ -1,6 +1,7 @@
 #include "DebugRendererVk.h"
 
 #include <TInfoStruct.Vulkan.h>
+#include <ArrayUtils.h>
 
 namespace apemode {
     using namespace apemodevk;
@@ -101,7 +102,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
     InitializeStruct( pipelineLayoutCreateInfo );
-    pipelineLayoutCreateInfo.setLayoutCount = GetArraySizeU( descriptorSetLayouts );
+    pipelineLayoutCreateInfo.setLayoutCount = GetArraySize( descriptorSetLayouts );
     pipelineLayoutCreateInfo.pSetLayouts    = descriptorSetLayouts;
 
     if ( false == hPipelineLayout.Recreate( pNode->hLogicalDevice, pipelineLayoutCreateInfo ) ) {
@@ -157,7 +158,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     shaderStageCreateInfo[ 1 ].module = hFragmentShaderModule;
     shaderStageCreateInfo[ 1 ].pName  = "main";
 
-    graphicsPipelineCreateInfo.stageCount = GetArraySizeU( shaderStageCreateInfo );
+    graphicsPipelineCreateInfo.stageCount = GetArraySize( shaderStageCreateInfo );
     graphicsPipelineCreateInfo.pStages    = shaderStageCreateInfo;
 
     //
@@ -170,9 +171,9 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     vertexInputAttributeDescription[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
     vertexInputAttributeDescription[ 0 ].offset   = ( size_t )( &( (PositionVertex*) 0 )->Position );
 
-    vertexInputStateCreateInfo.vertexBindingDescriptionCount   = GetArraySizeU( vertexInputBindingDescription );
+    vertexInputStateCreateInfo.vertexBindingDescriptionCount   = GetArraySize( vertexInputBindingDescription );
     vertexInputStateCreateInfo.pVertexBindingDescriptions      = vertexInputBindingDescription;
-    vertexInputStateCreateInfo.vertexAttributeDescriptionCount = GetArraySizeU( vertexInputAttributeDescription );
+    vertexInputStateCreateInfo.vertexAttributeDescriptionCount = GetArraySize( vertexInputAttributeDescription );
     vertexInputStateCreateInfo.pVertexAttributeDescriptions    = vertexInputAttributeDescription;
     graphicsPipelineCreateInfo.pVertexInputState               = &vertexInputStateCreateInfo;
 
@@ -186,7 +187,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     dynamicStateEnables[ 0 ]                 = VK_DYNAMIC_STATE_SCISSOR;
     dynamicStateEnables[ 1 ]                 = VK_DYNAMIC_STATE_VIEWPORT;
     dynamicStateCreateInfo.pDynamicStates    = dynamicStateEnables;
-    dynamicStateCreateInfo.dynamicStateCount = GetArraySizeU( dynamicStateEnables );
+    dynamicStateCreateInfo.dynamicStateCount = GetArraySize( dynamicStateEnables );
     graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
 
     //
@@ -205,7 +206,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
 
     colorBlendAttachmentState[ 0 ].colorWriteMask = 0xf;
     colorBlendAttachmentState[ 0 ].blendEnable    = VK_FALSE;
-    colorBlendStateCreateInfo.attachmentCount     = GetArraySizeU( colorBlendAttachmentState );
+    colorBlendStateCreateInfo.attachmentCount     = GetArraySize( colorBlendAttachmentState );
     colorBlendStateCreateInfo.pAttachments        = colorBlendAttachmentState;
     graphicsPipelineCreateInfo.pColorBlendState   = &colorBlendStateCreateInfo;
 

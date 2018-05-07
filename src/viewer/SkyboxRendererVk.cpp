@@ -91,7 +91,7 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
     VkDescriptorSetLayoutCreateInfo descSetLayoutCreateInfo;
     InitializeStruct( descSetLayoutCreateInfo );
 
-    descSetLayoutCreateInfo.bindingCount = GetArraySizeU( bindings );
+    descSetLayoutCreateInfo.bindingCount = utils::GetArraySizeU( bindings );
     descSetLayoutCreateInfo.pBindings    = bindings;
 
     if ( false == hDescSetLayout.Recreate( *pParams->pNode, descSetLayoutCreateInfo ) ) {
@@ -109,7 +109,7 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
     InitializeStruct( pipelineLayoutCreateInfo );
-    pipelineLayoutCreateInfo.setLayoutCount = GetArraySizeU( descriptorSetLayouts );
+    pipelineLayoutCreateInfo.setLayoutCount = utils::GetArraySizeU( descriptorSetLayouts );
     pipelineLayoutCreateInfo.pSetLayouts    = descriptorSetLayouts;
 
     if ( false == hPipelineLayout.Recreate( *pParams->pNode, pipelineLayoutCreateInfo ) ) {
@@ -164,7 +164,7 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
     shaderStageCreateInfo[ 1 ].module = hFragmentShaderModule;
     shaderStageCreateInfo[ 1 ].pName  = "main";
 
-    graphicsPipelineCreateInfo.stageCount = GetArraySizeU( shaderStageCreateInfo );
+    graphicsPipelineCreateInfo.stageCount = utils::GetArraySizeU( shaderStageCreateInfo );
     graphicsPipelineCreateInfo.pStages    = shaderStageCreateInfo;
 
     graphicsPipelineCreateInfo.pVertexInputState = &vertexInputStateCreateInfo;
@@ -179,7 +179,7 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
     dynamicStateEnables[ 0 ]                 = VK_DYNAMIC_STATE_SCISSOR;
     dynamicStateEnables[ 1 ]                 = VK_DYNAMIC_STATE_VIEWPORT;
     dynamicStateCreateInfo.pDynamicStates    = dynamicStateEnables;
-    dynamicStateCreateInfo.dynamicStateCount = GetArraySizeU( dynamicStateEnables );
+    dynamicStateCreateInfo.dynamicStateCount = utils::GetArraySizeU( dynamicStateEnables );
     graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
 
     //
@@ -198,7 +198,7 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
 
     colorBlendAttachmentState[ 0 ].colorWriteMask = 0xf;
     colorBlendAttachmentState[ 0 ].blendEnable    = VK_FALSE;
-    colorBlendStateCreateInfo.attachmentCount     = GetArraySizeU( colorBlendAttachmentState );
+    colorBlendStateCreateInfo.attachmentCount     = utils::GetArraySizeU( colorBlendAttachmentState );
     colorBlendStateCreateInfo.pAttachments        = colorBlendAttachmentState;
     graphicsPipelineCreateInfo.pColorBlendState   = &colorBlendStateCreateInfo;
 
@@ -293,9 +293,9 @@ bool apemodevk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPara
                              VK_PIPELINE_BIND_POINT_GRAPHICS,
                              hPipelineLayout,
                              0,
-                             GetArraySizeU( descriptorSet ),
+                             utils::GetArraySizeU( descriptorSet ),
                              descriptorSet,
-                             GetArraySizeU( dynamicOffsets ),
+                             utils::GetArraySizeU( dynamicOffsets ),
                              dynamicOffsets );
 
 //#if 1

@@ -946,6 +946,8 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 }
 
 bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBase ) {
+    using namespace apemodevk;
+
     if ( nullptr == pParamsBase ) {
         return false;
     }
@@ -954,39 +956,39 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     if ( nullptr == pParams->pNode )
         return false;
 
-    apemodevk::ShaderCompilerIncludedFileSet includedFiles;
+    ShaderCompilerIncludedFileSet includedFiles;
 
     auto compiledVertexShader = pParams->pShaderCompiler->Compile(
-        "shaders/Scene.vert", nullptr, apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader, &includedFiles );
+        "shaders/Scene.vert", nullptr, ShaderCompiler::eShaderType_GLSL_VertexShader, &includedFiles );
 
     if ( nullptr == compiledVertexShader ) {
-        apemodevk::platform::DebugBreak( );
+        platform::DebugBreak( );
         return false;
     }
 
     auto compiledFragmentShader = pParams->pShaderCompiler->Compile(
-        "shaders/Scene.frag", nullptr, apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader, &includedFiles );
+        "shaders/Scene.frag", nullptr, ShaderCompiler::eShaderType_GLSL_FragmentShader, &includedFiles );
 
     if ( nullptr == compiledFragmentShader ) {
-        apemodevk::platform::DebugBreak( );
+        platform::DebugBreak( );
         return false;
     }
 
     VkShaderModuleCreateInfo vertexShaderCreateInfo;
-    apemodevk::InitializeStruct( vertexShaderCreateInfo );
+    InitializeStruct( vertexShaderCreateInfo );
     vertexShaderCreateInfo.pCode    = compiledVertexShader->GetDwordPtr( );
     vertexShaderCreateInfo.codeSize = compiledVertexShader->GetByteCount( );
 
     VkShaderModuleCreateInfo fragmentShaderCreateInfo;
-    apemodevk::InitializeStruct( fragmentShaderCreateInfo );
+    InitializeStruct( fragmentShaderCreateInfo );
     fragmentShaderCreateInfo.pCode    = compiledFragmentShader->GetDwordPtr( );
     fragmentShaderCreateInfo.codeSize = compiledFragmentShader->GetByteCount( );
 
-    apemodevk::THandle< VkShaderModule > hVertexShaderModule;
-    apemodevk::THandle< VkShaderModule > hFragmentShaderModule;
+    THandle< VkShaderModule > hVertexShaderModule;
+    THandle< VkShaderModule > hFragmentShaderModule;
     if ( false == hVertexShaderModule.Recreate( *pParams->pNode, vertexShaderCreateInfo ) ||
          false == hFragmentShaderModule.Recreate( *pParams->pNode, fragmentShaderCreateInfo ) ) {
-        apemodevk::platform::DebugBreak( );
+        platform::DebugBreak( );
         return false;
     }
 
@@ -999,7 +1001,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     // layout( set = 0, binding = 3 ) uniform samplerCube IrradianceCubeMap;
 
     VkDescriptorSetLayoutBinding descriptorSetLayoutBindingsForPass[ 4 ];
-    apemodevk::InitializeStruct( descriptorSetLayoutBindingsForPass );
+    InitializeStruct( descriptorSetLayoutBindingsForPass );
 
     descriptorSetLayoutBindingsForPass[ 0 ].binding         = 0;
     descriptorSetLayoutBindingsForPass[ 0 ].descriptorCount = 1;
@@ -1034,7 +1036,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     // layout( set = 1, binding = 7 ) uniform sampler2D RoughnessMap;
 
     VkDescriptorSetLayoutBinding descriptorSetLayoutBindingsForObj[ 8 ];
-    apemodevk::InitializeStruct( descriptorSetLayoutBindingsForObj );
+    InitializeStruct( descriptorSetLayoutBindingsForObj );
 
     descriptorSetLayoutBindingsForObj[ 0 ].binding         = 0;
     descriptorSetLayoutBindingsForObj[ 0 ].descriptorCount = 1;
@@ -1054,7 +1056,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     }
 
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfos[ kDescriptorSetCount ];
-    apemodevk::InitializeStruct( descriptorSetLayoutCreateInfos );
+    InitializeStruct( descriptorSetLayoutCreateInfos );
 
     VkDescriptorSetLayout ppDescriptorSetLayouts[ kDescriptorSetCount ] = {nullptr};
 
@@ -1065,7 +1067,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     descriptorSetLayoutCreateInfos[ 1 ].pBindings    = descriptorSetLayoutBindingsForObj;
 
     for ( uint32_t i = 0; i < kDescriptorSetCount; ++i ) {
-        apemodevk::THandle< VkDescriptorSetLayout >& hDescriptorSetLayout = hDescriptorSetLayouts[ i ];
+        THandle< VkDescriptorSetLayout >& hDescriptorSetLayout = hDescriptorSetLayouts[ i ];
         if ( !hDescriptorSetLayout.Recreate( *pParams->pNode, descriptorSetLayoutCreateInfos[ i ] ) ) {
             return false;
         }
@@ -1077,7 +1079,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     }
 
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
-    apemodevk::InitializeStruct( pipelineLayoutCreateInfo );
+    InitializeStruct( pipelineLayoutCreateInfo );
     pipelineLayoutCreateInfo.setLayoutCount = GetArraySize( ppDescriptorSetLayouts );
     pipelineLayoutCreateInfo.pSetLayouts    = ppDescriptorSetLayouts;
 
@@ -1101,20 +1103,20 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     VkPipelineDynamicStateCreateInfo       dynamicStateCreateInfo ;
     VkPipelineShaderStageCreateInfo        shaderStageCreateInfo[ 2 ];
 
-    apemodevk::InitializeStruct( graphicsPipelineCreateInfo );
-    apemodevk::InitializeStruct( pipelineCacheCreateInfo );
-    apemodevk::InitializeStruct( vertexInputStateCreateInfo );
-    apemodevk::InitializeStruct( vertexInputAttributeDescription );
-    apemodevk::InitializeStruct( vertexInputBindingDescription );
-    apemodevk::InitializeStruct( inputAssemblyStateCreateInfo );
-    apemodevk::InitializeStruct( rasterizationStateCreateInfo );
-    apemodevk::InitializeStruct( colorBlendStateCreateInfo );
-    apemodevk::InitializeStruct( colorBlendAttachmentState );
-    apemodevk::InitializeStruct( depthStencilStateCreateInfo );
-    apemodevk::InitializeStruct( viewportStateCreateInfo );
-    apemodevk::InitializeStruct( multisampleStateCreateInfo );
-    apemodevk::InitializeStruct( dynamicStateCreateInfo );
-    apemodevk::InitializeStruct( shaderStageCreateInfo );
+    InitializeStruct( graphicsPipelineCreateInfo );
+    InitializeStruct( pipelineCacheCreateInfo );
+    InitializeStruct( vertexInputStateCreateInfo );
+    InitializeStruct( vertexInputAttributeDescription );
+    InitializeStruct( vertexInputBindingDescription );
+    InitializeStruct( inputAssemblyStateCreateInfo );
+    InitializeStruct( rasterizationStateCreateInfo );
+    InitializeStruct( colorBlendStateCreateInfo );
+    InitializeStruct( colorBlendAttachmentState );
+    InitializeStruct( depthStencilStateCreateInfo );
+    InitializeStruct( viewportStateCreateInfo );
+    InitializeStruct( multisampleStateCreateInfo );
+    InitializeStruct( dynamicStateCreateInfo );
+    InitializeStruct( shaderStageCreateInfo );
 
     //
 
@@ -1131,65 +1133,65 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     shaderStageCreateInfo[ 1 ].module = hFragmentShaderModule;
     shaderStageCreateInfo[ 1 ].pName  = "main";
 
-    graphicsPipelineCreateInfo.stageCount = apemodevk::GetArraySizeU( shaderStageCreateInfo );
+    graphicsPipelineCreateInfo.stageCount = GetArraySize( shaderStageCreateInfo );
     graphicsPipelineCreateInfo.pStages    = shaderStageCreateInfo;
 
     //
 #if 0
 
-    vertexInputBindingDescription[ 0 ].stride    = sizeof( apemodevk::PackedVertex );
+    vertexInputBindingDescription[ 0 ].stride    = sizeof( PackedVertex );
     vertexInputBindingDescription[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
     vertexInputAttributeDescription[ 0 ].location = 0;
     vertexInputAttributeDescription[ 0 ].binding  = vertexInputBindingDescription[ 0 ].binding;
     vertexInputAttributeDescription[ 0 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    vertexInputAttributeDescription[ 0 ].offset   = ( size_t )( &( (apemodevk::PackedVertex*) 0 )->position );
+    vertexInputAttributeDescription[ 0 ].offset   = ( size_t )( &( (PackedVertex*) 0 )->position );
 
     vertexInputAttributeDescription[ 1 ].location = 1;
     vertexInputAttributeDescription[ 1 ].binding  = vertexInputBindingDescription[ 0 ].binding;
     vertexInputAttributeDescription[ 1 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    vertexInputAttributeDescription[ 1 ].offset   = ( size_t )( &( (apemodevk::PackedVertex*) 0 )->normal );
+    vertexInputAttributeDescription[ 1 ].offset   = ( size_t )( &( (PackedVertex*) 0 )->normal );
 
     vertexInputAttributeDescription[ 2 ].location = 2;
     vertexInputAttributeDescription[ 2 ].binding  = vertexInputBindingDescription[ 0 ].binding;
     vertexInputAttributeDescription[ 2 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    vertexInputAttributeDescription[ 2 ].offset   = ( size_t )( &( (apemodevk::PackedVertex*) 0 )->tangent );
+    vertexInputAttributeDescription[ 2 ].offset   = ( size_t )( &( (PackedVertex*) 0 )->tangent );
 
     vertexInputAttributeDescription[ 3 ].location = 3;
     vertexInputAttributeDescription[ 3 ].binding  = vertexInputBindingDescription[ 0 ].binding;
     vertexInputAttributeDescription[ 3 ].format   = VK_FORMAT_R16G16_UNORM;
-    vertexInputAttributeDescription[ 3 ].offset   = ( size_t )( &( (apemodevk::PackedVertex*) 0 )->texcoords );
+    vertexInputAttributeDescription[ 3 ].offset   = ( size_t )( &( (PackedVertex*) 0 )->texcoords );
 
 #else
 
-    vertexInputBindingDescription[ 0 ].stride    = sizeof( apemodevk::StaticVertex );
+    vertexInputBindingDescription[ 0 ].stride    = sizeof( StaticVertex );
     vertexInputBindingDescription[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
     vertexInputAttributeDescription[ 0 ].location = 0;
     vertexInputAttributeDescription[ 0 ].binding  = vertexInputBindingDescription[ 0 ].binding;
     vertexInputAttributeDescription[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    vertexInputAttributeDescription[ 0 ].offset   = ( size_t )( &( (apemodevk::StaticVertex*) 0 )->position );
+    vertexInputAttributeDescription[ 0 ].offset   = ( size_t )( &( (StaticVertex*) 0 )->position );
 
     vertexInputAttributeDescription[ 1 ].location = 1;
     vertexInputAttributeDescription[ 1 ].binding  = vertexInputBindingDescription[ 0 ].binding;
     vertexInputAttributeDescription[ 1 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    vertexInputAttributeDescription[ 1 ].offset   = ( size_t )( &( (apemodevk::StaticVertex*) 0 )->normal );
+    vertexInputAttributeDescription[ 1 ].offset   = ( size_t )( &( (StaticVertex*) 0 )->normal );
 
     vertexInputAttributeDescription[ 2 ].location = 2;
     vertexInputAttributeDescription[ 2 ].binding  = vertexInputBindingDescription[ 0 ].binding;
     vertexInputAttributeDescription[ 2 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    vertexInputAttributeDescription[ 2 ].offset   = ( size_t )( &( (apemodevk::StaticVertex*) 0 )->tangent );
+    vertexInputAttributeDescription[ 2 ].offset   = ( size_t )( &( (StaticVertex*) 0 )->tangent );
 
     vertexInputAttributeDescription[ 3 ].location = 3;
     vertexInputAttributeDescription[ 3 ].binding  = vertexInputBindingDescription[ 0 ].binding;
     vertexInputAttributeDescription[ 3 ].format   = VK_FORMAT_R32G32_SFLOAT;
-    vertexInputAttributeDescription[ 3 ].offset   = ( size_t )( &( (apemodevk::StaticVertex*) 0 )->texcoords );
+    vertexInputAttributeDescription[ 3 ].offset   = ( size_t )( &( (StaticVertex*) 0 )->texcoords );
 
 #endif
 
-    vertexInputStateCreateInfo.vertexBindingDescriptionCount   = apemodevk::GetArraySizeU( vertexInputBindingDescription );
+    vertexInputStateCreateInfo.vertexBindingDescriptionCount   = GetArraySize( vertexInputBindingDescription );
     vertexInputStateCreateInfo.pVertexBindingDescriptions      = vertexInputBindingDescription;
-    vertexInputStateCreateInfo.vertexAttributeDescriptionCount = apemodevk::GetArraySizeU( vertexInputAttributeDescription );
+    vertexInputStateCreateInfo.vertexAttributeDescriptionCount = GetArraySize( vertexInputAttributeDescription );
     vertexInputStateCreateInfo.pVertexAttributeDescriptions    = vertexInputAttributeDescription;
     graphicsPipelineCreateInfo.pVertexInputState               = &vertexInputStateCreateInfo;
 
@@ -1203,7 +1205,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     dynamicStateEnables[ 0 ]                 = VK_DYNAMIC_STATE_SCISSOR;
     dynamicStateEnables[ 1 ]                 = VK_DYNAMIC_STATE_VIEWPORT;
     dynamicStateCreateInfo.pDynamicStates    = dynamicStateEnables;
-    dynamicStateCreateInfo.dynamicStateCount = apemodevk::GetArraySizeU( dynamicStateEnables );
+    dynamicStateCreateInfo.dynamicStateCount = GetArraySize( dynamicStateEnables );
     graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
 
     //
@@ -1223,7 +1225,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
 
     colorBlendAttachmentState[ 0 ].colorWriteMask = 0xf;
     colorBlendAttachmentState[ 0 ].blendEnable    = VK_FALSE;
-    colorBlendStateCreateInfo.attachmentCount     = apemodevk::GetArraySizeU( colorBlendAttachmentState );
+    colorBlendStateCreateInfo.attachmentCount     = GetArraySize( colorBlendAttachmentState );
     colorBlendStateCreateInfo.pAttachments        = colorBlendAttachmentState;
     graphicsPipelineCreateInfo.pColorBlendState   = &colorBlendStateCreateInfo;
 
@@ -1255,12 +1257,12 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     //
 
     if ( false == hPipelineCache.Recreate( *pParams->pNode, pipelineCacheCreateInfo ) ) {
-        apemodevk::platform::DebugBreak( );
+        platform::DebugBreak( );
         return false;
     }
 
     if ( false == hPipeline.Recreate( *pParams->pNode, hPipelineCache, graphicsPipelineCreateInfo ) ) {
-        apemodevk::platform::DebugBreak( );
+        platform::DebugBreak( );
         return false;
     }
 

@@ -51,8 +51,8 @@ namespace apemodevk
                 return false;
             }
 
-            apemodevk::ZeroMemory( Offsets );
-            apemodevk::ZeroMemory( Counts );
+            apemodevk::utils::ZeroMemory( Offsets );
+            apemodevk::utils::ZeroMemory( Counts );
 
             uint32_t layoutIndex   = 0;
             uint32_t descSetOffset = 0;

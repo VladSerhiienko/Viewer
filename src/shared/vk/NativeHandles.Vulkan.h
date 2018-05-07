@@ -659,7 +659,7 @@ namespace apemodevk
             VkMemoryRequirements memoryRequirements = GetMemoryRequirements();
 
             VkMemoryAllocateInfo memoryAllocInfo;
-            apemodevk::ZeroMemory(memoryAllocInfo);
+            apemodevk::utils::ZeroMemory(memoryAllocInfo);
             memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
             memoryAllocInfo.allocationSize = memoryRequirements.size;
             memoryAllocInfo.memoryTypeIndex = ResolveMemoryType(Deleter.PhysicalDeviceHandle, memoryPropertyFlags, memoryRequirements.memoryTypeBits);
@@ -739,7 +739,7 @@ namespace apemodevk
             VkMemoryRequirements memoryRequirements = GetMemoryRequirements( );
 
             VkMemoryAllocateInfo memoryAllocInfo;
-            apemodevk::ZeroMemory( memoryAllocInfo );
+            apemodevk::utils::ZeroMemory( memoryAllocInfo );
             memoryAllocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
             memoryAllocInfo.allocationSize = memoryRequirements.size;
             memoryAllocInfo.memoryTypeIndex = ResolveMemoryType( Deleter.PhysicalDeviceHandle, memoryPropertyFlags, memoryRequirements.memoryTypeBits );

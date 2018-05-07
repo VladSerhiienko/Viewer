@@ -130,7 +130,7 @@ namespace apemodevk
      */
     template < typename TStruct >
     inline void InitializeStruct( TStruct &uninitializedStruct ) {
-        ZeroMemory( uninitializedStruct );
+        utils::ZeroMemory( uninitializedStruct );
         SetStructType( uninitializedStruct );
     }
 
@@ -140,7 +140,7 @@ namespace apemodevk
      */
     template < typename TStruct, size_t TArraySize >
     inline void InitializeStruct( TStruct ( &uninitializedStructs )[ TArraySize ] ) {
-        ZeroMemory( uninitializedStructs );
+        utils::ZeroMemory( uninitializedStructs );
         SetStructType( uninitializedStructs );
     }
 
@@ -150,8 +150,8 @@ namespace apemodevk
      */
     template < typename TStruct >
     inline void InitializeStruct( TStruct *pUninitializedStructs, size_t count ) {
-            ZeroMemory( pUninitializedStructs, count );
-            SetStructType( pUninitializedStructs, count );
+        utils::ZeroMemory( pUninitializedStructs, count );
+        SetStructType( pUninitializedStructs, count );
     }
 
     /* Returns initialized structure (zeroed members, correct sType if applicable.

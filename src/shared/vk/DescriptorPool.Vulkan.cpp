@@ -34,8 +34,8 @@ bool apemodevk::DescriptorPool::RecreateResourcesFor( GraphicsDevice& graphicsNo
     // This array is used for creating descriptor pool.
     VkDescriptorPoolSize descriptorPoolSizes[ VK_DESCRIPTOR_TYPE_RANGE_SIZE ];
 
-    apemodevk::ZeroMemory( DescPoolCounters );
-    apemodevk::ZeroMemory( descriptorPoolSizes );
+    apemodevk::utils::ZeroMemory( DescPoolCounters );
+    apemodevk::utils::ZeroMemory( descriptorPoolSizes );
 
     uint32_t descriptorTypeCounter     = 0;
     uint32_t sizeCounter               = 0;

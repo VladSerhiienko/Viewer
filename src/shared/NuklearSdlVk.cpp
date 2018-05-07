@@ -1,5 +1,5 @@
-
 #include <NuklearSdlVk.h>
+#include <ArrayUtils.h>
 
 namespace apemode {
     using namespace apemodevk;
@@ -276,7 +276,6 @@ bool apemode::NuklearRendererSdlVk::DeviceCreate( InitParametersBase* pInitParam
 
         VkPushConstantRange pushConstant;
         InitializeStruct( pushConstant );
-        ZeroMemory( pushConstant );
         pushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
         pushConstant.size       = sizeof( float[ 4 ] );
 
@@ -329,9 +328,9 @@ bool apemode::NuklearRendererSdlVk::DeviceCreate( InitParametersBase* pInitParam
 
     VkPipelineVertexInputStateCreateInfo pipelineVertexInputState;
     InitializeStruct( pipelineVertexInputState );
-    pipelineVertexInputState.vertexBindingDescriptionCount   = GetArraySizeU( bindingDescs );
+    pipelineVertexInputState.vertexBindingDescriptionCount   = GetArraySize( bindingDescs );
     pipelineVertexInputState.pVertexBindingDescriptions      = bindingDescs;
-    pipelineVertexInputState.vertexAttributeDescriptionCount = GetArraySizeU( inputAttributeDesc );
+    pipelineVertexInputState.vertexAttributeDescriptionCount = GetArraySize( inputAttributeDesc );
     pipelineVertexInputState.pVertexAttributeDescriptions    = inputAttributeDesc;
 
     VkPipelineInputAssemblyStateCreateInfo pipelineInputAssemblyState;
@@ -378,12 +377,12 @@ bool apemode::NuklearRendererSdlVk::DeviceCreate( InitParametersBase* pInitParam
 
     VkPipelineDynamicStateCreateInfo pipelineDynamicState;
     InitializeStruct( pipelineDynamicState );
-    pipelineDynamicState.dynamicStateCount = GetArraySizeU( dynamicStates );
+    pipelineDynamicState.dynamicStateCount = GetArraySize( dynamicStates );
     pipelineDynamicState.pDynamicStates    = dynamicStates;
 
     VkGraphicsPipelineCreateInfo graphicsPipeline;
     InitializeStruct( graphicsPipeline );
-    graphicsPipeline.stageCount          = GetArraySizeU( pipelineStages );
+    graphicsPipeline.stageCount          = GetArraySize( pipelineStages );
     graphicsPipeline.pStages             = pipelineStages;
     graphicsPipeline.pVertexInputState   = &pipelineVertexInputState;
     graphicsPipeline.pInputAssemblyState = &pipelineInputAssemblyState;
