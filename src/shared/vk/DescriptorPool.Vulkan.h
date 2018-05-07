@@ -122,7 +122,7 @@ namespace apemodevk
 
     struct DescriptorSetBase {
         struct Binding {
-            uint32_t         DstBinding      = uint32_t( -1 );
+            uint32_t DstBinding = uint32_t( -1 );
             VkDescriptorType eDescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 
             union {
@@ -142,10 +142,18 @@ namespace apemodevk
         }
     };
 
-    template < uint32_t TBindingCount >
+    enum ETDescriptorSetNoInit {
+        eTDescriptorSetNoInit = 0,
+    };
+
+    template < uint32_t TMaxBindingCount >
     struct TDescriptorSet : DescriptorSetBase {
-        DescriptorSetBase::Binding Bindings[ TBindingCount ];
-        TDescriptorSet( ) : DescriptorSetBase( Bindings, TBindingCount ) {
+        DescriptorSetBase::Binding Bindings[ TMaxBindingCount ];
+
+        TDescriptorSet( ETDescriptorSetNoInit ) : DescriptorSetBase( Bindings, 0 ) {
+        }
+
+        TDescriptorSet( ) : DescriptorSetBase( Bindings, TMaxBindingCount ) {
             uint32_t DstBinding = 0;
             for ( auto& binding : Bindings ) {
                 binding.DstBinding = DstBinding++;
