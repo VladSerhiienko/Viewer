@@ -47,13 +47,24 @@ layout( set = 1, binding = 7 ) uniform sampler2D OcclusionMap;
 layout( location = 0 ) in vec3 inNormal;
 layout( location = 1 ) in vec3 inWorldNormal;
 layout( location = 2 ) in vec3 inViewNormal;
+layout( location = 3 ) in vec2 inTexcoords;
 
 layout( location = 0 ) out vec4 outColor;
 
 void main( ) {
+    vec2 texcoords = inTexcoords;
+
+    // outColor.rg = inTexcoords.xy;
+    // outColor.b = 0;
+
+    outColor.rgb = texture( BaseColorMap, texcoords ).rgb * BaseColorFactor.rgb;
+
+    // outColor.rgb = texture( NormalMap, texcoords ).rgb;
+    // outColor.rgb = texture( BaseColorMap, texcoords ).rgb;
+    // outColor.rgb = BaseColorFactor.rgb;
     // outColor.rgb = abs( inNormal.rgb );
-    outColor.rgb = BaseColorFactor.rgb;
     // outColor.rgb = abs( sepia( inNormal ) );
     // outColor.rgb *= inColor.rgb;
+
     outColor.a = 1;
 }

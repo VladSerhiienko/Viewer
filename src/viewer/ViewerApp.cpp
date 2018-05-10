@@ -304,6 +304,7 @@ bool ViewerApp::Initialize(  ) {
         // --assets "..\..\assets\**" --scene "C:\Sources\Models\graograman.fbxp"
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/dreadroamer-free.fbxp"
         // --assets "..\..\assets\**" --scene "C:/Sources/Models/warcraft-draenei-fanart.fbxp"
+        // --assets "..\..\assets\**" --scene "C:/Sources/Models/knight-artorias.fbxp"
         if ( false == pSceneRendererBase->Recreate( &recreateParams ) ) {
             apemode::platform::DebugBreak( );
             return false;

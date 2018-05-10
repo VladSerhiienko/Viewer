@@ -4,24 +4,8 @@
 #include <BufferPools.Vulkan.h>
 #include <QueuePools.Vulkan.h>
 
-#ifndef LODEPNG_NO_COMPILE_ALLOCATORS
-#define LODEPNG_NO_COMPILE_ALLOCATORS
-#endif
-
-void* lodepng_malloc( size_t size ) {
-    return apemode_malloc( size, APEMODE_DEFAULT_ALIGNMENT );
-}
-
-void* lodepng_realloc( void* p, size_t size ) {
-    return apemode_realloc( p, size, APEMODE_DEFAULT_ALIGNMENT );
-}
-
-void lodepng_free( void* p ) {
-    apemode_free( p );
-}
-
-#include <lodepng.h>
-#include <lodepng_util.h>
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 #pragma warning(disable:4309)
 #include <gli/gli.hpp>
@@ -189,25 +173,14 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
             }
         } break;
         case apemodevk::ImageLoader::eImageFileFormat_PNG: {
-
-            /* Ensure no leaks */
-            struct LodePNGStateWrapper {
-                LodePNGState state;
-                LodePNGStateWrapper( ) { lodepng_state_init( &state ); }
-                ~LodePNGStateWrapper( ) { lodepng_state_cleanup( &state ); }
-            } stateWrapper;
+            int imageWidth;
+            int imageHeight;
+            int componentsInFile;
 
             /* Load png file here from memory buffer */
-            uint8_t* pImageBytes = nullptr;
-            uint32_t imageHeight = 0;
-            uint32_t imageWidth  = 0;
+            stbi_uc* pImageBytes = stbi_load_from_memory( pFileContent, fileContentSize, &imageWidth, &imageHeight, &componentsInFile, STBI_rgb_alpha );
 
-            if ( 0 == lodepng_decode( &pImageBytes,
-                                      &imageWidth,
-                                      &imageHeight,
-                                      &stateWrapper.state,
-                                      pFileContent,
-                                      fileContentSize ) ) {
+            if ( pImageBytes && imageWidth && imageHeight) {
 
                 loadedImage->ImageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
                 loadedImage->ImageCreateInfo.format        = VK_FORMAT_R8G8B8A8_UNORM;
@@ -229,20 +202,20 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
                 loadedImage->ImgViewCreateInfo.subresourceRange.layerCount = 1;
 
                 imageBufferSuballocResult = pHostBufferPool->Suballocate( pImageBytes, imageWidth * imageHeight * 4 );
-                lodepng_free( pImageBytes ); /* Free decoded PNG since it is no longer needed */
+                stbi_image_free( (void*) pImageBytes ); /* Free decoded PNG since it is no longer needed */
 
-                bufferImageCopies.resize(1);
-                auto& bufferImageCopy = bufferImageCopies.back();
-                InitializeStruct(bufferImageCopy);
+                bufferImageCopies.resize( 1 );
+                auto& bufferImageCopy = bufferImageCopies.back( );
+                InitializeStruct( bufferImageCopy );
 
                 bufferImageCopy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
                 bufferImageCopy.imageSubresource.layerCount = 1;
-                bufferImageCopy.imageExtent.width = imageWidth;
-                bufferImageCopy.imageExtent.height = imageHeight;
-                bufferImageCopy.imageExtent.depth = 1;
-                bufferImageCopy.bufferOffset = imageBufferSuballocResult.DynamicOffset;
-                bufferImageCopy.bufferImageHeight = 0; /* Tightly packed according to the imageExtent */
-                bufferImageCopy.bufferRowLength = 0; /* Tightly packed according to the imageExtent */
+                bufferImageCopy.imageExtent.width           = imageWidth;
+                bufferImageCopy.imageExtent.height          = imageHeight;
+                bufferImageCopy.imageExtent.depth           = 1;
+                bufferImageCopy.bufferOffset                = imageBufferSuballocResult.DynamicOffset;
+                bufferImageCopy.bufferImageHeight           = 0; /* Tightly packed according to the imageExtent */
+                bufferImageCopy.bufferRowLength             = 0; /* Tightly packed according to the imageExtent */
 
                 writeImageMemoryBarrier.dstAccessMask               = VK_ACCESS_TRANSFER_WRITE_BIT;
                 writeImageMemoryBarrier.oldLayout                   = VK_IMAGE_LAYOUT_UNDEFINED;
@@ -380,13 +353,3 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
 
     return std::move( loadedImage );
 }
-
-#undef lodepng_malloc
-#undef lodepng_realloc
-#undef lodepng_free
-
-#pragma warning( push )
-// '<<': result of 32-bit shift implicitly converted to 64 bits
-#pragma warning( disable : 4334 )
-#include <lodepng.cpp>
-#pragma warning( pop )

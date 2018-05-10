@@ -40,8 +40,10 @@ layout( location = 3 ) in vec2 inTexcoords;
 layout( location = 0 ) out vec3 outNormal;
 layout( location = 1 ) out vec3 outWorldNormal;
 layout( location = 2 ) out vec3 outViewNormal;
+layout( location = 3 ) out vec2 outTexcoords;
 
 void main( ) {
+    outTexcoords   = inTexcoords;
     outNormal      = inNormal;
     outWorldNormal = mat3( WorldMatrix ) * outNormal;
     outViewNormal  = mat3( ViewMatrix ) * outWorldNormal;

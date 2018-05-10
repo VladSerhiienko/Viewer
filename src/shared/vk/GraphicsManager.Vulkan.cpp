@@ -387,7 +387,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL apemodevk::GraphicsManager::DebugCallback( VkFlag
             platform::DebugBreak( );
 
     } else if ( msgFlags & VK_DEBUG_REPORT_WARNING_BIT_EXT ) {
-        platform::DebugBreak( );
+        //platform::DebugBreak( );
     } else if ( msgFlags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT ) {
     } else if ( msgFlags & VK_DEBUG_REPORT_DEBUG_BIT_EXT ) {
     }

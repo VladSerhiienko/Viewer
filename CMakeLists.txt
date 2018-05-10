@@ -75,29 +75,6 @@ message(STATUS "spdlog_source_dir = ${spdlog_source_dir}")
 
 #
 #
-# lodepng
-#
-#
-
-ExternalProject_Add(
-    lodepng
-    GIT_REPOSITORY "git@github.com:lvandeve/lodepng.git"
-    GIT_TAG "master"
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/lodepng"
-    CONFIGURE_COMMAND ""
-    BUILD_COMMAND ""
-    INSTALL_COMMAND ""
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
-    LOG_DOWNLOAD ON
-)
-
-ExternalProject_Get_Property(lodepng SOURCE_DIR)
-set(lodepng_source_dir ${SOURCE_DIR})
-message(STATUS "lodepng_source_dir = ${lodepng_source_dir}")
-
-#
-#
 # nuklear
 #
 #
@@ -553,14 +530,6 @@ set(
     ${CMAKE_SOURCE_DIR}/src/shared/NuklearSdlVk.h
 )
 
-# Sources from external projects
-# add_custom_command(
-#     OUTPUT
-#     # ${CMAKE_SOURCE_DIR}/dependencies/lodepng/lodepng.cpp
-#     DEPENDS Viewer
-#     COMMAND ""
-#     )
-
 set(
     viewer_source_files
     ${shared_platform_source_files}
@@ -576,7 +545,6 @@ set(
     ${CMAKE_SOURCE_DIR}/src/viewer/SceneRendererVk.h
     ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.h
-    # ${CMAKE_SOURCE_DIR}/dependencies/lodepng/lodepng.cpp
 )
 
 # vert|frag|comp|geom|tesc|tese|h|inl|inc|fx
@@ -622,7 +590,6 @@ add_dependencies(
     DirectXMath
     FbxPipeline
     eastl
-    lodepng
     gli
     sdl2
     VulkanMemoryAllocator
@@ -646,7 +613,6 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/gli
     ${CMAKE_SOURCE_DIR}/dependencies/gli/external
     ${CMAKE_SOURCE_DIR}/dependencies/gli/external/glm
-    ${CMAKE_SOURCE_DIR}/dependencies/lodepng
     ${CMAKE_SOURCE_DIR}/dependencies/nuklear
     ${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator/src
     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath
