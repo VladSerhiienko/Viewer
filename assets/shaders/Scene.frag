@@ -57,6 +57,8 @@ void main( ) {
     // outColor.rg = inTexcoords.xy;
     // outColor.b = 0;
 
+    // outColor.rgb = texture( OcclusionMap, texcoords ).rgb;
+    // outColor.rgb = texture( NormalMap, texcoords ).rgb;
     outColor.rgb = texture( BaseColorMap, texcoords ).rgb * BaseColorFactor.rgb;
 
     // outColor.rgb = texture( NormalMap, texcoords ).rgb;

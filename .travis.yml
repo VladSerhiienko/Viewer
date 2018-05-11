@@ -23,11 +23,11 @@ before_script:
   - sudo apt-get -y install python3 libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxext-dev
 
 install:
-  - wget -O vulkansdk.run https://sdk.lunarg.com/sdk/download/1.0.68.0/linux/vulkansdk-linux-x86_64-1.0.68.0.run
+  - wget -O vulkansdk.run https://sdk.lunarg.com/sdk/download/1.1.73.0/linux/vulkansdk-linux-x86_64-1.1.73.0.run
   - chmod ugo+x vulkansdk.run
   - ./vulkansdk.run
-  - export VK_SDK_PATH=$TRAVIS_BUILD_DIR/VulkanSDK/1.0.68.0/x86_64
-  - export VULKAN_SDK=$TRAVIS_BUILD_DIR/VulkanSDK/1.0.68.0/x86_64
+  - export VK_SDK_PATH=$TRAVIS_BUILD_DIR/VulkanSDK/1.1.73.0/x86_64
+  - export VULKAN_SDK=$TRAVIS_BUILD_DIR/VulkanSDK/1.1.73.0/x86_64
 
 script:
   - export CC=/usr/bin/gcc-6

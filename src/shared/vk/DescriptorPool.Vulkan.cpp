@@ -172,23 +172,3 @@ VkDescriptorSet apemodevk::DescriptorSetPool::GetDescSet( const DescriptorSetBas
     vkUpdateDescriptorSets( pLogicalDevice, static_cast< uint32_t >( TempWrites.size( ) ), TempWrites.data( ), 0, nullptr );
     return descriptorSet;
 }
-
-//apemodevk::DescriptorSetPool::DescriptorBufferInfo::DescriptorBufferInfo( ) {
-//}
-//
-//apemodevk::DescriptorSetPool::DescriptorBufferInfo::DescriptorBufferInfo( VkDescriptorSet        pDescriptorSet,
-//                                                                          VkDescriptorBufferInfo bufferInfo,
-//                                                                          VkDescriptorType       eType,
-//                                                                          uint32_t               DstBinding )
-//    : pDescriptorSet( pDescriptorSet ), BufferInfo( bufferInfo ), eType( eType ), DstBinding( DstBinding ) {
-//}
-//
-//apemodevk::DescriptorSetPool::DescriptorImageInfo::DescriptorImageInfo( ) {
-//}
-//
-//apemodevk::DescriptorSetPool::DescriptorImageInfo::DescriptorImageInfo( VkDescriptorSet       pDescriptorSet,
-//                                                                        VkDescriptorImageInfo imageInfo,
-//                                                                        VkDescriptorType      eType,
-//                                                                        uint32_t              DstBinding )
-//    : pDescriptorSet( pDescriptorSet ), ImageInfo( imageInfo ), eType( eType ), DstBinding( DstBinding ) {
-//}

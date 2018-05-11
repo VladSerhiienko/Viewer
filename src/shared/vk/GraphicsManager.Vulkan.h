@@ -22,16 +22,6 @@ namespace apemodevk {
             APIVersion( );
         };
 
-        struct NativeLayerWrapper : public apemodevk::ScalableAllocPolicy {
-            bool                                 bIsUnnamed;
-            VkLayerProperties                    Layer;
-            std::vector< VkExtensionProperties > Extensions;
-
-            bool IsUnnamedLayer( ) const;
-            bool IsValidInstanceLayer( ) const;
-            bool IsValidDeviceLayer( ) const;
-        };
-
         struct ILogger {
             using LogLevel = platform::LogLevel;
             virtual void Log( LogLevel lvl, const char* pszMsg ) = 0;
@@ -87,28 +77,36 @@ namespace apemodevk {
                                const char*        sourceFunc ) = 0;
         };
 
-        static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback( VkFlags                    msgFlags,
-                                                             VkDebugReportObjectTypeEXT objType,
-                                                             uint64_t                   srcObject,
-                                                             size_t                     location,
-                                                             int32_t                    msgCode,
-                                                             const char *               pLayerPrefix,
-                                                             const char *               pMsg,
-                                                             void *                     pUserData );
-
         /* Destruction order must be preserved */
 
         std::unique_ptr< IAllocator >        pAllocator;
         APIVersion                           Version;
-        std::vector< const char * >          InstanceLayers;
-        std::vector< const char * >          InstanceExtensions;
-        std::vector< VkLayerProperties >     InstanceLayerProps;
-        std::vector< VkExtensionProperties > InstanceExtensionProps;
-        std::vector< NativeLayerWrapper >    LayerWrappers;
         std::unique_ptr< ILogger >           pLogger;
         std::unique_ptr< GraphicsDevice >    PrimaryNode;
         std::unique_ptr< GraphicsDevice >    SecondaryNode;
         THandle< VkInstance >                hInstance;
+
+        struct {
+            PFN_vkGetPhysicalDeviceSurfaceSupportKHR      GetPhysicalDeviceSurfaceSupportKHR;
+            PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR GetPhysicalDeviceSurfaceCapabilitiesKHR;
+            PFN_vkGetPhysicalDeviceSurfaceFormatsKHR      GetPhysicalDeviceSurfaceFormatsKHR;
+            PFN_vkGetPhysicalDeviceSurfacePresentModesKHR GetPhysicalDeviceSurfacePresentModesKHR;
+            PFN_vkCreateSwapchainKHR                      CreateSwapchainKHR;
+            PFN_vkDestroySwapchainKHR                     DestroySwapchainKHR;
+            PFN_vkGetSwapchainImagesKHR                   GetSwapchainImagesKHR;
+            PFN_vkAcquireNextImageKHR                     AcquireNextImageKHR;
+            PFN_vkQueuePresentKHR                         QueuePresentKHR;
+            PFN_vkGetRefreshCycleDurationGOOGLE           GetRefreshCycleDurationGOOGLE;
+            PFN_vkGetPastPresentationTimingGOOGLE         GetPastPresentationTimingGOOGLE;
+            PFN_vkCreateDebugUtilsMessengerEXT            CreateDebugUtilsMessengerEXT;
+            PFN_vkDestroyDebugUtilsMessengerEXT           DestroyDebugUtilsMessengerEXT;
+            PFN_vkSubmitDebugUtilsMessageEXT              SubmitDebugUtilsMessageEXT;
+            PFN_vkCmdBeginDebugUtilsLabelEXT              CmdBeginDebugUtilsLabelEXT;
+            PFN_vkCmdEndDebugUtilsLabelEXT                CmdEndDebugUtilsLabelEXT;
+            PFN_vkCmdInsertDebugUtilsLabelEXT             CmdInsertDebugUtilsLabelEXT;
+            PFN_vkSetDebugUtilsObjectNameEXT              SetDebugUtilsObjectNameEXT;
+            VkDebugUtilsMessengerEXT                      DebugUtilsMessengerEXT;
+        } Funcs;
 
         /* Initializes and returns GraphicsManager instance. */
         friend GraphicsManager* GetGraphicsManager( );
@@ -130,9 +128,7 @@ namespace apemodevk {
         GraphicsManager( );
         ~GraphicsManager( );
 
-        bool                ScanInstanceLayerProperties( uint32_t flags );
-        bool                ScanAdapters( uint32_t flags );
-        NativeLayerWrapper &GetUnnamedLayer( );
+        bool ScanAdapters( uint32_t flags );
     };
 
     /* Returns GraphicsManager instance */

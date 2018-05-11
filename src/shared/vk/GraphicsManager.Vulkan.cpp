@@ -1,154 +1,14 @@
-//#include <GameEngine.GraphicsEcosystem.Precompiled.h>
 #include <GraphicsDevice.Vulkan.h>
 #include <GraphicsManager.Vulkan.h>
-
 #include <NativeHandles.Vulkan.h>
-
 #include <TInfoStruct.Vulkan.h>
 
-#include <GraphicsManager.KnownExtensions.Vulkan.h>
-#include <GraphicsManager.KnownLayers.Vulkan.h>
-
 #include <stdlib.h>
-
-/// -------------------------------------------------------------------------------------------------------------------
-/// GraphicsEcosystem PrivateContent
-/// -------------------------------------------------------------------------------------------------------------------
 
 apemodevk::GraphicsManager::APIVersion::APIVersion( )
     : Major( VK_API_VERSION_1_0 >> 22 )
     , Minor( ( VK_API_VERSION_1_0 >> 12 ) & 0x3ff )
     , Patch( VK_API_VERSION_1_0 & 0xfff ) {
-}
-
-bool apemodevk::GraphicsManager::ScanInstanceLayerProperties( uint32_t flags ) {
-    struct SpecialLayerOrExtension {
-        uint32_t    eFlag;
-        const char* pName;
-    };
-
-    InstanceLayers.clear( );
-    InstanceLayerProps.clear( );
-    InstanceExtensions.clear( );
-    InstanceExtensionProps.clear( );
-
-    uint32_t PropCount = 0;
-    uint32_t LayerCount = 0;
-
-    switch ( CheckedCall( vkEnumerateInstanceLayerProperties( &LayerCount, NULL ) ) ) {
-        case VK_SUCCESS:
-            InstanceLayerProps.resize( LayerCount );
-            CheckedCall( vkEnumerateInstanceLayerProperties( &LayerCount, InstanceLayerProps.data( ) ) );
-            break;
-
-        default:
-            return false;
-    }
-
-    InstanceLayers.reserve( LayerCount + 1 );
-    InstanceLayers.push_back( nullptr );
-    std::transform( InstanceLayerProps.begin( ),
-                    InstanceLayerProps.end( ),
-                    std::back_inserter( InstanceLayers ),
-                    [&]( VkLayerProperties const& ExtProp ) { return ExtProp.layerName; } );
-
-    for ( SpecialLayerOrExtension specialLayer : {
-              SpecialLayerOrExtension{kEnable_LUNARG_vktrace, "VK_LAYER_LUNARG_vktrace"},
-              SpecialLayerOrExtension{kEnable_LUNARG_api_dump, "VK_LAYER_LUNARG_api_dump"},
-              SpecialLayerOrExtension{kEnable_RENDERDOC_Capture, "VK_LAYER_RENDERDOC_Capture"},
-              /*SpecialLayerOrExtension{kEnable_RENDERDOC_Capture, "VK_LAYER_LUNARG_core_validation"},
-              SpecialLayerOrExtension{kEnable_RENDERDOC_Capture, "VK_LAYER_LUNARG_monitor"},
-              SpecialLayerOrExtension{kEnable_RENDERDOC_Capture, "VK_LAYER_LUNARG_object_tracker"},
-              SpecialLayerOrExtension{kEnable_RENDERDOC_Capture, "VK_LAYER_LUNARG_parameter_validation"},
-              SpecialLayerOrExtension{kEnable_RENDERDOC_Capture, "VK_LAYER_LUNARG_screenshot"},
-              SpecialLayerOrExtension{kEnable_RENDERDOC_Capture, "VK_LAYER_LUNARG_standard_validation"},*/
-              SpecialLayerOrExtension{8, "VK_LAYER_GOOGLE_threading"},
-              SpecialLayerOrExtension{8, "VK_LAYER_GOOGLE_unique_objects"},
-              SpecialLayerOrExtension{8, "VK_LAYER_NV_optimus"},
-              SpecialLayerOrExtension{8, "VK_LAYER_NV_nsight"},
-          } ) {
-        if ( false == HasFlagEq( flags, specialLayer.eFlag ) ) {
-            auto specialLayerIt = std::find_if( ++InstanceLayers.begin( ), InstanceLayers.end( ), [&]( const char* pName ) {
-                return 0 == strcmp( pName, specialLayer.pName );
-            } );
-
-            if ( specialLayerIt != InstanceLayers.end( ) )
-                InstanceLayers.erase( specialLayerIt );
-        }
-    }
-
-    for ( auto pInstanceLayer : InstanceLayers ) {
-        switch ( CheckedCall( vkEnumerateInstanceExtensionProperties( pInstanceLayer, &PropCount, NULL ) ) ) {
-            case VK_SUCCESS: {
-                uint32_t FirstInstanceExtension = static_cast< uint32_t >( InstanceExtensionProps.size( ) );
-                InstanceExtensionProps.resize( InstanceExtensionProps.size( ) + PropCount );
-                CheckedCall( vkEnumerateInstanceExtensionProperties( pInstanceLayer, &PropCount, InstanceExtensionProps.data( ) + FirstInstanceExtension ) );
-            } break;
-
-            default:
-                return false;
-        }
-    }
-
-    std::sort( InstanceExtensionProps.begin( ),
-               InstanceExtensionProps.end( ),
-               [&]( VkExtensionProperties const& a, VkExtensionProperties const& b ) {
-                   return 0 > strcmp( a.extensionName, b.extensionName );
-               } );
-    InstanceExtensionProps.erase( std::unique( InstanceExtensionProps.begin( ),
-                                               InstanceExtensionProps.end( ),
-                                               [&]( VkExtensionProperties const& a, VkExtensionProperties const& b ) {
-                                                   return 0 == strcmp( a.extensionName, b.extensionName );
-                                               } ),
-                                  InstanceExtensionProps.end( ) );
-
-    InstanceLayers.erase( InstanceLayers.begin( ) );
-
-    platform::DebugTrace( platform::LogLevel::Info, "Instance Layers (%u):", InstanceLayers.size( ) );
-    std::for_each( InstanceLayers.begin( ), InstanceLayers.end( ), [&]( const char* pName ) {
-        platform::DebugTrace( platform::LogLevel::Info, "> %s", pName );
-    } );
-
-    InstanceExtensions.reserve( InstanceExtensionProps.size( ) );
-    std::transform( InstanceExtensionProps.begin( ),
-                    InstanceExtensionProps.end( ),
-                    std::back_inserter( InstanceExtensions ),
-                    [&]( VkExtensionProperties const& ExtProp ) { return ExtProp.extensionName; } );
-
-    /*
-        APEMODE VK: > VK_EXT_debug_report
-        APEMODE VK: > VK_EXT_display_surface_counter
-        APEMODE VK: > VK_KHR_get_physical_device_properties2
-        APEMODE VK: > VK_KHR_get_surface_capabilities2
-        APEMODE VK: > VK_KHR_surface
-        APEMODE VK: > VK_KHR_win32_surface
-        APEMODE VK: > VK_KHX_device_group_creation
-        APEMODE VK: > VK_NV_external_memory_capabilities
-    */
-
-    for ( SpecialLayerOrExtension specialLayer : {SpecialLayerOrExtension{8, "VK_NV_external_memory_capabilities"},
-                                                  SpecialLayerOrExtension{8, "VK_KHX_device_group_creation"},
-                                                  //SpecialLayerOrExtension{8, "VK_KHR_win32_surface"},
-                                                  //SpecialLayerOrExtension{8, "VK_KHR_surface"},
-                                                  SpecialLayerOrExtension{8, "VK_KHR_get_surface_capabilities2"},
-                                                  SpecialLayerOrExtension{8, "VK_KHR_get_physical_device_properties2"},
-                                                  SpecialLayerOrExtension{8, "VK_EXT_display_surface_counter"}} ) {
-        if ( false == HasFlagEq( flags, specialLayer.eFlag ) ) {
-            auto specialLayerIt = std::find_if( InstanceExtensions.begin( ),
-                                                InstanceExtensions.end( ),
-                                                [&]( const char* pName ) { return 0 == strcmp( pName, specialLayer.pName ); } );
-
-            if ( specialLayerIt != InstanceExtensions.end( ) )
-                InstanceExtensions.erase( specialLayerIt );
-        }
-    }
-
-    platform::DebugTrace( platform::LogLevel::Info, "Instance Extensions (%u):", InstanceExtensions.size( ) );
-    std::for_each( InstanceExtensions.begin( ), InstanceExtensions.end( ), [&]( const char* pName ) {
-        platform::DebugTrace( platform::LogLevel::Info, "> %s", pName );
-    } );
-
-    return true;
 }
 
 bool apemodevk::GraphicsManager::ScanAdapters( uint32_t flags ) {
@@ -181,15 +41,188 @@ bool apemodevk::GraphicsManager::ScanAdapters( uint32_t flags ) {
     return adaptersFound != 0;
 }
 
-apemodevk::GraphicsManager::NativeLayerWrapper &apemodevk::GraphicsManager::GetUnnamedLayer( ) {
-    apemode_assert( LayerWrappers.front( ).IsUnnamedLayer( ), "vkEnumerateInstanceExtensionProperties failed." );
-    return LayerWrappers.front( );
-}
-
 void apemodevk::GraphicsManager::Destroy( ) {
     PrimaryNode   = nullptr;
     SecondaryNode = nullptr;
     hInstance.Destroy( );
+}
+
+/*
+ * Return 1 (true) if all layer names specified in check_names
+ * can be found in given layer properties.
+ */
+static VkBool32 CheckLayers( uint32_t check_count, const char** check_names, uint32_t layer_count, VkLayerProperties* layers ) {
+
+    for ( uint32_t i = 0; i < check_count; i++ ) {
+
+        VkBool32 found = 0;
+        for ( uint32_t j = 0; j < layer_count; j++ ) {
+            if ( !strcmp( check_names[ i ], layers[ j ].layerName ) ) {
+                found = 1;
+                break;
+            }
+        }
+
+        if ( !found ) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+bool EnumerateLayersAndExtensions( bool                        bValidate,
+                                   std::vector< const char* >& layer_names,
+                                   std::vector< const char* >& extension_names ) {
+    VkResult err;
+
+    const char* instance_validation_layers_alt1[] = {"VK_LAYER_LUNARG_standard_validation"};
+
+    const char* instance_validation_layers_alt2[] = {"VK_LAYER_GOOGLE_threading",
+                                                     "VK_LAYER_LUNARG_parameter_validation",
+                                                     "VK_LAYER_LUNARG_object_tracker",
+                                                     "VK_LAYER_LUNARG_core_validation",
+                                                     "VK_LAYER_GOOGLE_unique_objects"};
+
+    /* Look for validation layers */
+    VkBool32 validation_found = 0;
+    if ( bValidate ) {
+
+        uint32_t instance_layer_count = 0;
+        err = vkEnumerateInstanceLayerProperties( &instance_layer_count, NULL );
+        if ( err )
+            return false;
+
+        if ( instance_layer_count > 0 ) {
+
+            std::vector< VkLayerProperties > instance_layers;
+            instance_layers.resize( instance_layer_count );
+
+            err = vkEnumerateInstanceLayerProperties( &instance_layer_count, instance_layers.data( ) );
+            if ( err )
+                return false;
+
+            validation_found = CheckLayers( apemodevk::utils::GetArraySizeU( instance_validation_layers_alt1 ),
+                                            instance_validation_layers_alt1,
+                                            instance_layer_count,
+                                            instance_layers.data( ) );
+            if ( validation_found ) {
+                for ( auto n : instance_validation_layers_alt1 ) {
+                    layer_names.push_back( n );
+                }
+            } else {
+                validation_found = CheckLayers( apemodevk::utils::GetArraySizeU( instance_validation_layers_alt2 ),
+                                                instance_validation_layers_alt2,
+                                                instance_layer_count,
+                                                instance_layers.data( ) );
+                if ( validation_found ) {
+                    for ( auto n : instance_validation_layers_alt2 ) {
+                        layer_names.push_back( n );
+                    }
+                }
+            }
+        }
+
+        if ( !validation_found ) {
+           return false;
+        }
+    }
+
+    /* Look for instance extensions */
+    VkBool32 surfaceExtFound = 0;
+    VkBool32 platformSurfaceExtFound = 0;
+
+    uint32_t instance_extension_count = 0;
+    err = vkEnumerateInstanceExtensionProperties( NULL, &instance_extension_count, NULL );
+    if ( err )
+        return false;
+
+    if ( instance_extension_count > 0 ) {
+        std::vector< VkExtensionProperties > instance_extensions;
+        instance_extensions.resize( instance_extension_count );
+
+        err = vkEnumerateInstanceExtensionProperties( NULL, &instance_extension_count, instance_extensions.data( ) );
+        if ( err )
+            return false;
+
+        for ( uint32_t i = 0; i < instance_extension_count; i++ ) {
+            if ( !strcmp( VK_KHR_SURFACE_EXTENSION_NAME, instance_extensions[ i ].extensionName ) ) {
+                surfaceExtFound = 1;
+                extension_names.push_back( VK_KHR_SURFACE_EXTENSION_NAME );
+            }
+
+#if defined( VK_USE_PLATFORM_WIN32_KHR )
+            if ( !strcmp( VK_KHR_WIN32_SURFACE_EXTENSION_NAME, instance_extensions[ i ].extensionName ) ) {
+                platformSurfaceExtFound = 1;
+                extension_names.push_back( VK_KHR_WIN32_SURFACE_EXTENSION_NAME );
+            }
+#elif defined( VK_USE_PLATFORM_XLIB_KHR )
+            if ( !strcmp( VK_KHR_XLIB_SURFACE_EXTENSION_NAME, instance_extensions[ i ].extensionName ) ) {
+                platformSurfaceExtFound = 1;
+                extension_names.push_back( VK_KHR_XLIB_SURFACE_EXTENSION_NAME );
+            }
+#elif defined( VK_USE_PLATFORM_XCB_KHR )
+            if ( !strcmp( VK_KHR_XCB_SURFACE_EXTENSION_NAME, instance_extensions[ i ].extensionName ) ) {
+                platformSurfaceExtFound = 1;
+                extension_names.push_back( VK_KHR_XCB_SURFACE_EXTENSION_NAME );
+            }
+#elif defined( VK_USE_PLATFORM_WAYLAND_KHR )
+            if ( !strcmp( VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME, instance_extensions[ i ].extensionName ) ) {
+                platformSurfaceExtFound = 1;
+                extension_names.push_back( VK_KHR_WAYLAND_SURFACE_EXTENSION_NAME );
+            }
+#elif defined( VK_USE_PLATFORM_DISPLAY_KHR )
+            if ( !strcmp( VK_KHR_DISPLAY_EXTENSION_NAME, instance_extensions[ i ].extensionName ) ) {
+                platformSurfaceExtFound = 1;
+                extension_names.push_back( VK_KHR_DISPLAY_EXTENSION_NAME );
+            }
+#elif defined( VK_USE_PLATFORM_ANDROID_KHR )
+            if ( !strcmp( VK_KHR_ANDROID_SURFACE_EXTENSION_NAME, instance_extensions[ i ].extensionName ) ) {
+                platformSurfaceExtFound = 1;
+                extension_names.push_back( VK_KHR_ANDROID_SURFACE_EXTENSION_NAME );
+            }
+#elif defined( VK_USE_PLATFORM_IOS_MVK )
+            if ( !strcmp( VK_MVK_IOS_SURFACE_EXTENSION_NAME, instance_extensions[ i ].extensionName ) ) {
+                platformSurfaceExtFound = 1;
+                extension_names.push_back( VK_MVK_IOS_SURFACE_EXTENSION_NAME );
+            }
+#elif defined( VK_USE_PLATFORM_MACOS_MVK )
+            if ( !strcmp( VK_MVK_MACOS_SURFACE_EXTENSION_NAME, instance_extensions[ i ].extensionName ) ) {
+                platformSurfaceExtFound = 1;
+                extension_names.push_back( VK_MVK_MACOS_SURFACE_EXTENSION_NAME );
+            }
+#elif defined( VK_USE_PLATFORM_MIR_KHR )
+#endif
+
+            if ( !strcmp( VK_EXT_DEBUG_REPORT_EXTENSION_NAME, instance_extensions[ i ].extensionName ) ) {
+                if ( bValidate ) {
+                    extension_names.push_back( VK_EXT_DEBUG_REPORT_EXTENSION_NAME );
+                }
+            }
+
+            if ( !strcmp( VK_EXT_DEBUG_UTILS_EXTENSION_NAME, instance_extensions[ i ].extensionName ) ) {
+                if ( bValidate ) {
+                    extension_names.push_back( VK_EXT_DEBUG_REPORT_EXTENSION_NAME );
+                }
+            }
+        }
+    }
+
+    if ( !surfaceExtFound ) {
+        return false;
+    }
+
+    if ( !platformSurfaceExtFound ) {
+        return false;
+    }
+
+    return true;
+}
+
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback( VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+                                                       VkDebugUtilsMessageTypeFlagsEXT             messageType,
+                                                       const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                                       void*                                       pUserData ) {
+    return false;
 }
 
 bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t                      flags,
@@ -200,7 +233,11 @@ bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t                
     pAllocator = std::move( pInAllocator );
     pLogger    = std::move( pInLogger );
 
-    if ( !ScanInstanceLayerProperties( flags ) )
+    bool                       bValidate = false;
+    std::vector< const char* > instanceLayers;
+    std::vector< const char* > instanceExtensions;
+
+    if ( !EnumerateLayersAndExtensions( bValidate, instanceLayers, instanceExtensions ) )
         return false;
 
     VkApplicationInfo applicationInfo;
@@ -212,29 +249,31 @@ bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t                
     applicationInfo.applicationVersion = 1;
     applicationInfo.engineVersion      = 1;
 
-    // clang-format off
-    auto debugFlags
-        = VK_DEBUG_REPORT_ERROR_BIT_EXT
-        | VK_DEBUG_REPORT_DEBUG_BIT_EXT
-        | VK_DEBUG_REPORT_WARNING_BIT_EXT
-        | VK_DEBUG_REPORT_INFORMATION_BIT_EXT;
-    // clang-format on
-
-    VkDebugReportCallbackCreateInfoEXT debugReportCallbackCreateInfo;
-    InitializeStruct( debugReportCallbackCreateInfo );
-    debugReportCallbackCreateInfo.pfnCallback = DebugCallback;
-    debugReportCallbackCreateInfo.pUserData   = this;
-    debugReportCallbackCreateInfo.sType       = VK_STRUCTURE_TYPE_DEBUG_REPORT_CREATE_INFO_EXT;
-    debugReportCallbackCreateInfo.flags       = debugFlags;
+    VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfoEXT;
+    InitializeStruct( debugUtilsMessengerCreateInfoEXT );
+    debugUtilsMessengerCreateInfoEXT.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    debugUtilsMessengerCreateInfoEXT.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                                                       VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    debugUtilsMessengerCreateInfoEXT.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                                   VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                                   VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    debugUtilsMessengerCreateInfoEXT.pfnUserCallback = DebugMessengerCallback;
 
     VkInstanceCreateInfo instanceCreateInfo;
     InitializeStruct( instanceCreateInfo );
-    instanceCreateInfo.pNext                   = &debugReportCallbackCreateInfo;
     instanceCreateInfo.pApplicationInfo        = &applicationInfo;
-    instanceCreateInfo.enabledLayerCount       = GetSizeU( InstanceLayers );
-    instanceCreateInfo.ppEnabledLayerNames     = InstanceLayers.data( );
-    instanceCreateInfo.enabledExtensionCount   = GetSizeU( InstanceExtensions );
-    instanceCreateInfo.ppEnabledExtensionNames = InstanceExtensions.data( );
+    instanceCreateInfo.enabledLayerCount       = GetSizeU( instanceLayers );
+    instanceCreateInfo.ppEnabledLayerNames     = instanceLayers.data( );
+    instanceCreateInfo.enabledExtensionCount   = GetSizeU( instanceExtensions );
+    instanceCreateInfo.ppEnabledExtensionNames = instanceExtensions.data( );
+
+    /* This is info for a temp callback to use during CreateInstance.
+     *  After the instance is created, we use the instance-based
+     * function to register the final callback. */
+    if ( bValidate ) {
+        // VK_EXT_debug_utils style
+        instanceCreateInfo.pNext = &debugUtilsMessengerCreateInfoEXT;
+    }
 
     /*
     Those layers cannot be used as standalone layers (please, see vktrace, renderdoc docs)
@@ -253,6 +292,34 @@ bool apemodevk::GraphicsManager::RecreateGraphicsNodes( uint32_t                
 
     bool bIsOk = hInstance.Recreate( instanceCreateInfo );
     apemode_assert( bIsOk, "vkCreateInstance failed." );
+
+    if ( bIsOk && bValidate ) {
+
+        // clang-format off
+        // Setup VK_EXT_debug_utils function pointers always (we use them for debug labels and names).
+        Funcs.CreateDebugUtilsMessengerEXT  = (PFN_vkCreateDebugUtilsMessengerEXT)  vkGetInstanceProcAddr( hInstance, "vkCreateDebugUtilsMessengerEXT" );
+        Funcs.DestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr( hInstance, "vkDestroyDebugUtilsMessengerEXT" );
+        Funcs.SubmitDebugUtilsMessageEXT    = (PFN_vkSubmitDebugUtilsMessageEXT)    vkGetInstanceProcAddr( hInstance, "vkSubmitDebugUtilsMessageEXT" );
+        Funcs.CmdBeginDebugUtilsLabelEXT    = (PFN_vkCmdBeginDebugUtilsLabelEXT)    vkGetInstanceProcAddr( hInstance, "vkCmdBeginDebugUtilsLabelEXT" );
+        Funcs.CmdEndDebugUtilsLabelEXT      = (PFN_vkCmdEndDebugUtilsLabelEXT)      vkGetInstanceProcAddr( hInstance, "vkCmdEndDebugUtilsLabelEXT" );
+        Funcs.CmdInsertDebugUtilsLabelEXT   = (PFN_vkCmdInsertDebugUtilsLabelEXT)   vkGetInstanceProcAddr( hInstance, "vkCmdInsertDebugUtilsLabelEXT" );
+        Funcs.SetDebugUtilsObjectNameEXT    = (PFN_vkSetDebugUtilsObjectNameEXT)    vkGetInstanceProcAddr( hInstance, "vkSetDebugUtilsObjectNameEXT" );
+        // clang-format on
+
+        if ( NULL == Funcs.CreateDebugUtilsMessengerEXT || NULL == Funcs.DestroyDebugUtilsMessengerEXT ||
+             NULL == Funcs.SubmitDebugUtilsMessageEXT || NULL == Funcs.CmdBeginDebugUtilsLabelEXT ||
+             NULL == Funcs.CmdEndDebugUtilsLabelEXT || NULL == Funcs.CmdInsertDebugUtilsLabelEXT ||
+             NULL == Funcs.SetDebugUtilsObjectNameEXT ) {
+            return false;
+        }
+
+        switch ( CheckedCall( Funcs.CreateDebugUtilsMessengerEXT( hInstance, &debugUtilsMessengerCreateInfoEXT, NULL, &Funcs.DebugUtilsMessengerEXT ) ) ) {
+            case VK_SUCCESS:
+                break;
+            default:
+                return false;
+        }
+    }
 
     if ( !ScanAdapters( flags ) )
         return false;
@@ -363,79 +430,44 @@ std::string ToStringFlags( VkFlags flags )
     return ss.str( );
 }
 
-VKAPI_ATTR VkBool32 VKAPI_CALL apemodevk::GraphicsManager::DebugCallback( VkFlags                    msgFlags,
-                                                                          VkDebugReportObjectTypeEXT objType,
-                                                                          uint64_t                   srcObject,
-                                                                          size_t                     location,
-                                                                          int32_t                    msgCode,
-                                                                          const char *               pLayerPrefix,
-                                                                          const char *               pMsg,
-                                                                          void *                     pUserData ) {
-    platform::DebugTrace( platform::LogLevel::Warn,
-                          "[vk-debug-cb] [%s] %s msg: %s, tobj: %s, obj: %llu, location: %zu, msgcode: %i",
-                          pLayerPrefix,
-                          ToStringFlags( msgFlags ).c_str(),
-                          pMsg,
-                          ToString( objType ),
-                          srcObject,
-                          location,
-                          msgCode );
+// VKAPI_ATTR VkBool32 VKAPI_CALL apemodevk::GraphicsManager::DebugCallback( VkFlags                    msgFlags,
+//                                                                           VkDebugReportObjectTypeEXT objType,
+//                                                                           uint64_t                   srcObject,
+//                                                                           size_t                     location,
+//                                                                           int32_t                    msgCode,
+//                                                                           const char *               pLayerPrefix,
+//                                                                           const char *               pMsg,
+//                                                                           void *                     pUserData ) {
+//     platform::DebugTrace( platform::LogLevel::Warn,
+//                           "[vk-debug-cb] [%s] %s msg: %s, tobj: %s, obj: %llu, location: %zu, msgcode: %i",
+//                           pLayerPrefix,
+//                           ToStringFlags( msgFlags ).c_str(),
+//                           pMsg,
+//                           ToString( objType ),
+//                           srcObject,
+//                           location,
+//                           msgCode );
 
-    if ( msgFlags & VK_DEBUG_REPORT_ERROR_BIT_EXT ) {
+//     if ( msgFlags & VK_DEBUG_REPORT_ERROR_BIT_EXT ) {
 
-        if ( nullptr == strstr( pMsg, "Nvda.Graphics.Interception" ) )
-            platform::DebugBreak( );
+//         if ( nullptr == strstr( pMsg, "Nvda.Graphics.Interception" ) )
+//             platform::DebugBreak( );
 
-    } else if ( msgFlags & VK_DEBUG_REPORT_WARNING_BIT_EXT ) {
-        //platform::DebugBreak( );
-    } else if ( msgFlags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT ) {
-    } else if ( msgFlags & VK_DEBUG_REPORT_DEBUG_BIT_EXT ) {
-    }
+//     } else if ( msgFlags & VK_DEBUG_REPORT_WARNING_BIT_EXT ) {
+//         //platform::DebugBreak( );
+//     } else if ( msgFlags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT ) {
+//     } else if ( msgFlags & VK_DEBUG_REPORT_DEBUG_BIT_EXT ) {
+//     }
 
-    /* False indicates that layer should not bail-out of an
-     * API call that had validation failures. This may mean that the
-     * app dies inside the driver due to invalid parameter(s).
-     * That's what would happen without validation layers, so we'll
-     * keep that behavior here.
-     */
+//     /* False indicates that layer should not bail-out of an
+//      * API call that had validation failures. This may mean that the
+//      * app dies inside the driver due to invalid parameter(s).
+//      * That's what would happen without validation layers, so we'll
+//      * keep that behavior here.
+//      */
 
-    return false;
-}
-
-bool apemodevk::GraphicsManager::NativeLayerWrapper::IsUnnamedLayer( ) const {
-    return bIsUnnamed;
-}
-
-bool apemodevk::GraphicsManager::NativeLayerWrapper::IsValidInstanceLayer( ) const {
-    if ( IsUnnamedLayer( ) ) {
-
-        auto const pKnownExtensionBeginIt = Vulkan::KnownInstanceExtensions;
-        auto const pKnownExtensionEndIt   = Vulkan::KnownInstanceExtensions + Vulkan::KnownInstanceExtensionCount;
-
-        size_t knownExtensionsFound = std::count_if( pKnownExtensionBeginIt, pKnownExtensionEndIt, [this]( char const *KnownExtension ) {
-
-            auto const pExtensionBeginIt = Extensions.begin( );
-            auto const pExtensionEndIt   = Extensions.end( );
-
-            auto const pFoundExtensionIt = std::find_if( pExtensionBeginIt, pExtensionEndIt, [&]( VkExtensionProperties const& Extension ) {
-                return strcmp( KnownExtension, Extension.extensionName ) == 0;
-            } );
-
-            bool const bIsExtensionFound = pFoundExtensionIt != pExtensionEndIt;
-            apemode_assert( bIsExtensionFound, "Extension '%s' was not found.", KnownExtension );
-
-            return bIsExtensionFound;
-        } );
-
-        return knownExtensionsFound == Vulkan::KnownInstanceExtensionCount;
-    }
-
-    return true;
-}
-
-/// -------------------------------------------------------------------------------------------------------------------
-/// GraphicsManager
-/// -------------------------------------------------------------------------------------------------------------------
+//     return false;
+// }
 
 apemodevk::GraphicsManager* apemodevk::GetGraphicsManager( ) {
     static apemodevk::GraphicsManager graphicsManagerInstance;

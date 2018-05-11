@@ -11,38 +11,6 @@
 
 #include <TInfoStruct.Vulkan.h>
 
-/// -------------------------------------------------------------------------------------------------------------------
-/// GraphicsDevice PrivateContent
-/// -------------------------------------------------------------------------------------------------------------------
-
-bool apemodevk::GraphicsManager::NativeLayerWrapper::IsValidDeviceLayer( ) const {
-    if ( IsUnnamedLayer( ) ) {
-        auto const KnownExtensionBeginIt = Vulkan::KnownDeviceExtensions;
-        auto const KnownExtensionEndIt   = Vulkan::KnownDeviceExtensions + Vulkan::KnownDeviceExtensionCount;
-
-        auto Counter = [this]( char const* KnownExtension ) {
-            auto const ExtensionBeginIt = Extensions.begin( );
-            auto const ExtensionEndIt   = Extensions.end( );
-
-            auto Finder = [&]( VkExtensionProperties const& Extension ) {
-                static const int eStrCmp_EqualStrings = 0;
-                return strcmp( KnownExtension, Extension.extensionName ) == eStrCmp_EqualStrings;
-            };
-
-            auto const FoundExtensionIt  = std::find_if( ExtensionBeginIt, ExtensionEndIt, Finder );
-            auto const bIsExtensionFound = FoundExtensionIt != ExtensionEndIt;
-            apemode_assert( bIsExtensionFound, "Extension '%s' was not found.", KnownExtension );
-
-            return bIsExtensionFound;
-        };
-
-        size_t KnownExtensionsFound = std::count_if( KnownExtensionBeginIt, KnownExtensionEndIt, Counter );
-        return KnownExtensionsFound == Vulkan::KnownDeviceExtensionCount;
-    }
-
-    return true;
-}
-
 bool apemodevk::GraphicsDevice::ScanDeviceQueues( std::vector< VkQueueFamilyProperties >& QueueProps,
                                                   std::vector< VkDeviceQueueCreateInfo >& QueueReqs,
                                                   std::vector< float >&                   QueuePriorities ) {
@@ -83,103 +51,6 @@ bool apemodevk::GraphicsDevice::ScanDeviceQueues( std::vector< VkQueueFamilyProp
     return true;
 }
 
-bool apemodevk::GraphicsDevice::ScanDeviceLayerProperties( uint32_t flags ) {
-
-    struct SpecialLayerOrExtension {
-        uint32_t    eFlag;
-        const char* pName;
-    };
-
-    DeviceLayers.clear( );
-    DeviceLayerProps.clear( );
-    DeviceExtensions.clear( );
-    DeviceExtensionProps.clear( );
-
-    VkResult eResult;
-
-    uint32_t LayerCount = 0;
-    eResult = vkEnumerateDeviceLayerProperties( pPhysicalDevice, &LayerCount, NULL );
-    if (  VK_SUCCESS == eResult && LayerCount ) {
-        DeviceLayerProps.resize( LayerCount );
-        eResult = vkEnumerateDeviceLayerProperties( pPhysicalDevice, &LayerCount, DeviceLayerProps.data( ) );
-    }
-
-    if ( VK_SUCCESS != eResult )
-        return false;
-
-    DeviceLayers.reserve( LayerCount + 1 );
-    DeviceLayers.push_back( nullptr );
-    std::transform( DeviceLayerProps.begin( ),
-                    DeviceLayerProps.end( ),
-                    std::back_inserter( DeviceLayers ),
-                    [&]( VkLayerProperties const& ExtProp ) { return ExtProp.layerName; } );
-
-    for ( auto layerName : DeviceLayers ) {
-        uint32_t ExtPropCount = 0;
-        eResult = vkEnumerateDeviceExtensionProperties( pPhysicalDevice, layerName, &ExtPropCount, NULL );
-        if ( VK_SUCCESS == eResult && ExtPropCount ) {
-            uint32_t firstExt = static_cast< uint32_t >( DeviceExtensionProps.size( ) );
-            DeviceExtensionProps.resize( DeviceExtensionProps.size( ) + ExtPropCount );
-            eResult = vkEnumerateDeviceExtensionProperties( pPhysicalDevice, layerName, &ExtPropCount, DeviceExtensionProps.data( ) + firstExt );
-        }
-    }
-
-    std::sort( DeviceExtensionProps.begin( ),
-               DeviceExtensionProps.end( ),
-               [&]( VkExtensionProperties const& a, VkExtensionProperties const& b ) {
-                   return 0 > strcmp( a.extensionName, b.extensionName );
-               } );
-    DeviceExtensionProps.erase( std::unique( DeviceExtensionProps.begin( ),
-                                             DeviceExtensionProps.end( ),
-                                             [&]( VkExtensionProperties const& a, VkExtensionProperties const& b ) {
-                                                 return 0 == strcmp( a.extensionName, b.extensionName );
-                                             } ),
-                                DeviceExtensionProps.end( ) );
-
-    DeviceLayers.erase( DeviceLayers.begin( ) );
-
-    for ( SpecialLayerOrExtension specialLayer : {
-              SpecialLayerOrExtension{GraphicsManager::kEnable_LUNARG_vktrace, "VK_LAYER_LUNARG_vktrace"},
-              SpecialLayerOrExtension{GraphicsManager::kEnable_LUNARG_api_dump, "VK_LAYER_LUNARG_api_dump"},
-              SpecialLayerOrExtension{GraphicsManager::kEnable_RENDERDOC_Capture, "VK_LAYER_RENDERDOC_Capture"},
-              /*
-              SpecialLayerOrExtension{kEnable_RENDERDOC_Capture, "VK_LAYER_LUNARG_core_validation"},
-              SpecialLayerOrExtension{kEnable_RENDERDOC_Capture, "VK_LAYER_LUNARG_monitor"},
-              SpecialLayerOrExtension{kEnable_RENDERDOC_Capture, "VK_LAYER_LUNARG_object_tracker"},
-              SpecialLayerOrExtension{kEnable_RENDERDOC_Capture, "VK_LAYER_LUNARG_parameter_validation"},
-              SpecialLayerOrExtension{kEnable_RENDERDOC_Capture, "VK_LAYER_LUNARG_screenshot"},
-              SpecialLayerOrExtension{kEnable_RENDERDOC_Capture, "VK_LAYER_LUNARG_standard_validation"},
-              */
-              SpecialLayerOrExtension{8, "VK_LAYER_GOOGLE_threading"},
-              SpecialLayerOrExtension{8, "VK_LAYER_GOOGLE_unique_objects"},
-              SpecialLayerOrExtension{8, "VK_LAYER_NV_optimus"},
-              SpecialLayerOrExtension{8, "VK_LAYER_NV_nsight"},
-          } ) {
-        if ( false == HasFlagEq( flags, specialLayer.eFlag ) ) {
-            auto specialLayerIt = std::find_if( DeviceLayers.begin( ), DeviceLayers.end( ), [&]( const char* pName ) {
-                return 0 == strcmp( pName, specialLayer.pName );
-            } );
-
-            if ( specialLayerIt != DeviceLayers.end( ) )
-                DeviceLayers.erase( specialLayerIt );
-        }
-    }
-
-    platform::DebugTrace( platform::LogLevel::Info, "Device Layers (%u):", DeviceLayers.size( ) );
-    std::for_each( DeviceLayers.begin( ), DeviceLayers.end( ), [&]( const char* pName ) { platform::DebugTrace( platform::LogLevel::Info, "> %s", pName ); } );
-
-    DeviceExtensions.reserve( DeviceExtensionProps.size( ) );
-    std::transform( DeviceExtensionProps.begin( ),
-                    DeviceExtensionProps.end( ),
-                    std::back_inserter( DeviceExtensions ),
-                    [&]( VkExtensionProperties const& ExtProp ) { return ExtProp.extensionName; } );
-
-    platform::DebugTrace( platform::LogLevel::Info, "Device Extensions (%u):", DeviceExtensions.size( ) );
-    std::for_each( DeviceExtensions.begin( ), DeviceExtensions.end( ), [&]( const char* pName ) { platform::DebugTrace( platform::LogLevel::Info, "> %s", pName ); } );
-
-    return VK_SUCCESS == eResult;
-}
-
 bool apemodevk::GraphicsDevice::ScanFormatProperties( ) {
     VkFormat NativeFormatIt = VK_FORMAT_UNDEFINED;
     for ( ; NativeFormatIt < VK_FORMAT_RANGE_SIZE; ) {
@@ -210,13 +81,7 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( VkPhysicalDevice InAdapter
         std::vector< VkDeviceQueueCreateInfo > QueueReqs;
         std::vector< float >                   QueuePriorities;
 
-        if ( ScanDeviceQueues( QueueProps, QueueReqs, QueuePriorities ) && ScanFormatProperties( ) && ScanDeviceLayerProperties( flags ) ) {
-            std::vector< const char* > DeviceExtNames;
-            DeviceExtNames.reserve( DeviceExtensionProps.size( ) );
-            std::transform( DeviceExtensionProps.begin( ),
-                            DeviceExtensionProps.end( ),
-                            std::back_inserter( DeviceExtNames ),
-                            [&]( VkExtensionProperties const& ExtProp ) { return ExtProp.extensionName; } );
+        if ( ScanDeviceQueues( QueueProps, QueueReqs, QueuePriorities ) && ScanFormatProperties( ) ) {
 
             VkPhysicalDeviceFeatures Features;
             vkGetPhysicalDeviceFeatures( pPhysicalDevice, &Features );
@@ -225,10 +90,10 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( VkPhysicalDevice InAdapter
             deviceCreateInfo.pEnabledFeatures        = &Features;
             deviceCreateInfo.queueCreateInfoCount    = GetSizeU( QueueReqs );
             deviceCreateInfo.pQueueCreateInfos       = QueueReqs.data( );
-            deviceCreateInfo.enabledLayerCount       = (uint32_t) DeviceLayers.size( );
-            deviceCreateInfo.ppEnabledLayerNames     = DeviceLayers.data( );
-            deviceCreateInfo.enabledExtensionCount   = (uint32_t) DeviceExtensions.size( );
-            deviceCreateInfo.ppEnabledExtensionNames = DeviceExtensions.data( );
+            // deviceCreateInfo.enabledLayerCount       = (uint32_t) DeviceLayers.size( );
+            // deviceCreateInfo.ppEnabledLayerNames     = DeviceLayers.data( );
+            // deviceCreateInfo.enabledExtensionCount   = (uint32_t) DeviceExtensions.size( );
+            // deviceCreateInfo.ppEnabledExtensionNames = DeviceExtensions.data( );
 
             const auto bOk = hLogicalDevice.Recreate( pPhysicalDevice, deviceCreateInfo );
             apemode_assert( bOk, "vkCreateDevice failed." );
