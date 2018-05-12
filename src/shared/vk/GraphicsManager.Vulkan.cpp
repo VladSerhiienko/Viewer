@@ -235,7 +235,6 @@ bool EnumerateLayersAndExtensions( uint32_t                    eFlags,
     return true;
 }
 
-/* TODO: Complete error logging */
 VKAPI_ATTR VkBool32 VKAPI_CALL DebugReportCallback( VkFlags                    msgFlags,
                                                     VkDebugReportObjectTypeEXT objType,
                                                     uint64_t                   srcObject,
@@ -243,43 +242,12 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugReportCallback( VkFlags                    m
                                                     int32_t                    msgCode,
                                                     const char*                pLayerPrefix,
                                                     const char*                pMsg,
-                                                    void*                      pUserData ) {
+                                                    void*                      pUserData );
 
-    apemodevk::platform::LogLevel lvl = apemodevk::platform::LogLevel::Trace;
-    if ( msgFlags & VK_DEBUG_REPORT_ERROR_BIT_EXT ) {
-        lvl = apemodevk::platform::LogLevel::Err;
-    } else if ( msgFlags & VK_DEBUG_REPORT_WARNING_BIT_EXT ) {
-        lvl = apemodevk::platform::LogLevel::Warn;
-    } else if ( msgFlags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT ) {
-        lvl = apemodevk::platform::LogLevel::Info;
-    } else if ( msgFlags & VK_DEBUG_REPORT_DEBUG_BIT_EXT ) {
-        lvl = apemodevk::platform::LogLevel::Debug;
-    }
-
-    apemodevk::platform::DebugTrace( lvl, "[vk-drprt] [%s] %s", pLayerPrefix, pMsg );
-    return false;
-}
-
-/* TODO: Complete error logging */
 VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback( VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
                                                        VkDebugUtilsMessageTypeFlagsEXT             messageType,
                                                        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-                                                       void*                                       pUserData ) {
-
-    apemodevk::platform::LogLevel lvl = apemodevk::platform::LogLevel::Trace;
-    if ( messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT ) {
-        lvl = apemodevk::platform::LogLevel::Debug;
-    } else if ( messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT ) {
-        lvl = apemodevk::platform::LogLevel::Info;
-    } else if ( messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ) {
-        lvl = apemodevk::platform::LogLevel::Warn;
-    } else if ( messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ) {
-        lvl = apemodevk::platform::LogLevel::Err;
-    }
-
-    apemodevk::platform::DebugTrace( lvl, "[vk-dmsgr] [%s] %s", pCallbackData->pMessageIdName, pCallbackData->pMessage );
-    return false;
-}
+                                                       void*                                       pUserData );
 
 bool apemodevk::GraphicsManager::Initialize( uint32_t                      eFlags,
                                              std::unique_ptr< IAllocator > pInAllocator,
@@ -298,14 +266,11 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                      eFlag
     std::vector< const char* > instanceLayers;
     std::vector< const char* > instanceExtensions;
 
-    bool bDebugReport    = false;
-    bool bDebugMessanger = false;
-
     if ( !EnumerateLayersAndExtensions( eFlags,
                                         instanceLayers,
                                         instanceExtensions,
-                                        bDebugReport,
-                                        bDebugMessanger,
+                                        Ext.bDebugReport,
+                                        Ext.bDebugMessanger,
                                         ppszLayers,
                                         layerCount,
                                         ppszExtensions,
@@ -353,10 +318,10 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                      eFlag
      *  After the instance is created, we use the instance-based
      * function to register the final callback. */
 
-    if ( bValidate && bDebugMessanger ) {
+    if ( bValidate && Ext.bDebugMessanger ) {
         // VK_EXT_debug_utils style
         instanceCreateInfo.pNext = &debugUtilsMessengerCreateInfoEXT;
-    } else if ( bValidate && bDebugReport ) {
+    } else if ( bValidate && Ext.bDebugReport ) {
         // VK_EXT_debug_report style
         instanceCreateInfo.pNext = &debugReportCallbackCreateInfoEXT;
     }
@@ -395,7 +360,7 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                      eFlag
         return false;
     }
 
-    if ( bValidate && bDebugMessanger ) {
+    if ( bValidate && Ext.bDebugMessanger ) {
 
         // clang-format off
         // VK_EXT_debug_utils
@@ -431,8 +396,7 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                      eFlag
     return true;
 }
 
-const char * ToString( VkDebugReportObjectTypeEXT eDebugReportObjectTypeEXT )
-{
+const char* ToString( VkDebugReportObjectTypeEXT eDebugReportObjectTypeEXT ) {
     switch ( eDebugReportObjectTypeEXT ) {
         case VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT:
             return "VK_DEBUG_REPORT_OBJECT_TYPE_UNKNOWN_EXT";
@@ -507,71 +471,51 @@ const char * ToString( VkDebugReportObjectTypeEXT eDebugReportObjectTypeEXT )
     }
 }
 
-std::string ToStringFlags( VkFlags flags )
-{
-    std::stringstream ss;
+/* TODO: Complete error logging */
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugReportCallback( VkFlags                    msgFlags,
+                                                    VkDebugReportObjectTypeEXT objType,
+                                                    uint64_t                   srcObject,
+                                                    size_t                     location,
+                                                    int32_t                    msgCode,
+                                                    const char*                pLayerPrefix,
+                                                    const char*                pMsg,
+                                                    void*                      pUserData ) {
 
-    ss << "[";
-    if ( ( flags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT ) == VK_DEBUG_REPORT_INFORMATION_BIT_EXT ) {
-        ss << "info|";
-    }
-    if ( ( flags & VK_DEBUG_REPORT_WARNING_BIT_EXT ) == VK_DEBUG_REPORT_WARNING_BIT_EXT ) {
-        ss << "warn|";
-    }
-    if ( ( flags & VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT ) == VK_DEBUG_REPORT_PERFORMANCE_WARNING_BIT_EXT ) {
-        ss << "perf|";
-    }
-    if ( ( flags & VK_DEBUG_REPORT_ERROR_BIT_EXT ) == VK_DEBUG_REPORT_ERROR_BIT_EXT ) {
-        ss << "err|";
-    }
-    if ( ( flags & VK_DEBUG_REPORT_DEBUG_BIT_EXT ) == VK_DEBUG_REPORT_DEBUG_BIT_EXT ) {
-        ss << "debug|";
+    apemodevk::platform::LogLevel lvl = apemodevk::platform::LogLevel::Trace;
+    if ( msgFlags & VK_DEBUG_REPORT_ERROR_BIT_EXT ) {
+        lvl = apemodevk::platform::LogLevel::Err;
+    } else if ( msgFlags & VK_DEBUG_REPORT_WARNING_BIT_EXT ) {
+        lvl = apemodevk::platform::LogLevel::Warn;
+    } else if ( msgFlags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT ) {
+        lvl = apemodevk::platform::LogLevel::Info;
+    } else if ( msgFlags & VK_DEBUG_REPORT_DEBUG_BIT_EXT ) {
+        lvl = apemodevk::platform::LogLevel::Debug;
     }
 
-    ss.seekp( ss.tellp( ) - std::stringstream::pos_type( 1 ), ss.beg );
-    ss << "]";
-
-    return ss.str( );
+    apemodevk::platform::DebugTrace( lvl, "[vk-drprt] [%s] (%s) %s", pLayerPrefix, ToString( objType ), pMsg );
+    return false;
 }
 
-// VKAPI_ATTR VkBool32 VKAPI_CALL apemodevk::GraphicsManager::DebugCallback( VkFlags                    msgFlags,
-//                                                                           VkDebugReportObjectTypeEXT objType,
-//                                                                           uint64_t                   srcObject,
-//                                                                           size_t                     location,
-//                                                                           int32_t                    msgCode,
-//                                                                           const char *               pLayerPrefix,
-//                                                                           const char *               pMsg,
-//                                                                           void *                     pUserData ) {
-//     platform::DebugTrace( platform::LogLevel::Warn,
-//                           "[vk-debug-cb] [%s] %s msg: %s, tobj: %s, obj: %llu, location: %zu, msgcode: %i",
-//                           pLayerPrefix,
-//                           ToStringFlags( msgFlags ).c_str(),
-//                           pMsg,
-//                           ToString( objType ),
-//                           srcObject,
-//                           location,
-//                           msgCode );
+/* TODO: Complete error logging */
+VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback( VkDebugUtilsMessageSeverityFlagBitsEXT      messageSeverity,
+                                                       VkDebugUtilsMessageTypeFlagsEXT             messageType,
+                                                       const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+                                                       void*                                       pUserData ) {
 
-//     if ( msgFlags & VK_DEBUG_REPORT_ERROR_BIT_EXT ) {
+    apemodevk::platform::LogLevel lvl = apemodevk::platform::LogLevel::Trace;
+    if ( messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT ) {
+        lvl = apemodevk::platform::LogLevel::Debug;
+    } else if ( messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT ) {
+        lvl = apemodevk::platform::LogLevel::Info;
+    } else if ( messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT ) {
+        lvl = apemodevk::platform::LogLevel::Warn;
+    } else if ( messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT ) {
+        lvl = apemodevk::platform::LogLevel::Err;
+    }
 
-//         if ( nullptr == strstr( pMsg, "Nvda.Graphics.Interception" ) )
-//             platform::DebugBreak( );
-
-//     } else if ( msgFlags & VK_DEBUG_REPORT_WARNING_BIT_EXT ) {
-//         //platform::DebugBreak( );
-//     } else if ( msgFlags & VK_DEBUG_REPORT_INFORMATION_BIT_EXT ) {
-//     } else if ( msgFlags & VK_DEBUG_REPORT_DEBUG_BIT_EXT ) {
-//     }
-
-//     /* False indicates that layer should not bail-out of an
-//      * API call that had validation failures. This may mean that the
-//      * app dies inside the driver due to invalid parameter(s).
-//      * That's what would happen without validation layers, so we'll
-//      * keep that behavior here.
-//      */
-
-//     return false;
-// }
+    apemodevk::platform::DebugTrace( lvl, "[vk-dmsgr] [%s] %s", pCallbackData->pMessageIdName, pCallbackData->pMessage );
+    return false;
+}
 
 apemodevk::GraphicsManager* apemodevk::GetGraphicsManager( ) {
     static apemodevk::GraphicsManager graphicsManagerInstance;
@@ -597,7 +541,7 @@ apemodevk::GraphicsManager::ILogger* apemodevk::GraphicsManager::GetLogger( ) {
 }
 
 const VkAllocationCallbacks* apemodevk::GraphicsManager::GetAllocationCallbacks( ) const {
-    static VkAllocationCallbacks allocationCallbacks{nullptr,
+    static VkAllocationCallbacks allocationCallbacks{nullptr, /* pUserData */
                                                      &AllocationCallbacks::AllocationFunction,
                                                      &AllocationCallbacks::ReallocationFunction,
                                                      &AllocationCallbacks::FreeFunction,
@@ -657,7 +601,7 @@ void apemodevk::GraphicsManager::AllocationCallbacks::InternalAllocationNotifica
                                                                                       VkInternalAllocationType allocationType,
                                                                                       VkSystemAllocationScope  allocationScope ) {
     platform::DebugTrace( platform::LogLevel::Debug,
-                          "[vk-internal-notification] allocated: %uz, type: %s, scope: %s",
+                          "[vk-intnt] allocated: %uz, type: %s, scope: %s",
                           size,
                           ToString( allocationType ),
                           ToString( allocationScope ) );
@@ -668,7 +612,7 @@ void apemodevk::GraphicsManager::AllocationCallbacks::InternalFreeNotification( 
                                                                                 VkInternalAllocationType allocationType,
                                                                                 VkSystemAllocationScope  allocationScope ) {
     platform::DebugTrace( platform::LogLevel::Debug,
-                          "[vk-internal-notification] freed: %uz, type: %s, scope: %s",
+                          "[vk-intnt] freed: %uz, type: %s, scope: %s",
                           size,
                           ToString( allocationType ),
                           ToString( allocationScope ) );

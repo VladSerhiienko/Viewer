@@ -97,6 +97,8 @@ namespace apemodevk {
             PFN_vkCmdInsertDebugUtilsLabelEXT             CmdInsertDebugUtilsLabelEXT                  = nullptr;
             PFN_vkSetDebugUtilsObjectNameEXT              SetDebugUtilsObjectNameEXT                   = nullptr;
             VkDebugUtilsMessengerEXT                      DebugUtilsMessengerEXT                       = nullptr;
+            bool                                          bDebugReport                                 = false;
+            bool                                          bDebugMessanger                              = false;
         } Ext;
 
         /* Initializes and returns GraphicsManager instance. */
