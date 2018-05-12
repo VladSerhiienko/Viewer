@@ -50,117 +50,132 @@ struct GraphicsLogger : apemodevk::GraphicsManager::ILogger {
 bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, const char* name ) {
     LogInfo( "apemode/AppSurfaceSdlVk/Initialize" );
 
-    if ( AppSurfaceSdlBase::Initialize( width, height, name ) ) {
+    if ( !AppSurfaceSdlBase::Initialize( width, height, name ) ) {
+        return false;
+    }
 
-        uint32_t graphicsManagerFlags = 0;
+    uint32_t graphicsManagerFlags = 0;
 
 #ifdef _DEBUG
-        graphicsManagerFlags |= apemodevk::GraphicsManager::kEnableValidation;
+    graphicsManagerFlags |= apemodevk::GraphicsManager::kEnableValidation;
 #endif
-        const char* ppszLayers[ 3 ] = {nullptr};
-        size_t      layerCount      = 0;
 
-        if ( TGetOption< bool >( "renderdoc", false ) )
-            ppszLayers[ layerCount ] = "VK_LAYER_RENDERDOC_Capture", ++layerCount;
+    const char* ppszLayers[ 3 ] = {nullptr};
+    size_t layerCount = 0;
 
-        if ( TGetOption< bool >( "vktrace", false ) )
-            ppszLayers[ layerCount ] = "VK_LAYER_LUNARG_vktrace", ++layerCount;
+    if ( TGetOption< bool >( "renderdoc", false ) ) {
+        ppszLayers[ layerCount ] = "VK_LAYER_RENDERDOC_Capture";
+        graphicsManagerFlags = 0;
+        ++layerCount;
+    }
 
-        if ( TGetOption< bool >( "vkapidump", false ) )
-            ppszLayers[ layerCount ] = "VK_LAYER_LUNARG_api_dump", ++layerCount;
+    if ( TGetOption< bool >( "vktrace", false ) ) {
+        ppszLayers[ layerCount ] = "VK_LAYER_LUNARG_vktrace";
+        graphicsManagerFlags = 0;
+        ++layerCount;
+    }
 
-        if ( apemodevk::GetGraphicsManager( )->Initialize( graphicsManagerFlags,
-                                                           apemodevk::make_unique< GraphicsAllocator >( ),
-                                                           apemodevk::make_unique< GraphicsLogger >( ),
-                                                           "Viewer",
-                                                           "apemodevk",
-                                                           ppszLayers,
-                                                           layerCount,
-                                                           nullptr,
-                                                           0 ) ) {
-            Node.RecreateResourcesFor( 0, apemodevk::GetGraphicsManager( )->ppAdapters[ 0 ], nullptr, 0, nullptr, 0 );
+    if ( TGetOption< bool >( "vkapidump", false ) ) {
+        ppszLayers[ layerCount ] = "VK_LAYER_LUNARG_api_dump";
+        graphicsManagerFlags = 0;
+        ++layerCount;
+    }
+
+    if ( !apemodevk::GetGraphicsManager( )->Initialize( graphicsManagerFlags,
+                                                        apemodevk::make_unique< GraphicsAllocator >( ),
+                                                        apemodevk::make_unique< GraphicsLogger >( ),
+                                                        "Viewer",
+                                                        "apemodevk",
+                                                        ppszLayers,
+                                                        layerCount,
+                                                        nullptr,
+                                                        0 ) ) {
+
+        return false;
+    }
+
+    if ( !Node.RecreateResourcesFor( 0, apemodevk::GetGraphicsManager( )->ppAdapters[ 0 ], nullptr, 0, nullptr, 0 ) ) {
+        return false;
+    }
 
 #ifdef X_PROTOCOL
-                Surface.Recreate(
-                    Node.pPhysicalDevice, apemodevk::GetGraphicsManager( )->hInstance, pDisplayX11, pWindowX11 );
+    Surface.Recreate( Node.pPhysicalDevice, apemodevk::GetGraphicsManager( )->hInstance, pDisplayX11, pWindowX11 );
 #endif
 
 #ifdef _WINDOWS_
-            Surface.Recreate( Node.pPhysicalDevice, apemodevk::GetGraphicsManager( )->hInstance, hInstance, hWnd );
+    Surface.Recreate( Node.pPhysicalDevice, apemodevk::GetGraphicsManager( )->hInstance, hInstance, hWnd );
 #endif
 
-            uint32_t queueFamilyIndex = 0;
-            apemodevk::QueueFamilyPool* queueFamilyPool  = nullptr;
-            while ( auto currentQueueFamilyPool = Node.GetQueuePool( )->GetPool( queueFamilyIndex++ ) ) {
-                if ( currentQueueFamilyPool->SupportsPresenting( Surface.hSurface ) ) {
-                    PresentQueueFamilyIds.push_back( queueFamilyIndex - 1 );
-                    break;
-                }
-            }
+    uint32_t queueFamilyIndex = 0;
+    apemodevk::QueueFamilyPool* queueFamilyPool  = nullptr;
 
-            // Determine the number of VkImage's to use in the swap chain.
-            // We desire to own only 1 image at a time, besides the
-            // images being displayed and queued for display.
-
-            uint32_t ImgCount = std::min< uint32_t >( apemodevk::Swapchain::kMaxImgs, Surface.SurfaceCaps.minImageCount + 1 );
-            if ( ( Surface.SurfaceCaps.maxImageCount > 0 ) && ( Surface.SurfaceCaps.maxImageCount < ImgCount ) ) {
-                // Application must settle for fewer images than desired.
-                ImgCount = Surface.SurfaceCaps.maxImageCount;
-            }
-
-            VkExtent2D currentExtent = {0, 0};
-
-            if ( Surface.SurfaceCaps.currentExtent.width == apemodevk::Swapchain::kExtentMatchFullscreen &&
-                 Surface.SurfaceCaps.currentExtent.height == apemodevk::Swapchain::kExtentMatchFullscreen ) {
-                // If the surface size is undefined, the size is set to
-                // the size of the images requested.
-                apemode_assert( bIsDefined, "Unexpected." );
-
-                uint32_t DesiredColorWidth  = GetWidth( );
-                uint32_t DesiredColorHeight = GetHeight( );
-
-                const bool bMatchesWindow = DesiredColorWidth == apemodevk::Swapchain::kExtentMatchWindow &&
-                                            DesiredColorHeight == apemodevk::Swapchain::kExtentMatchWindow;
-
-                const bool bMatchesFullscreen = DesiredColorWidth == apemodevk::Swapchain::kExtentMatchFullscreen &&
-                                                DesiredColorHeight == apemodevk::Swapchain::kExtentMatchFullscreen;
-
-                if ( !bMatchesWindow && !bMatchesFullscreen ) {
-                    currentExtent.width  = DesiredColorWidth;
-                    currentExtent.height = DesiredColorHeight;
-                }
-            } else {
-                // If the surface size is defined, the swap chain size must match
-                currentExtent = Surface.SurfaceCaps.currentExtent;
-            }
-
-            if ( false == Swapchain.Recreate( Node.hLogicalDevice,
-                                              Node.pPhysicalDevice,
-                                              Surface.hSurface,
-                                              ImgCount,
-                                              currentExtent.width,
-                                              currentExtent.height,
-                                              Surface.eColorFormat,
-                                              Surface.eColorSpace,
-                                              Surface.eSurfaceTransform,
-                                              Surface.ePresentMode ) ) {
-
-                apemodevk::platform::DebugBreak( );
-                return false;
-            }
-
-            LastWidth  = Swapchain.ImgExtent.width;
-            LastHeight = Swapchain.ImgExtent.height;
+    while ( auto currentQueueFamilyPool = Node.GetQueuePool( )->GetPool( queueFamilyIndex++ ) ) {
+        if ( currentQueueFamilyPool->SupportsPresenting( Surface.hSurface ) ) {
+            PresentQueueFamilyIds.push_back( queueFamilyIndex - 1 );
+            break;
         }
-
-        return true;
     }
 
-    return false;
+    // Determine the number of VkImage's to use in the swap chain.
+    // We desire to own only 1 image at a time, besides the images being displayed and queued for display.
+
+    uint32_t ImgCount = std::min< uint32_t >( apemodevk::Swapchain::kMaxImgs, Surface.SurfaceCaps.minImageCount + 1 );
+    if ( ( Surface.SurfaceCaps.maxImageCount > 0 ) && ( Surface.SurfaceCaps.maxImageCount < ImgCount ) ) {
+
+        // Application must settle for fewer images than desired.
+        ImgCount = Surface.SurfaceCaps.maxImageCount;
+    }
+
+    VkExtent2D currentExtent = {0, 0};
+
+    if ( Surface.SurfaceCaps.currentExtent.width == apemodevk::Swapchain::kExtentMatchFullscreen &&
+         Surface.SurfaceCaps.currentExtent.height == apemodevk::Swapchain::kExtentMatchFullscreen ) {
+
+        // If the surface size is undefined, the size is set to
+        // the size of the images requested.
+        apemode_assert( bIsDefined, "Unexpected." );
+
+        uint32_t desiredColorWidth  = GetWidth( );
+        uint32_t desiredColorHeight = GetHeight( );
+
+        const bool bMatchesWindow = desiredColorWidth == apemodevk::Swapchain::kExtentMatchWindow &&
+                                    desiredColorHeight == apemodevk::Swapchain::kExtentMatchWindow;
+
+        const bool bMatchesFullscreen = desiredColorWidth == apemodevk::Swapchain::kExtentMatchFullscreen &&
+                                        desiredColorHeight == apemodevk::Swapchain::kExtentMatchFullscreen;
+
+        if ( !bMatchesWindow && !bMatchesFullscreen ) {
+            currentExtent.width  = desiredColorWidth;
+            currentExtent.height = desiredColorHeight;
+        }
+    } else {
+        // If the surface size is defined, the swap chain size must match
+        currentExtent = Surface.SurfaceCaps.currentExtent;
+    }
+
+    if ( !Swapchain.Recreate( Node.hLogicalDevice,
+                              Node.pPhysicalDevice,
+                              Surface.hSurface,
+                              ImgCount,
+                              currentExtent.width,
+                              currentExtent.height,
+                              Surface.eColorFormat,
+                              Surface.eColorSpace,
+                              Surface.eSurfaceTransform,
+                              Surface.ePresentMode ) ) {
+        return false;
+    }
+
+    LastWidth  = Swapchain.ImgExtent.width;
+    LastHeight = Swapchain.ImgExtent.height;
+
+    return true;
 }
 
 void apemode::AppSurfaceSdlVk::Finalize( ) {
+    Node.Destroy( );
     apemodevk::GetGraphicsManager( )->Destroy( );
+
     AppSurfaceSdlBase::Finalize( );
 }
 

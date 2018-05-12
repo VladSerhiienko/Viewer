@@ -15,12 +15,12 @@
  * Exactly the same, no need for explicit mapping.
  * But still decided to leave it as a function in case GLI stops maintain such compatibility.
  */
-VkFormat ToImgFormat( gli::format textureFormat ) {
-    return static_cast< VkFormat >( textureFormat );
+VkFormat ToImgFormat( const gli::format eTextureFormat ) {
+    return static_cast< VkFormat >( eTextureFormat );
 }
 
-VkImageType ToImgType( gli::target textureTarget ) {
-    switch ( textureTarget ) {
+VkImageType ToImgType( const gli::target eTextureTarget ) {
+    switch ( eTextureTarget ) {
         case gli::TARGET_1D:            return VK_IMAGE_TYPE_1D;
         case gli::TARGET_1D_ARRAY:      return VK_IMAGE_TYPE_1D;
         case gli::TARGET_2D:            return VK_IMAGE_TYPE_2D;
@@ -34,8 +34,8 @@ VkImageType ToImgType( gli::target textureTarget ) {
     }
 }
 
-VkImageViewType ToImgViewType( gli::target textureTarget ) {
-    switch ( textureTarget ) {
+VkImageViewType ToImgViewType( const gli::target eTextureTarget ) {
+    switch ( eTextureTarget ) {
         case gli::TARGET_1D:            return VK_IMAGE_VIEW_TYPE_1D;
         case gli::TARGET_1D_ARRAY:      return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
         case gli::TARGET_2D:            return VK_IMAGE_VIEW_TYPE_2D;
@@ -178,7 +178,7 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
             int componentsInFile;
 
             /* Load png file here from memory buffer */
-            stbi_uc* pImageBytes = stbi_load_from_memory( pFileContent, fileContentSize, &imageWidth, &imageHeight, &componentsInFile, STBI_rgb_alpha );
+            stbi_uc* pImageBytes = stbi_load_from_memory( pFileContent, int( fileContentSize ), &imageWidth, &imageHeight, &componentsInFile, STBI_rgb_alpha );
 
             if ( pImageBytes && imageWidth && imageHeight) {
 

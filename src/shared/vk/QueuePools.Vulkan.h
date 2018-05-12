@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GraphicsDevice.Vulkan.h>
+#include <GraphicsManager.Vulkan.h>
 
 namespace apemodevk {
 
@@ -59,39 +59,43 @@ namespace apemodevk {
 
     class CommandBufferFamilyPool : public QueueFamilyBased {
         friend class CommandBufferPool;
+    public:
 
         VkDevice                           pDevice         = VK_NULL_HANDLE;
         VkPhysicalDevice                   pPhysicalDevice = VK_NULL_HANDLE;
         std::vector< CommandBufferInPool > CmdBuffers;
 
-        CommandBufferFamilyPool( VkDevice                       pInDevice,
-                                 VkPhysicalDevice               pInPhysicalDevice,
-                                 uint32_t                       InQueueFamilyIndex,
-                                 VkQueueFamilyProperties const& InQueueFamilyProps );
-
-    public:
+        CommandBufferFamilyPool( )                                 = default;
         CommandBufferFamilyPool( CommandBufferFamilyPool&& other ) = default;
         ~CommandBufferFamilyPool( );
+
+        bool Inititalize( VkDevice                       pInDevice,
+                          VkPhysicalDevice               pInPhysicalDevice,
+                          uint32_t                       InQueueFamilyIndex,
+                          VkQueueFamilyProperties const& InQueueFamilyProps );
+
+        void Destroy( );
 
         AcquiredCommandBuffer Acquire( bool bIgnoreFenceStatus );
         bool                  Release( const AcquiredCommandBuffer& acquireCmdBuffer );
     };
 
     class CommandBufferPool {
+    public:
         VkDevice                               pDevice         = VK_NULL_HANDLE;
         VkPhysicalDevice                       pPhysicalDevice = VK_NULL_HANDLE;
         uint32_t                               QueueFamilyId   = 0;
         std::vector< CommandBufferFamilyPool > Pools;
 
-        friend class GraphicsDevice;
-        CommandBufferPool( VkDevice                       pDevice,
-                           VkPhysicalDevice               pPhysicalDevice,
-                           const VkQueueFamilyProperties* pQueuePropsIt,
-                           const VkQueueFamilyProperties* pQueuePropsEnd );
-
-
-    public:
+        CommandBufferPool( ) = default;
         ~CommandBufferPool( );
+
+        bool Inititalize( VkDevice                       pDevice,
+                          VkPhysicalDevice               pPhysicalDevice,
+                          const VkQueueFamilyProperties* pQueuePropsIt,
+                          const VkQueueFamilyProperties* pQueuePropsEnd );
+
+        void Destroy( );
 
         uint32_t                       GetPoolCount( ) const;
         CommandBufferFamilyPool*       GetPool( uint32_t queueFamilyIndex );
@@ -137,21 +141,22 @@ namespace apemodevk {
     };
 
     class QueueFamilyPool : public QueueFamilyBased {
-        friend class QueuePool;
-
+    public:
         VkDevice                   pDevice         = VK_NULL_HANDLE;
         VkPhysicalDevice           pPhysicalDevice = VK_NULL_HANDLE;
         std::vector< QueueInPool > Queues;
 
-        QueueFamilyPool( VkDevice                       pInDevice,
-                         VkPhysicalDevice               pInPhysicalDevice,
-                         uint32_t                       InQueueFamilyIndex,
-                         VkQueueFamilyProperties const& InQueueFamilyProps );
+        QueueFamilyPool( )                              = default;
+        QueueFamilyPool( QueueFamilyPool&& other )      = default;
         QueueFamilyPool( const QueueFamilyPool& other ) = default;
-
-    public:
-        QueueFamilyPool( QueueFamilyPool&& other ) = default;
         ~QueueFamilyPool( );
+
+        bool Inititalize( VkDevice                       pInDevice,
+                          VkPhysicalDevice               pInPhysicalDevice,
+                          uint32_t                       InQueueFamilyIndex,
+                          VkQueueFamilyProperties const& InQueueFamilyProps );
+
+        void Destroy( );
 
         const VkQueueFamilyProperties& GetQueueFamilyProps( ) const;
         bool SupportsPresenting( VkSurfaceKHR pSurface ) const;
@@ -175,20 +180,22 @@ namespace apemodevk {
      * QueuePool is created by device.
      */
     class QueuePool {
+    public:
         VkDevice                       pDevice         = VK_NULL_HANDLE;
         VkPhysicalDevice               pPhysicalDevice = VK_NULL_HANDLE;
         std::vector< QueueFamilyPool > Pools;
 
-        friend class GraphicsDevice;
-        QueuePool( VkDevice                       pInDevice,
-                   VkPhysicalDevice               pInPhysicalDevice,
-                   const VkQueueFamilyProperties* pQueuePropsIt,
-                   const VkQueueFamilyProperties* pQueuePropsEnd,
-                   const float*                   pQueuePrioritiesIt,
-                   const float*                   pQueuePrioritiesItEnd );
-
-    public:
+        QueuePool( ) = default;
         ~QueuePool( );
+
+        bool Inititalize( VkDevice                       pInDevice,
+                          VkPhysicalDevice               pInPhysicalDevice,
+                          const VkQueueFamilyProperties* pQueuePropsIt,
+                          const VkQueueFamilyProperties* pQueuePropsEnd,
+                          const float*                   pQueuePrioritiesIt,
+                          const float*                   pQueuePrioritiesItEnd );
+
+        void Destroy( );
 
         uint32_t               GetPoolCount( ) const;                      /* @note Returns the number of queue families */
         QueueFamilyPool*       GetPool( uint32_t QueueFamilyIndex );       /* @see GetPool( VkQueueFlags , bool ) */

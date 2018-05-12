@@ -11,11 +11,8 @@ namespace apemodevk {
         friend class GraphicsDevice;
 
         enum InitFlags : uint32_t {
-            kNormal                   = 0,      // Normal initialization.
-            kEnableValidation         = 1 << 0, // Enable validation layers.
-            kEnable_RENDERDOC_Capture = 1 << 1, // Must be enabled for RenderDoc tool.
-            kEnable_LUNARG_vktrace    = 1 << 2, // Must be enable for vktrace tool.
-            kEnable_LUNARG_api_dump   = 1 << 3, // Traces every call to stdout.
+            kNormal           = 0,      // Normal initialization.
+            kEnableValidation = 1 << 0, // Enable validation layers.
         };
 
         struct APIVersion : public apemodevk::ScalableAllocPolicy {

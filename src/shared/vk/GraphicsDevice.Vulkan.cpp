@@ -3,7 +3,6 @@
 #include <GraphicsDevice.Vulkan.h>
 #include <GraphicsManager.Vulkan.h>
 
-#include <QueuePools.Vulkan.h>
 #include <ShaderCompiler.Vulkan.h>
 
 #include <GraphicsManager.KnownExtensions.Vulkan.h>
@@ -89,11 +88,15 @@ bool EnumerateLayersAndExtensions( apemodevk::GraphicsDevice*  pNode,
         if ( err )
             return false;
 
-        for ( auto& l : deviceLayers ) {
-            apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Debug, "> DeviceLayer: %s (%u): %s", l.layerName, l.specVersion, l.description );
+        for ( auto& deviceLayer : deviceLayers ) {
+            apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Debug,
+                                             "> DeviceLayer: %s (%u): %s",
+                                             deviceLayer.layerName,
+                                             deviceLayer.specVersion,
+                                             deviceLayer.description );
 
             for ( uint32_t j = 0; j < layerCount; ++j ) {
-                if ( !strcmp( ppszLayers[ j ], l.layerName ) ) {
+                if ( !strcmp( ppszLayers[ j ], deviceLayer.layerName ) ) {
                     OutLayerNames.push_back( ppszLayers[ j ] );
                 }
             }
@@ -241,19 +244,24 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( uint32_t         flags,
                 allocatorCreateInfo.device                 = hLogicalDevice;
                 allocatorCreateInfo.pAllocationCallbacks   = GetAllocationCallbacks( );
 
-                hAllocator.Recreate( allocatorCreateInfo );
+                if ( !hAllocator.Recreate( allocatorCreateInfo ) )
+                    return false;
 
-                pQueuePool.reset( new QueuePool( hLogicalDevice,
-                                                 pPhysicalDevice,
-                                                 QueueProps.data( ),
-                                                 QueueProps.data( ) + QueueProps.size( ),
-                                                 QueuePriorities.data( ),
-                                                 QueuePriorities.data( ) + QueuePriorities.size( ) ) );
+                if ( !Queues.Inititalize( hLogicalDevice,
+                                          pPhysicalDevice,
+                                          QueueProps.data( ),
+                                          QueueProps.data( ) + QueueProps.size( ),
+                                          QueuePriorities.data( ),
+                                          QueuePriorities.data( ) + QueuePriorities.size( ) ) )
+                    return false;
 
-                pCmdBufferPool.reset( new CommandBufferPool( hLogicalDevice,
-                                                             pPhysicalDevice,
-                                                             QueueProps.data( ),
-                                                             QueueProps.data( ) + QueueProps.size( ) ) );
+                // clang-format off
+                if ( !CmdBuffers.Inititalize( hLogicalDevice,
+                                              pPhysicalDevice,
+                                              QueueProps.data( ),
+                                              QueueProps.data( ) + QueueProps.size( ) ) )
+                    return false;
+                // clang-format on
             }
 
             return true;
@@ -263,14 +271,18 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( uint32_t         flags,
     return false;
 }
 
-/// -------------------------------------------------------------------------------------------------------------------
-/// GraphicsDevice
-/// -------------------------------------------------------------------------------------------------------------------
-
 apemodevk::GraphicsDevice::GraphicsDevice( ) {
 }
 
 apemodevk::GraphicsDevice::~GraphicsDevice( ) {
+    Destroy( );
+}
+
+void apemodevk::GraphicsDevice::Destroy( ) {
+    Queues.Destroy( );
+    CmdBuffers.Destroy( );
+    hAllocator.Destroy( );
+    hLogicalDevice.Destroy( );
 }
 
 apemodevk::GraphicsDevice::operator VkDevice( ) const {
@@ -295,19 +307,19 @@ bool apemodevk::GraphicsDevice::Await( ) {
 }
 
 apemodevk::QueuePool* apemodevk::GraphicsDevice::GetQueuePool( ) {
-    return pQueuePool.get( );
+    return &Queues;
 }
 
 const apemodevk::QueuePool* apemodevk::GraphicsDevice::GetQueuePool( ) const {
-    return pQueuePool.get( );
+    return &Queues;
 }
 
 apemodevk::CommandBufferPool* apemodevk::GraphicsDevice::GetCommandBufferPool( ) {
-    return pCmdBufferPool.get( );
+    return &CmdBuffers;
 }
 
 const apemodevk::CommandBufferPool* apemodevk::GraphicsDevice::GetCommandBufferPool( ) const {
-    return pCmdBufferPool.get( );
+    return &CmdBuffers;
 }
 
 #pragma warning(push, 4)

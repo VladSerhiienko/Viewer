@@ -59,6 +59,9 @@ bool EnumerateLayersAndExtensions( uint32_t                    eFlags,
                                    size_t                      extensionCount ) {
     VkResult err = VK_SUCCESS;
 
+    OutLayerNames.clear( );
+    OutExtensionNames.clear( );
+
     const bool bValidate = HasFlagEq( eFlags, apemodevk::GraphicsManager::kEnableValidation );
 
     const char* instance_validation_layers_alt1[] = {"VK_LAYER_LUNARG_standard_validation"};
@@ -87,11 +90,15 @@ bool EnumerateLayersAndExtensions( uint32_t                    eFlags,
             if ( err )
                 return false;
 
-            for ( auto& l : allInstanceLayers ) {
-                apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Debug, "> Layer: %s (%u): %s", l.layerName, l.specVersion, l.description );
+            for ( auto& instanceLayerName : allInstanceLayers ) {
+                apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Debug,
+                                                 "> Layer: %s (%u): %s",
+                                                 instanceLayerName.layerName,
+                                                 instanceLayerName.specVersion,
+                                                 instanceLayerName.description );
 
                 for ( uint32_t j = 0; j < layerCount; ++j ) {
-                    if ( !strcmp( ppszLayers[ j ], l.layerName ) ) {
+                    if ( !strcmp( ppszLayers[ j ], instanceLayerName.layerName ) ) {
                         OutLayerNames.push_back( ppszLayers[ j ] );
                     }
                 }
@@ -123,10 +130,6 @@ bool EnumerateLayersAndExtensions( uint32_t                    eFlags,
         }
     }
 
-    const bool bRenderdoc = HasFlagEq( eFlags, apemodevk::GraphicsManager::kEnable_RENDERDOC_Capture );
-    const bool bApidump   = HasFlagEq( eFlags, apemodevk::GraphicsManager::kEnable_LUNARG_api_dump );
-    const bool bTrace     = HasFlagEq( eFlags, apemodevk::GraphicsManager::kEnable_LUNARG_vktrace );
-
     /* Look for instance extensions */
     VkBool32 surfaceExtFound = 0;
     VkBool32 platformSurfaceExtFound = 0;
@@ -146,7 +149,7 @@ bool EnumerateLayersAndExtensions( uint32_t                    eFlags,
 
         for ( uint32_t i = 0; i < instance_extension_count; i++ ) {
 
-            apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Err,
+            apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Debug,
                                              "> Extension: %s (%u)",
                                              allInstanceExtensions[ i ].extensionName,
                                              allInstanceExtensions[ i ].specVersion );
@@ -329,13 +332,13 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                      eFlag
 
     VkDebugUtilsMessengerCreateInfoEXT debugUtilsMessengerCreateInfoEXT;
     InitializeStruct( debugUtilsMessengerCreateInfoEXT );
-    debugUtilsMessengerCreateInfoEXT.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    debugUtilsMessengerCreateInfoEXT.pfnUserCallback = DebugMessengerCallback;
+    debugUtilsMessengerCreateInfoEXT.sType           = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    debugUtilsMessengerCreateInfoEXT.messageType     = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                                                       VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                                                       VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
     debugUtilsMessengerCreateInfoEXT.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
                                                        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-    debugUtilsMessengerCreateInfoEXT.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
-                                                   VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
-                                                   VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-    debugUtilsMessengerCreateInfoEXT.pfnUserCallback = DebugMessengerCallback;
     // clang-format on
 
     VkInstanceCreateInfo instanceCreateInfo;

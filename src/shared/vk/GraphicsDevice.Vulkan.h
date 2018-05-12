@@ -1,14 +1,13 @@
 #pragma once
 
 #include <GraphicsManager.Vulkan.h>
+#include <QueuePools.Vulkan.h>
 
 namespace apemodevk {
     class Swapchain;
     class CommandQueue;
     class GraphicsManager;
 
-    class QueuePool;
-    class CommandBufferPool;
     class ShaderCompiler;
 
     class GraphicsDevice : public NoCopyAssignPolicy {
@@ -20,12 +19,14 @@ namespace apemodevk {
         GraphicsDevice( );
         ~GraphicsDevice( );
 
-        bool RecreateResourcesFor( uint32_t         flags,
+        bool RecreateResourcesFor( uint32_t         eFlags,
                                    VkPhysicalDevice pPhysicalDevice,
                                    const char **    ppszLayers,
                                    size_t           layerCount,
                                    const char **    ppszExtensions,
                                    size_t           extensionCount );
+
+        void Destroy( );
 
         bool IsValid( ) const;
         bool Await( );
@@ -35,26 +36,25 @@ namespace apemodevk {
         CommandBufferPool *      GetCommandBufferPool( );
         const CommandBufferPool *GetCommandBufferPool( ) const;
 
-        bool ScanDeviceQueues( std::vector< VkQueueFamilyProperties > &QueueProps,
-                               std::vector< VkDeviceQueueCreateInfo > &QueueReqs,
-                               std::vector< float > &                  QueuePriorities );
+        bool ScanDeviceQueues( std::vector< VkQueueFamilyProperties > &queueProps,
+                               std::vector< VkDeviceQueueCreateInfo > &queueReqs,
+                               std::vector< float > &                  queuePriorities );
 
-        bool ScanDeviceLayerProperties( uint32_t flags );
         bool ScanFormatProperties( );
 
         operator VkDevice( ) const;
         operator VkPhysicalDevice( ) const;
         operator VkInstance( ) const;
 
-        THandle< VkDevice >                   hLogicalDevice;
-        THandle< VmaAllocator >               hAllocator;
-        VkPhysicalDevice                      pPhysicalDevice;
-        VkPhysicalDeviceProperties            AdapterProps;
-        VkPhysicalDeviceMemoryProperties      MemoryProps;
-        VkPhysicalDeviceFeatures              Features;
-        VkFormatPropertiesArray               FormatProperties;
-        std::unique_ptr< QueuePool >          pQueuePool;
-        std::unique_ptr< CommandBufferPool >  pCmdBufferPool;
+        THandle< VkDevice >              hLogicalDevice;
+        THandle< VmaAllocator >          hAllocator;
+        VkPhysicalDevice                 pPhysicalDevice;
+        VkPhysicalDeviceProperties       AdapterProps;
+        VkPhysicalDeviceMemoryProperties MemoryProps;
+        VkPhysicalDeviceFeatures         Features;
+        VkFormatPropertiesArray          FormatProperties;
+        QueuePool                        Queues;
+        CommandBufferPool                CmdBuffers;
 
         struct {
             PFN_vkCreateSwapchainKHR              CreateSwapchainKHR              = nullptr;

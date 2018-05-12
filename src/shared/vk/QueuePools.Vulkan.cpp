@@ -1,4 +1,5 @@
-#include "QueuePools.Vulkan.h"
+#include <QueuePools.Vulkan.h>
+#include <GraphicsDevice.Vulkan.h>
 
 /**
  * Helper function to avoid functionality duplication.
@@ -24,14 +25,15 @@ TQueueFamilyBasedElement* TGetPool( TQueueFamilyBasedCollection& Pools, VkQueueF
     return nullptr;
 }
 
-apemodevk::QueuePool::QueuePool( VkDevice                       pInDevice,
-                                 VkPhysicalDevice               pInPhysicalDevice,
-                                 const VkQueueFamilyProperties* pQueuePropsIt,
-                                 const VkQueueFamilyProperties* pQueuePropsEnd,
-                                 const float*                   pQueuePrioritiesIt,
-                                 const float*                   pQueuePrioritiesItEnd )
-    : pDevice( pInDevice )
-    , pPhysicalDevice( pInPhysicalDevice ) {
+bool apemodevk::QueuePool::Inititalize( VkDevice                       pInDevice,
+                                        VkPhysicalDevice               pInPhysicalDevice,
+                                        const VkQueueFamilyProperties* pQueuePropsIt,
+                                        const VkQueueFamilyProperties* pQueuePropsEnd,
+                                        const float*                   pQueuePrioritiesIt,
+                                        const float*                   pQueuePrioritiesItEnd ) {
+
+    pDevice = pInDevice;
+    pPhysicalDevice = pInPhysicalDevice;
 
     (void) pQueuePrioritiesIt;
     (void) pQueuePrioritiesItEnd;
@@ -40,8 +42,15 @@ apemodevk::QueuePool::QueuePool( VkDevice                       pInDevice,
 
     uint32_t familyIndex = 0;
     std::transform( pQueuePropsIt, pQueuePropsEnd, std::back_inserter( Pools ), [&]( const VkQueueFamilyProperties& InProps ) {
-        return QueueFamilyPool( pInDevice, pInPhysicalDevice, familyIndex++, InProps );
+        QueueFamilyPool pool;
+        pool.Inititalize( pInDevice, pInPhysicalDevice, familyIndex++, InProps );
+        return pool;
     } );
+
+    return true;
+}
+
+void apemodevk::QueuePool::Destroy( ) {
 }
 
 apemodevk::QueuePool::~QueuePool( ) {
@@ -99,17 +108,20 @@ void apemodevk::QueuePool::Release( const apemodevk::AcquiredQueue& acquiredQueu
     Pools[ acquiredQueue.QueueFamilyId ].Release( acquiredQueue );
 }
 
-apemodevk::QueueFamilyPool::QueueFamilyPool( VkDevice                       pInDevice,
-                                             VkPhysicalDevice               pInPhysicalDevice,
-                                             uint32_t                       InQueueFamilyIndex,
-                                             VkQueueFamilyProperties const& InQueueFamilyProps )
-    : QueueFamilyBased( InQueueFamilyIndex, InQueueFamilyProps )
-    , pDevice( pInDevice )
-    , pPhysicalDevice( pInPhysicalDevice ) {
+bool apemodevk::QueueFamilyPool::Inititalize( VkDevice                       pInDevice,
+                                              VkPhysicalDevice               pInPhysicalDevice,
+                                              uint32_t                       InQueueFamilyIndex,
+                                              VkQueueFamilyProperties const& InQueueFamilyProps ) {
+    pDevice          = pInDevice;
+    pPhysicalDevice  = pInPhysicalDevice;
+    queueFamilyId    = InQueueFamilyIndex;
+    queueFamilyProps = InQueueFamilyProps;
+
     Queues.resize( InQueueFamilyProps.queueCount );
+    return true;
 }
 
-apemodevk::QueueFamilyPool::~QueueFamilyPool( ) {
+void apemodevk::QueueFamilyPool::Destroy( ) {
     if ( false == Queues.empty( ) ) {
         uint32_t queueIndex = queueFamilyProps.queueCount;
         while ( queueIndex-- ) {
@@ -119,6 +131,9 @@ apemodevk::QueueFamilyPool::~QueueFamilyPool( ) {
             }
         }
     }
+}
+
+apemodevk::QueueFamilyPool::~QueueFamilyPool( ) {
 }
 
 const VkQueueFamilyProperties& apemodevk::QueueFamilyPool::GetQueueFamilyProps( ) const {
@@ -245,17 +260,26 @@ apemodevk::QueueInPool::QueueInPool( const QueueInPool& other )
     , bInUse( other.bInUse.load( std::memory_order_relaxed ) ) {
 }
 
-apemodevk::CommandBufferPool::CommandBufferPool( VkDevice                       pInDevice,
-                                                 VkPhysicalDevice               pInPhysicalDevice,
-                                                 const VkQueueFamilyProperties* pQueuePropsIt,
-                                                 const VkQueueFamilyProperties* pQueuePropsEnd )
-    : pDevice( pInDevice ), pPhysicalDevice( pInPhysicalDevice ) {
+bool apemodevk::CommandBufferPool::Inititalize( VkDevice                       pInDevice,
+                                                VkPhysicalDevice               pInPhysicalDevice,
+                                                const VkQueueFamilyProperties* pQueuePropsIt,
+                                                const VkQueueFamilyProperties* pQueuePropsEnd ) {
+    pDevice         = pInDevice;
+    pPhysicalDevice = pInPhysicalDevice;
+
     Pools.reserve( std::distance( pQueuePropsIt, pQueuePropsEnd ) );
 
     uint32_t familyIndex = 0;
     std::transform( pQueuePropsIt, pQueuePropsEnd, std::back_inserter( Pools ), [&]( const VkQueueFamilyProperties& InProps ) {
-        return CommandBufferFamilyPool( pInDevice, pInPhysicalDevice, familyIndex++, InProps );
+        CommandBufferFamilyPool pool;
+        pool.Inititalize( pInDevice, pInPhysicalDevice, familyIndex++, InProps );
+        return pool;
     } );
+
+    return true;
+}
+
+void apemodevk::CommandBufferPool::Destroy( ) {
 }
 
 apemodevk::CommandBufferPool::~CommandBufferPool( ) {
@@ -315,13 +339,18 @@ void apemodevk::CommandBufferPool::Release( const AcquiredCommandBuffer& acquire
     Pools[ acquireCmdBuffer.queueFamilyId ].Release( acquireCmdBuffer );
 }
 
-apemodevk::CommandBufferFamilyPool::CommandBufferFamilyPool( VkDevice                       pInDevice,
-                                                             VkPhysicalDevice               pInPhysicalDevice,
-                                                             uint32_t                       InQueueFamilyIndex,
-                                                             VkQueueFamilyProperties const& InQueueFamilyProps )
-    : QueueFamilyBased( InQueueFamilyIndex, InQueueFamilyProps )
-    , pDevice( pInDevice )
-    , pPhysicalDevice( pInPhysicalDevice ) {
+bool apemodevk::CommandBufferFamilyPool::Inititalize( VkDevice                       pInDevice,
+                                                      VkPhysicalDevice               pInPhysicalDevice,
+                                                      uint32_t                       InQueueFamilyIndex,
+                                                      VkQueueFamilyProperties const& InQueueFamilyProps ) {
+    queueFamilyId    = InQueueFamilyIndex;
+    queueFamilyProps = InQueueFamilyProps;
+    pDevice          = pInDevice;
+    pPhysicalDevice = pInPhysicalDevice;
+    return true;
+}
+
+void apemodevk::CommandBufferFamilyPool::Destroy( ) {
 }
 
 apemodevk::CommandBufferFamilyPool::~CommandBufferFamilyPool( ) {
@@ -436,13 +465,8 @@ VkResult apemodevk::WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t tim
                 case VK_ERROR_OUT_OF_HOST_MEMORY:
                 case VK_ERROR_OUT_OF_DEVICE_MEMORY:
                 case VK_ERROR_DEVICE_LOST:
-                    platform::DebugBreak( );
                     break;
             } break;
-
-        case VK_ERROR_DEVICE_LOST:
-            platform::DebugBreak( );
-            break;
     }
 
     return err;
