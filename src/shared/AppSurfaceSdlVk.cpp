@@ -54,33 +54,44 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
 
         uint32_t graphicsManagerFlags = 0;
 
+#ifdef _DEBUG
+        graphicsManagerFlags |= apemodevk::GraphicsManager::kEnableValidation;
+#endif
+        const char* ppszLayers[ 3 ] = {nullptr};
+        size_t      layerCount      = 0;
+
         if ( TGetOption< bool >( "renderdoc", false ) )
-            graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_RENDERDOC_Capture;
+            ppszLayers[ layerCount ] = "VK_LAYER_RENDERDOC_Capture", ++layerCount;
 
         if ( TGetOption< bool >( "vktrace", false ) )
-            graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_LUNARG_vktrace;
+            ppszLayers[ layerCount ] = "VK_LAYER_LUNARG_vktrace", ++layerCount;
 
         if ( TGetOption< bool >( "vkapidump", false ) )
-            graphicsManagerFlags |= apemodevk::GraphicsManager::kEnable_LUNARG_api_dump;
+            ppszLayers[ layerCount ] = "VK_LAYER_LUNARG_api_dump", ++layerCount;
 
-        if ( apemodevk::GetGraphicsManager( )->RecreateGraphicsNodes( graphicsManagerFlags,
-                                                                      apemodevk::make_unique< GraphicsAllocator >( ),
-                                                                      apemodevk::make_unique< GraphicsLogger >( ),
-                                                                      "Viewer",
-                                                                      "apemodevk" ) ) {
-            pNode = apemodevk::GetGraphicsManager( )->GetPrimaryGraphicsNode( );
+        if ( apemodevk::GetGraphicsManager( )->Initialize( graphicsManagerFlags,
+                                                           apemodevk::make_unique< GraphicsAllocator >( ),
+                                                           apemodevk::make_unique< GraphicsLogger >( ),
+                                                           "Viewer",
+                                                           "apemodevk",
+                                                           ppszLayers,
+                                                           layerCount,
+                                                           nullptr,
+                                                           0 ) ) {
+            Node.RecreateResourcesFor( 0, apemodevk::GetGraphicsManager( )->ppAdapters[ 0 ], nullptr, 0, nullptr, 0 );
 
 #ifdef X_PROTOCOL
-            Surface.Recreate( pNode->pPhysicalDevice, apemodevk::GetGraphicsManager( )->hInstance, pDisplayX11, pWindowX11 );
+                Surface.Recreate(
+                    Node.pPhysicalDevice, apemodevk::GetGraphicsManager( )->hInstance, pDisplayX11, pWindowX11 );
 #endif
 
 #ifdef _WINDOWS_
-            Surface.Recreate( pNode->pPhysicalDevice, apemodevk::GetGraphicsManager( )->hInstance, hInstance, hWnd );
+            Surface.Recreate( Node.pPhysicalDevice, apemodevk::GetGraphicsManager( )->hInstance, hInstance, hWnd );
 #endif
 
             uint32_t queueFamilyIndex = 0;
             apemodevk::QueueFamilyPool* queueFamilyPool  = nullptr;
-            while ( auto currentQueueFamilyPool = pNode->GetQueuePool( )->GetPool( queueFamilyIndex++ ) ) {
+            while ( auto currentQueueFamilyPool = Node.GetQueuePool( )->GetPool( queueFamilyIndex++ ) ) {
                 if ( currentQueueFamilyPool->SupportsPresenting( Surface.hSurface ) ) {
                     PresentQueueFamilyIds.push_back( queueFamilyIndex - 1 );
                     break;
@@ -123,8 +134,8 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
                 currentExtent = Surface.SurfaceCaps.currentExtent;
             }
 
-            if ( false == Swapchain.Recreate( pNode->hLogicalDevice,
-                                              pNode->pPhysicalDevice,
+            if ( false == Swapchain.Recreate( Node.hLogicalDevice,
+                                              Node.pPhysicalDevice,
                                               Surface.hSurface,
                                               ImgCount,
                                               currentExtent.width,
@@ -158,13 +169,13 @@ void apemode::AppSurfaceSdlVk::OnFrameMove( ) {
     const uint32_t height = GetHeight( );
 
     if ( width != LastWidth || height != LastHeight ) {
-        apemodevk::CheckedCall( vkDeviceWaitIdle( *pNode ) );
+        apemodevk::CheckedCall( vkDeviceWaitIdle( Node ) );
 
         LastWidth  = width;
         LastHeight = height;
 
-        const bool bResized = Swapchain.Recreate( pNode->hLogicalDevice,
-                                                  pNode->pPhysicalDevice,
+        const bool bResized = Swapchain.Recreate( Node.hLogicalDevice,
+                                                  Node.pPhysicalDevice,
                                                   Surface.hSurface,
                                                   Swapchain.ImgCount,
                                                   width,
@@ -179,7 +190,7 @@ void apemode::AppSurfaceSdlVk::OnFrameMove( ) {
 }
 
 void* apemode::AppSurfaceSdlVk::GetGraphicsHandle( ) {
-    return reinterpret_cast< void* >( pNode );
+    return reinterpret_cast< void* >( &Node );
 }
 
 apemode::SceneRendererBase* apemode::AppSurfaceSdlVk::CreateSceneRenderer( ) {

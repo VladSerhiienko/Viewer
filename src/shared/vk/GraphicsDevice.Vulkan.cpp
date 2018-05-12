@@ -62,14 +62,142 @@ bool apemodevk::GraphicsDevice::ScanFormatProperties( ) {
     return true;
 }
 
-bool apemodevk::GraphicsDevice::RecreateResourcesFor( VkPhysicalDevice InAdapterHandle, uint32_t flags ) {
-    apemode_assert( Args != nullptr, "Ecosystem is required in case of Vulkan." );
+void AddName( std::vector< const char* >& names, const char* pszName );
+bool EnumerateLayersAndExtensions( apemodevk::GraphicsDevice*  pNode,
+                                   uint32_t                    eFlags,
+                                   std::vector< const char* >& OutLayerNames,
+                                   std::vector< const char* >& OutExtensionNames,
+                                   bool&                       bIncrementalPresentKHR,
+                                   bool&                       bDisplayTimingGOOGLE,
+                                   const char**                ppszLayers,
+                                   size_t                      layerCount,
+                                   const char**                ppszExtensions,
+                                   size_t                      extensionCount ) {
+    VkResult err = VK_SUCCESS;
 
-    pPhysicalDevice = InAdapterHandle;
+    uint32_t deviceLayerCount = 0;
+    err = vkEnumerateDeviceLayerProperties( pNode->pPhysicalDevice, &deviceLayerCount, NULL );
+    if ( err )
+        return false;
+
+    if ( deviceLayerCount > 0 ) {
+
+        std::vector< VkLayerProperties > deviceLayers;
+        deviceLayers.resize( deviceLayerCount );
+
+        err = vkEnumerateDeviceLayerProperties( pNode->pPhysicalDevice, &deviceLayerCount, deviceLayers.data( ) );
+        if ( err )
+            return false;
+
+        for ( auto& l : deviceLayers ) {
+            apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Debug, "> DeviceLayer: %s (%u): %s", l.layerName, l.specVersion, l.description );
+
+            for ( uint32_t j = 0; j < layerCount; ++j ) {
+                if ( !strcmp( ppszLayers[ j ], l.layerName ) ) {
+                    OutLayerNames.push_back( ppszLayers[ j ] );
+                }
+            }
+        }
+    }
+
+    uint32_t deviceExtensionCount = 0;
+    err = vkEnumerateDeviceExtensionProperties( pNode->pPhysicalDevice, NULL, &deviceExtensionCount, NULL );
+    if ( err )
+        return false;
+
+    if ( deviceExtensionCount > 0 ) {
+
+        std::vector< VkExtensionProperties > deviceExtensions;
+        deviceExtensions.resize( deviceExtensionCount );
+
+        err = vkEnumerateDeviceExtensionProperties( pNode->pPhysicalDevice, NULL, &deviceExtensionCount, deviceExtensions.data( ) );
+        if ( err )
+            return false;
+
+        VkBool32 swapchainExtFound = 0;
+        for ( uint32_t i = 0; i < deviceExtensionCount; i++ ) {
+
+            apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Debug,
+                                             "> DeviceExtension: %s (%u)",
+                                             deviceExtensions[ i ].extensionName,
+                                             deviceExtensions[ i ].specVersion );
+
+            for ( uint32_t j = 0; j < extensionCount; ++j ) {
+                if ( !strcmp( ppszExtensions[ j ], deviceExtensions[ i ].extensionName ) ) {
+                    OutExtensionNames.push_back( ppszExtensions[ j ] );
+                }
+            }
+
+            if ( !strcmp( VK_KHR_SWAPCHAIN_EXTENSION_NAME, deviceExtensions[ i ].extensionName ) ) {
+                swapchainExtFound = 1;
+                AddName( OutExtensionNames, VK_KHR_SWAPCHAIN_EXTENSION_NAME );
+            }
+
+            if ( !strcmp( VK_KHR_INCREMENTAL_PRESENT_EXTENSION_NAME, deviceExtensions[ i ].extensionName ) ) {
+                bIncrementalPresentKHR = true;
+                AddName( OutExtensionNames, VK_KHR_INCREMENTAL_PRESENT_EXTENSION_NAME );
+            }
+
+            if ( !strcmp( VK_GOOGLE_DISPLAY_TIMING_EXTENSION_NAME, deviceExtensions[ i ].extensionName ) ) {
+                bIncrementalPresentKHR = true;
+                AddName( OutExtensionNames, VK_GOOGLE_DISPLAY_TIMING_EXTENSION_NAME );
+            }
+        }
+
+        if ( !swapchainExtFound ) {
+            return false;
+        }
+
+        for ( auto& l : OutLayerNames ) {
+            err = vkEnumerateDeviceExtensionProperties( pNode->pPhysicalDevice, l, &deviceExtensionCount, NULL );
+            if ( err )
+                return false;
+
+            err = vkEnumerateDeviceExtensionProperties( pNode->pPhysicalDevice, l, &deviceExtensionCount, deviceExtensions.data( ) );
+            if ( err )
+                return false;
+
+            for ( uint32_t i = 0; i < deviceExtensionCount; i++ ) {
+                for ( uint32_t j = 0; j < extensionCount; ++j ) {
+                    if ( !strcmp( ppszExtensions[ j ], deviceExtensions[ i ].extensionName ) ) {
+                        AddName( OutExtensionNames, ppszExtensions[ j ] );
+                    }
+                }
+            }
+        }
+    }
+
+    return true;
+}
+
+bool apemodevk::GraphicsDevice::RecreateResourcesFor( uint32_t         flags,
+                                                      VkPhysicalDevice pInPhysicalDevice,
+                                                      const char**     ppszLayers,
+                                                      size_t           layerCount,
+                                                      const char**     ppszExtensions,
+                                                      size_t           extensionCount ) {
+    pPhysicalDevice = pInPhysicalDevice;
+    assert( pPhysicalDevice );
 
     // Physical device is required to create a related logical device.
     // Likewise, vulkan instance is required for physical device.
     if ( VK_NULL_HANDLE != pPhysicalDevice ) {
+
+        std::vector< const char* > deviceLayers;
+        std::vector< const char* > deviceExtensions;
+
+        if ( !EnumerateLayersAndExtensions( this,
+                                            flags,
+                                            deviceLayers,
+                                            deviceExtensions,
+                                            Ext.bIncrementalPresentKHR,
+                                            Ext.bDisplayTimingGOOGLE,
+                                            ppszLayers,
+                                            layerCount,
+                                            ppszExtensions,
+                                            extensionCount ) )
+            return false;
+
         vkGetPhysicalDeviceProperties( pPhysicalDevice, &AdapterProps );
         vkGetPhysicalDeviceMemoryProperties( pPhysicalDevice, &MemoryProps );
         vkGetPhysicalDeviceFeatures( pPhysicalDevice, &Features );
@@ -82,25 +210,33 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( VkPhysicalDevice InAdapter
         std::vector< float >                   QueuePriorities;
 
         if ( ScanDeviceQueues( QueueProps, QueueReqs, QueuePriorities ) && ScanFormatProperties( ) ) {
-
-            VkPhysicalDeviceFeatures Features;
             vkGetPhysicalDeviceFeatures( pPhysicalDevice, &Features );
 
             VkDeviceCreateInfo deviceCreateInfo      = TNewInitializedStruct< VkDeviceCreateInfo >( );
             deviceCreateInfo.pEnabledFeatures        = &Features;
             deviceCreateInfo.queueCreateInfoCount    = GetSizeU( QueueReqs );
             deviceCreateInfo.pQueueCreateInfos       = QueueReqs.data( );
-            // deviceCreateInfo.enabledLayerCount       = (uint32_t) DeviceLayers.size( );
-            // deviceCreateInfo.ppEnabledLayerNames     = DeviceLayers.data( );
-            // deviceCreateInfo.enabledExtensionCount   = (uint32_t) DeviceExtensions.size( );
-            // deviceCreateInfo.ppEnabledExtensionNames = DeviceExtensions.data( );
+            deviceCreateInfo.enabledLayerCount       = GetSizeU( deviceLayers );
+            deviceCreateInfo.ppEnabledLayerNames     = deviceLayers.data( );
+            deviceCreateInfo.enabledExtensionCount   = GetSizeU( deviceExtensions );
+            deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data( );
 
-            const auto bOk = hLogicalDevice.Recreate( pPhysicalDevice, deviceCreateInfo );
-            apemode_assert( bOk, "vkCreateDevice failed." );
+            if ( hLogicalDevice.Recreate( pPhysicalDevice, deviceCreateInfo ) ) {
 
-            if ( bOk ) {
+                PFN_vkGetDeviceProcAddr GetDeviceProcAddr = GetGraphicsManager()->Ext.GetDeviceProcAddr;
 
-                VmaAllocatorCreateInfo allocatorCreateInfo = {};
+                Ext.CreateSwapchainKHR    = (PFN_vkCreateSwapchainKHR)    GetDeviceProcAddr( hLogicalDevice, "vkCreateSwapchainKHR" );
+                Ext.DestroySwapchainKHR   = (PFN_vkDestroySwapchainKHR)   GetDeviceProcAddr( hLogicalDevice, "vkDestroySwapchainKHR" );
+                Ext.GetSwapchainImagesKHR = (PFN_vkGetSwapchainImagesKHR) GetDeviceProcAddr( hLogicalDevice, "vkGetSwapchainImagesKHR" );
+                Ext.AcquireNextImageKHR   = (PFN_vkAcquireNextImageKHR)   GetDeviceProcAddr( hLogicalDevice, "vkAcquireNextImageKHR" );
+                Ext.QueuePresentKHR       = (PFN_vkQueuePresentKHR)       GetDeviceProcAddr( hLogicalDevice, "vkQueuePresentKHR" );
+
+                if ( Ext.bDisplayTimingGOOGLE ) {
+                    Ext.GetRefreshCycleDurationGOOGLE     = (PFN_vkGetRefreshCycleDurationGOOGLE)     GetDeviceProcAddr( hLogicalDevice, "vkGetRefreshCycleDurationGOOGLE" );
+                    Ext.GetPastPresentationTimingGOOGLE   = (PFN_vkGetPastPresentationTimingGOOGLE)   GetDeviceProcAddr( hLogicalDevice, "vkGetPastPresentationTimingGOOGLE" );
+                }
+
+                VmaAllocatorCreateInfo allocatorCreateInfo = TNewInitializedStruct< VmaAllocatorCreateInfo >( );
                 allocatorCreateInfo.physicalDevice         = pPhysicalDevice;
                 allocatorCreateInfo.device                 = hLogicalDevice;
                 allocatorCreateInfo.pAllocationCallbacks   = GetAllocationCallbacks( );
@@ -120,7 +256,7 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( VkPhysicalDevice InAdapter
                                                              QueueProps.data( ) + QueueProps.size( ) ) );
             }
 
-            return bOk;
+            return true;
         }
     }
 
@@ -166,8 +302,7 @@ const apemodevk::QueuePool* apemodevk::GraphicsDevice::GetQueuePool( ) const {
     return pQueuePool.get( );
 }
 
-apemodevk::CommandBufferPool * apemodevk::GraphicsDevice::GetCommandBufferPool()
-{
+apemodevk::CommandBufferPool* apemodevk::GraphicsDevice::GetCommandBufferPool( ) {
     return pCmdBufferPool.get( );
 }
 

@@ -134,7 +134,7 @@ bool ViewerApp::Initialize(  ) {
             cmdPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
             cmdPoolCreateInfo.queueFamilyIndex = pAppSurface->PresentQueueFamilyIds[0];
 
-            if ( false == hCmdPool[ i ].Recreate( *pAppSurface->pNode, cmdPoolCreateInfo ) ) {
+            if ( false == hCmdPool[ i ].Recreate( pAppSurface->Node, cmdPoolCreateInfo ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
@@ -145,33 +145,33 @@ bool ViewerApp::Initialize(  ) {
             cmdBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
             cmdBufferAllocInfo.commandBufferCount = 1;
 
-            if ( false == hCmdBuffers[ i ].Recreate( *pAppSurface->pNode, cmdBufferAllocInfo ) ) {
+            if ( false == hCmdBuffers[ i ].Recreate( pAppSurface->Node, cmdBufferAllocInfo ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
 
             VkSemaphoreCreateInfo semaphoreCreateInfo;
             InitializeStruct( semaphoreCreateInfo );
-            if ( false == hPresentCompleteSemaphores[ i ].Recreate( *pAppSurface->pNode, semaphoreCreateInfo ) ||
-                 false == hRenderCompleteSemaphores[ i ].Recreate( *pAppSurface->pNode, semaphoreCreateInfo ) ) {
+            if ( false == hPresentCompleteSemaphores[ i ].Recreate( pAppSurface->Node, semaphoreCreateInfo ) ||
+                 false == hRenderCompleteSemaphores[ i ].Recreate( pAppSurface->Node, semaphoreCreateInfo ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
         }
 
-        if ( false == DescriptorPool.RecreateResourcesFor( *pAppSurface->pNode, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256 ) ) {
+        if ( false == DescriptorPool.RecreateResourcesFor( pAppSurface->Node, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256 ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
 
         pSamplerManager = apemodevk::make_unique< apemodevk::SamplerManager >( );
-        if ( false == pSamplerManager->Recreate( pAppSurface->pNode ) ) {
+        if ( false == pSamplerManager->Recreate( &pAppSurface->Node ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
 
         apemodevk::ImageLoader imgLoader;
-        if ( false == imgLoader.Recreate( pAppSurface->pNode, nullptr ) ) {
+        if ( false == imgLoader.Recreate( &pAppSurface->Node, nullptr ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
@@ -248,7 +248,7 @@ bool ViewerApp::Initialize(  ) {
 
         pNkRenderer = new NuklearRendererSdlVk();
 
-        auto queueFamilyPool = pAppSurface->pNode->GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
+        auto queueFamilyPool = pAppSurface->Node.GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
         apemodevk::AcquiredQueue acquiredQueue;
 
         while ( acquiredQueue.pQueue == nullptr ) {
@@ -256,7 +256,7 @@ bool ViewerApp::Initialize(  ) {
         }
 
         NuklearRendererSdlVk::InitParametersVk initParamsNk;
-        initParamsNk.pNode           = pAppSurface->pNode;
+        initParamsNk.pNode           = &pAppSurface->Node;
         initParamsNk.pShaderCompiler = pShaderCompiler.get( );
         initParamsNk.pFontAsset      = mAssetManager.GetAsset( "fonts/iosevka-ss07-medium.ttf" );
         initParamsNk.pRenderPass     = hDbgRenderPass;
@@ -270,7 +270,7 @@ bool ViewerApp::Initialize(  ) {
         queueFamilyPool->Release( acquiredQueue );
 
         DebugRendererVk::InitParametersVk initParamsDbg;
-        initParamsDbg.pNode           = pAppSurface->pNode;
+        initParamsDbg.pNode           = &pAppSurface->Node;
         initParamsDbg.pShaderCompiler = pShaderCompiler.get( );
         initParamsDbg.pRenderPass     = hDbgRenderPass;
         initParamsDbg.pDescPool       = DescriptorPool;
@@ -282,14 +282,14 @@ bool ViewerApp::Initialize(  ) {
         pSceneRendererBase = pAppSurface->CreateSceneRenderer( );
 
         SceneRendererVk::RecreateParametersVk recreateParams;
-        recreateParams.pNode           = pAppSurface->pNode;
+        recreateParams.pNode           = &pAppSurface->Node;
         recreateParams.pShaderCompiler = pShaderCompiler.get( );
         recreateParams.pRenderPass     = hDbgRenderPass;
         recreateParams.pDescPool       = DescriptorPool;
         recreateParams.FrameCount      = FrameCount;
 
         SceneRendererVk::SceneUpdateParametersVk updateParams;
-        updateParams.pNode           = pAppSurface->pNode;
+        updateParams.pNode           = &pAppSurface->Node;
         updateParams.pRenderPass     = hDbgRenderPass;
         updateParams.pDescPool       = DescriptorPool;
         updateParams.FrameCount      = FrameCount;
@@ -325,7 +325,7 @@ bool ViewerApp::Initialize(  ) {
         }
 
         apemodevk::SkyboxRenderer::RecreateParameters skyboxRendererRecreateParams;
-        skyboxRendererRecreateParams.pNode           = pAppSurface->pNode;
+        skyboxRendererRecreateParams.pNode           = &pAppSurface->Node;
         skyboxRendererRecreateParams.pShaderCompiler = pShaderCompiler.get();
         skyboxRendererRecreateParams.pRenderPass     = hDbgRenderPass;
         skyboxRendererRecreateParams.pDescPool       = DescriptorPool;
@@ -352,7 +352,7 @@ bool ViewerApp::Initialize(  ) {
 }
 
 bool apemode::ViewerApp::OnResized( ) {
-    if ( auto appSurface = (AppSurfaceSdlVk*) GetSurface( ) ) {
+    if ( auto appSurface = static_cast< AppSurfaceSdlVk* >( GetSurface( ) ) ) {
 
             width  = appSurface->GetWidth( );
             height = appSurface->GetHeight( );
@@ -385,16 +385,14 @@ bool apemode::ViewerApp::OnResized( ) {
             allocationCreateInfo.flags = 0;
 
             for ( uint32_t i = 0; i < FrameCount; ++i ) {
-                if ( false == hDepthImgs[ i ].Recreate( appSurface->pNode->hAllocator, depthImgCreateInfo, allocationCreateInfo ) ) {
-                    apemode::platform::DebugBreak( );
+                if ( false == hDepthImgs[ i ].Recreate( appSurface->Node.hAllocator, depthImgCreateInfo, allocationCreateInfo ) ) {
                     return false;
                 }
             }
 
             for ( uint32_t i = 0; i < FrameCount; ++i ) {
                 depthImgViewCreateInfo.image = hDepthImgs[ i ];
-                if ( false == hDepthImgViews[ i ].Recreate( *appSurface->pNode, depthImgViewCreateInfo ) ) {
-                    apemode::platform::DebugBreak( );
+                if ( false == hDepthImgViews[ i ].Recreate( appSurface->Node, depthImgViewCreateInfo ) ) {
                     return false;
                 }
             }
@@ -457,12 +455,12 @@ bool apemode::ViewerApp::OnResized( ) {
             renderPassCreateInfoDbg.subpassCount    = 1;
             renderPassCreateInfoDbg.pSubpasses      = &subpassDbg;
 
-            if ( false == hNkRenderPass.Recreate( *appSurface->pNode, renderPassCreateInfoNk ) ) {
+            if ( false == hNkRenderPass.Recreate( appSurface->Node, renderPassCreateInfoNk ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
 
-            if ( false == hDbgRenderPass.Recreate( *appSurface->pNode, renderPassCreateInfoDbg ) ) {
+            if ( false == hDbgRenderPass.Recreate( appSurface->Node, renderPassCreateInfoDbg ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
@@ -487,7 +485,7 @@ bool apemode::ViewerApp::OnResized( ) {
                 VkImageView attachments[ 1 ] = {appSurface->Swapchain.hImgViews[ i ]};
                 framebufferCreateInfoNk.pAttachments = attachments;
 
-                if ( false == hNkFramebuffers[ i ].Recreate( *appSurface->pNode, framebufferCreateInfoNk ) ) {
+                if ( false == hNkFramebuffers[ i ].Recreate( appSurface->Node, framebufferCreateInfoNk ) ) {
                     apemode::platform::DebugBreak( );
                     return false;
                 }
@@ -497,7 +495,7 @@ bool apemode::ViewerApp::OnResized( ) {
                 VkImageView attachments[ 2 ] = {appSurface->Swapchain.hImgViews[ i ], hDepthImgViews[ i ]};
                 framebufferCreateInfoDbg.pAttachments = attachments;
 
-                if ( false == hDbgFramebuffers[ i ].Recreate( *appSurface->pNode, framebufferCreateInfoDbg ) ) {
+                if ( false == hDbgFramebuffers[ i ].Recreate( appSurface->Node, framebufferCreateInfoDbg ) ) {
                     apemode::platform::DebugBreak( );
                     return false;
                 }
@@ -600,14 +598,14 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
     pCamController->Dolly( pCamInput->DollyDelta );
     pCamController->Update( deltaSecs );
 
-    if ( auto pAppSurface = (AppSurfaceSdlVk*) GetSurface( ) ) {
-        auto queueFamilyPool = pAppSurface->pNode->GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
+    if ( auto pAppSurface = static_cast< AppSurfaceSdlVk* >( GetSurface( ) ) ) {
+        auto queueFamilyPool = pAppSurface->Node.GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
         auto acquiredQueue   = queueFamilyPool->Acquire( true );
         while ( acquiredQueue.pQueue == nullptr ) {
             acquiredQueue = queueFamilyPool->Acquire( true );
         }
 
-        VkDevice        device                   = pAppSurface->pNode->hLogicalDevice;
+        VkDevice        device                   = pAppSurface->Node.hLogicalDevice;
         VkQueue         queue                    = acquiredQueue.pQueue;
         VkSwapchainKHR  swapchain                = pAppSurface->Swapchain.hSwapchain;
         VkFence         fence                    = acquiredQueue.pFence;
@@ -696,7 +694,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         skyboxRenderParams.Scale.y     = 1;
         skyboxRenderParams.FrameIndex  = FrameIndex;
         skyboxRenderParams.pCmdBuffer  = pCmdBuffer;
-        skyboxRenderParams.pNode       = pAppSurface->pNode;
+        skyboxRenderParams.pNode       = &pAppSurface->Node;
         skyboxRenderParams.FieldOfView = apemodexm::DegreesToRadians( 67 );
 
         pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
@@ -740,7 +738,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         sceneRenderParameters.Scale.y                  = 1;
         sceneRenderParameters.FrameIndex               = FrameIndex;
         sceneRenderParameters.pCmdBuffer               = pCmdBuffer;
-        sceneRenderParameters.pNode                    = pAppSurface->pNode;
+        sceneRenderParameters.pNode                    = &pAppSurface->Node;
         sceneRenderParameters.ViewMatrix               = frameData.ViewMatrix;
         sceneRenderParameters.ProjMatrix               = frameData.ProjMatrix;
         sceneRenderParameters.RadianceMap.eImgLayout   = RadianceLoadedImg->eImgLayout;

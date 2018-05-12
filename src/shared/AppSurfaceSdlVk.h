@@ -28,11 +28,11 @@ namespace apemode {
         void*              GetGraphicsHandle( ) override;
         SceneRendererBase* CreateSceneRenderer( ) override;
 
-        uint32_t                   LastWidth;
-        uint32_t                   LastHeight;
-        apemodevk::Surface         Surface;
-        apemodevk::Swapchain       Swapchain;
-        std::vector< uint32_t >    PresentQueueFamilyIds;
-        apemodevk::GraphicsDevice* pNode;
+        uint32_t                  LastWidth;
+        uint32_t                  LastHeight;
+        apemodevk::Surface        Surface;
+        apemodevk::Swapchain      Swapchain;
+        apemodevk::GraphicsDevice Node;
+        std::vector< uint32_t >   PresentQueueFamilyIds;
     };
 }

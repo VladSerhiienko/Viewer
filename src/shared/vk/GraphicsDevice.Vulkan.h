@@ -20,7 +20,12 @@ namespace apemodevk {
         GraphicsDevice( );
         ~GraphicsDevice( );
 
-        bool RecreateResourcesFor( VkPhysicalDevice pPhysicalDevice, uint32_t flags );
+        bool RecreateResourcesFor( uint32_t         flags,
+                                   VkPhysicalDevice pPhysicalDevice,
+                                   const char **    ppszLayers,
+                                   size_t           layerCount,
+                                   const char **    ppszExtensions,
+                                   size_t           extensionCount );
 
         bool IsValid( ) const;
         bool Await( );
@@ -50,5 +55,18 @@ namespace apemodevk {
         VkFormatPropertiesArray               FormatProperties;
         std::unique_ptr< QueuePool >          pQueuePool;
         std::unique_ptr< CommandBufferPool >  pCmdBufferPool;
+
+        struct {
+            PFN_vkCreateSwapchainKHR              CreateSwapchainKHR              = nullptr;
+            PFN_vkDestroySwapchainKHR             DestroySwapchainKHR             = nullptr;
+            PFN_vkGetSwapchainImagesKHR           GetSwapchainImagesKHR           = nullptr;
+            PFN_vkAcquireNextImageKHR             AcquireNextImageKHR             = nullptr;
+            PFN_vkQueuePresentKHR                 QueuePresentKHR                 = nullptr;
+            PFN_vkGetRefreshCycleDurationGOOGLE   GetRefreshCycleDurationGOOGLE   = nullptr;
+            PFN_vkGetPastPresentationTimingGOOGLE GetPastPresentationTimingGOOGLE = nullptr;
+            bool                                  bIncrementalPresentKHR          = false;
+            bool                                  bDisplayTimingGOOGLE            = false;
+        } Ext;
+
     };
 }
