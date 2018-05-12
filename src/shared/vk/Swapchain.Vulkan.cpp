@@ -1,5 +1,4 @@
 #include <Platform.Vulkan.h>
-#include <GraphicsManager.KnownExtensions.Vulkan.h>
 #include <Swapchain.Vulkan.h>
 
 /// -------------------------------------------------------------------------------------------------------------------

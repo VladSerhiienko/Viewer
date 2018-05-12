@@ -2,12 +2,8 @@
 
 #include <GraphicsDevice.Vulkan.h>
 #include <GraphicsManager.Vulkan.h>
-
 #include <ShaderCompiler.Vulkan.h>
-
-#include <GraphicsManager.KnownExtensions.Vulkan.h>
 #include <NativeHandles.Vulkan.h>
-
 #include <TInfoStruct.Vulkan.h>
 
 bool apemodevk::GraphicsDevice::ScanDeviceQueues( std::vector< VkQueueFamilyProperties >& QueueProps,
