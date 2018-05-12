@@ -270,7 +270,7 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                      eFlag
                                         instanceLayers,
                                         instanceExtensions,
                                         Ext.bDebugReport,
-                                        Ext.bDebugMessanger,
+                                        Ext.bDebugMessenger,
                                         ppszLayers,
                                         layerCount,
                                         ppszExtensions,
@@ -318,7 +318,7 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                      eFlag
      *  After the instance is created, we use the instance-based
      * function to register the final callback. */
 
-    if ( bValidate && Ext.bDebugMessanger ) {
+    if ( bValidate && Ext.bDebugMessenger ) {
         // VK_EXT_debug_utils style
         instanceCreateInfo.pNext = &debugUtilsMessengerCreateInfoEXT;
     } else if ( bValidate && Ext.bDebugReport ) {
@@ -360,7 +360,7 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                      eFlag
         return false;
     }
 
-    if ( bValidate && Ext.bDebugMessanger ) {
+    if ( bValidate && Ext.bDebugMessenger ) {
 
         // clang-format off
         // VK_EXT_debug_utils
