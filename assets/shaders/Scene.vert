@@ -30,6 +30,7 @@ layout( std140, set = 1, binding = 0 ) uniform ObjectUBO {
     mat4 WorldMatrix;
     vec4 PositionOffset;
     vec4 PositionScale;
+    vec4 TexcoordOffsetScale;
 };
 
 layout( location = 0 ) in vec3 inPosition;
@@ -43,7 +44,7 @@ layout( location = 2 ) out vec3 outViewNormal;
 layout( location = 3 ) out vec2 outTexcoords;
 
 void main( ) {
-    outTexcoords   = inTexcoords;
+    outTexcoords   = inTexcoords * TexcoordOffsetScale.zw + TexcoordOffsetScale.xy;
     outNormal      = inNormal;
     outWorldNormal = mat3( WorldMatrix ) * outNormal;
     outViewNormal  = mat3( ViewMatrix ) * outWorldNormal;

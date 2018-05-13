@@ -263,8 +263,26 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
         }
     }
 
+    auto pTexturesFb = pSrcScene->textures( );
+    auto pFilesFb    = pSrcScene->files( );
+
+    std::map< uint32_t, uint32_t > materialIdRemap;
+
     if ( auto pMaterialsFb = pSrcScene->materials( ) ) {
         pScene->Materials.reserve( materialIds.size( ) );
+
+#define APEMODE_SCENE_DUMP_MATERIAL_NAMES
+#ifdef APEMODE_SCENE_DUMP_MATERIAL_NAMES
+        for ( uint32_t materialId = 0; materialId < pMaterialsFb->size( ); ++materialId ) {
+            auto pMaterialFb = FlatbuffersTVectorGetAtIndex( pMaterialsFb, materialId );
+            assert( pMaterialFb );
+
+            LogInfo( "Found material \"{}\": properties: {}, textures: {}",
+                     GetCStringProperty( pSrcScene, pMaterialFb->name_id( ) ),
+                     pMaterialFb->properties( ) ? pMaterialFb->properties( )->size( ) : 0,
+                     pMaterialFb->texture_properties( ) ? pMaterialFb->texture_properties( )->size( ) : 0 );
+        }
+#endif
 
         for ( auto materialId : materialIds ) {
 
@@ -276,30 +294,52 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
                      pMaterialFb->properties( ) ? pMaterialFb->properties( )->size( ) : 0,
                      pMaterialFb->texture_properties( ) ? pMaterialFb->texture_properties( )->size( ) : 0 );
 
+            materialIdRemap[ materialId ] = pScene->Materials.size( );
+
             pScene->Materials.emplace_back( );
             auto &material = pScene->Materials.back( );
             material.SrcId = materialId;
+
+            for ( auto pTexturePropFb : *pMaterialFb->texture_properties( ) ) {
+                auto pszTexturePropName = GetCStringProperty( pSrcScene, pTexturePropFb->name_id( ) );
+
+                auto pTextureFb = FlatbuffersTVectorGetAtIndex( pTexturesFb, pTexturePropFb->value_id( ) );
+                assert( pTextureFb );
+
+                auto pFileFb = FlatbuffersTVectorGetAtIndex( pFilesFb, pTextureFb->file_id( ) );
+                assert( pFileFb );
+
+                auto pszFileName = GetCStringProperty( pSrcScene, pFileFb->name_id( ) );
+                assert( pszFileName );
+
+                LogInfo( "\tTexture: \"{}\" -> {}", pszTexturePropName, pszFileName );
+            }
 
             if ( auto pPropertiesFb = pMaterialFb->properties( ) ) {
                 for ( auto pMaterialPropFb : *pPropertiesFb ) {
 
                     auto pszMaterialPropName = GetCStringProperty( pSrcScene, pMaterialPropFb->name_id( ) );
-                    LogInfo( "Loading property: \"{}\"", pszMaterialPropName );
+                    LogInfo( "\tProperty: \"{}\"", pszMaterialPropName );
 
-                    if ( strcmp( "baseColorFactor", pszMaterialPropName ) == 0 ) {
+                    if ( strcmp( "diffuseFactor", pszMaterialPropName ) == 0 ) {
+                        material.BaseColorFactor = GetVec4Property( pSrcScene, pMaterialPropFb->value_id( ) );
+                    } else if ( strcmp( "baseColorFactor", pszMaterialPropName ) == 0 ) {
                         material.BaseColorFactor = GetVec4Property( pSrcScene, pMaterialPropFb->value_id( ) );
                     } else if ( strcmp( "metallicFactor", pszMaterialPropName ) == 0 ) {
                         material.MetallicFactor = GetScalarProperty( pSrcScene, pMaterialPropFb->value_id( ) );
                     } else if ( strcmp( "emissiveFactor", pszMaterialPropName ) == 0 ) {
                         material.EmissiveFactor = GetVec3Property( pSrcScene, pMaterialPropFb->value_id( ) );
+                    } else  if ( strcmp( "specularFactor", pszMaterialPropName ) == 0 ) {
+                        material.MetallicFactor = GetVec3Property( pSrcScene, pMaterialPropFb->value_id( ) ).x;
+                    } else if ( strcmp( "glossinessFactor", pszMaterialPropName ) == 0 ) {
+                        material.RoughnessFactor = 1.0f - GetScalarProperty( pSrcScene, pMaterialPropFb->value_id( ) );
                     } else if ( strcmp( "roughnessFactor", pszMaterialPropName ) == 0 ) {
                         material.RoughnessFactor = GetScalarProperty( pSrcScene, pMaterialPropFb->value_id( ) );
                     } else if ( strcmp( "doubleSided", pszMaterialPropName ) == 0 ) {
                         material.bDoubleSided = GetBoolProperty( pSrcScene, pMaterialPropFb->value_id( ) );
                     } else if ( strcmp( "alphaMode", pszMaterialPropName ) == 0 ) {
-                        auto pszAlphaMode   = GetCStringProperty( pSrcScene, pMaterialPropFb->value_id( ) );
-                        bool bBlendMode     = strcmp( "BLEND", pszAlphaMode ) == 0;
-                        material.eAlphaMode = bBlendMode ? SceneMaterial::eAlphaMode_Blend : SceneMaterial::eAlphaMode_Unknown;
+                        if ( strcmp( "BLEND", GetCStringProperty( pSrcScene, pMaterialPropFb->value_id( ) ) ) == 0 )
+                            material.eAlphaMode = SceneMaterial::eAlphaMode_Blend;
                     } else {
                         LogError( "Failed to map the property to the available slot" );
                     }
@@ -308,6 +348,10 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
             }     /* pPropertiesFb */
         }         /* pMaterialFb */
     }             /* pMaterialsFb */
+
+    for ( auto &subset : pScene->Subsets ) {
+        subset.MaterialId = materialIdRemap[ subset.MaterialId ];
+    }
 
     return UniqueScenePtrPair( std::move( pScene ), pSrcScene );
 }

@@ -53,18 +53,15 @@ layout( location = 0 ) out vec4 outColor;
 
 void main( ) {
     vec2 texcoords = inTexcoords;
-
     // outColor.rg = inTexcoords.xy;
     // outColor.b = 0;
-
     // outColor.rgb = texture( OcclusionMap, texcoords ).rgb;
     // outColor.rgb = texture( NormalMap, texcoords ).rgb;
-    outColor.rgb = texture( BaseColorMap, texcoords ).rgb * BaseColorFactor.rgb;
-
+    // outColor.rgb = texture( BaseColorMap, texcoords ).rgb * BaseColorFactor.rgb;
     // outColor.rgb = texture( NormalMap, texcoords ).rgb;
     // outColor.rgb = texture( BaseColorMap, texcoords ).rgb;
     // outColor.rgb = BaseColorFactor.rgb;
-    // outColor.rgb = abs( inNormal.rgb );
+    outColor.rgb = abs( inNormal.rgb );
     // outColor.rgb = abs( sepia( inNormal ) );
     // outColor.rgb *= inColor.rgb;
 

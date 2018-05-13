@@ -53,6 +53,7 @@ namespace apemodevk {
         XMFLOAT4X4 WorldMatrix;
         XMFLOAT4   PositionOffset;
         XMFLOAT4   PositionScale;
+        XMFLOAT4   TexcoordOffsetScale;
     };
 
     struct CameraUBO {
@@ -80,6 +81,8 @@ namespace apemodevk {
     };
 
     struct SceneMaterialDeviceAssetVk : apemode::SceneDeviceAsset {
+        const char * pszName = nullptr;
+
         const LoadedImage* pBaseColorLoadedImg         = nullptr;
         const LoadedImage* pNormalLoadedImg            = nullptr;
         const LoadedImage* pOcclusionLoadedImg         = nullptr;
@@ -106,10 +109,14 @@ namespace apemodevk {
 
         if ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) {
             return &pMaterialAsset->pBaseColorLoadedImg;
+        } else if ( strcmp( "diffuseTexture", pszTexturePropName ) == 0 ) {
+            return &pMaterialAsset->pBaseColorLoadedImg;
         } else if ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) {
             return &pMaterialAsset->pNormalLoadedImg;
         } else if ( strcmp( "occlusionTexture", pszTexturePropName ) == 0 ) {
             return &pMaterialAsset->pOcclusionLoadedImg;
+        } else if ( strcmp( "specularGlossinessTexture", pszTexturePropName ) == 0 ) {
+            return &pMaterialAsset->pMetallicRoughnessLoadedImg;
         } else if ( strcmp( "metallicRoughnessTexture", pszTexturePropName ) == 0 ) {
             return &pMaterialAsset->pMetallicRoughnessLoadedImg;
         } else if ( strcmp( "emissiveTexture", pszTexturePropName ) == 0 ) {
@@ -539,6 +546,11 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             assert( pMaterialFb );
             assert( pTexturePropertiesFb );
 
+            auto pszMaterialName = GetCStringProperty( pParamsBase->pSrcScene, pMaterialFb->name_id( ) );
+            pMaterialAsset->pszName = pszMaterialName;
+
+            LogError( "Loading textures for material \"{}\"", pszMaterialName );
+
             for ( auto pTexturePropFb : *pTexturePropertiesFb ) {
 
                 auto pszTexturePropName      = GetCStringProperty( pParamsBase->pSrcScene, pTexturePropFb->name_id( ) );
@@ -779,18 +791,18 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     lightDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( LightUBO );
 
     TDescriptorSet< 4 > descriptorSetForPass;
-    
+
     descriptorSetForPass.pBinding[ 0 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 0 */
     descriptorSetForPass.pBinding[ 0 ].BufferInfo            = cameraDataUploadBufferRange.DescriptorBufferInfo;
-    
+
     descriptorSetForPass.pBinding[ 1 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 1 */
     descriptorSetForPass.pBinding[ 1 ].BufferInfo            = lightDataUploadBufferRange.DescriptorBufferInfo;
-    
+
     descriptorSetForPass.pBinding[ 2 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER; /* 2 */
     descriptorSetForPass.pBinding[ 2 ].ImageInfo.imageLayout = pParams->RadianceMap.eImgLayout;
     descriptorSetForPass.pBinding[ 2 ].ImageInfo.imageView   = pParams->RadianceMap.pImgView;
     descriptorSetForPass.pBinding[ 2 ].ImageInfo.sampler     = pParams->RadianceMap.pSampler;
-    
+
     descriptorSetForPass.pBinding[ 3 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER; /* 3 */
     descriptorSetForPass.pBinding[ 3 ].ImageInfo.imageLayout = pParams->IrradianceMap.eImgLayout;
     descriptorSetForPass.pBinding[ 3 ].ImageInfo.imageView   = pParams->IrradianceMap.pImgView;
@@ -811,12 +823,16 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
         assert( pMeshAsset );
 
         ObjectUBO objectData;
-        objectData.PositionOffset.x = mesh.PositionOffset.x;
-        objectData.PositionOffset.y = mesh.PositionOffset.y;
-        objectData.PositionOffset.z = mesh.PositionOffset.z;
-        objectData.PositionScale.x  = mesh.PositionScale.x;
-        objectData.PositionScale.y  = mesh.PositionScale.y;
-        objectData.PositionScale.z  = mesh.PositionScale.z;
+        objectData.PositionOffset.x      = mesh.PositionOffset.x;
+        objectData.PositionOffset.y      = mesh.PositionOffset.y;
+        objectData.PositionOffset.z      = mesh.PositionOffset.z;
+        objectData.PositionScale.x       = mesh.PositionScale.x;
+        objectData.PositionScale.y       = mesh.PositionScale.y;
+        objectData.PositionScale.z       = mesh.PositionScale.z;
+        objectData.TexcoordOffsetScale.x = mesh.TexcoordOffset.x;
+        objectData.TexcoordOffsetScale.y = mesh.TexcoordOffset.y;
+        objectData.TexcoordOffsetScale.z = mesh.TexcoordScale.x;
+        objectData.TexcoordOffsetScale.w = mesh.TexcoordScale.y;
         XMStoreFloat4x4( &objectData.WorldMatrix, pScene->WorldMatrices[ node.Id ] );
 
         auto pSubsetIt    = pScene->Subsets.data( ) + mesh.BaseSubset;

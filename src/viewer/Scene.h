@@ -32,7 +32,7 @@ namespace apemode {
     /* Represents the material class.
      */
     struct SceneMaterial {
-        enum EAlphaMode { eAlphaMode_Blend, eAlphaMode_Unknown };
+        enum EAlphaMode { eAlphaMode_Solid, eAlphaMode_Blend };
 
         uint32_t SrcId = uint32_t(-1);
         SceneDeviceAssetPtr pDeviceAsset;
@@ -43,7 +43,7 @@ namespace apemode {
         float      RoughnessFactor = 0;
         float      AlphaCutoff     = 0;
         bool       bDoubleSided    = false;
-        EAlphaMode eAlphaMode      = eAlphaMode_Unknown;
+        EAlphaMode eAlphaMode      = eAlphaMode_Solid;
     };
 
     /* Represents the mesh subset class.

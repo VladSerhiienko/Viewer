@@ -151,6 +151,7 @@ namespace apemodevk
         DescriptorSetBase::Binding Bindings[ TMaxBindingCount ];
 
         TDescriptorSet( ETDescriptorSetNoInit ) : DescriptorSetBase( Bindings, 0 ) {
+            InitializeStruct( Bindings );
         }
 
         TDescriptorSet( ) : DescriptorSetBase( Bindings, TMaxBindingCount ) {
@@ -161,7 +162,7 @@ namespace apemodevk
         }
     };
 
-    struct 
+    struct
     DescriptorSetPool {
         struct DescriptorSetItem {
             uint64_t        Hash           = uint64_t( -1 );
