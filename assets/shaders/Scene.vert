@@ -12,6 +12,7 @@
 layout( std140, set = 0, binding = 0 ) uniform CameraUBO {
     mat4 ViewMatrix;
     mat4 ProjMatrix;
+    vec4 CameraWorldPosition;
 };
 
 //
@@ -38,17 +39,20 @@ layout( location = 1 ) in vec3 inNormal;
 layout( location = 2 ) in vec4 inTangent;
 layout( location = 3 ) in vec2 inTexcoords;
 
-layout( location = 0 ) out vec3 outNormal;
+layout( location = 0 ) out vec3 outWorldPosition;
 layout( location = 1 ) out vec3 outWorldNormal;
-layout( location = 2 ) out vec3 outViewNormal;
+layout( location = 2 ) out vec3 outViewDirection;
 layout( location = 3 ) out vec2 outTexcoords;
 
 void main( ) {
     outTexcoords   = inTexcoords * TexcoordOffsetScale.zw + TexcoordOffsetScale.xy;
-    outNormal      = inNormal;
-    outWorldNormal = mat3( WorldMatrix ) * outNormal;
-    outViewNormal  = mat3( ViewMatrix ) * outWorldNormal;
+    outWorldNormal = normalize( mat3( WorldMatrix ) * inNormal );
 
-    vec3 adjustedPosition = inPosition.xyz * PositionScale.xyz + PositionOffset.xyz;
-    gl_Position           = ProjMatrix * ViewMatrix * WorldMatrix * vec4( adjustedPosition, 1.0 );
+    vec3 modelPosition = inPosition.xyz * PositionScale.xyz + PositionOffset.xyz;
+    vec4 worldPosition = WorldMatrix * vec4( modelPosition, 1.0 );
+
+    outViewDirection = normalize( CameraWorldPosition.xyz - worldPosition.xyz );
+
+    outWorldPosition = worldPosition.xyz;
+    gl_Position      = ProjMatrix * ViewMatrix * worldPosition;
 }

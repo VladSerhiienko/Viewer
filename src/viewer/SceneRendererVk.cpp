@@ -59,6 +59,7 @@ namespace apemodevk {
     struct CameraUBO {
         XMFLOAT4X4 ViewMatrix;
         XMFLOAT4X4 ProjMatrix;
+        XMFLOAT4   CameraWorldPosition;
     };
 
     struct MaterialUBO {
@@ -766,7 +767,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     scissor.offset.y      = 0;
     scissor.extent.width  = ( uint32_t )( pParams->Dims.x * pParams->Scale.x );
     scissor.extent.height = ( uint32_t )( pParams->Dims.y * pParams->Scale.y );
-
+ 
     vkCmdSetScissor( pParams->pCmdBuffer, 0, 1, &scissor );
 
     const uint32_t frameIndex = pParams->FrameIndex % kMaxFrameCount;
@@ -774,9 +775,13 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     VkDescriptorSet ppDescriptorSets[ 2 ] = {nullptr};
     uint32_t pDynamicOffsets[ 4 ] = {0};
 
-    CameraUBO cameraData;
-    cameraData.ProjMatrix = pParams->ProjMatrix;
-    cameraData.ViewMatrix = pParams->ViewMatrix;
+    CameraUBO cameraData;   
+    cameraData.ProjMatrix            = pParams->ProjMatrix;
+    cameraData.ViewMatrix            = pParams->ViewMatrix;
+    cameraData.CameraWorldPosition.x = pParams->ViewMatrix._41;
+    cameraData.CameraWorldPosition.y = pParams->ViewMatrix._42;
+    cameraData.CameraWorldPosition.z = pParams->ViewMatrix._43;
+    cameraData.CameraWorldPosition.w = pParams->ViewMatrix._44; 
 
     LightUBO lightData;
     lightData.LightDirection = XMFLOAT4( 0, -1, 0, 1 );
@@ -789,7 +794,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     auto lightDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( cameraData );
     assert( VK_NULL_HANDLE != lightDataUploadBufferRange.DescriptorBufferInfo.buffer );
     lightDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( LightUBO );
-
+ 
     TDescriptorSet< 4 > descriptorSetForPass;
 
     descriptorSetForPass.pBinding[ 0 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 0 */
@@ -808,7 +813,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     descriptorSetForPass.pBinding[ 3 ].ImageInfo.imageView   = pParams->IrradianceMap.pImgView;
     descriptorSetForPass.pBinding[ 3 ].ImageInfo.sampler     = pParams->IrradianceMap.pSampler;
 
-    ppDescriptorSets[ kDescriptorSetForPass ] = DescriptorSetPools[ frameIndex ][ 0 ].GetDescSet( &descriptorSetForPass );
+    ppDescriptorSets[ kDescriptorSetForPass ] = DescriptorSetPools[ frameIndex ][ kDescriptorSetForPass ].GetDescSet( &descriptorSetForPass );
 
     pDynamicOffsets[ 0 ] = cameraDataUploadBufferRange.DynamicOffset;
     pDynamicOffsets[ 1 ] = lightDataUploadBufferRange.DynamicOffset;
@@ -921,7 +926,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
 
             descriptorSetForObject.BindingCount = objectSetBindingCount;
 
-            ppDescriptorSets[ kDescriptorSetForObj ] = DescriptorSetPools[ frameIndex ][ 1 ].GetDescSet( &descriptorSetForObject );
+            ppDescriptorSets[ kDescriptorSetForObj ] = DescriptorSetPools[ frameIndex ][ kDescriptorSetForObj ].GetDescSet( &descriptorSetForObject );
 
             pDynamicOffsets[ 2 ] = objectDataUploadBufferRange.DynamicOffset;
             pDynamicOffsets[ 3 ] = materialDataUploadBufferRange.DynamicOffset;
@@ -986,7 +991,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
         "shaders/Scene.frag", nullptr, ShaderCompiler::eShaderType_GLSL_FragmentShader, &includedFiles );
 
     if ( nullptr == compiledFragmentShader ) {
-        platform::DebugBreak( );
+        platform::DebugBreak( ); 
         return false;
     }
 
@@ -1022,12 +1027,12 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     descriptorSetLayoutBindingsForPass[ 0 ].binding         = 0;
     descriptorSetLayoutBindingsForPass[ 0 ].descriptorCount = 1;
     descriptorSetLayoutBindingsForPass[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    descriptorSetLayoutBindingsForPass[ 0 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT;
+    descriptorSetLayoutBindingsForPass[ 0 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
     descriptorSetLayoutBindingsForPass[ 1 ].binding         = 1;
     descriptorSetLayoutBindingsForPass[ 1 ].descriptorCount = 1;
     descriptorSetLayoutBindingsForPass[ 1 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
-    descriptorSetLayoutBindingsForPass[ 1 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT;
+    descriptorSetLayoutBindingsForPass[ 1 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
     descriptorSetLayoutBindingsForPass[ 2 ].binding         = 2;
     descriptorSetLayoutBindingsForPass[ 2 ].descriptorCount = 1;
@@ -1064,7 +1069,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     descriptorSetLayoutBindingsForObj[ 1 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     descriptorSetLayoutBindingsForObj[ 1 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
 
-    for ( uint32_t i = 2; i < 8; ++i ) {
+    for ( uint32_t i = 2; i < GetArraySize( descriptorSetLayoutBindingsForObj ); ++i ) {
         descriptorSetLayoutBindingsForObj[ i ].binding         = i;
         descriptorSetLayoutBindingsForObj[ i ].descriptorCount = 1;
         descriptorSetLayoutBindingsForObj[ i ].descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -1284,8 +1289,8 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
 
     for ( uint32_t i = 0; i < pParams->FrameCount; ++i ) {
         BufferPools[ i ].Recreate( pParams->pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
-        DescriptorSetPools[ i ][ kDescriptorSetForPass ].Recreate( *pParams->pNode, pParams->pDescPool, hDescriptorSetLayouts[ 0 ] );
-        DescriptorSetPools[ i ][ kDescriptorSetForObj ].Recreate( *pParams->pNode, pParams->pDescPool, hDescriptorSetLayouts[ 1 ] );
+        DescriptorSetPools[ i ][ kDescriptorSetForPass ].Recreate( *pParams->pNode, pParams->pDescPool, hDescriptorSetLayouts[ kDescriptorSetForPass ] );
+        DescriptorSetPools[ i ][ kDescriptorSetForObj ].Recreate( *pParams->pNode, pParams->pDescPool, hDescriptorSetLayouts[ kDescriptorSetForObj ] );
     }
 
     return true;

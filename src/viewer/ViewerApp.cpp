@@ -81,9 +81,9 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 //const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
 ViewerApp::ViewerApp( ) {
-    pCamController = apemodevk::make_unique< ModelViewCameraController >();
     pCamInput      = apemodevk::make_unique< MouseKeyboardCameraControllerInput >( );
-    //pCamController = apemodevk::make_unique< FreeLookCameraController >( );
+    pCamController = apemodevk::make_unique< FreeLookCameraController >( );
+    // pCamController = apemodevk::make_unique< ModelViewCameraController >();
 }
 
 ViewerApp::~ViewerApp( ) {
