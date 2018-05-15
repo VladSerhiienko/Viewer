@@ -297,14 +297,28 @@ bool ViewerApp::Initialize(  ) {
         updateParams.pSamplerManager = pSamplerManager.get( );
         updateParams.pShaderCompiler = pShaderCompiler.get( );
 
-        // --assets "..\..\assets\**" --scene "C:/Sources/Models/rainier-ak-3ds.fbxp"
-        // --assets "..\..\assets\**" --scene "C:/Sources/Models/bristleback-dota-fan-art.fbxp"
-        // --assets "..\..\assets\**" --scene "C:/Sources/Models/skull_salazar.fbxp"
-        // --assets "..\..\assets\**" --scene "C:/Sources/Models/1972-datsun-240k-gt.fbxp"
-        // --assets "..\..\assets\**" --scene "C:\Sources\Models\graograman.fbxp"
-        // --assets "..\..\assets\**" --scene "C:/Sources/Models/dreadroamer-free.fbxp"
-        // --assets "..\..\assets\**" --scene "C:/Sources/Models/warcraft-draenei-fanart.fbxp"
-        // --assets "..\..\assets\**" --scene "C:/Sources/Models/knight-artorias.fbxp"
+        /*
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/wasteland-hunters-vehicule.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/snow-road-raw-scan-freebie.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/skull_salazar.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/graograman.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/warcraft-draenei-fanart.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/1972-datsun-240k-gt.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/dreadroamer-free.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/knight-artorias.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/rainier-ak-3ds.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/leather-shoes.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/terrarium-bot.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/car-lego-technic-42010.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/9-mm.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/colt.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/cerberus.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/gunslinger.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/pickup-truck.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/rock-jacket-mid-poly.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/mech-m-6k.fbxp"
+        */
+
         if ( false == pSceneRendererBase->Recreate( &recreateParams ) ) {
             apemode::platform::DebugBreak( );
             return false;
