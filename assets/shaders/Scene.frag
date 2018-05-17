@@ -83,15 +83,14 @@ float GetRoughness( ) {
     return MetallicRoughnessFactor.y;
 }
 
-vec3 CalculateWorldNormal()
-{
+vec3 CalculateWorldNormal( ) {
     if ( false == IsTextureMapAvailable( Flags.x, 3 ) )
         return WorldNormal;
 
-    vec3 detailNormal = texture( NormalMap, Texcoords ).xyz;
-    detailNormal = detailNormal * vec3( 2.0 ) - vec3( 1.0 );
+    vec3 detailNormal = normalize( texture( NormalMap, Texcoords ).xyz );
+    detailNormal = normalize( detailNormal * vec3( 2.0 ) - vec3( 1.0 ) );
 
-    vec3 detailedWorldNormal = (detailNormal.x * WorldTangent.xyz) + (detailNormal.y * WorldBitangent.xyz) + (detailNormal.z * WorldNormal.xyz);
+    vec3 detailedWorldNormal = ( detailNormal.x * WorldTangent.xyz ) + ( detailNormal.y * WorldBitangent.xyz ) + ( detailNormal.z * WorldNormal.xyz );
     return normalize( detailedWorldNormal );
 }
 
