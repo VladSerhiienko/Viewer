@@ -59,7 +59,8 @@ namespace apemodevk {
     struct CameraUBO {
         XMFLOAT4X4 ViewMatrix;
         XMFLOAT4X4 ProjMatrix;
-        XMFLOAT4   CameraWorldPosition;
+        XMFLOAT4X4 InvViewMatrix;
+        XMFLOAT4X4 InvProjMatrix;
     };
 
     struct MaterialUBO {
@@ -125,6 +126,27 @@ namespace apemodevk {
         }
 
         return nullptr;
+    }
+
+    bool GenerateMipMapsForPropertyName(  const char* pszTexturePropName ) {
+
+        if ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) {
+            return true;
+        } else if ( strcmp( "diffuseTexture", pszTexturePropName ) == 0 ) {
+            return true;
+        } else if ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) {
+            return false;
+        } else if ( strcmp( "occlusionTexture", pszTexturePropName ) == 0 ) {
+            return false;
+        } else if ( strcmp( "specularGlossinessTexture", pszTexturePropName ) == 0 ) {
+            return false;
+        } else if ( strcmp( "metallicRoughnessTexture", pszTexturePropName ) == 0 ) {
+            return false;
+        } else if ( strcmp( "emissiveTexture", pszTexturePropName ) == 0 ) {
+            return true;
+        }
+
+        return false;
     }
 
     struct SceneDeviceAssetVk : apemode::SceneDeviceAsset {
@@ -583,11 +605,16 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                     } else {
 
                         LogInfo( "Loading texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
+
+                        apemodevk::ImageLoader::LoadOptions loadOptions;
+                        loadOptions.eFileFormat    = apemodevk::ImageLoader::eImageFileFormat_PNG;
+                        loadOptions.bAwaitLoading    = true;
+                        loadOptions.bImgView         = false;
+                        loadOptions.bGenerateMipMaps = apemodevk::GenerateMipMapsForPropertyName( pszTexturePropName );
+
                         auto loadedImg = imageLoader.LoadImageFromData( pFileFb->buffer( )->data( ),
                                                                         pFileFb->buffer( )->size( ),
-                                                                        apemodevk::ImageLoader::eImageFileFormat_PNG,
-                                                                        false,
-                                                                        true );
+                                                                        loadOptions );
 
                         if ( loadedImg ) {
 
@@ -767,7 +794,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     scissor.offset.y      = 0;
     scissor.extent.width  = ( uint32_t )( pParams->Dims.x * pParams->Scale.x );
     scissor.extent.height = ( uint32_t )( pParams->Dims.y * pParams->Scale.y );
- 
+
     vkCmdSetScissor( pParams->pCmdBuffer, 0, 1, &scissor );
 
     const uint32_t frameIndex = pParams->FrameIndex % kMaxFrameCount;
@@ -775,13 +802,11 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     VkDescriptorSet ppDescriptorSets[ 2 ] = {nullptr};
     uint32_t pDynamicOffsets[ 4 ] = {0};
 
-    CameraUBO cameraData;   
-    cameraData.ProjMatrix            = pParams->ProjMatrix;
+    CameraUBO cameraData;
     cameraData.ViewMatrix            = pParams->ViewMatrix;
-    cameraData.CameraWorldPosition.x = pParams->ViewMatrix._41;
-    cameraData.CameraWorldPosition.y = pParams->ViewMatrix._42;
-    cameraData.CameraWorldPosition.z = pParams->ViewMatrix._43;
-    cameraData.CameraWorldPosition.w = pParams->ViewMatrix._44; 
+    cameraData.ProjMatrix            = pParams->ProjMatrix;
+    cameraData.InvViewMatrix         = pParams->InvViewMatrix;
+    cameraData.InvProjMatrix         = pParams->InvProjMatrix;
 
     LightUBO lightData;
     lightData.LightDirection = XMFLOAT4( 0, -1, 0, 1 );
@@ -794,7 +819,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     auto lightDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( cameraData );
     assert( VK_NULL_HANDLE != lightDataUploadBufferRange.DescriptorBufferInfo.buffer );
     lightDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( LightUBO );
- 
+
     TDescriptorSet< 4 > descriptorSetForPass;
 
     descriptorSetForPass.pBinding[ 0 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 0 */
@@ -991,7 +1016,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
         "shaders/Scene.frag", nullptr, ShaderCompiler::eShaderType_GLSL_FragmentShader, &includedFiles );
 
     if ( nullptr == compiledFragmentShader ) {
-        platform::DebugBreak( ); 
+        platform::DebugBreak( );
         return false;
     }
 

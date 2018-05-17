@@ -9,6 +9,7 @@
 
 #pragma warning(disable:4309)
 #include <gli/gli.hpp>
+#include <gli/generate_mipmaps.hpp>
 #pragma warning(default:4309)
 
 /**
@@ -49,23 +50,132 @@ VkImageViewType ToImgViewType( const gli::target eTextureTarget ) {
     }
 }
 
-bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode, HostBufferPool* pInHostBufferPool ) {
-    pNode = pInNode;
+gli::texture DuplicateWithMipMaps( const gli::texture& originalTexture ) {
 
-    if ( nullptr == pInHostBufferPool ) {
-        pHostBufferPool = new HostBufferPool( );
-        pHostBufferPool->Recreate( pNode, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, false );
-    } else {
-        pHostBufferPool = pInHostBufferPool;
+    if ( originalTexture.empty( ) ) {
+        return gli::texture( );
     }
 
-    return true;
+    const uint32_t maxExtent = std::max( std::max( originalTexture.extent( ).x, originalTexture.extent( ).y ), originalTexture.extent( ).z );
+    const uint32_t maxLod    = static_cast< uint32_t >( std::floor( std::log2( maxExtent ) ) ) + 1;
+
+    gli::texture duplicate( originalTexture.target( ),
+                            originalTexture.format( ),
+                            originalTexture.extent( ),
+                            originalTexture.layers( ),
+                            originalTexture.faces( ),
+                            maxLod,
+                            originalTexture.swizzles( ) );
+
+    for ( gli::texture::size_type ll = 0; ll < duplicate.layers( ); ++ll )
+        for ( gli::texture::size_type ff = 0; ff < duplicate.faces( ); ++ff )
+            duplicate.copy( originalTexture, ll, ff, originalTexture.base_level( ), ll, ff, duplicate.base_level( ) );
+
+    return duplicate;
 }
 
-std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromData(
-    const uint8_t* pFileContent, size_t fileContentSize, EImageFileFormat eFileFormat, bool bImgView, bool bAwaitLoading ) {
+gli::texture GenerateMipMaps( const gli::texture& texture ) {
+
+    if ( texture.empty( ) ) {
+        return gli::texture( );
+    }
+
+    switch ( texture.target( ) ) {
+        case gli::TARGET_1D:
+            return gli::generate_mipmaps( static_cast< const gli::texture1d& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_1D_ARRAY:
+            return gli::generate_mipmaps( static_cast< const gli::texture1d_array& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_2D:
+            return gli::generate_mipmaps( static_cast< const gli::texture2d& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_2D_ARRAY:
+            return gli::generate_mipmaps( static_cast< const gli::texture2d_array& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_RECT:
+            return gli::generate_mipmaps( static_cast< const gli::texture2d& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_RECT_ARRAY:
+            return gli::generate_mipmaps( static_cast< const gli::texture2d_array& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_3D:
+            return gli::generate_mipmaps( static_cast< const gli::texture3d& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_CUBE:
+            return gli::generate_mipmaps( static_cast< const gli::texture_cube& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_CUBE_ARRAY:
+            return gli::generate_mipmaps( static_cast< const gli::texture_cube_array& >( texture ), gli::FILTER_LINEAR );
+    }
+
+    assert( false );
+    return gli::texture();
+}
+
+gli::texture LoadTexture( const uint8_t*                           pFileContent,
+                          size_t                                   fileContentSize,
+                          apemodevk::ImageLoader::EImageFileFormat eFileFormat,
+                          bool                                     bGenerateMipMaps ) {
+    assert( pFileContent && fileContentSize );
+
+    gli::texture texture;
+
+    /**
+     * @note All the data will be uploaded in switch cases,
+     *       all the structures that depend on image type and dimensions
+     *       will be filled in switch cases.
+     **/
+    switch ( eFileFormat ) {
+        case apemodevk::ImageLoader::eImageFileFormat_DDS:
+        case apemodevk::ImageLoader::eImageFileFormat_KTX: {
+            texture = gli::load( (const char*) pFileContent, fileContentSize );
+        } break;
+
+        // case apemodevk::ImageLoader::eImageFileFormat_PNG:
+        // case apemodevk::ImageLoader::eImageFileFormat_Undefined:
+        default: {
+            int imageWidth;
+            int imageHeight;
+            int componentsInFile;
+
+            /* Load png file here from memory buffer */
+            if ( stbi_uc* pImageBytes = stbi_load_from_memory( pFileContent, int( fileContentSize ), &imageWidth, &imageHeight, &componentsInFile, STBI_rgb_alpha ) ) {
+                assert( imageWidth && imageHeight );
+
+                texture = gli::texture(
+                    gli::target::TARGET_2D,
+                    gli::format::FORMAT_RGBA8_UINT_PACK8,
+                    gli::texture::extent_type( imageWidth, imageHeight, 1 ),
+                    1,
+                    1,
+                    1,
+                    gli::swizzles( gli::SWIZZLE_RED, gli::SWIZZLE_GREEN, gli::SWIZZLE_BLUE, gli::SWIZZLE_ALPHA ) );
+
+                memcpy( texture.data( ), pImageBytes, texture.size( ) );
+                stbi_image_free( pImageBytes );
+            }
+        } break;
+    }
+
+    /* Check if the user needs mipmaps.
+     * Note, that DDS and KTX files can contain mipmaps. */
+    if ( !texture.empty( ) && bGenerateMipMaps && 1 == texture.levels( ) ) {
+
+        /* Cannot generate mipmaps the data is compressed. */
+        if ( !gli::is_compressed( texture.format( ) ) ) {
+            gli::texture dumplicateWithMapMaps = DuplicateWithMipMaps( texture );
+            texture = GenerateMipMaps( dumplicateWithMapMaps );
+        }
+    }
+
+    return texture;
+}
+
+
+std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromData( const uint8_t*     pFileContent,
+                                                                                     size_t             fileContentSize,
+                                                                                     LoadOptions const& loadOptions ) {
+    if ( !pFileContent || !fileContentSize ) {
+        return nullptr;
+    }
 
     auto loadedImage = apemodevk::make_unique< LoadedImage >( );
+    if ( !loadedImage ) {
+        return nullptr;
+    }
 
     std::vector< VkBufferImageCopy > bufferImageCopies;
     VkImageMemoryBarrier             writeImageMemoryBarrier;
@@ -79,165 +189,91 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
 
     pHostBufferPool->Reset( );
 
-    /**
-     * @note All the data will be uploaded in switch cases,
-     *       all the structures that depend on image type and dimensions
-     *       will be filled in switch cases.
-     **/
-    switch ( eFileFormat ) {
-        case apemodevk::ImageLoader::eImageFileFormat_DDS:
-        case apemodevk::ImageLoader::eImageFileFormat_KTX: {
-            auto texture = gli::load( (const char*) pFileContent, fileContentSize );
+    gli::texture texture = LoadTexture( pFileContent, fileContentSize, loadOptions.eFileFormat, loadOptions.bGenerateMipMaps );
+    if ( texture.empty( ) ) {
+        return nullptr;
+    }
 
-            if ( false == texture.empty( ) ) {
+    loadedImage->ImageCreateInfo.format        = ToImgFormat( texture.format( ) );
+    loadedImage->ImageCreateInfo.imageType     = ToImgType( texture.target( ) );
+    loadedImage->ImageCreateInfo.extent.width  = (uint32_t) texture.extent( ).x;
+    loadedImage->ImageCreateInfo.extent.height = (uint32_t) texture.extent( ).y;
+    loadedImage->ImageCreateInfo.extent.depth  = (uint32_t) texture.extent( ).z;
+    loadedImage->ImageCreateInfo.mipLevels     = (uint32_t) texture.levels( );
+    loadedImage->ImageCreateInfo.arrayLayers   = (uint32_t) texture.faces( );
+    loadedImage->ImageCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
+    loadedImage->ImageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
+    loadedImage->ImageCreateInfo.usage         = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    loadedImage->ImageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
+    loadedImage->ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
 
-                loadedImage->ImageCreateInfo.format        = ToImgFormat( texture.format( ) );
-                loadedImage->ImageCreateInfo.imageType     = ToImgType( texture.target( ) );
-                loadedImage->ImageCreateInfo.extent.width  = (uint32_t) texture.extent( ).x;
-                loadedImage->ImageCreateInfo.extent.height = (uint32_t) texture.extent( ).y;
-                loadedImage->ImageCreateInfo.extent.depth  = (uint32_t) texture.extent( ).z;
-                loadedImage->ImageCreateInfo.mipLevels     = (uint32_t) texture.levels( );
-                loadedImage->ImageCreateInfo.arrayLayers   = (uint32_t) texture.faces( );
-                loadedImage->ImageCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
-                loadedImage->ImageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
-                loadedImage->ImageCreateInfo.usage         = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-                loadedImage->ImageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-                loadedImage->ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+    loadedImage->ImgViewCreateInfo.flags                           = 0;
+    loadedImage->ImgViewCreateInfo.format                          = ToImgFormat( texture.format( ) );
+    loadedImage->ImgViewCreateInfo.viewType                        = ToImgViewType( texture.target( ) );
+    loadedImage->ImgViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+    loadedImage->ImgViewCreateInfo.subresourceRange.levelCount     = (uint32_t) texture.levels( );
+    loadedImage->ImgViewCreateInfo.subresourceRange.layerCount     = (uint32_t) texture.faces( );
+    loadedImage->ImgViewCreateInfo.subresourceRange.baseMipLevel   = 0;
+    loadedImage->ImgViewCreateInfo.subresourceRange.baseArrayLayer = 0;
 
-                loadedImage->ImgViewCreateInfo.flags                           = 0;
-                loadedImage->ImgViewCreateInfo.format                          = ToImgFormat( texture.format( ) );
-                loadedImage->ImgViewCreateInfo.viewType                        = ToImgViewType( texture.target( ) );
-                loadedImage->ImgViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-                loadedImage->ImgViewCreateInfo.subresourceRange.levelCount     = (uint32_t) texture.levels( );
-                loadedImage->ImgViewCreateInfo.subresourceRange.layerCount     = (uint32_t) texture.faces( );
-                loadedImage->ImgViewCreateInfo.subresourceRange.baseMipLevel   = 0;
-                loadedImage->ImgViewCreateInfo.subresourceRange.baseArrayLayer = 0;
-
-                switch ( loadedImage->ImgViewCreateInfo.viewType ) {
-                    case VK_IMAGE_VIEW_TYPE_CUBE:
-                    case VK_IMAGE_VIEW_TYPE_CUBE_ARRAY: {
-                        loadedImage->ImageCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
-                    } break;
-                }
-
-                imageBufferSuballocResult = pHostBufferPool->Suballocate( texture.data( ), (uint32_t) texture.size( ) );
-
-                uint32_t bufferImageCopyIndex = 0;
-                bufferImageCopies.resize( ( uint32_t )( texture.levels( ) * texture.faces( ) ) );
-
-                for ( size_t mipLevel = 0; mipLevel < texture.levels( ); ++mipLevel ) {
-                    for ( size_t face = 0; face < texture.faces( ); ++face ) {
-                        auto& bufferImageCopy = bufferImageCopies[ bufferImageCopyIndex++ ];
-                        InitializeStruct( bufferImageCopy );
-
-                        /**
-                         * Note, that the texture will be destructed at the end of the 'case' scope.
-                         * All the memory was copied to the pHostBufferPool.
-                         **/
-
-                        uintptr_t    imgAddress    = (uintptr_t) texture.data( );
-                        uintptr_t    subImgAddress = (uintptr_t) texture.data( 0, face, mipLevel );
-                        VkDeviceSize imageOffset   = subImgAddress - imgAddress;
-                        VkDeviceSize bufferOffset  = imageBufferSuballocResult.DynamicOffset + imageOffset;
-
-                        bufferImageCopy.imageSubresource.baseArrayLayer = 0;
-                        bufferImageCopy.imageSubresource.mipLevel       = (uint32_t) mipLevel;
-                        bufferImageCopy.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-                        bufferImageCopy.imageSubresource.baseArrayLayer = (uint32_t) face;
-                        bufferImageCopy.imageSubresource.layerCount     = 1;
-                        bufferImageCopy.imageExtent.width               = (uint32_t) texture.extent( mipLevel ).x;
-                        bufferImageCopy.imageExtent.height              = (uint32_t) texture.extent( mipLevel ).y;
-                        bufferImageCopy.imageExtent.depth               = (uint32_t) texture.extent( mipLevel ).z;
-                        bufferImageCopy.bufferOffset                    = bufferOffset;
-                        bufferImageCopy.bufferImageHeight               = 0; /* Tightly packed according to the imageExtent */
-                        bufferImageCopy.bufferRowLength                 = 0; /* Tightly packed according to the imageExtent */
-                    }
-                }
-
-                writeImageMemoryBarrier.dstAccessMask               = VK_ACCESS_TRANSFER_WRITE_BIT;
-                writeImageMemoryBarrier.oldLayout                   = VK_IMAGE_LAYOUT_UNDEFINED;
-                writeImageMemoryBarrier.newLayout                   = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-                writeImageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                writeImageMemoryBarrier.subresourceRange.levelCount = (uint32_t) texture.levels( );
-                writeImageMemoryBarrier.subresourceRange.layerCount = (uint32_t) texture.faces( );
-
-                readImgMemoryBarrier.srcAccessMask               = VK_ACCESS_TRANSFER_WRITE_BIT;
-                readImgMemoryBarrier.dstAccessMask               = VK_ACCESS_SHADER_READ_BIT;
-                readImgMemoryBarrier.oldLayout                   = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-                readImgMemoryBarrier.newLayout                   = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                readImgMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                readImgMemoryBarrier.subresourceRange.levelCount = (uint32_t) texture.levels( );
-                readImgMemoryBarrier.subresourceRange.layerCount = (uint32_t) texture.faces( );
-
-                loadedImage->eImgLayout = readImgMemoryBarrier.newLayout;
-            }
+    switch ( loadedImage->ImgViewCreateInfo.viewType ) {
+        case VK_IMAGE_VIEW_TYPE_CUBE:
+        case VK_IMAGE_VIEW_TYPE_CUBE_ARRAY: {
+            loadedImage->ImageCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
         } break;
-        case apemodevk::ImageLoader::eImageFileFormat_PNG: {
-            int imageWidth;
-            int imageHeight;
-            int componentsInFile;
-
-            /* Load png file here from memory buffer */
-            stbi_uc* pImageBytes = stbi_load_from_memory( pFileContent, int( fileContentSize ), &imageWidth, &imageHeight, &componentsInFile, STBI_rgb_alpha );
-
-            if ( pImageBytes && imageWidth && imageHeight) {
-
-                loadedImage->ImageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
-                loadedImage->ImageCreateInfo.format        = VK_FORMAT_R8G8B8A8_UNORM;
-                loadedImage->ImageCreateInfo.extent.width  = imageWidth;
-                loadedImage->ImageCreateInfo.extent.height = imageHeight;
-                loadedImage->ImageCreateInfo.extent.depth  = 1;
-                loadedImage->ImageCreateInfo.mipLevels     = 1;
-                loadedImage->ImageCreateInfo.arrayLayers   = 1;
-                loadedImage->ImageCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
-                loadedImage->ImageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
-                loadedImage->ImageCreateInfo.usage         = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-                loadedImage->ImageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-                loadedImage->ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-                loadedImage->ImgViewCreateInfo.viewType                    = VK_IMAGE_VIEW_TYPE_2D;
-                loadedImage->ImgViewCreateInfo.format                      = VK_FORMAT_R8G8B8A8_UNORM;
-                loadedImage->ImgViewCreateInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                loadedImage->ImgViewCreateInfo.subresourceRange.levelCount = 1;
-                loadedImage->ImgViewCreateInfo.subresourceRange.layerCount = 1;
-
-                imageBufferSuballocResult = pHostBufferPool->Suballocate( pImageBytes, imageWidth * imageHeight * 4 );
-                stbi_image_free( (void*) pImageBytes ); /* Free decoded PNG since it is no longer needed */
-
-                bufferImageCopies.resize( 1 );
-                auto& bufferImageCopy = bufferImageCopies.back( );
-                InitializeStruct( bufferImageCopy );
-
-                bufferImageCopy.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                bufferImageCopy.imageSubresource.layerCount = 1;
-                bufferImageCopy.imageExtent.width           = imageWidth;
-                bufferImageCopy.imageExtent.height          = imageHeight;
-                bufferImageCopy.imageExtent.depth           = 1;
-                bufferImageCopy.bufferOffset                = imageBufferSuballocResult.DynamicOffset;
-                bufferImageCopy.bufferImageHeight           = 0; /* Tightly packed according to the imageExtent */
-                bufferImageCopy.bufferRowLength             = 0; /* Tightly packed according to the imageExtent */
-
-                writeImageMemoryBarrier.dstAccessMask               = VK_ACCESS_TRANSFER_WRITE_BIT;
-                writeImageMemoryBarrier.oldLayout                   = VK_IMAGE_LAYOUT_UNDEFINED;
-                writeImageMemoryBarrier.newLayout                   = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-                writeImageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                writeImageMemoryBarrier.subresourceRange.levelCount = 1;
-                writeImageMemoryBarrier.subresourceRange.layerCount = 1;
-
-                readImgMemoryBarrier.srcAccessMask               = VK_ACCESS_TRANSFER_WRITE_BIT;
-                readImgMemoryBarrier.dstAccessMask               = VK_ACCESS_SHADER_READ_BIT;
-                readImgMemoryBarrier.oldLayout                   = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-                readImgMemoryBarrier.newLayout                   = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                readImgMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-                readImgMemoryBarrier.subresourceRange.levelCount = 1;
-                readImgMemoryBarrier.subresourceRange.layerCount = 1;
-
-                loadedImage->eImgLayout = readImgMemoryBarrier.newLayout;
-            }
+        case VK_IMAGE_VIEW_TYPE_2D_ARRAY: {
+            loadedImage->ImageCreateInfo.flags |= VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT;
         } break;
     }
 
-    pHostBufferPool->Flush( ); /* Unmap buffers and flush all memory ranges */
+    imageBufferSuballocResult = pHostBufferPool->Suballocate( texture.data( ), (uint32_t) texture.size( ) );
+
+    uint32_t bufferImageCopyIndex = 0;
+    bufferImageCopies.resize( ( uint32_t )( texture.levels( ) * texture.faces( ) ) );
+
+    for ( size_t mipLevel = 0; mipLevel < texture.levels( ); ++mipLevel ) {
+        for ( size_t face = 0; face < texture.faces( ); ++face ) {
+            auto& bufferImageCopy = bufferImageCopies[ bufferImageCopyIndex++ ];
+            InitializeStruct( bufferImageCopy );
+
+            uintptr_t    imgAddress    = (uintptr_t) texture.data( );
+            uintptr_t    subImgAddress = (uintptr_t) texture.data( 0, face, mipLevel );
+            VkDeviceSize imageOffset   = subImgAddress - imgAddress;
+            VkDeviceSize bufferOffset  = imageBufferSuballocResult.DynamicOffset + imageOffset;
+
+            bufferImageCopy.imageSubresource.baseArrayLayer = 0;
+            bufferImageCopy.imageSubresource.mipLevel       = (uint32_t) mipLevel;
+            bufferImageCopy.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+            bufferImageCopy.imageSubresource.baseArrayLayer = (uint32_t) face;
+            bufferImageCopy.imageSubresource.layerCount     = 1;
+            bufferImageCopy.imageExtent.width               = (uint32_t) texture.extent( mipLevel ).x;
+            bufferImageCopy.imageExtent.height              = (uint32_t) texture.extent( mipLevel ).y;
+            bufferImageCopy.imageExtent.depth               = (uint32_t) texture.extent( mipLevel ).z;
+            bufferImageCopy.bufferOffset                    = bufferOffset;
+            bufferImageCopy.bufferImageHeight               = 0; /* Tightly packed according to the imageExtent */
+            bufferImageCopy.bufferRowLength                 = 0; /* Tightly packed according to the imageExtent */
+        }
+    }
+
+    writeImageMemoryBarrier.dstAccessMask               = VK_ACCESS_TRANSFER_WRITE_BIT;
+    writeImageMemoryBarrier.oldLayout                   = VK_IMAGE_LAYOUT_UNDEFINED;
+    writeImageMemoryBarrier.newLayout                   = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    writeImageMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    writeImageMemoryBarrier.subresourceRange.levelCount = (uint32_t) texture.levels( );
+    writeImageMemoryBarrier.subresourceRange.layerCount = (uint32_t) texture.faces( );
+
+    readImgMemoryBarrier.srcAccessMask               = VK_ACCESS_TRANSFER_WRITE_BIT;
+    readImgMemoryBarrier.dstAccessMask               = VK_ACCESS_SHADER_READ_BIT;
+    readImgMemoryBarrier.oldLayout                   = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    readImgMemoryBarrier.newLayout                   = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    readImgMemoryBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    readImgMemoryBarrier.subresourceRange.levelCount = (uint32_t) texture.levels( );
+    readImgMemoryBarrier.subresourceRange.layerCount = (uint32_t) texture.faces( );
+
+    loadedImage->eImgLayout = readImgMemoryBarrier.newLayout;
+
+    texture = gli::texture( ); /* Free allocated CPU memory. */
+    pHostBufferPool->Flush( ); /* Unmap buffers and flush all staging memory ranges */
 
     VmaAllocationCreateInfo allocationCreateInfo = {};
     allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
@@ -247,7 +283,7 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
         return nullptr;
     }
 
-    if ( bImgView ) {
+    if ( loadOptions.bImgView ) {
         loadedImage->ImgViewCreateInfo.image = loadedImage->hImg.Handle.pImg;
         if ( false == loadedImage->hImgView.Recreate( *pNode, loadedImage->ImgViewCreateInfo ) ) {
             return nullptr;
@@ -329,7 +365,7 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
         return nullptr;
     }
 
-    if ( bAwaitLoading ) {
+    if ( loadOptions.bAwaitLoading ) {
         /* No need to pass fence to command buffer pool */
         acquiredCmdBuffer.pFence = nullptr;
 
@@ -352,4 +388,17 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
     pNode->GetQueuePool( )->Release( acquiredQueue );
 
     return std::move( loadedImage );
+}
+
+bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode, HostBufferPool* pInHostBufferPool ) {
+    pNode = pInNode;
+
+    if ( nullptr == pInHostBufferPool ) {
+        pHostBufferPool = new HostBufferPool( );
+        pHostBufferPool->Recreate( pNode, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, false );
+    } else {
+        pHostBufferPool = pInHostBufferPool;
+    }
+
+    return true;
 }

@@ -53,6 +53,8 @@ namespace apemode {
             VkCommandBuffer            pCmdBuffer = VK_NULL_HANDLE; /* Required */
             XMFLOAT4X4                 ViewMatrix;                  /* Required */
             XMFLOAT4X4                 ProjMatrix;                  /* Required */
+            XMFLOAT4X4                 InvViewMatrix;               /* Required */
+            XMFLOAT4X4                 InvProjMatrix;               /* Required */
             EnvMap                     RadianceMap;                 /* Required */
             EnvMap                     IrradianceMap;               /* Required */
         };

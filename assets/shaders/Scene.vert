@@ -12,7 +12,8 @@
 layout( std140, set = 0, binding = 0 ) uniform CameraUBO {
     mat4 ViewMatrix;
     mat4 ProjMatrix;
-    vec4 CameraWorldPosition;
+    mat4 InvViewMatrix;
+    mat4 InvProjMatrix;
 };
 
 //
@@ -41,18 +42,25 @@ layout( location = 3 ) in vec2 inTexcoords;
 
 layout( location = 0 ) out vec3 outWorldPosition;
 layout( location = 1 ) out vec3 outWorldNormal;
-layout( location = 2 ) out vec3 outViewDirection;
-layout( location = 3 ) out vec2 outTexcoords;
+layout( location = 2 ) out vec4 outWorldTangent;
+layout( location = 3 ) out vec3 outWorldBitangent;
+layout( location = 4 ) out vec3 outViewDirection;
+layout( location = 5 ) out vec2 outTexcoords;
+
+vec3 GetCameraWorldPosition( ) {
+    return InvViewMatrix[ 3 ].xyz;
+}
 
 void main( ) {
-    outTexcoords   = inTexcoords * TexcoordOffsetScale.zw + TexcoordOffsetScale.xy;
-    outWorldNormal = normalize( mat3( WorldMatrix ) * inNormal );
 
     vec3 modelPosition = inPosition.xyz * PositionScale.xyz + PositionOffset.xyz;
     vec4 worldPosition = WorldMatrix * vec4( modelPosition, 1.0 );
 
-    outViewDirection = normalize( CameraWorldPosition.xyz - worldPosition.xyz );
-
-    outWorldPosition = worldPosition.xyz;
-    gl_Position      = ProjMatrix * ViewMatrix * worldPosition;
+    outWorldPosition  = worldPosition.xyz;
+    outViewDirection  = normalize( GetCameraWorldPosition( ).xyz - worldPosition.xyz );
+    outWorldNormal    = normalize( mat3( WorldMatrix ) * inNormal );
+    outWorldTangent   = vec4( normalize( mat3( WorldMatrix ) * inTangent.xyz ), inTangent.w );
+    outWorldBitangent = cross( outWorldNormal.xyz, outWorldTangent.xyz );
+    outTexcoords      = inTexcoords * TexcoordOffsetScale.zw + TexcoordOffsetScale.xy;
+    gl_Position       = ProjMatrix * ViewMatrix * worldPosition;
 }

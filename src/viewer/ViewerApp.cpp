@@ -82,8 +82,8 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 
 ViewerApp::ViewerApp( ) {
     pCamInput      = apemodevk::make_unique< MouseKeyboardCameraControllerInput >( );
-    pCamController = apemodevk::make_unique< FreeLookCameraController >( );
-    // pCamController = apemodevk::make_unique< ModelViewCameraController >();
+    // pCamController = apemodevk::make_unique< FreeLookCameraController >( );
+    pCamController = apemodevk::make_unique< ModelViewCameraController >();
 }
 
 ViewerApp::~ViewerApp( ) {
@@ -180,11 +180,15 @@ bool ViewerApp::Initialize(  ) {
             {
                 const std::vector< uint8_t > texAssetBin = pTexAsset->AsBin( );
 
+                apemodevk::ImageLoader::LoadOptions loadOptions;
+                loadOptions.eFileFormat    = apemodevk::ImageLoader::eImageFileFormat_DDS;
+                loadOptions.bAwaitLoading    = true;
+                loadOptions.bImgView         = true;
+                loadOptions.bGenerateMipMaps = true;
+
                 RadianceLoadedImg = imgLoader.LoadImageFromData( texAssetBin.data( ),
                                                                  texAssetBin.size( ),
-                                                                 apemodevk::ImageLoader::eImageFileFormat_DDS,
-                                                                 true,   /* ImgView */
-                                                                 true ); /* Await */
+                                                                 loadOptions ); /* Await */
             }
 
             VkSamplerCreateInfo samplerCreateInfo;
@@ -215,11 +219,15 @@ bool ViewerApp::Initialize(  ) {
             {
                 const std::vector< uint8_t > texAssetBin = pTexAsset->AsBin( );
 
+                apemodevk::ImageLoader::LoadOptions loadOptions;
+                loadOptions.eFileFormat    = apemodevk::ImageLoader::eImageFileFormat_DDS;
+                loadOptions.bAwaitLoading    = true;
+                loadOptions.bImgView         = true;
+                loadOptions.bGenerateMipMaps = false;
+
                 IrradianceLoadedImg = imgLoader.LoadImageFromData( texAssetBin.data( ),
                                                                    texAssetBin.size( ),
-                                                                   apemodevk::ImageLoader::eImageFileFormat_DDS,
-                                                                   true,   /* ImgView */
-                                                                   true ); /* Await */
+                                                                   loadOptions );
             }
 
             VkSamplerCreateInfo samplerCreateInfo;
@@ -548,62 +556,40 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
     auto ctx = &pNkRenderer->Context;
     float clearColor[ 4 ] = {0.5f, 0.5f, 1.0f, 1.0f};
 
-    if (nk_begin(ctx, "Calculator", nk_rect(10, 10, 180, 250),
-        NK_WINDOW_BORDER|NK_WINDOW_NO_SCROLLBAR|NK_WINDOW_MOVABLE))
-    {
-        static int set = 0, prev = 0, op = 0;
-        static const char numbers[] = "789456123";
-        static const char ops[] = "+-*/";
-        static double a = 0, b = 0;
-        static double *current = &a;
+    if ( nk_begin( ctx, "Calculator", nk_rect( 10, 10, 180, 250 ), NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_MOVABLE ) ) {
 
-        size_t i = 0;
-        int solve = 0;
-        {int len; char buffer[256];
-        nk_layout_row_dynamic(ctx, 35, 1);
-        len = snprintf(buffer, 256, "%.2f", *current);
-        nk_edit_string(ctx, NK_EDIT_SIMPLE, buffer, &len, 255, nk_filter_float);
-        buffer[len] = 0;
-        *current = atof(buffer);}
+        auto viewMatrix = pCamController->ViewMatrix( );
+        auto invViewMatrix = XMMatrixInverse( nullptr, viewMatrix );
 
-        nk_layout_row_dynamic(ctx, 35, 4);
-        for (i = 0; i < 16; ++i) {
-            if (i >= 12 && i < 15) {
-                if (i > 12) continue;
-                if (nk_button_label(ctx, "C")) {
-                    a = b = op = 0; current = &a; set = 0;
-                } if (nk_button_label(ctx, "0")) {
-                    *current = *current*10.0f; set = 0;
-                } if (nk_button_label(ctx, "=")) {
-                    solve = 1; prev = op; op = 0;
-                }
-            } else if (((i+1) % 4)) {
-                if (nk_button_text(ctx, &numbers[(i/4)*3+i%4], 1)) {
-                    *current = *current * 10.0f + numbers[(i/4)*3+i%4] - '0';
-                    set = 0;
-                }
-            } else if (nk_button_text(ctx, &ops[i/4], 1)) {
-                if (!set) {
-                    if (current != &b) {
-                        current = &b;
-                    } else {
-                        prev = op;
-                        solve = 1;
-                    }
-                }
-                op = ops[i/4];
-                set = 1;
-            }
-        }
-        if (solve) {
-            if (prev == '+') a = a + b;
-            if (prev == '-') a = a - b;
-            if (prev == '*') a = a * b;
-            if (prev == '/') a = a / b;
-            current = &a;
-            if (set) current = &b;
-            b = 0; set = 0;
-        }
+        nk_layout_row_dynamic(ctx, 30, 1);
+        nk_labelf( ctx,
+                   NK_TEXT_LEFT,
+                   "View: %2.2f %2.2f %2.2f %2.2f ",
+                   invViewMatrix._11,
+                   invViewMatrix._12,
+                   invViewMatrix._13,
+                   invViewMatrix._14 );
+        nk_labelf( ctx,
+                   NK_TEXT_LEFT,
+                   "    : %2.2f %2.2f %2.2f %2.2f ",
+                   invViewMatrix._21,
+                   invViewMatrix._22,
+                   invViewMatrix._23,
+                   invViewMatrix._24 );
+        nk_labelf( ctx,
+                   NK_TEXT_LEFT,
+                   "    : %2.2f %2.2f %2.2f %2.2f ",
+                   invViewMatrix._31,
+                   invViewMatrix._32,
+                   invViewMatrix._33,
+                   invViewMatrix._34 );
+        nk_labelf( ctx,
+                   NK_TEXT_LEFT,
+                   "    : %2.2f %2.2f %2.2f %2.2f ",
+                   invViewMatrix._41,
+                   invViewMatrix._42,
+                   invViewMatrix._43,
+                   invViewMatrix._44 );
     }
     nk_end(ctx);
 
@@ -684,14 +670,15 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 
         vkCmdBeginRenderPass( pCmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-        auto View    = pCamController->ViewMatrix( );
-        auto InvView = XMMatrixInverse( nullptr, View );
-        auto Proj    = CamProjController.ProjMatrix( 55, float( width ), float( height ), 0.1f, 1000.0f );
-        auto InvProj = XMMatrixInverse( nullptr, Proj );
+        auto viewMatrix     = pCamController->ViewMatrix( );
+        auto invViewMatrix  = XMMatrixInverse( nullptr, viewMatrix );
+        auto projMatrix     = CamProjController.ProjMatrix( 55, float( width ), float( height ), 0.1f, 1000.0f );
+        auto projBiasMatrix = CamProjController.ProjBiasMatrix( );
+        auto invProjMatrix  = XMMatrixInverse( nullptr, projMatrix );
 
         DebugRendererVk::FrameUniformBuffer frameData;
-        XMStoreFloat4x4( &frameData.ProjMatrix, Proj );
-        XMStoreFloat4x4( &frameData.ViewMatrix, pCamController->ViewMatrix( ) );
+        XMStoreFloat4x4( &frameData.ProjMatrix, projMatrix );
+        XMStoreFloat4x4( &frameData.ViewMatrix, viewMatrix );
         frameData.Color = {1, 0, 0, 1};
 
         pSkyboxRenderer->Reset( FrameIndex );
@@ -699,9 +686,9 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         pSceneRendererBase->Reset( pScene.get( ), FrameIndex );
 
         apemodevk::SkyboxRenderer::RenderParameters skyboxRenderParams;
-        XMStoreFloat4x4( &skyboxRenderParams.InvViewMatrix, InvView );
-        XMStoreFloat4x4( &skyboxRenderParams.InvProjMatrix, InvProj );
-        XMStoreFloat4x4( &skyboxRenderParams.ProjBiasMatrix, CamProjController.ProjBiasMatrix( ) );
+        XMStoreFloat4x4( &skyboxRenderParams.InvViewMatrix, invViewMatrix );
+        XMStoreFloat4x4( &skyboxRenderParams.InvProjMatrix, invProjMatrix );
+        XMStoreFloat4x4( &skyboxRenderParams.ProjBiasMatrix, projBiasMatrix );
         skyboxRenderParams.Dims.x      = float( width );
         skyboxRenderParams.Dims.y      = float( height );
         skyboxRenderParams.Scale.x     = 1;
@@ -753,14 +740,16 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         sceneRenderParameters.FrameIndex               = FrameIndex;
         sceneRenderParameters.pCmdBuffer               = pCmdBuffer;
         sceneRenderParameters.pNode                    = &pAppSurface->Node;
-        sceneRenderParameters.ViewMatrix               = frameData.ViewMatrix;
-        sceneRenderParameters.ProjMatrix               = frameData.ProjMatrix;
         sceneRenderParameters.RadianceMap.eImgLayout   = RadianceLoadedImg->eImgLayout;
         sceneRenderParameters.RadianceMap.pImgView     = RadianceLoadedImg->hImgView;
         sceneRenderParameters.RadianceMap.pSampler     = pRadianceCubeMapSampler;
         sceneRenderParameters.IrradianceMap.eImgLayout = IrradianceLoadedImg->eImgLayout;
         sceneRenderParameters.IrradianceMap.pImgView   = IrradianceLoadedImg->hImgView;
         sceneRenderParameters.IrradianceMap.pSampler   = pIrradianceCubeMapSampler;
+        XMStoreFloat4x4( &sceneRenderParameters.ProjMatrix, projMatrix );
+        XMStoreFloat4x4( &sceneRenderParameters.ViewMatrix, viewMatrix );
+        XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );
+        XMStoreFloat4x4( &sceneRenderParameters.InvProjMatrix, invProjMatrix );
         pSceneRendererBase->RenderScene( pScene.get( ), &sceneRenderParameters );
 
         NuklearRendererSdlVk::RenderParametersVk renderParamsNk;

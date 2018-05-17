@@ -20,20 +20,27 @@ namespace apemodevk {
     class ImageLoader {
     public:
         enum EImageFileFormat {
+            eImageFileFormat_Undefined,
             eImageFileFormat_DDS,
             eImageFileFormat_KTX,
             eImageFileFormat_PNG,
             // TODO PVR
         };
 
+        struct LoadOptions {
+            EImageFileFormat eFileFormat      = eImageFileFormat_Undefined;
+            bool             bImgView         = false;
+            bool             bAwaitLoading    = true;
+            bool             bGenerateMipMaps = false;
+        };
+
         GraphicsDevice* pNode           = nullptr;
         HostBufferPool* pHostBufferPool = nullptr;
 
         bool Recreate( GraphicsDevice* pNode, HostBufferPool* pHostBufferPool = nullptr );
-        std::unique_ptr< LoadedImage > LoadImageFromData( const uint8_t*   fileContent,
-                                                          size_t           fileContentSize,
-                                                          EImageFileFormat eFileFormat,
-                                                          bool             bImgView,
-                                                          bool             bAwaitLoading );
+
+        std::unique_ptr< LoadedImage > LoadImageFromData( const uint8_t*     pFileContent,
+                                                          size_t             fileContentSize,
+                                                          LoadOptions const& loadOptions );
     };
 }
