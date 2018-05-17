@@ -67,6 +67,8 @@ namespace apemodevk {
         XMFLOAT4 BaseColorFactor;
         XMFLOAT4 EmissiveFactor;
         XMFLOAT4 MetallicRoughnessFactor;
+        XMUINT4 Flags;
+
     };
 
     struct LightUBO {
@@ -135,7 +137,7 @@ namespace apemodevk {
         } else if ( strcmp( "diffuseTexture", pszTexturePropName ) == 0 ) {
             return true;
         } else if ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) {
-            return false;
+            return true;
         } else if ( strcmp( "occlusionTexture", pszTexturePropName ) == 0 ) {
             return false;
         } else if ( strcmp( "specularGlossinessTexture", pszTexturePropName ) == 0 ) {
@@ -153,6 +155,9 @@ namespace apemodevk {
         using LoadedImagePtrPair = std::pair< uint32_t, std::unique_ptr< LoadedImage > >;
 
         std::vector< LoadedImagePtrPair >     LoadedImgs;
+        std::unique_ptr< LoadedImage >        MissingTextureZeros;
+        std::unique_ptr< LoadedImage >        MissingTextureOnes;
+        VkSampler                             pMissingSampler = VK_NULL_HANDLE;
         apemode::SceneMaterial                MissingMaterial;
         apemodevk::SceneMaterialDeviceAssetVk MissingMaterialAsset;
 
@@ -276,13 +281,23 @@ namespace apemodevk {
     bool FillCombinedImgSamplerBinding( apemodevk::DescriptorSetBase::Binding* pBinding,
                                         VkImageView                            pImgView,
                                         VkSampler                              pSampler,
-                                        VkImageLayout                          eImgLayout ) {
-        if ( pBinding && pImgView && pSampler ) {
-            pBinding->eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            pBinding->ImageInfo.imageLayout = eImgLayout;
-            pBinding->ImageInfo.imageView   = pImgView;
-            pBinding->ImageInfo.sampler     = pSampler;
-            return true;
+                                        VkImageLayout                          eImgLayout,
+                                        VkImageView                            pMissingImgView,
+                                        VkSampler                              pMissingSampler ) {
+        if ( pBinding ) {
+            if ( pImgView && pSampler ) {
+                pBinding->eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                pBinding->ImageInfo.imageLayout = eImgLayout;
+                pBinding->ImageInfo.imageView   = pImgView;
+                pBinding->ImageInfo.sampler     = pSampler;
+                return true;
+            } else if ( pMissingImgView && pMissingSampler ) {
+                pBinding->eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+                pBinding->ImageInfo.imageLayout = eImgLayout;
+                pBinding->ImageInfo.imageView   = pMissingImgView;
+                pBinding->ImageInfo.sampler     = pMissingSampler;
+                return true;
+            }
         }
 
         return false;
@@ -554,6 +569,34 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             return false;
         }
 
+        {
+            uint8_t imageBytes[ 4 ];
+            apemodevk::ImageLoader::LoadOptions loadOptions;
+
+            loadOptions.eFileFormat      = apemodevk::ImageLoader::eImageFileFormat_PNG;
+            loadOptions.bAwaitLoading    = true;
+            loadOptions.bImgView         = true;
+            loadOptions.bGenerateMipMaps = false;
+
+            imageBytes[ 0 ] = 0;
+            imageBytes[ 1 ] = 0;
+            imageBytes[ 2 ] = 0;
+            imageBytes[ 3 ] = 255;
+
+            pSceneAsset->MissingTextureZeros = imageLoader.LoadImageFromRawImgRGBA8( imageBytes, 1, 1, loadOptions );
+
+            imageBytes[ 0 ] = 255;
+            imageBytes[ 1 ] = 255;
+            imageBytes[ 2 ] = 255;
+            imageBytes[ 3 ] = 255;
+
+            pSceneAsset->MissingTextureOnes = imageLoader.LoadImageFromRawImgRGBA8( imageBytes, 1, 1, loadOptions );
+
+            const uint32_t missingSamplerIndex = pParams->pSamplerManager->GetSamplerIndex( apemodevk::GetDefaultSamplerCreateInfo( 0 ) );
+            assert( apemodevk::SamplerManager::IsSamplerIndexValid( missingSamplerIndex ) );
+            pSceneAsset->pMissingSampler = pParams->pSamplerManager->StoredSamplers[ missingSamplerIndex ].pSampler;
+        }
+
         for ( auto& material : pScene->Materials ) {
 
             /* Create material device asset if needed. */
@@ -612,7 +655,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                         loadOptions.bImgView         = false;
                         loadOptions.bGenerateMipMaps = apemodevk::GenerateMipMapsForPropertyName( pszTexturePropName );
 
-                        auto loadedImg = imageLoader.LoadImageFromData( pFileFb->buffer( )->data( ),
+                        auto loadedImg = imageLoader.LoadImageFromFileData( pFileFb->buffer( )->data( ),
                                                                         pFileFb->buffer( )->size( ),
                                                                         loadOptions );
 
@@ -882,6 +925,14 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
                 pMaterialAsset   = &pSceneAsset->MissingMaterialAsset;
             }
 
+            uint32_t flags = 0;
+            flags |= pMaterialAsset->hBaseColorImgView ? 1 << 0 : 0;
+            flags |= pMaterialAsset->hNormalImgView ? 1 << 1 : 0;
+            flags |= pMaterialAsset->hEmissiveImgView ? 1 << 2 : 0;
+            flags |= pMaterialAsset->hMetallicImgView ? 1 << 3 : 0;
+            flags |= pMaterialAsset->hRoughnessImgView ? 1 << 4 : 0;
+            flags |= pMaterialAsset->hOcclusionImgView ? 1 << 5 : 0;
+
             MaterialUBO materialData;
             materialData.BaseColorFactor.x         = pMaterial->BaseColorFactor.x;
             materialData.BaseColorFactor.y         = pMaterial->BaseColorFactor.y;
@@ -892,6 +943,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
             materialData.EmissiveFactor.z          = pMaterial->EmissiveFactor.z;
             materialData.MetallicRoughnessFactor.x = pMaterial->MetallicFactor;
             materialData.MetallicRoughnessFactor.y = pMaterial->RoughnessFactor;
+            materialData.Flags.x                   = flags;
 
             auto objectDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( objectData );
             assert( VK_NULL_HANDLE != objectDataUploadBufferRange.DescriptorBufferInfo.buffer );
@@ -917,37 +969,49 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
                                                                     pMaterialAsset->hBaseColorImgView,
                                                                     pMaterialAsset->pBaseColorSampler,
-                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
+                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                                    pSceneAsset->MissingTextureZeros->hImgView,
+                                                                    pSceneAsset->pMissingSampler );
 
             descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 3;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
                                                                     pMaterialAsset->hNormalImgView,
                                                                     pMaterialAsset->pNormalSampler,
-                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
+                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                                    pSceneAsset->MissingTextureZeros->hImgView,
+                                                                    pSceneAsset->pMissingSampler );
 
             descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 4;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
                                                                     pMaterialAsset->hEmissiveImgView,
                                                                     pMaterialAsset->pEmissiveSampler,
-                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
+                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                                    pSceneAsset->MissingTextureZeros->hImgView,
+                                                                    pSceneAsset->pMissingSampler );
 
             descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 5;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
                                                                     pMaterialAsset->hMetallicImgView,
                                                                     pMaterialAsset->pMetallicSampler,
-                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
+                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                                    pSceneAsset->MissingTextureZeros->hImgView,
+                                                                    pSceneAsset->pMissingSampler );
 
             descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 6;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
                                                                     pMaterialAsset->hRoughnessImgView,
                                                                     pMaterialAsset->pRoughnessSampler,
-                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
+                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                                    pSceneAsset->MissingTextureZeros->hImgView,
+                                                                    pSceneAsset->pMissingSampler );
 
             descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 7;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
                                                                     pMaterialAsset->hOcclusionImgView,
                                                                     pMaterialAsset->pOcclusionSampler,
-                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL );
+                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                                                                    pSceneAsset->MissingTextureZeros->hImgView,
+                                                                    pSceneAsset->pMissingSampler );
 
             descriptorSetForObject.BindingCount = objectSetBindingCount;
 

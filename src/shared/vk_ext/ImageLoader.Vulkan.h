@@ -39,8 +39,13 @@ namespace apemodevk {
 
         bool Recreate( GraphicsDevice* pNode, HostBufferPool* pHostBufferPool = nullptr );
 
-        std::unique_ptr< LoadedImage > LoadImageFromData( const uint8_t*     pFileContent,
-                                                          size_t             fileContentSize,
-                                                          LoadOptions const& loadOptions );
+        std::unique_ptr< LoadedImage > LoadImageFromRawImgRGBA8( const uint8_t*     pImageBytes,
+                                                                 uint16_t           imageWidth,
+                                                                 uint16_t           imageHeight,
+                                                                 LoadOptions const& loadOptions );
+
+        std::unique_ptr< LoadedImage > LoadImageFromFileData( const uint8_t*     pFileContent,
+                                                              size_t             fileContentSize,
+                                                              LoadOptions const& loadOptions );
     };
 }

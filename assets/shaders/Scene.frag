@@ -42,7 +42,7 @@ layout( std140, set = 1, binding = 1 ) uniform MaterialUBO {
     vec4 BaseColorFactor;
     vec4 EmissiveFactor;
     vec4 MetallicRoughnessFactor;
-    vec4 Params;
+    uvec4 Flags;
 };
 
 layout( set = 1, binding = 2 ) uniform sampler2D BaseColorMap;
@@ -61,31 +61,50 @@ layout( location = 5 ) in vec2 Texcoords;
 
 layout( location = 0 ) out vec4 OutColor;
 
-bool IsTextureMapAvailable( int textureFlags, int textureMapBinding ) {
+bool IsTextureMapAvailable( uint textureFlags, uint textureMapBinding ) {
     return 0 != ( textureFlags & ( 1 << ( textureMapBinding - 2 ) ) );
 }
 
 vec4 GetBaseColor( ) {
-    if ( IsTextureMapAvailable( int( Params.x ), 2 ) )
+    if ( IsTextureMapAvailable( Flags.x, 2 ) )
         return BaseColorFactor * texture( BaseColorMap, Texcoords );
     return BaseColorFactor;
 }
 
 float GetMetallic( ) {
-    if ( IsTextureMapAvailable( int( Params.x ), 5 ) )
+    if ( IsTextureMapAvailable( Flags.x, 5 ) )
         return MetallicRoughnessFactor.x * texture( MetallicMap, Texcoords ).x;
     return MetallicRoughnessFactor.x;
 }
 
 float GetRoughness( ) {
-    if ( IsTextureMapAvailable( int( Params.x ), 6 ) )
+    if ( IsTextureMapAvailable( Flags.x, 6 ) )
         return MetallicRoughnessFactor.y * texture( RoughnessMap, Texcoords ).x;
     return MetallicRoughnessFactor.y;
 }
 
+vec3 CalculateWorldNormal()
+{
+    if ( false == IsTextureMapAvailable( Flags.x, 3 ) )
+        return WorldNormal;
+
+    vec3 detailNormal = texture( NormalMap, Texcoords ).xyz;
+    detailNormal = detailNormal * vec3( 2.0 ) - vec3( 1.0 );
+
+    vec3 detailedWorldNormal = (detailNormal.x * WorldTangent.xyz) + (detailNormal.y * WorldBitangent.xyz) + (detailNormal.z * WorldNormal.xyz);
+    return normalize( detailedWorldNormal );
+}
+
 void main( ) {
-    vec3 R = reflect( -ViewDirection, WorldNormal );
-    OutColor.rgb = textureLod( SkyboxCubeMap, R, 5 ).rgb; // * MetallicRoughnessFactor.x;
-    // OutColor.rgb += texture( IrradianceCubeMap, R ).rgb * (1.0f - MetallicRoughnessFactor.x );
+    vec3 worldNormal = CalculateWorldNormal();
+    vec3 R = reflect( -ViewDirection, worldNormal );
+    // OutColor.rgb = worldNormal.xyz; //texture( NormalMap, Texcoords ).xyz;
+    // OutColor.rgb = normalize( worldNormal.xyz );
+    // OutColor.rgb = WorldNormal.xyz;
+    // OutColor.r = IsTextureMapAvailable( Flags.x, 3 ) ? 1.0 : 0;
+    // OutColor.gb = vec2(0 ,0 );
+    // OutColor.rgb = textureLod( SkyboxCubeMap, R, 3 ).rgb; // * MetallicRoughnessFactor.x;
+    OutColor.rgb = texture( SkyboxCubeMap, R ).rgb; // * MetallicRoughnessFactor.x;
+    // OutColor.rgb = texture( IrradianceCubeMap, R ).rgb; // * (1.0f - MetallicRoughnessFactor.x );
     OutColor.a = 1;
 }

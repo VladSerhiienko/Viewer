@@ -186,7 +186,7 @@ bool ViewerApp::Initialize(  ) {
                 loadOptions.bImgView         = true;
                 loadOptions.bGenerateMipMaps = true;
 
-                RadianceLoadedImg = imgLoader.LoadImageFromData( texAssetBin.data( ),
+                RadianceLoadedImg = imgLoader.LoadImageFromFileData( texAssetBin.data( ),
                                                                  texAssetBin.size( ),
                                                                  loadOptions ); /* Await */
             }
@@ -225,7 +225,7 @@ bool ViewerApp::Initialize(  ) {
                 loadOptions.bImgView         = true;
                 loadOptions.bGenerateMipMaps = false;
 
-                IrradianceLoadedImg = imgLoader.LoadImageFromData( texAssetBin.data( ),
+                IrradianceLoadedImg = imgLoader.LoadImageFromFileData( texAssetBin.data( ),
                                                                    texAssetBin.size( ),
                                                                    loadOptions );
             }
@@ -558,8 +558,8 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 
     if ( nk_begin( ctx, "Calculator", nk_rect( 10, 10, 180, 250 ), NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_MOVABLE ) ) {
 
-        auto viewMatrix = pCamController->ViewMatrix( );
-        auto invViewMatrix = XMMatrixInverse( nullptr, viewMatrix );
+        auto viewMatrix = GetMatrix( pCamController->ViewMatrix( ) );
+        auto invViewMatrix = GetMatrix( XMMatrixInverse( nullptr, pCamController->ViewMatrix( ) ) );
 
         nk_layout_row_dynamic(ctx, 30, 1);
         nk_labelf( ctx,

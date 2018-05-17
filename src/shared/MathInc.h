@@ -11,7 +11,7 @@ namespace apemodexm {
     using float3 = DirectX::XMFLOAT3;
     using float4 = DirectX::XMFLOAT4;
     using float4x4 = DirectX::XMFLOAT4X4;
-    
+
     static const float kPi               = 3.1415926535897932f;
     static const float kSmallNumber      = 1.e-8f;
     static const float kKindaSmallNumber = 1.e-4f;
@@ -90,7 +90,7 @@ namespace apemodexm {
     inline bool IsNearlyZero( float3 const Value, float ErrorTolerance = kSmallNumber ) {
         return fabsf( Value.x ) <= ErrorTolerance && fabsf( Value.y ) <= ErrorTolerance && fabsf( Value.z ) <= ErrorTolerance;
     }
-    
+
     inline uint32_t AlignedOffset( uint32_t offset, uint32_t alignment ) {
         return alignment * ( offset / alignment + static_cast< uint32_t >( !!( offset % alignment ) ) );
     }
@@ -99,6 +99,12 @@ namespace apemodexm {
     inline T RandomInRange( T min, T max ) {
         return min + static_cast< T >( static_cast< float >( rand( ) ) * static_cast< float >( max - min ) /
                                        static_cast< float >( RAND_MAX ) );
+    }
+
+    inline float4x4 GetMatrix( XMMATRIX m ) {
+        XMFLOAT4X4 storedMatrix;
+        XMStoreFloat4x4( &storedMatrix, m );
+        return storedMatrix;
     }
 }
 

@@ -105,10 +105,21 @@ gli::texture GenerateMipMaps( const gli::texture& texture ) {
     return gli::texture();
 }
 
+gli::texture LoadTexture( const uint8_t* pImageBytes, uint32_t imageWidth, uint32_t imageHeight ) {
+    assert( pImageBytes && imageWidth && imageHeight );
+    gli::texture texture =
+        gli::texture2d( gli::format::FORMAT_RGBA8_UNORM_PACK8,
+                        gli::extent2d( imageWidth, imageHeight ),
+                        1,
+                        gli::swizzles( gli::SWIZZLE_RED, gli::SWIZZLE_GREEN, gli::SWIZZLE_BLUE, gli::SWIZZLE_ALPHA ) );
+
+    memcpy( texture.data( ), pImageBytes, imageWidth * imageHeight * 4 );
+    return texture;
+}
+
 gli::texture LoadTexture( const uint8_t*                           pFileContent,
                           size_t                                   fileContentSize,
-                          apemodevk::ImageLoader::EImageFileFormat eFileFormat,
-                          bool                                     bGenerateMipMaps ) {
+                          apemodevk::ImageLoader::EImageFileFormat eFileFormat ) {
     assert( pFileContent && fileContentSize );
 
     gli::texture texture;
@@ -133,26 +144,24 @@ gli::texture LoadTexture( const uint8_t*                           pFileContent,
 
             /* Load png file here from memory buffer */
             if ( stbi_uc* pImageBytes = stbi_load_from_memory( pFileContent, int( fileContentSize ), &imageWidth, &imageHeight, &componentsInFile, STBI_rgb_alpha ) ) {
-                assert( imageWidth && imageHeight );
-
-                texture = gli::texture(
-                    gli::target::TARGET_2D,
-                    gli::format::FORMAT_RGBA8_UINT_PACK8,
-                    gli::texture::extent_type( imageWidth, imageHeight, 1 ),
-                    1,
-                    1,
-                    1,
-                    gli::swizzles( gli::SWIZZLE_RED, gli::SWIZZLE_GREEN, gli::SWIZZLE_BLUE, gli::SWIZZLE_ALPHA ) );
-
-                memcpy( texture.data( ), pImageBytes, texture.size( ) );
+                texture = LoadTexture( pImageBytes, imageWidth, imageHeight );
                 stbi_image_free( pImageBytes );
             }
         } break;
     }
 
+    return texture;
+}
+
+std::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture( apemodevk::GraphicsDevice*                 pNode,
+                                                                   apemodevk::HostBufferPool*                 pHostBufferPool,
+                                                                   gli::texture                               texture,
+                                                                   const apemodevk::ImageLoader::LoadOptions& loadOptions ) {
+    using namespace apemodevk;
+
     /* Check if the user needs mipmaps.
-     * Note, that DDS and KTX files can contain mipmaps. */
-    if ( !texture.empty( ) && bGenerateMipMaps && 1 == texture.levels( ) ) {
+    * Note, that DDS and KTX files can contain mipmaps. */
+    if ( !texture.empty( ) && loadOptions.bGenerateMipMaps && 1 == texture.levels( ) ) {
 
         /* Cannot generate mipmaps the data is compressed. */
         if ( !gli::is_compressed( texture.format( ) ) ) {
@@ -161,14 +170,7 @@ gli::texture LoadTexture( const uint8_t*                           pFileContent,
         }
     }
 
-    return texture;
-}
-
-
-std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromData( const uint8_t*     pFileContent,
-                                                                                     size_t             fileContentSize,
-                                                                                     LoadOptions const& loadOptions ) {
-    if ( !pFileContent || !fileContentSize ) {
+    if ( texture.empty( ) ) {
         return nullptr;
     }
 
@@ -188,11 +190,6 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromD
     InitializeStruct( loadedImage->ImgViewCreateInfo );
 
     pHostBufferPool->Reset( );
-
-    gli::texture texture = LoadTexture( pFileContent, fileContentSize, loadOptions.eFileFormat, loadOptions.bGenerateMipMaps );
-    if ( texture.empty( ) ) {
-        return nullptr;
-    }
 
     loadedImage->ImageCreateInfo.format        = ToImgFormat( texture.format( ) );
     loadedImage->ImageCreateInfo.imageType     = ToImgType( texture.target( ) );
@@ -401,4 +398,35 @@ bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode, HostBufferPool* 
     }
 
     return true;
+}
+
+std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromFileData( const uint8_t*     pFileContent,
+                                                                                         size_t             fileContentSize,
+                                                                                         LoadOptions const& loadOptions ) {
+    if ( !pFileContent || !fileContentSize ) {
+        return nullptr;
+    }
+
+    gli::texture texture = LoadTexture( pFileContent, fileContentSize, loadOptions.eFileFormat );
+    if ( texture.empty( ) ) {
+        return nullptr;
+    }
+
+    return LoadImageFromGLITexture( pNode, pHostBufferPool, texture, loadOptions );
+}
+
+std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromRawImgRGBA8( const uint8_t*     pImageBytes,
+                                                                                            uint16_t           imageWidth,
+                                                                                            uint16_t           imageHeight,
+                                                                                            LoadOptions const& loadOptions ) {
+    if ( !pImageBytes || !imageWidth || !imageHeight ) {
+        return nullptr;
+    }
+
+    gli::texture texture = LoadTexture( pImageBytes, imageWidth, imageHeight );
+    if ( texture.empty( ) ) {
+        return nullptr;
+    }
+
+    return LoadImageFromGLITexture( pNode, pHostBufferPool, texture, loadOptions );
 }
