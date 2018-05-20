@@ -67,6 +67,8 @@ namespace apemode {
         uint32_t FrameIndex = 0;
         uint64_t FrameId    = 0;
 
+        float WorldRotationY = 0;
+
         apemodeos::FileTracker          mFileTracker;
         apemodeos::AssetManager         mAssetManager;
 

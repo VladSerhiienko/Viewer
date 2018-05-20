@@ -51,6 +51,7 @@ namespace apemode {
             XMFLOAT2                   Scale;                       /* Required */
             uint32_t                   FrameIndex = 0;              /* Required */
             VkCommandBuffer            pCmdBuffer = VK_NULL_HANDLE; /* Required */
+            XMFLOAT4X4                 RootMatrix;                  /* Required */
             XMFLOAT4X4                 ViewMatrix;                  /* Required */
             XMFLOAT4X4                 ProjMatrix;                  /* Required */
             XMFLOAT4X4                 InvViewMatrix;               /* Required */

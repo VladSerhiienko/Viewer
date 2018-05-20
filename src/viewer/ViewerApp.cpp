@@ -82,8 +82,8 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 
 ViewerApp::ViewerApp( ) {
     pCamInput      = apemodevk::make_unique< MouseKeyboardCameraControllerInput >( );
-    // pCamController = apemodevk::make_unique< FreeLookCameraController >( );
-    pCamController = apemodevk::make_unique< ModelViewCameraController >();
+    pCamController = apemodevk::make_unique< FreeLookCameraController >( );
+    //pCamController = apemodevk::make_unique< ModelViewCameraController >( );
 }
 
 ViewerApp::~ViewerApp( ) {
@@ -590,6 +590,9 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
                    invViewMatrix._42,
                    invViewMatrix._43,
                    invViewMatrix._44 );
+
+        nk_labelf( ctx, NK_TEXT_LEFT, "WorldRotationY" );
+        nk_slider_float( ctx, 0, &WorldRotationY, apemodexm::XM_2PI, 0.1f );
     }
     nk_end(ctx);
 
@@ -732,6 +735,8 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         frameData.Color = { 1, 0, 0, 1 };
         pDebugRenderer->Render(&renderParamsDbg);
 
+        XMMATRIX rootMatrix = XMMatrixRotationY( WorldRotationY );
+
         apemode::SceneRendererVk::SceneRenderParametersVk sceneRenderParameters;
         sceneRenderParameters.Dims.x                   = float( width );
         sceneRenderParameters.Dims.y                   = float( height );
@@ -750,6 +755,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         XMStoreFloat4x4( &sceneRenderParameters.ViewMatrix, viewMatrix );
         XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );
         XMStoreFloat4x4( &sceneRenderParameters.InvProjMatrix, invProjMatrix );
+        XMStoreFloat4x4( &sceneRenderParameters.RootMatrix, rootMatrix );
         pSceneRendererBase->RenderScene( pScene.get( ), &sceneRenderParameters );
 
         NuklearRendererSdlVk::RenderParametersVk renderParamsNk;

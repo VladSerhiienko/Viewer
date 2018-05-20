@@ -51,6 +51,7 @@ namespace apemodevk {
 
     struct ObjectUBO {
         XMFLOAT4X4 WorldMatrix;
+        XMFLOAT4X4 NormalMatrix;
         XMFLOAT4   PositionOffset;
         XMFLOAT4   PositionScale;
         XMFLOAT4   TexcoordOffsetScale;
@@ -66,7 +67,7 @@ namespace apemodevk {
     struct MaterialUBO {
         XMFLOAT4 BaseColorFactor;
         XMFLOAT4 EmissiveFactor;
-        XMFLOAT4 MetallicRoughnessFactor;
+        XMFLOAT4 MetallicRoughnessNormalFactor;
         XMUINT4 Flags;
 
     };
@@ -906,7 +907,13 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
         objectData.TexcoordOffsetScale.y = mesh.TexcoordOffset.y;
         objectData.TexcoordOffsetScale.z = mesh.TexcoordScale.x;
         objectData.TexcoordOffsetScale.w = mesh.TexcoordScale.y;
-        XMStoreFloat4x4( &objectData.WorldMatrix, pScene->WorldMatrices[ node.Id ] );
+
+        XMMATRIX rootMatrix   = XMLoadFloat4x4( &pParams->RootMatrix );
+        XMMATRIX worldMatrix  = pScene->WorldMatrices[ node.Id ] * rootMatrix;
+        XMMATRIX normalMatrix = XMMatrixTranspose( XMMatrixInverse( 0, worldMatrix ) );
+
+        XMStoreFloat4x4( &objectData.WorldMatrix, worldMatrix );
+        XMStoreFloat4x4( &objectData.NormalMatrix, normalMatrix );
 
         auto pSubsetIt    = pScene->Subsets.data( ) + mesh.BaseSubset;
         auto pSubsetItEnd = pSubsetIt + mesh.SubsetCount;
@@ -934,16 +941,17 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
             flags |= pMaterialAsset->hOcclusionImgView ? 1 << 5 : 0;
 
             MaterialUBO materialData;
-            materialData.BaseColorFactor.x         = pMaterial->BaseColorFactor.x;
-            materialData.BaseColorFactor.y         = pMaterial->BaseColorFactor.y;
-            materialData.BaseColorFactor.z         = pMaterial->BaseColorFactor.z;
-            materialData.BaseColorFactor.w         = pMaterial->BaseColorFactor.w;
-            materialData.EmissiveFactor.x          = pMaterial->EmissiveFactor.x;
-            materialData.EmissiveFactor.y          = pMaterial->EmissiveFactor.y;
-            materialData.EmissiveFactor.z          = pMaterial->EmissiveFactor.z;
-            materialData.MetallicRoughnessFactor.x = pMaterial->MetallicFactor;
-            materialData.MetallicRoughnessFactor.y = pMaterial->RoughnessFactor;
-            materialData.Flags.x                   = flags;
+            materialData.BaseColorFactor.x               = pMaterial->BaseColorFactor.x;
+            materialData.BaseColorFactor.y               = pMaterial->BaseColorFactor.y;
+            materialData.BaseColorFactor.z               = pMaterial->BaseColorFactor.z;
+            materialData.BaseColorFactor.w               = pMaterial->BaseColorFactor.w;
+            materialData.EmissiveFactor.x                = pMaterial->EmissiveFactor.x;
+            materialData.EmissiveFactor.y                = pMaterial->EmissiveFactor.y;
+            materialData.EmissiveFactor.z                = pMaterial->EmissiveFactor.z;
+            materialData.MetallicRoughnessNormalFactor.x = pMaterial->MetallicFactor;
+            materialData.MetallicRoughnessNormalFactor.y = pMaterial->RoughnessFactor;
+            materialData.MetallicRoughnessNormalFactor.z = 1;
+            materialData.Flags.x                         = flags;
 
             auto objectDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( objectData );
             assert( VK_NULL_HANDLE != objectDataUploadBufferRange.DescriptorBufferInfo.buffer );

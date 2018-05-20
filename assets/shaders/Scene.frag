@@ -19,8 +19,8 @@ layout( std140, set = 0, binding = 0 ) uniform CameraUBO {
 };
 
 layout( std140, set = 0, binding = 1 ) uniform LightUBO {
-	vec4 LightDirection;
-	vec4 LightColor;
+    vec4 LightDirection;
+    vec4 LightColor;
 };
 
 layout( set = 0, binding = 2 ) uniform samplerCube SkyboxCubeMap;
@@ -39,9 +39,9 @@ layout( set = 0, binding = 3 ) uniform samplerCube IrradianceCubeMap;
 // layout( set = 1, binding = 7 ) uniform sampler2D RoughnessMap;
 
 layout( std140, set = 1, binding = 1 ) uniform MaterialUBO {
-    vec4 BaseColorFactor;
-    vec4 EmissiveFactor;
-    vec4 MetallicRoughnessFactor;
+    vec4  BaseColorFactor;
+    vec4  EmissiveFactor;
+    vec4  MetallicRoughnessNormalFactor;
     uvec4 Flags;
 };
 
@@ -54,8 +54,8 @@ layout( set = 1, binding = 7 ) uniform sampler2D OcclusionMap;
 
 layout( location = 0 ) in vec3 WorldPosition;
 layout( location = 1 ) in vec3 WorldNormal;
-layout( location = 2 ) in vec4 WorldTangent;
-layout( location = 3 ) in vec4 WorldBitangent;
+layout( location = 2 ) in vec3 WorldTangent;
+layout( location = 3 ) in vec3 WorldBitangent;
 layout( location = 4 ) in vec3 ViewDirection;
 layout( location = 5 ) in vec2 Texcoords;
 
@@ -73,37 +73,65 @@ vec4 GetBaseColor( ) {
 
 float GetMetallic( ) {
     if ( IsTextureMapAvailable( Flags.x, 5 ) )
-        return MetallicRoughnessFactor.x * texture( MetallicMap, Texcoords ).x;
-    return MetallicRoughnessFactor.x;
+        return MetallicRoughnessNormalFactor.x * texture( MetallicMap, Texcoords ).x;
+    return MetallicRoughnessNormalFactor.x;
 }
 
 float GetRoughness( ) {
     if ( IsTextureMapAvailable( Flags.x, 6 ) )
-        return MetallicRoughnessFactor.y * texture( RoughnessMap, Texcoords ).x;
-    return MetallicRoughnessFactor.y;
+        return MetallicRoughnessNormalFactor.y * texture( RoughnessMap, Texcoords ).x;
+    return MetallicRoughnessNormalFactor.y;
+}
+
+mat3 CalculateTangentToWorldMatrix( vec3 p, vec3 n, vec2 uv ) {
+// #define APEMODE_SCENE_FRAG_BETTER_TANGENT_SPACE_PRECISION
+#ifdef APEMODE_SCENE_FRAG_BETTER_TANGENT_SPACE_PRECISION
+    vec3 e1   = dFdx( p );
+    vec3 e2   = dFdy( p );
+    vec2 duv1 = dFdx( uv );
+    vec2 duv2 = dFdy( uv );
+    vec3 t    = ( duv2.y * e1 - duv1.y * e2 ) / ( duv1.x * duv2.y - duv2.x * duv1.y );
+    t         = normalize( t - n * dot( n, t ) );
+    vec3 b    = normalize( cross( n, t ) );
+    return mat3( t, b, n );
+#else
+    return mat3( WorldTangent, WorldBitangent, WorldNormal );
+#endif
 }
 
 vec3 CalculateWorldNormal( ) {
     if ( false == IsTextureMapAvailable( Flags.x, 3 ) )
         return WorldNormal;
 
-    vec3 detailNormal = normalize( texture( NormalMap, Texcoords ).xyz );
-    detailNormal = normalize( detailNormal * vec3( 2.0 ) - vec3( 1.0 ) );
+    // Calculate normal in the tangent space.
+    // Read texture color [0, 1], transform to [-1, 1], and normalize.
+    vec3 tangentialNormal = normalize( texture( NormalMap, Texcoords ).xyz * vec3( 2.0 ) - vec3( 1.0 ) );
 
-    vec3 detailedWorldNormal = ( detailNormal.x * WorldTangent.xyz ) + ( detailNormal.y * WorldBitangent.xyz ) + ( detailNormal.z * WorldNormal.xyz );
-    return normalize( detailedWorldNormal );
+    // Transform from tangent space to world space.
+    return CalculateTangentToWorldMatrix( WorldPosition, WorldNormal, Texcoords ) * tangentialNormal.xyz;
 }
 
 void main( ) {
-    vec3 worldNormal = CalculateWorldNormal();
-    vec3 R = reflect( -ViewDirection, worldNormal );
+    vec3 worldNormal = CalculateWorldNormal( );
+    vec3 R           = reflect( -ViewDirection, worldNormal );
+
+    // OutColor.rgb = worldNormal;
+    // OutColor.rgb = texture( SkyboxCubeMap, R ).rgb;
+    OutColor.rgb = texture( IrradianceCubeMap, R ).rgb;
+
+    // OutColor.rgb = worldNormal;
+    // OutColor.rgb = abs(WorldBitangent.xyz);
+    // OutColor.rgb = abs(WorldTangent.xyz);
+    // OutColor.rgb = abs(WorldNormal.xyz);
+
     // OutColor.rgb = worldNormal.xyz; //texture( NormalMap, Texcoords ).xyz;
     // OutColor.rgb = normalize( worldNormal.xyz );
     // OutColor.rgb = WorldNormal.xyz;
     // OutColor.r = IsTextureMapAvailable( Flags.x, 3 ) ? 1.0 : 0;
     // OutColor.gb = vec2(0 ,0 );
-    // OutColor.rgb = textureLod( SkyboxCubeMap, R, 3 ).rgb; // * MetallicRoughnessFactor.x;
-    OutColor.rgb = texture( SkyboxCubeMap, R ).rgb; // * MetallicRoughnessFactor.x;
-    // OutColor.rgb = texture( IrradianceCubeMap, R ).rgb; // * (1.0f - MetallicRoughnessFactor.x );
+    // OutColor.rgb = textureLod( SkyboxCubeMap, R, 3 ).rgb;
+    // OutColor.rgb = texture( SkyboxCubeMap, R ).rgb;
+    // OutColor.rgb = texture( IrradianceCubeMap, R ).rgb;
+
     OutColor.a = 1;
 }

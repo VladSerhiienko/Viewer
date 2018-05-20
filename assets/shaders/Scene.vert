@@ -29,7 +29,8 @@ layout( std140, set = 0, binding = 0 ) uniform CameraUBO {
 // layout( set = 1, binding = 7 ) uniform sampler2D RoughnessMap;
 
 layout( std140, set = 1, binding = 0 ) uniform ObjectUBO {
-    mat4 WorldMatrix;
+    mat4 WorldMatrix; // ObjectToWorld
+    mat4 NormalMatrix; // ObjectNormalToWorld
     vec4 PositionOffset;
     vec4 PositionScale;
     vec4 TexcoordOffsetScale;
@@ -42,7 +43,7 @@ layout( location = 3 ) in vec2 inTexcoords;
 
 layout( location = 0 ) out vec3 outWorldPosition;
 layout( location = 1 ) out vec3 outWorldNormal;
-layout( location = 2 ) out vec4 outWorldTangent;
+layout( location = 2 ) out vec3 outWorldTangent;
 layout( location = 3 ) out vec3 outWorldBitangent;
 layout( location = 4 ) out vec3 outViewDirection;
 layout( location = 5 ) out vec2 outTexcoords;
@@ -58,8 +59,8 @@ void main( ) {
 
     outWorldPosition  = worldPosition.xyz;
     outViewDirection  = normalize( GetCameraWorldPosition( ).xyz - worldPosition.xyz );
-    outWorldNormal    = normalize( mat3( WorldMatrix ) * inNormal );
-    outWorldTangent   = vec4( normalize( mat3( WorldMatrix ) * inTangent.xyz ), inTangent.w );
+    outWorldNormal    = normalize( mat3( NormalMatrix ) * inNormal );
+    outWorldTangent   = normalize( mat3( NormalMatrix ) * inTangent.xyz );
     outWorldBitangent = cross( outWorldNormal.xyz, outWorldTangent.xyz );
     outTexcoords      = inTexcoords * TexcoordOffsetScale.zw + TexcoordOffsetScale.xy;
     gl_Position       = ProjMatrix * ViewMatrix * worldPosition;
