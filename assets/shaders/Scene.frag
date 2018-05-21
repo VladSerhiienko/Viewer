@@ -41,7 +41,7 @@ layout( set = 0, binding = 3 ) uniform samplerCube IrradianceCubeMap;
 layout( std140, set = 1, binding = 1 ) uniform MaterialUBO {
     vec4  BaseColorFactor;
     vec4  EmissiveFactor;
-    vec4  MetallicRoughnessNormalFactor;
+    vec4  MetallicRoughnessFactor;
     uvec4 Flags;
 };
 
@@ -73,14 +73,20 @@ vec4 GetBaseColor( ) {
 
 float GetMetallic( ) {
     if ( IsTextureMapAvailable( Flags.x, 5 ) )
-        return MetallicRoughnessNormalFactor.x * texture( MetallicMap, Texcoords ).x;
-    return MetallicRoughnessNormalFactor.x;
+        return MetallicRoughnessFactor.x * texture( MetallicMap, Texcoords ).x;
+    return MetallicRoughnessFactor.x;
 }
 
 float GetRoughness( ) {
     if ( IsTextureMapAvailable( Flags.x, 6 ) )
-        return MetallicRoughnessNormalFactor.y * texture( RoughnessMap, Texcoords ).x;
-    return MetallicRoughnessNormalFactor.y;
+        return MetallicRoughnessFactor.y * texture( RoughnessMap, Texcoords ).x;
+    return MetallicRoughnessFactor.y;
+}
+
+float GetAO( ) {
+    if ( IsTextureMapAvailable( Flags.x, 7 ) )
+        return texture( OcclusionMap, Texcoords ).x;
+    return 1.0;
 }
 
 mat3 CalculateTangentToWorldMatrix( vec3 p, vec3 n, vec2 uv ) {
@@ -111,27 +117,83 @@ vec3 CalculateWorldNormal( ) {
     return CalculateTangentToWorldMatrix( WorldPosition, WorldNormal, Texcoords ) * tangentialNormal.xyz;
 }
 
+vec3 CalculateFresnel( vec3 _cspec, float _dot, float _strength ) {
+    return _cspec + ( 1.0 - _cspec ) * pow( 1.0 - _dot, 5.0 ) * _strength;
+}
+
+vec3 CalculateLambert( vec3 _cdiff, float _ndotl ) {
+    return _cdiff * _ndotl;
+}
+
+vec3 CalculateBlinn( vec3 _cspec, float _ndoth, float _ndotl, float _specPwr ) {
+    float norm = ( _specPwr + 8.0 ) * 0.125;
+    float brdf = pow( _ndoth, _specPwr ) * _ndotl * norm;
+    return _cspec * brdf;
+}
+
+float CalculateSpecPwr( float _gloss ) {
+    return exp2( 10.0 * _gloss + 2.0 );
+}
+
+vec3 CalculateLinear( vec3 _rgb ) {
+    return pow( abs( _rgb ), vec3( 2.2 ) );
+}
+
+vec3 CalculateFilmic( vec3 _rgb ) {
+    _rgb = max( vec3( 0.0 ), _rgb - 0.004 );
+    _rgb = ( _rgb * ( 6.2 * _rgb + 0.5 ) ) / ( _rgb * ( 6.2 * _rgb + 1.7 ) + 0.06 );
+    return _rgb;
+}
+
+float GetRadianceMipLevelCount() {
+    return MetallicRoughnessFactor.w;
+}
+
 void main( ) {
-    vec3 worldNormal = CalculateWorldNormal( );
-    vec3 R           = reflect( -ViewDirection, worldNormal );
 
-    // OutColor.rgb = worldNormal;
-    // OutColor.rgb = texture( SkyboxCubeMap, R ).rgb;
-    OutColor.rgb = texture( IrradianceCubeMap, R ).rgb;
+    vec3 L          = normalize( LightDirection.xyz );
+    vec3 lightColor = LightColor.xyz;
 
-    // OutColor.rgb = worldNormal;
-    // OutColor.rgb = abs(WorldBitangent.xyz);
-    // OutColor.rgb = abs(WorldTangent.xyz);
-    // OutColor.rgb = abs(WorldNormal.xyz);
+    vec3 N = CalculateWorldNormal( );
+    vec3 V = ViewDirection.xyz;
+    vec3 R = reflect( -V, N );
+    vec3 H = normalize( V + L );
 
-    // OutColor.rgb = worldNormal.xyz; //texture( NormalMap, Texcoords ).xyz;
-    // OutColor.rgb = normalize( worldNormal.xyz );
-    // OutColor.rgb = WorldNormal.xyz;
-    // OutColor.r = IsTextureMapAvailable( Flags.x, 3 ) ? 1.0 : 0;
-    // OutColor.gb = vec2(0 ,0 );
-    // OutColor.rgb = textureLod( SkyboxCubeMap, R, 3 ).rgb;
-    // OutColor.rgb = texture( SkyboxCubeMap, R ).rgb;
-    // OutColor.rgb = texture( IrradianceCubeMap, R ).rgb;
+    float dotNV = clamp( dot( N, V ), 0.0, 1.0 );
+    float dotNL = clamp( dot( N, L ), 0.0, 1.0 );
+    float dotNH = clamp( dot( N, H ), 0.0, 1.0 );
+    float dotHV = clamp( dot( H, V ), 0.0, 1.0 );
 
-    OutColor.a = 1;
+    vec4  baseColor = GetBaseColor( );
+    float metallic  = GetMetallic( );
+    float roughness = GetRoughness( );
+    float gloss = 1.0 - roughness;
+
+    vec3 reflection = mix( vec3( 0.04 ), baseColor.xyz, metallic );
+    vec3 albedo     = baseColor.xyz * vec3( 1.0 - metallic );
+
+    vec3 dirFresnel = CalculateFresnel( reflection, dotHV, gloss );
+    vec3 envFresnel = CalculateFresnel( reflection, dotNV, gloss );
+    vec3 lambert    = CalculateLambert( albedo * ( vec3( 1.0 ) - dirFresnel ), dotNL );
+    vec3 blinn      = CalculateBlinn( dirFresnel, dotNH, dotNL, CalculateSpecPwr( gloss ) );
+    vec3 direct     = ( lambert + blinn ) * lightColor.xyz;
+
+    float radianceMipLevel = 1.0 + ( GetRadianceMipLevelCount( ) - 1.0 ) * ( 1.0 - gloss );
+    vec3  radiance         = CalculateLinear( textureLod( SkyboxCubeMap, R, radianceMipLevel ).xyz );
+    vec3  irradiance       = CalculateLinear( texture( IrradianceCubeMap, R ).xyz );
+    vec3  envDiffuse       = albedo * irradiance;
+    vec3  envSpecular      = envFresnel * radiance;
+    vec3  indirect         = envDiffuse + envSpecular;
+
+    vec3 color = direct + indirect;
+    color = color * exp2( 0.0 );
+    // color = color * GetAO( );
+
+    if ( IsTextureMapAvailable( Flags.x, 4 ) ) {
+        vec3 emissive = EmissiveFactor.rgb * texture( EmissiveMap, Texcoords ).rgb;
+        color += emissive;
+    }
+
+    OutColor.rgb = CalculateFilmic( color.rgb );
+    OutColor.a   = baseColor.a;
 }

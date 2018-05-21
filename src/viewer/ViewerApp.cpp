@@ -176,7 +176,9 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_skybox.dds" ) ) {
+        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/bolonga_lod.dds" ) ) {
+        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/kyoto_lod.dds" ) ) {
+        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_skybox.dds" ) ) {
             {
                 const std::vector< uint8_t > texAssetBin = pTexAsset->AsBin( );
 
@@ -215,7 +217,9 @@ bool ViewerApp::Initialize(  ) {
             pRadianceCubeMapSampler = pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
         }
 
-        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_iem.dds" ) ) {
+        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/bolonga_irr.dds" ) ) {
+        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/kyoto_irr.dds" ) ) {
+        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_iem.dds" ) ) {
             {
                 const std::vector< uint8_t > texAssetBin = pTexAsset->AsBin( );
 
@@ -366,6 +370,9 @@ bool ViewerApp::Initialize(  ) {
         pSkybox->eImgLayout    = RadianceLoadedImg->eImgLayout;
         pSkybox->Exposure      = 3;
         pSkybox->LevelOfDetail = 0;
+
+        LightDirection = XMFLOAT4( 0, 1, 0, 1 );
+        LightColor     = XMFLOAT4( 1, 1, 1, 1 );
 
         return true;
     }
@@ -556,12 +563,12 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
     auto ctx = &pNkRenderer->Context;
     float clearColor[ 4 ] = {0.5f, 0.5f, 1.0f, 1.0f};
 
-    if ( nk_begin( ctx, "Calculator", nk_rect( 10, 10, 180, 250 ), NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_MOVABLE ) ) {
+    if ( nk_begin( ctx, "Viewer", nk_rect( 10, 10, 180, 500 ), NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_MOVABLE ) ) {
 
         auto viewMatrix = GetMatrix( pCamController->ViewMatrix( ) );
         auto invViewMatrix = GetMatrix( XMMatrixInverse( nullptr, pCamController->ViewMatrix( ) ) );
 
-        nk_layout_row_dynamic(ctx, 30, 1);
+        nk_layout_row_dynamic(ctx, 10, 1);
         nk_labelf( ctx,
                    NK_TEXT_LEFT,
                    "View: %2.2f %2.2f %2.2f %2.2f ",
@@ -593,6 +600,24 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 
         nk_labelf( ctx, NK_TEXT_LEFT, "WorldRotationY" );
         nk_slider_float( ctx, 0, &WorldRotationY, apemodexm::XM_2PI, 0.1f );
+
+        nk_labelf( ctx, NK_TEXT_LEFT, "LightColorR" );
+        nk_slider_float( ctx, 0, &LightColor.x, 1, 0.1f );
+
+        nk_labelf( ctx, NK_TEXT_LEFT, "LightColorG" );
+        nk_slider_float( ctx, 0, &LightColor.y, 1, 0.1f );
+
+        nk_labelf( ctx, NK_TEXT_LEFT, "LightColorB" );
+        nk_slider_float( ctx, 0, &LightColor.z, 1, 0.1f );
+
+        nk_labelf( ctx, NK_TEXT_LEFT, "LightDirectionX" );
+        nk_slider_float( ctx, -1, &LightDirection.x, 1, 0.1f );
+
+        nk_labelf( ctx, NK_TEXT_LEFT, "LightDirectionY" );
+        nk_slider_float( ctx, -1, &LightDirection.y, 1, 0.1f );
+
+        nk_labelf( ctx, NK_TEXT_LEFT, "LightDirectionZ" );
+        nk_slider_float( ctx, -1, &LightDirection.z, 1, 0.1f );
     }
     nk_end(ctx);
 
@@ -748,9 +773,13 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         sceneRenderParameters.RadianceMap.eImgLayout   = RadianceLoadedImg->eImgLayout;
         sceneRenderParameters.RadianceMap.pImgView     = RadianceLoadedImg->hImgView;
         sceneRenderParameters.RadianceMap.pSampler     = pRadianceCubeMapSampler;
+        sceneRenderParameters.RadianceMap.MipLevels    = RadianceLoadedImg->ImageCreateInfo.mipLevels;
         sceneRenderParameters.IrradianceMap.eImgLayout = IrradianceLoadedImg->eImgLayout;
         sceneRenderParameters.IrradianceMap.pImgView   = IrradianceLoadedImg->hImgView;
         sceneRenderParameters.IrradianceMap.pSampler   = pIrradianceCubeMapSampler;
+        sceneRenderParameters.IrradianceMap.MipLevels  = IrradianceLoadedImg->ImageCreateInfo.mipLevels;
+        sceneRenderParameters.LightColor               = LightColor;
+        sceneRenderParameters.LightDirection           = LightDirection;
         XMStoreFloat4x4( &sceneRenderParameters.ProjMatrix, projMatrix );
         XMStoreFloat4x4( &sceneRenderParameters.ViewMatrix, viewMatrix );
         XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );

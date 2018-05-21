@@ -67,7 +67,7 @@ namespace apemodevk {
     struct MaterialUBO {
         XMFLOAT4 BaseColorFactor;
         XMFLOAT4 EmissiveFactor;
-        XMFLOAT4 MetallicRoughnessNormalFactor;
+        XMFLOAT4 MetallicRoughnessFactor;
         XMUINT4 Flags;
 
     };
@@ -769,8 +769,15 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                 pMaterialAsset->pOcclusionSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
                 VkImageViewCreateInfo occlusionImgViewCreateInfo = pMaterialAsset->pOcclusionLoadedImg->ImgViewCreateInfo;
-                occlusionImgViewCreateInfo.image                 = pMaterialAsset->pOcclusionLoadedImg->hImg;
 
+                occlusionImgViewCreateInfo.image = pMaterialAsset->pOcclusionLoadedImg->hImg;
+
+                occlusionImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_B;
+                occlusionImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ZERO;
+                occlusionImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ZERO;
+                occlusionImgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ZERO;
+
+                #if 0
                 if ( pMaterialAsset->pOcclusionLoadedImg == pMaterialAsset->pMetallicRoughnessLoadedImg ) {
                     /* MetallicRoughness texture has 2 components, the third channel can used as occlusion. */
                     occlusionImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_B;
@@ -790,6 +797,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                     occlusionImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ZERO;
                     occlusionImgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ZERO;
                 }
+                #endif
 
                 if ( !pMaterialAsset->hOcclusionImgView.Recreate( pParams->pNode->hLogicalDevice, occlusionImgViewCreateInfo ) ) {
                     return false;
@@ -853,14 +861,14 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
     cameraData.InvProjMatrix         = pParams->InvProjMatrix;
 
     LightUBO lightData;
-    lightData.LightDirection = XMFLOAT4( 0, -1, 0, 1 );
-    lightData.LightColor     = XMFLOAT4( 1, 0, 0, 1 );
+    lightData.LightDirection = pParams->LightDirection;
+    lightData.LightColor     = pParams->LightColor;
 
     auto cameraDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( cameraData );
     assert( VK_NULL_HANDLE != cameraDataUploadBufferRange.DescriptorBufferInfo.buffer );
     cameraDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( CameraUBO );
 
-    auto lightDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( cameraData );
+    auto lightDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( lightData );
     assert( VK_NULL_HANDLE != lightDataUploadBufferRange.DescriptorBufferInfo.buffer );
     lightDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( LightUBO );
 
@@ -941,17 +949,18 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
             flags |= pMaterialAsset->hOcclusionImgView ? 1 << 5 : 0;
 
             MaterialUBO materialData;
-            materialData.BaseColorFactor.x               = pMaterial->BaseColorFactor.x;
-            materialData.BaseColorFactor.y               = pMaterial->BaseColorFactor.y;
-            materialData.BaseColorFactor.z               = pMaterial->BaseColorFactor.z;
-            materialData.BaseColorFactor.w               = pMaterial->BaseColorFactor.w;
-            materialData.EmissiveFactor.x                = pMaterial->EmissiveFactor.x;
-            materialData.EmissiveFactor.y                = pMaterial->EmissiveFactor.y;
-            materialData.EmissiveFactor.z                = pMaterial->EmissiveFactor.z;
-            materialData.MetallicRoughnessNormalFactor.x = pMaterial->MetallicFactor;
-            materialData.MetallicRoughnessNormalFactor.y = pMaterial->RoughnessFactor;
-            materialData.MetallicRoughnessNormalFactor.z = 1;
-            materialData.Flags.x                         = flags;
+            materialData.BaseColorFactor.x = pMaterial->BaseColorFactor.x;
+            materialData.BaseColorFactor.y = pMaterial->BaseColorFactor.y;
+            materialData.BaseColorFactor.z = pMaterial->BaseColorFactor.z;
+            materialData.BaseColorFactor.w = pMaterial->BaseColorFactor.w;
+            materialData.EmissiveFactor.x = pMaterial->EmissiveFactor.x;
+            materialData.EmissiveFactor.y = pMaterial->EmissiveFactor.y;
+            materialData.EmissiveFactor.z = pMaterial->EmissiveFactor.z;
+            materialData.MetallicRoughnessFactor.x = pMaterial->MetallicFactor;
+            materialData.MetallicRoughnessFactor.y = pMaterial->RoughnessFactor;
+            materialData.MetallicRoughnessFactor.z = 1;
+            materialData.MetallicRoughnessFactor.w = pParams->RadianceMap.MipLevels;
+            materialData.Flags.x = flags;
 
             auto objectDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( objectData );
             assert( VK_NULL_HANDLE != objectDataUploadBufferRange.DescriptorBufferInfo.buffer );

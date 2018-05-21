@@ -67,7 +67,9 @@ namespace apemode {
         uint32_t FrameIndex = 0;
         uint64_t FrameId    = 0;
 
-        float WorldRotationY = 0;
+        float    WorldRotationY = 0;
+        XMFLOAT4 LightDirection;
+        XMFLOAT4 LightColor;
 
         apemodeos::FileTracker          mFileTracker;
         apemodeos::AssetManager         mAssetManager;
@@ -117,6 +119,7 @@ namespace apemode {
     public:
         virtual bool                     Initialize( ) override;
         virtual apemode::AppSurfaceBase* CreateAppSurface( ) override;
+        virtual const char* GetAppName( ) override { return "Viewer"; }
 
     public:
         bool         OnResized( );
