@@ -11,6 +11,11 @@
 
 [FbxPipeline](https://github.com/VladSerhiienko/FbxPipeline) accompaning project.
 
+## Demo:
+![alt text](https://github.com/VladSerhiienko/FbxPipeline/blob/master/docs/AK.PNG "AK")
+![alt text](https://github.com/VladSerhiienko/FbxPipeline/blob/master/docs/Cerberus.PNG "Cerberus")
+![alt text](https://github.com/VladSerhiienko/FbxPipeline/blob/master/docs/9mm.PNG "9mm")
+
 ## How to build (Linux, bash + cmake + make):
 
 ### Bash
