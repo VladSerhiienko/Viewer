@@ -186,31 +186,37 @@ bool apemode::NuklearRendererSdlVk::DeviceCreate( InitParametersBase* pInitParam
         "   outColor = inColor * texture(samplerFont, inTexcoords.st);\n"
         "}\n";
 
-    auto pInitParams = (InitParametersVk*) pInitParamsBase;
-    if ( nullptr == pInitParams ) {
+    auto pParams = (InitParametersVk*) pInitParamsBase;
+    if ( nullptr == pParams ) {
         apemodevk::platform::DebugBreak( );
         return false;
     }
 
-    auto compiledVertexShader = pInitParams->pShaderCompiler->Compile(
-        "embedded/nuklear.vert", vertex_shader, nullptr, apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader );
+    auto compiledVertexShader = pParams->pShaderCompiler->Compile( "embedded/nuklear.vert",
+                                                                   vertex_shader,
+                                                                   nullptr,
+                                                                   apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader,
+                                                                   apemodevk::ShaderCompiler::eShaderOptimization_Performance );
 
     if ( nullptr == compiledVertexShader ) {
         apemodevk::platform::DebugBreak( );
         return false;
     }
 
-    auto compiledFragmentShader = pInitParams->pShaderCompiler->Compile(
-        "embedded/nuklear.frag", fragment_shader, nullptr, apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader );
+    auto compiledFragmentShader = pParams->pShaderCompiler->Compile( "embedded/nuklear.frag",
+                                                                     fragment_shader,
+                                                                     nullptr,
+                                                                     apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader,
+                                                                     apemodevk::ShaderCompiler::eShaderOptimization_Performance );
 
     if ( nullptr == compiledFragmentShader ) {
         apemodevk::platform::DebugBreak( );
         return false;
     }
 
-    pNode       = pInitParams->pNode;
-    pDescPool   = pInitParams->pDescPool;
-    pRenderPass = pInitParams->pRenderPass;
+    pNode       = pParams->pNode;
+    pDescPool   = pParams->pDescPool;
+    pRenderPass = pParams->pRenderPass;
 
     VkShaderModuleCreateInfo vertexShaderCreateInfo;
     InitializeStruct( vertexShaderCreateInfo );
@@ -412,7 +418,7 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
                                                         uint32_t            width,
                                                         uint32_t            height ) {
 
-    InitParametersVk* pInitParams   = reinterpret_cast< InitParametersVk* >( init_params );
+    InitParametersVk* pParams   = reinterpret_cast< InitParametersVk* >( init_params );
     const uint8_t*    fontImgPixels = reinterpret_cast< const uint8_t* >( image );
     uint32_t          uploadSize    = width * height * 4 * sizeof( uint8_t );
 
@@ -503,7 +509,7 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
 
     THandle< VkCommandPool >   cmdPool;
     THandle< VkCommandBuffer > cmdBuffer;
-    VkCommandBuffer            pFinalCmdBuffer = pInitParams->pCmdBuffer;
+    VkCommandBuffer            pFinalCmdBuffer = pParams->pCmdBuffer;
 
     if ( VK_NULL_HANDLE == pFinalCmdBuffer ) {
 
@@ -511,9 +517,9 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
         InitializeStruct( cmdPoolCreateInfo );
 
         cmdPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        cmdPoolCreateInfo.queueFamilyIndex = pInitParams->QueueFamilyId;
+        cmdPoolCreateInfo.queueFamilyIndex = pParams->QueueFamilyId;
 
-        if ( false == cmdPool.Recreate( pInitParams->pNode->hLogicalDevice, cmdPoolCreateInfo ) ) {
+        if ( false == cmdPool.Recreate( pParams->pNode->hLogicalDevice, cmdPoolCreateInfo ) ) {
             apemodevk::platform::DebugBreak( );
             return nullptr;
         }
@@ -525,7 +531,7 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
         cmdBufferAllocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
         cmdBufferAllocInfo.commandBufferCount = 1;
 
-        if ( false == cmdBuffer.Recreate( pInitParams->pNode->hLogicalDevice, cmdBufferAllocInfo ) ) {
+        if ( false == cmdBuffer.Recreate( pParams->pNode->hLogicalDevice, cmdBufferAllocInfo ) ) {
             apemodevk::platform::DebugBreak( );
             return nullptr;
         }
@@ -609,11 +615,11 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
             return nullptr;
         }
 
-        if ( VK_SUCCESS != CheckedCall( vkQueueSubmit( pInitParams->pQueue, 1, &submitInfo, VK_NULL_HANDLE ) ) ) {
+        if ( VK_SUCCESS != CheckedCall( vkQueueSubmit( pParams->pQueue, 1, &submitInfo, VK_NULL_HANDLE ) ) ) {
             return nullptr;
         }
 
-        if ( VK_SUCCESS != CheckedCall( vkDeviceWaitIdle( pInitParams->pNode->hLogicalDevice ) ) ) {
+        if ( VK_SUCCESS != CheckedCall( vkDeviceWaitIdle( pParams->pNode->hLogicalDevice ) ) ) {
             return nullptr;
         }
     }

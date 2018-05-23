@@ -52,7 +52,7 @@ public:
                                         size_t               includeDepth ) {
 
         auto userData = apemodevk::make_unique< UserData >( );
-        if ( userData && FileReader.ReadShaderTxtFile( pszRequestedSource, userData->Path, userData->Content ) ) {
+        if ( userData && pIncludedFiles && FileReader.ReadShaderTxtFile( pszRequestedSource, userData->Path, userData->Content ) ) {
             pIncludedFiles->InsertIncludedFile( userData->Path );
 
             auto includeResult                = apemodevk::make_unique< shaderc_include_result >( );
@@ -124,12 +124,11 @@ static std::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
     if ( shaderc_compilation_status_success != preprocessedSourceCompilationResult.GetCompilationStatus( ) ) {
         if ( nullptr != pShaderFeedbackWriter ) {
             pShaderFeedbackWriter->WriteFeedback(
-                apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed |
-                    preprocessedSourceCompilationResult.GetCompilationStatus( ),
+                apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed | preprocessedSourceCompilationResult.GetCompilationStatus( ),
                 shaderName,
                 pMacros,
-                preprocessedSourceCompilationResult.GetErrorMessage( ).cbegin( ).operator->( ),
-                preprocessedSourceCompilationResult.GetErrorMessage( ).cend( ).  operator->( ) );
+                preprocessedSourceCompilationResult.GetErrorMessage( ).data( ),
+                preprocessedSourceCompilationResult.GetErrorMessage( ).data( ) + preprocessedSourceCompilationResult.GetErrorMessage( ).size( )  );
         }
 
         platform::DebugBreak( );
@@ -137,13 +136,13 @@ static std::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
     }
 
     if ( nullptr != pShaderFeedbackWriter ) {
-        pShaderFeedbackWriter->WriteFeedback(
-            apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed |
-                apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success,
-            shaderName,
-            pMacros,
-            preprocessedSourceCompilationResult.cbegin( ),
-            preprocessedSourceCompilationResult.cend( ) );
+        platform::DebugTrace( platform::LogLevel::Info, "ShaderCompiler: Preprocessed GLSL." );
+
+        pShaderFeedbackWriter->WriteFeedback( ShaderCompiler::IShaderFeedbackWriter::eFeedback_PreprocessingSucceeded,
+                                              shaderName,
+                                              pMacros,
+                                              preprocessedSourceCompilationResult.cbegin( ),
+                                              preprocessedSourceCompilationResult.cend( ) );
     }
 
     if ( bAssembly ) {
@@ -151,14 +150,17 @@ static std::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
             preprocessedSourceCompilationResult.begin( ), (shaderc_shader_kind) eShaderKind, shaderName.c_str( ), options );
 
         if ( shaderc_compilation_status_success != assemblyCompilationResult.GetCompilationStatus( ) ) {
+            platform::DebugTrace( platform::LogLevel::Err,
+                                  "ShaderCompiler: Failed to compile processed GLSL to SPV assembly: %s.",
+                                  assemblyCompilationResult.GetErrorMessage( ).c_str( ) );
+
             if ( nullptr != pShaderFeedbackWriter ) {
                 pShaderFeedbackWriter->WriteFeedback(
-                    ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Assembly |
-                        assemblyCompilationResult.GetCompilationStatus( ),
+                    ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Assembly | assemblyCompilationResult.GetCompilationStatus( ),
                     shaderName,
                     pMacros,
-                    assemblyCompilationResult.GetErrorMessage( ).cbegin( ).operator->( ),
-                    assemblyCompilationResult.GetErrorMessage( ).cend( ).  operator->( ) );
+                    assemblyCompilationResult.GetErrorMessage( ).data( ),
+                    assemblyCompilationResult.GetErrorMessage( ).data( ) + assemblyCompilationResult.GetErrorMessage( ).size( ) );
             }
 
             platform::DebugBreak( );
@@ -166,13 +168,13 @@ static std::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
         }
 
         if ( nullptr != pShaderFeedbackWriter ) {
-            pShaderFeedbackWriter->WriteFeedback(
-                ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Assembly |
-                    ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success,
-                shaderName,
-                pMacros,
-                assemblyCompilationResult.cbegin( ),
-                assemblyCompilationResult.cend( ) );
+            platform::DebugTrace( platform::LogLevel::Info, "ShaderCompiler: Compiled GLSL to SPV assembly." );
+
+            pShaderFeedbackWriter->WriteFeedback( ShaderCompiler::IShaderFeedbackWriter::eFeedback_AssemblySucceeded,
+                                                  shaderName,
+                                                  pMacros,
+                                                  assemblyCompilationResult.cbegin( ),
+                                                  assemblyCompilationResult.cend( ) );
         }
     }
 
@@ -181,12 +183,15 @@ static std::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
 
     if ( shaderc_compilation_status_success != spvCompilationResult.GetCompilationStatus( ) ) {
         if ( nullptr != pShaderFeedbackWriter ) {
-            pShaderFeedbackWriter->WriteFeedback( ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Spv |
-                                                      spvCompilationResult.GetCompilationStatus( ),
+            platform::DebugTrace( platform::LogLevel::Err,
+                                  "ShaderCompiler: Failed to compile processed GLSL to SPV: %s.",
+                                  spvCompilationResult.GetErrorMessage( ).c_str( ) );
+
+            pShaderFeedbackWriter->WriteFeedback( ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Spv | spvCompilationResult.GetCompilationStatus( ),
                                                   shaderName,
                                                   pMacros,
-                                                  spvCompilationResult.GetErrorMessage( ).cbegin( ).operator->( ),
-                                                  spvCompilationResult.GetErrorMessage( ).cend( ).  operator->( ) );
+                                                  spvCompilationResult.GetErrorMessage( ).data( ),
+                                                  spvCompilationResult.GetErrorMessage( ).data( ) + spvCompilationResult.GetErrorMessage( ).size( ) );
         }
 
         platform::DebugBreak( );
@@ -194,13 +199,13 @@ static std::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
     }
 
     if ( nullptr != pShaderFeedbackWriter ) {
-        pShaderFeedbackWriter->WriteFeedback(
-            ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Spv |
-                ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success,
-            shaderName,
-            pMacros,
-            spvCompilationResult.cbegin( ),
-            spvCompilationResult.cend( ) );
+        platform::DebugTrace( platform::LogLevel::Info, "ShaderCompiler: Compiled GLSL to SPV." );
+
+        pShaderFeedbackWriter->WriteFeedback( ShaderCompiler::IShaderFeedbackWriter::eFeedback_SpvSucceeded,
+                                              shaderName,
+                                              pMacros,
+                                              spvCompilationResult.cbegin( ),
+                                              spvCompilationResult.cend( ) );
     }
 
     const size_t dwordCount = (size_t) std::distance( spvCompilationResult.cbegin( ), spvCompilationResult.cend( ) );
@@ -213,13 +218,15 @@ static std::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
     return apemodevk::make_unique< CompiledShader >( dwords );
 }
 
-std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile( const std::string& shaderName,
-                                                                                  const std::string& shaderContent,
+std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile( const std::string&                shaderName,
+                                                                                  const std::string&                shaderContent,
                                                                                   const IMacroDefinitionCollection* pMacros,
-                                                                                  const EShaderType eShaderKind ) {
+                                                                                  const EShaderType                 eShaderKind,
+                                                                                  const EShaderOptimizationType     eShaderOptimization ) {
+
     shaderc::CompileOptions options;
     options.SetSourceLanguage( shaderc_source_language_glsl );
-    options.SetOptimizationLevel( shaderc_optimization_level_size );
+    options.SetOptimizationLevel( shaderc_optimization_level( eShaderOptimization ) );
     options.SetTargetEnvironment( shaderc_target_env_vulkan, 0 );
 
     return InternalCompile( shaderName,
@@ -235,7 +242,8 @@ std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile
 std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile( const std::string&                InFilePath,
                                                                                   const IMacroDefinitionCollection* pMacros,
                                                                                   const EShaderType                 eShaderKind,
-                                                                                  IIncludedFileSet* pOutIncludedFiles ) {
+                                                                                  const EShaderOptimizationType     eShaderOptimization,
+                                                                                  IIncludedFileSet*                 pOutIncludedFiles ) {
     if ( nullptr == pImpl->pShaderFileReader ) {
         platform::DebugTrace( platform::LogLevel::Err, "ShaderCompiler: pShaderFileReader must be set." );
         platform::DebugBreak( );
@@ -244,7 +252,7 @@ std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile
 
     shaderc::CompileOptions options;
     options.SetSourceLanguage( shaderc_source_language_glsl );
-    options.SetOptimizationLevel( shaderc_optimization_level_zero );
+    options.SetOptimizationLevel( shaderc_optimization_level( eShaderOptimization ) );
     options.SetTargetEnvironment( shaderc_target_env_vulkan, 0 );
     options.SetIncluder( apemodevk::make_unique< Includer >( *pImpl->pShaderFileReader, pOutIncludedFiles ) );
 

@@ -42,16 +42,22 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
 
     apemodevk::ShaderCompilerIncludedFileSet includedFiles;
 
-    auto compiledVertexShader = pParams->pShaderCompiler->Compile(
-        "shaders/Skyboxv2.vert", nullptr, apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader, &includedFiles );
+    auto compiledVertexShader = pParams->pShaderCompiler->Compile( "shaders/Skyboxv2.vert",
+                                                                   nullptr,
+                                                                   apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader,
+                                                                   apemodevk::ShaderCompiler::eShaderOptimization_Performance,
+                                                                   &includedFiles );
 
     if ( nullptr == compiledVertexShader ) {
         apemodevk::platform::DebugBreak( );
         return false;
     }
 
-    auto compiledFragmentShader = pParams->pShaderCompiler->Compile(
-        "shaders/Skybox.frag", nullptr, apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader, &includedFiles );
+    auto compiledFragmentShader = pParams->pShaderCompiler->Compile( "shaders/Skybox.frag",
+                                                                     nullptr,
+                                                                     apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader,
+                                                                     apemodevk::ShaderCompiler::eShaderOptimization_Performance,
+                                                                     &includedFiles );
 
     if ( nullptr == compiledFragmentShader ) {
         apemodevk::platform::DebugBreak( );

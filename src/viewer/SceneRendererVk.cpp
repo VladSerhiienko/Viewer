@@ -1085,16 +1085,22 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
 
     ShaderCompilerIncludedFileSet includedFiles;
 
-    auto compiledVertexShader = pParams->pShaderCompiler->Compile(
-        "shaders/Scene.vert", nullptr, ShaderCompiler::eShaderType_GLSL_VertexShader, &includedFiles );
+    auto compiledVertexShader = pParams->pShaderCompiler->Compile( "shaders/Scene.vert",
+                                                                   nullptr,
+                                                                   ShaderCompiler::eShaderType_GLSL_VertexShader,
+                                                                   apemodevk::ShaderCompiler::eShaderOptimization_Performance,
+                                                                   &includedFiles );
 
     if ( nullptr == compiledVertexShader ) {
         platform::DebugBreak( );
         return false;
     }
 
-    auto compiledFragmentShader = pParams->pShaderCompiler->Compile(
-        "shaders/Scene.frag", nullptr, ShaderCompiler::eShaderType_GLSL_FragmentShader, &includedFiles );
+    auto compiledFragmentShader = pParams->pShaderCompiler->Compile( "shaders/Scene.frag",
+                                                                     nullptr,
+                                                                     ShaderCompiler::eShaderType_GLSL_FragmentShader,
+                                                                     apemodevk::ShaderCompiler::eShaderOptimization_Performance,
+                                                                     &includedFiles );
 
     if ( nullptr == compiledFragmentShader ) {
         platform::DebugBreak( );

@@ -16,7 +16,7 @@ namespace apemode {
 struct EFeedbackTypeWithOStream {
     apemodevk::ShaderCompiler::IShaderFeedbackWriter::EFeedbackType e;
 
-    EFeedbackTypeWithOStream(  apemodevk::ShaderCompiler::IShaderFeedbackWriter::EFeedbackType e) : e(e) {
+    EFeedbackTypeWithOStream( apemodevk::ShaderCompiler::IShaderFeedbackWriter::EFeedbackType e ) : e( e ) {
     }
 
     // clang-format off

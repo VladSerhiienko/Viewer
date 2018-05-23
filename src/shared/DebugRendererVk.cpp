@@ -38,16 +38,24 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
 
     apemodevk::GraphicsDevice* pNode = pInitParams->pNode;
 
-    auto compiledVertexShader = pInitParams->pShaderCompiler->Compile(
-        "embedded/debug.vert", vertexShader, nullptr, apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader );
+    auto compiledVertexShader =
+        pInitParams->pShaderCompiler->Compile( "embedded/debug.vert",
+                                               vertexShader,
+                                               nullptr,
+                                               apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader,
+                                               apemodevk::ShaderCompiler::eShaderOptimization_Performance );
 
     if ( nullptr == compiledVertexShader ) {
         apemodevk::platform::DebugBreak( );
         return false;
     }
 
-    auto compiledFragmentShader = pInitParams->pShaderCompiler->Compile(
-        "embedded/debug.frag", fragmentShader, nullptr, apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader );
+    auto compiledFragmentShader =
+        pInitParams->pShaderCompiler->Compile( "embedded/debug.frag",
+                                               fragmentShader,
+                                               nullptr,
+                                               apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader,
+                                               apemodevk::ShaderCompiler::eShaderOptimization_Performance );
 
     if ( nullptr == compiledFragmentShader ) {
         apemodevk::platform::DebugBreak( );

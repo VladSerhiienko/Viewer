@@ -80,6 +80,11 @@ namespace apemodevk {
 
             using EFeedbackType = std::underlying_type< EFeedbackTypeBits >::type;
 
+            static const EFeedbackType eFeedback_PreprocessingSucceeded = eFeedbackType_CompilationStage_Preprocessed | eFeedbackType_CompilationStatus_Success;
+            static const EFeedbackType eFeedback_OptimizationSucceeded = eFeedbackType_CompilationStage_PreprocessedOptimized | eFeedbackType_CompilationStatus_Success;
+            static const EFeedbackType eFeedback_AssemblySucceeded = eFeedbackType_CompilationStage_PreprocessedOptimized | eFeedbackType_CompilationStatus_Success;
+            static const EFeedbackType eFeedback_SpvSucceeded = eFeedbackType_CompilationStage_PreprocessedOptimized | eFeedbackType_CompilationStatus_Success;
+
             /**
              * If CompilationStatus bit is not Success, pContent is an error message (Txt).
              * pContent is Bin in case CompilationStatus bit is success and Stage is Spv.
@@ -126,6 +131,13 @@ namespace apemodevk {
             eShaderType_SPIRV_assembly,
         };
 
+        /* Copy-paste from shaderc */
+        enum EShaderOptimizationType {
+            eShaderOptimization_None,        // no optimization
+            eShaderOptimization_Size,        // optimize towards reducing code size
+            eShaderOptimization_Performance, // optimize towards performance
+        };
+
     public:
         ShaderCompiler( );
         virtual ~ShaderCompiler( );
@@ -135,7 +147,8 @@ namespace apemodevk {
         virtual std::unique_ptr< ICompiledShader > Compile( const std::string&                ShaderName,
                                                             const std::string&                ShaderCode,
                                                             const IMacroDefinitionCollection* pMacros,
-                                                            EShaderType                       eShaderKind );
+                                                            EShaderType                       eShaderKind,
+                                                            EShaderOptimizationType           eShaderOptimization );
 
         /* @note Compiling from source files */
 
@@ -147,6 +160,7 @@ namespace apemodevk {
         virtual std::unique_ptr< ICompiledShader > Compile( const std::string&                FilePath,
                                                             const IMacroDefinitionCollection* pMacros,
                                                             EShaderType                       eShaderKind,
+                                                            EShaderOptimizationType           eShaderOptimization,
                                                             IIncludedFileSet*                 pOutIncludedFiles );
     };
 } // namespace apemodevk
