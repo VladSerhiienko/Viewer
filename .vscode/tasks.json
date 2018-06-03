@@ -1,6 +1,4 @@
 {
-    // See https://go.microsoft.com/fwlink/?LinkId=733558
-    // for the documentation about the tasks.json format
     "version": "2.0.0",
     "tasks": [
         {
@@ -22,7 +20,7 @@
             }
         },
         {
-            "label": "CMake/Viewer",
+            "label": "CMake/Viewer(Linux/Makefile)",
             "type": "shell",
             "command": "cmake",
             "args": [
@@ -37,7 +35,39 @@
             }
         },
         {
-            "label": "Make/Viewer",
+            "label": "CMake/Viewer(Darwin/Makefile)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-H.", "-Bbuild_darwin_x86_64",
+                // "-DCMAKE_C_COMPILER=/usr/local/Cellar/gcc\\@7/7.3.0/bin/gcc-7",
+                // "-DCMAKE_CXX_COMPILER=/usr/local/Cellar/gcc\\@7/7.3.0/bin/g++-7",
+                // "-DCMAKE_C_COMPILER=/usr/local/opt/llvm@5/bin/clang",
+                // "-DCMAKE_CXX_COMPILER=/usr/local/opt/llvm@5/bin/clang++",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "Make/Viewer(Darwin/Makefile)",
+            "type": "shell",
+            "command": "make",
+            "options": {
+                "cwd": "${workspaceFolder}/build_darwin_x86_64"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [ "CMake/Viewer(Darwin/Makefile)"]
+        },
+        {
+            "label": "Make/Viewer(Linux/Makefile)",
             "type": "shell",
             "command": "make",
             "options": {
@@ -47,7 +77,7 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": [ "CMake/Viewer"]
+            "dependsOn": [ "CMake/Viewer(Linux/Makefile)"]
         }
     ]
 }

@@ -21,6 +21,14 @@ if (WIN32)
         "Visual Studio 15 2017 Win64"
         -B${BUILD_FOLDER_SUFFIX} "-H."
     )
+elseif(APPLE)
+    add_definitions("-std=c++1y")
+    set(
+        default_cmake_args
+        -B${BUILD_FOLDER_SUFFIX} -H.
+        #-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} 
+        #-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
+    )
 else()
     set(
         default_cmake_args
@@ -48,7 +56,7 @@ ExternalProject_Add(
 
 ExternalProject_Get_Property(argh SOURCE_DIR)
 set(argh_source_dir ${SOURCE_DIR})
-message(STATUS "argh_source_dir = ${cargh_source_dir}")
+message(STATUS "argh_source_dir = ${argh_source_dir}")
 
 #
 #
@@ -629,7 +637,29 @@ target_include_directories(
     $ENV{VK_SDK_PATH}/include
 )
 
-if (UNIX)
+if (APPLE)
+    set(
+        third_party_libs
+        $ENV{VK_SDK_PATH}/lib/libvulkan.dylib
+        X11
+        Xext
+        Xcursor
+        Xinerama
+        Xrandr
+        pthread
+        c++experimental
+        ${sdl2_binary_dir}/libSDL2.a
+        ${shaderc_binary_dir}/libshaderc/libshaderc_combined.a
+        ${spirv_cross_binary_dir}/libspirv-cross-core.a
+        ${spirv_cross_binary_dir}/libspirv-cross-cpp.a
+        ${spirv_cross_binary_dir}/libspirv-cross-glsl.a
+        ${spirv_cross_binary_dir}/libspirv-cross-util.a
+        ${flatbuffers_binary_dir}/libflatbuffers.a
+        ${eastl_binary_dir}/libEASTL.a
+        ${eastl_binary_dir}/test/packages/EAStdC/libEAStdC.a
+        dl
+    )
+elseif (UNIX)
     set(
         third_party_libs
         $ENV{VK_SDK_PATH}/lib/libvulkan.so
