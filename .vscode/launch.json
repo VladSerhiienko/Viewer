@@ -50,7 +50,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Make/Viewer"
+            "preLaunchTask": "Make/Viewer(Linux/Makefile)"
         }
     ]
 }

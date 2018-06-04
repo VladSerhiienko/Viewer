@@ -2,24 +2,10 @@
 
 #include <FileReader.h>
 #include <AppState.h>
-
-#include <stdlib.h>
 #include <tinydir.h>
 
-#include <fstream>
-#include <iterator>
-#include <set>
+#include <stdlib.h>
 #include <regex>
-
-
-//#if defined( __clang__ ) || defined( __GNUC__ )
-//#include <experimental/filesystem>
-//#else
-//#include <filesystem>
-//#endif
-//namespace std {
-//    namespace filesystem = std::experimental::filesystem::v1;
-//}
 
 const std::string& apemodeos::AssetFile::GetName( ) const {
     return RelPath;
@@ -37,26 +23,12 @@ std::vector< uint8_t > apemodeos::AssetFile::AsBin( ) const {
     return FileReader( ).ReadBinFile( FullPath );
 }
 
-inline std::string ToCanonicalAbsolutPath( std::string InRelativePath ) {
-    // InRelativePath = std::filesystem::canonical( std::filesystem::absolute( InRelativePath ) ).string( );
-#if _WIN32
-    char canonicalAbsolutePath[ 1024 ] = {0};
-    if ( !_fullpath( canonicalAbsolutePath, InRelativePath.c_str( ), sizeof( canonicalAbsolutePath ) ) ) {
-        return "";
-    }
-
-    InRelativePath = canonicalAbsolutePath;
-#else
-    InRelativePath = realpath( InRelativePath.c_str( ), NULL );
-#endif
-    std::replace( InRelativePath.begin( ), InRelativePath.end( ), '\\', '/' );
-    return InRelativePath;
-}
-
 const apemodeos::IAsset* apemodeos::AssetManager::GetAsset( const std::string& InAssetName ) const {
     auto assetIt = AssetFiles.find( InAssetName );
     return assetIt == AssetFiles.end( ) ? 0 : &assetIt->second;
 }
+
+std::string ToCanonicalAbsolutPath( const std::string & relativePath );
 
 template < typename TFileCallback >
 void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
@@ -102,20 +74,12 @@ void apemodeos::AssetManager::AddFilesFromDirectory( const std::string&         
     }
 
     tinydir_dir dir;
-
-    // if ( std::filesystem::exists( storageDirectory ) ) {
     std::string storageDirectoryFull = ToCanonicalAbsolutPath( storageDirectory );
-
-    // if ( !storageDirectoryFull.empty( ) && tinydir_open( &dir, storageDirectoryFull.c_str( ) ) != -1 ) {
     if ( !storageDirectoryFull.empty( ) && tinydir_open_sorted( &dir, storageDirectoryFull.c_str( ) ) != -1 ) {
 
-        // auto addFileFn = [&]( const std::filesystem::path& filePath ) {
         auto addFileFn = [&]( const std::string& filePath, tinydir_file file ) {
-            // tinydir_file file;
-            // if ( std::filesystem::is_regular_file( filePath ) ) {
-            // if ( tinydir_readfile( &dir, &file ) != -1 && file.is_reg ) {
-            /* Check if file matches the patterns */
 
+            /* Check if file matches the patterns */
             bool matches = InFilePatterns.empty( );
             for ( const auto& f : InFilePatterns ) {
                 if ( std::regex_match( filePath, std::regex( f ) ) ) {
@@ -138,8 +102,6 @@ void apemodeos::AssetManager::AddFilesFromDirectory( const std::string&         
                 AssetFiles[ relativePath ].RelPath  = relativePath;
                 AssetFiles[ relativePath ].FullPath = fullPath;
             }
-
-            //}
         };
 
         ProcessFiles( addFileFn, dir, addSubDirectories );

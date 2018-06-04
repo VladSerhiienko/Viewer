@@ -1,53 +1,88 @@
 #include "FileTracker.h"
 
+#include <AppState.h>
+#include <tinydir.h>
+
 #include <set>
 #include <regex>
-
-#if defined( __clang__ ) || defined( __GNUC__ )
-#include <experimental/filesystem>
-#else
-#include <filesystem>
-#endif
-namespace std {
-    namespace filesystem = std::experimental::filesystem::v1;
-}
-
 #include <fstream>
 #include <iterator>
 
-#include <AppState.h>
-
-std::string apemodeos::CurrentDirectory( ) {
-    return std::filesystem::current_path( ).string( );
-}
-
-std::string apemodeos::GetFileName( const std::string& filePath ) {
-    return std::filesystem::path( filePath ).filename( ).string( );
-}
-
-bool apemodeos::PathExists( const std::string& path ) {
-    return std::filesystem::exists( path );
-}
-
 bool apemodeos::DirectoryExists( const std::string& directoryPath ) {
-    return std::filesystem::is_directory( directoryPath );
+#if _WIN32
+    DWORD dwAttrib = GetFileAttributes( directoryPath.c_str( ) );
+    return ( dwAttrib != INVALID_FILE_ATTRIBUTES && ( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
+#else
+    struct stat statBuffer;
+    return ( stat( directoryPath.c_str( ), &statBuffer ) == 0 ) && S_ISDIR( statBuffer.st_mode );
+#endif
 }
 
 bool apemodeos::FileExists( const std::string& filePath ) {
-    return std::filesystem::is_regular_file( filePath );
+#if _WIN32
+    DWORD dwAttrib = GetFileAttributes( filePath.c_str( ) );
+    return ( dwAttrib != INVALID_FILE_ATTRIBUTES && !( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
+#else
+    struct stat statBuffer;
+    return ( stat( filePath.c_str( ), &statBuffer ) == 0 ) && S_ISREG( statBuffer.st_mode );
+#endif
 }
 
-std::string apemodeos::ReplaceSlashes( std::string path ) {
-    std::replace( path.begin( ), path.end( ), '\\', '/' );
-    return path;
+uint64_t GetLastModifiedTime( const std::string& filePath ) {
+    struct stat statBuffer;
+
+#if _WIN32
+    if ( _stat( filePath.c_str( ), &statBuffer ) != 0 )
+        return 0;
+#else
+    if ( stat( filePath.c_str( ), &statBuffer ) != 0 )
+        return 0;
+#endif
+
+    return statBuffer.st_mtime;
 }
 
-std::string apemodeos::RealPath( std::string path ) {
-    return std::filesystem::canonical( path ).string( );
+std::string ToCanonicalAbsolutPath( const std::string & relativePath ) {
+    char canonicalAbsolutePathBuffer[ PATH_MAX ] = {0};
+
+#if _WIN32
+    if ( !_fullpath( canonicalAbsolutePathBuffer, relativePath.c_str( ), sizeof( canonicalAbsolutePathBuffer ) ) ) {
+        return "";
+    }
+#else
+    struct stat statBuffer;
+    if ( stat( relativePath.c_str( ), &statBuffer ) != 0 )
+        return "";
+
+    realpath( relativePath.c_str( ), canonicalAbsolutePathBuffer );
+#endif
+
+    char* canonicalAbsolutePathIt    = canonicalAbsolutePathBuffer;
+    char* canonicalAbsolutePathEndIt = canonicalAbsolutePathBuffer + strlen( canonicalAbsolutePathBuffer );
+
+    std::replace( canonicalAbsolutePathIt, canonicalAbsolutePathEndIt, '\\', '/' );
+    return canonicalAbsolutePathBuffer;
 }
 
-std::string apemodeos::ResolveFullPath( const std::string& path ) {
-    return ReplaceSlashes( RealPath( std::filesystem::absolute( path ).string( ) ) );
+template < typename TFileCallback >
+void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
+    auto appState = apemode::AppState::Get( );
+    appState->Logger->info( "AssetManager: Entering folder: {}", dir.path );
+
+    for ( size_t i = 0; i < dir.n_files; i++ ) {
+        tinydir_file file;
+        if ( tinydir_readfile_n( &dir, &file, i ) != -1 )
+            if ( file.is_reg ) {
+                appState->Logger->info( "AssetManager: Processing file: {}", file.path );
+                callback( file.path, file );
+            } else if ( r && file.is_dir && strcmp( file.name, "." ) != 0 && strcmp( file.name, ".." ) != 0 ) {
+                tinydir_dir subdir;
+                if ( tinydir_open_sorted( &subdir, file.path ) != -1 ) {
+                    ProcessFiles( callback, subdir, r );
+                    tinydir_close( &subdir );
+                }
+            }
+    }
 }
 
 bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool bRemoveDeletedFiles ) {
@@ -67,47 +102,40 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
             storageDirectory = storageDirectory.substr( 0, storageDirectory.size( ) - 2 );
     }
 
-    if ( DirectoryExists( storageDirectory ) ) {
-        const std::string storageDirectoryFull = ResolveFullPath( storageDirectory );
+    tinydir_dir dir;
+    std::string storageDirectoryFull = ToCanonicalAbsolutPath( storageDirectory );
+    if ( !storageDirectoryFull.empty( ) && tinydir_open_sorted( &dir, storageDirectoryFull.c_str( ) ) != -1 ) {
 
         /* Lambda to check the path and the file to Files. */
+        auto addFileFn = [&]( const std::string& filePath, tinydir_file file ) {
 
-        auto addFileFn = [&]( const std::filesystem::path& filePath ) {
-            if ( std::filesystem::is_regular_file( filePath ) ) {
+            /* Check if file matches the patterns */
+            bool matches = FilePatterns.empty( );
+            for ( const auto& f : FilePatterns ) {
+                if ( std::regex_match( filePath, std::regex( f ) ) ) {
+                    matches = true;
+                    break;
+                }
+            }
 
-                /* Check if file matches the patterns */
+            if ( matches ) {
+                /* Update file state */
+                const uint64_t lastWriteTime = GetLastModifiedTime( filePath );
 
-                bool matches = FilePatterns.empty( );
-                for ( const auto& f : FilePatterns ) {
-                    if ( std::regex_match( filePath.string( ), std::regex( f ) ) ) {
-                        matches = true;
-                        break;
-                    }
+                auto fileIt = Files.find( filePath );
+                if ( fileIt == Files.end( ) ) {
+                    appState->Logger->info( "FileScanner: Added: {} ({})", filePath.c_str( ), lastWriteTime );
                 }
 
-                if ( matches ) {
-
-                    /* Update file state */
-
-                    std::error_code lastWriteTimeError;
-                    const auto      filePathFull  = ResolveFullPath( filePath.string( ) );
-                    const auto      lastWriteTime = std::filesystem::last_write_time( filePathFull, lastWriteTimeError );
-
-                    auto fileIt = Files.find( filePathFull );
-                    if ( fileIt == Files.end( ) ) {
-                        appState->Logger->info( "FileScanner: Added: {} ({})", filePathFull.c_str( ), lastWriteTime.time_since_epoch( ).count( ) );
-                    }
-
-                    auto& fileState = Files[ filePathFull ];
-                    if ( lastWriteTimeError == std::error_code( ) ) {
-                        /* Swap the times to know if it has been changed. */
-                        fileState.PrevTime = fileState.CurrTime;
-                        fileState.CurrTime = lastWriteTime.time_since_epoch( ).count( );
-                    } else {
-                        /* Set to error state. */
-                        fileState.CurrTime = 0;
-                        appState->Logger->info( "FileScanner: Error state: {}", filePath.string( ).c_str( ) );
-                    }
+                auto& fileState = Files[ filePath ];
+                if ( lastWriteTime ) {
+                    /* Swap the times to know if it has been changed. */
+                    fileState.PrevTime = fileState.CurrTime;
+                    fileState.CurrTime = lastWriteTime;
+                } else {
+                    /* Set to error state. */
+                    fileState.CurrTime = 0;
+                    appState->Logger->info( "FileScanner: Error state: {}", filePath );
                 }
             }
         };
@@ -134,13 +162,8 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
             }
         }
 
-        if ( addSubDirectories ) {
-            for ( const auto& fileOrFolderPath : std::filesystem::recursive_directory_iterator( storageDirectoryFull ) )
-                addFileFn( fileOrFolderPath.path( ) );
-        } else {
-            for ( const auto& fileOrFolderPath : std::filesystem::directory_iterator( storageDirectoryFull ) )
-                addFileFn( fileOrFolderPath.path( ) );
-        }
+        ProcessFiles( addFileFn, dir, addSubDirectories );
+        tinydir_close( &dir );
 
         return true;
     }
@@ -164,7 +187,7 @@ void apemodeos::FileTracker::CollectChangedFiles( std::vector< std::string >& Ou
 }
 
 std::vector< uint8_t > apemodeos::FileReader::ReadBinFile( const std::string& filePath ) {
-    const std::string resolvedFilePath = ResolveFullPath( filePath );
+    const std::string resolvedFilePath = ToCanonicalAbsolutPath( filePath );
 
     std::ifstream fileStream( resolvedFilePath, std::ios::binary | std::ios::ate );
     if ( fileStream.good( ) ) {
@@ -183,7 +206,7 @@ std::vector< uint8_t > apemodeos::FileReader::ReadBinFile( const std::string& fi
 }
 
 std::string apemodeos::FileReader::ReadTxtFile( const std::string& filePath ) {
-    const std::string resolvedFilePath = ResolveFullPath( filePath );
+    const std::string resolvedFilePath = ToCanonicalAbsolutPath( filePath );
 
     std::ifstream fileStream( resolvedFilePath );
     if ( fileStream.good( ) ) {
