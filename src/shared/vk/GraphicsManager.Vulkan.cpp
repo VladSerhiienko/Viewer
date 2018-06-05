@@ -621,3 +621,53 @@ void apemodevk::GraphicsManager::AllocationCallbacks::InternalFreeNotification( 
 void apemodevk::platform::Log( apemodevk::platform::LogLevel level, char const* pszMsg ) {
     GetGraphicsManager( )->GetLogger( )->Log( level, pszMsg );
 }
+
+void* operator new[]( std::size_t               size,
+                      std::nothrow_t const&     eNothrowTag,
+                      apemodevk::EAllocationTag eAllocTag,
+                      const char*               pszSourceFile,
+                      const unsigned int        sourceLine,
+                      const char*               pszSourceFunc ) noexcept {
+    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Malloc( size, apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
+}
+
+void* operator new[]( std::size_t               size,
+                      apemodevk::EAllocationTag eAllocTag,
+                      const char*               pszSourceFile,
+                      const unsigned int        sourceLine,
+                      const char*               pszSourceFunc ) throw( ) {
+    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Malloc( size, apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
+}
+
+void operator delete[]( void*                     pMemory,
+                        apemodevk::EAllocationTag eAllocTag,
+                        const char*               pszSourceFile,
+                        const unsigned int        sourceLine,
+                        const char*               pszSourceFunc ) throw( ) {
+    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Free( pMemory, __FILE__, __LINE__, __FUNCTION__ );
+}
+
+void* operator new( std::size_t               size,
+                    std::nothrow_t const&     eNothrowTag,
+                    apemodevk::EAllocationTag eAllocTag,
+                    const char*               pszSourceFile,
+                    const unsigned int        sourceLine,
+                    const char*               pszSourceFunc ) noexcept {
+    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Malloc( size, apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
+}
+
+void* operator new( std::size_t               size,
+                    apemodevk::EAllocationTag eAllocTag,
+                    const char*               pszSourceFile,
+                    const unsigned int        sourceLine,
+                    const char*               pszSourceFunc ) throw( ) {
+    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Malloc( size, apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
+}
+
+void operator delete( void*                     pMemory,
+                      apemodevk::EAllocationTag eAllocTag,
+                      const char*               pszSourceFile,
+                      const unsigned int        sourceLine,
+                      const char*               pszSourceFunc ) throw( ) {
+    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Free( pMemory, __FILE__, __LINE__, __FUNCTION__ );
+}

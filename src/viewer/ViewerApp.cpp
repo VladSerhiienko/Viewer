@@ -1,4 +1,5 @@
 #include <ViewerApp.h>
+#include <MemoryManager.h>
 
 using namespace apemode;
 
@@ -90,7 +91,7 @@ ViewerApp::~ViewerApp( ) {
 }
 
 AppSurfaceBase* ViewerApp::CreateAppSurface( ) {
-    return new AppSurfaceSdlVk( );
+    return apemode_new AppSurfaceSdlVk( );
 }
 
 bool ViewerApp::Initialize(  ) {
@@ -258,7 +259,7 @@ bool ViewerApp::Initialize(  ) {
             pIrradianceCubeMapSampler = pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
         }
 
-        pNkRenderer = new NuklearRendererSdlVk();
+        pNkRenderer = apemode_new NuklearRendererSdlVk();
 
         auto queueFamilyPool = pAppSurface->Node.GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
         apemodevk::AcquiredQueue acquiredQueue;
@@ -288,7 +289,7 @@ bool ViewerApp::Initialize(  ) {
         initParamsDbg.pDescPool       = DescriptorPool;
         initParamsDbg.FrameCount      = FrameCount;
 
-        pDebugRenderer = new DebugRendererVk();
+        pDebugRenderer = apemode_new DebugRendererVk();
         pDebugRenderer->RecreateResources( &initParamsDbg );
 
         pSceneRendererBase = pAppSurface->CreateSceneRenderer( );
@@ -848,5 +849,5 @@ bool ViewerApp::IsRunning( ) {
 }
 
 extern "C" AppBase* CreateApp( ) {
-    return new ViewerApp( );
+    return apemode_new ViewerApp( );
 }

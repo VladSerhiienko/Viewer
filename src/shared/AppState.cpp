@@ -4,6 +4,8 @@
 #include <iomanip>
 
 #include <AppState.h>
+#include <MemoryManager.h>
+
 
 #pragma warning( push )
 #pragma warning( disable: 4244 )
@@ -19,12 +21,12 @@ apemode::AppState* apemode::AppState::Get( ) {
 
 void apemode::AppState::OnMain( int args, const char** ppArgs ) {
     if ( nullptr == gState )
-        gState = new AppState( args, ppArgs );
+        gState = apemode_new AppState( args, ppArgs );
 }
 
 void apemode::AppState::OnExit( ) {
     if ( nullptr != gState ) {
-        delete gState;
+        apemode_delete gState;
         gState = nullptr;
     }
 }

@@ -1,10 +1,10 @@
-#include <SDL.h>
 
 #include <AppBase.h>
+
 #include <AppState.h>
-#include <AppSurfaceBase.h>
-#include <Input.h>
-#include <Stopwatch.h>
+#include <MemoryManager.h>
+
+#include <SDL.h>
 
 void apemode::AppBase::HandleWindowSizeChanged( ) {
 }
@@ -41,7 +41,7 @@ bool apemode::AppBase::Initialize( ) {
 }
 
 apemode::AppSurfaceBase* apemode::AppBase::CreateAppSurface( ) {
-    return new AppSurfaceBase( );
+    return apemode_new AppSurfaceBase( );
 }
 
 apemode::AppSurfaceBase* apemode::AppBase::GetSurface( ) {

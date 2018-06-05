@@ -387,17 +387,16 @@ std::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture( apemodevk::Gr
     return std::move( loadedImage );
 }
 
-bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode, HostBufferPool* pInHostBufferPool ) {
-    pNode = pInNode;
-
-    if ( nullptr == pInHostBufferPool ) {
-        pHostBufferPool = new HostBufferPool( );
-        pHostBufferPool->Recreate( pNode, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, false );
-    } else {
-        pHostBufferPool = pInHostBufferPool;
-    }
+bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode ) {
+    pNode           = pInNode;
+    pHostBufferPool = apemodevk_new HostBufferPool( );
+    pHostBufferPool->Recreate( pNode, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, false );
 
     return true;
+}
+
+void apemodevk::ImageLoader::Destroy( ) {
+    apemodevk_delete pHostBufferPool;
 }
 
 std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromFileData( const uint8_t*     pFileContent,

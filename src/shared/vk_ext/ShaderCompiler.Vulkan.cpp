@@ -69,16 +69,16 @@ public:
 
     // Handles shaderc_include_result_release_fn callbacks.
     void ReleaseInclude( shaderc_include_result* data ) {
-        delete (UserData*) data->user_data;
-        delete data;
+        apemodevk_delete ((UserData*) data->user_data);
+        apemodevk_delete data;
     }
 };
 
-apemodevk::ShaderCompiler::ShaderCompiler( ) : pImpl( new Impl( ) ) {
+apemodevk::ShaderCompiler::ShaderCompiler( ) : pImpl( apemodevk_new Impl( ) ) {
 }
 
 apemodevk::ShaderCompiler::~ShaderCompiler( ) {
-    delete pImpl;
+    apemodevk_delete pImpl;
 }
 
 apemodevk::ShaderCompiler::IShaderFileReader* apemodevk::ShaderCompiler::GetShaderFileReader( ) {

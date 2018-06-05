@@ -1,5 +1,7 @@
 #pragma once
 
+#include <MemoryManager.h>
+
 #pragma warning( push )
 #pragma warning( disable: 4244 )
 
@@ -16,7 +18,7 @@ namespace apemode {
     */
     template < typename T, typename... Args >
     std::unique_ptr< T > make_unique( Args&&... args ) {
-        return std::unique_ptr< T >( new T( std::forward< Args >( args )... ) );
+        return std::unique_ptr< T >( apemode_new T( std::forward< Args >( args )... ) );
     }
 
     /**

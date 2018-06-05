@@ -109,7 +109,7 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
         return UniqueScenePtrPair( nullptr, nullptr );
     }
 
-    std::unique_ptr< Scene > pScene( new Scene( ) );
+    std::unique_ptr< Scene > pScene( apemode_new Scene( ) );
     std::set< uint32_t >     meshIds;
     std::set< uint32_t >     materialIds;
 

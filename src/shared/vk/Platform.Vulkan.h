@@ -137,12 +137,68 @@
 #include <vk_mem_alloc.h>
 #include <spirv_glsl.hpp>
 
+#ifndef APEMODEVK_DEFAULT_ALIGNMENT
+#define APEMODEVK_DEFAULT_ALIGNMENT ( sizeof( void* ) << 1 )
+#endif
+
+namespace apemodevk {
+
+    enum EAllocationTag { eAllocationTag = 0 };
+
+    /**
+     * The default alignment for memory allocations.
+     */
+    static const size_t kAlignment = APEMODEVK_DEFAULT_ALIGNMENT;
+
+} // namespace apemodevk
+
+void *operator new[]( std::size_t               size,
+                      std::nothrow_t const &    eNothrowTag,
+                      apemodevk::EAllocationTag eAllocTag,
+                      const char *              pszSourceFile,
+                      const unsigned int        sourceLine,
+                      const char *              pszSourceFunc ) noexcept;
+
+void *operator new[]( std::size_t               size,
+                      apemodevk::EAllocationTag eAllocTag,
+                      const char *              pszSourceFile,
+                      const unsigned int        sourceLine,
+                      const char *              pszSourceFunc ) throw( );
+
+void operator delete[]( void *                    pMemory,
+                        apemodevk::EAllocationTag eAllocTag,
+                        const char *              pszSourceFile,
+                        const unsigned int        sourceLine,
+                        const char *              pszSourceFunc ) throw( );
+
+void *operator new( std::size_t               size,
+                    std::nothrow_t const &    eNothrowTag,
+                    apemodevk::EAllocationTag eAllocTag,
+                    const char *              pszSourceFile,
+                    const unsigned int        sourceLine,
+                    const char *              pszSourceFunc ) noexcept;
+
+void *operator new( std::size_t               size,
+                    apemodevk::EAllocationTag eAllocTag,
+                    const char *              pszSourceFile,
+                    const unsigned int        sourceLine,
+                    const char *              pszSourceFunc ) throw( );
+
+void operator delete( void *                    pMemory,
+                      apemodevk::EAllocationTag eAllocTag,
+                      const char *              pszSourceFile,
+                      const unsigned int        sourceLine,
+                      const char *              pszSourceFunc ) throw( );
+
+#define apemodevk_new new ( apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
+#define apemodevk_delete delete ( apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
+
 namespace apemodevk {
     template < typename T, typename... Args >
-    std::unique_ptr< T > make_unique( Args&&... args ) {
-        return std::unique_ptr< T >( new T( std::forward< Args >( args )... ) );
+    std::unique_ptr< T > make_unique( Args &&... args ) {
+        return std::unique_ptr< T >( apemodevk_new T( std::forward< Args >( args )... ) );
     }
-} // namespace apemode
+} // namespace apemodevk
 
 namespace apemodevk {
 

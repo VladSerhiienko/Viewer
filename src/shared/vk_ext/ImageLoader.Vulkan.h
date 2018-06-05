@@ -37,7 +37,8 @@ namespace apemodevk {
         GraphicsDevice* pNode           = nullptr;
         HostBufferPool* pHostBufferPool = nullptr;
 
-        bool Recreate( GraphicsDevice* pNode, HostBufferPool* pHostBufferPool = nullptr );
+        bool Recreate( GraphicsDevice* pNode );
+        void Destroy( );
 
         std::unique_ptr< LoadedImage > LoadImageFromRawImgRGBA8( const uint8_t*     pImageBytes,
                                                                  uint16_t           imageWidth,
