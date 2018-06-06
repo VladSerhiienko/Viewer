@@ -26,8 +26,8 @@ void apemode::AppState::OnMain( int args, const char** ppArgs ) {
 
 void apemode::AppState::OnExit( ) {
     if ( nullptr != gState ) {
-        apemode_delete gState;
-        gState = nullptr;
+        apemode_delete( gState );
+        // gState = nullptr;
     }
 }
 

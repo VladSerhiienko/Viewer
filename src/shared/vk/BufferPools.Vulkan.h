@@ -50,7 +50,7 @@ namespace apemodevk {
             }
         };
 
-        using PagePtr = std::unique_ptr< Page >;
+        using PagePtr = typename apemodevk::unique_ptr< Page >;
 
         struct SuballocResult {
             VkDescriptorBufferInfo DescriptorBufferInfo;

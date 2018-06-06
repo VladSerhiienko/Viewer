@@ -153,11 +153,11 @@ namespace apemodevk {
     }
 
     struct SceneDeviceAssetVk : apemode::SceneDeviceAsset {
-        using LoadedImagePtrPair = std::pair< uint32_t, std::unique_ptr< LoadedImage > >;
+        using LoadedImagePtrPair = std::pair< uint32_t, apemodevk::unique_ptr< LoadedImage > >;
 
         std::vector< LoadedImagePtrPair >     LoadedImgs;
-        std::unique_ptr< LoadedImage >        MissingTextureZeros;
-        std::unique_ptr< LoadedImage >        MissingTextureOnes;
+        apemodevk::unique_ptr< LoadedImage >  MissingTextureZeros;
+        apemodevk::unique_ptr< LoadedImage >  MissingTextureOnes;
         VkSampler                             pMissingSampler = VK_NULL_HANDLE;
         apemode::SceneMaterial                MissingMaterial;
         apemodevk::SceneMaterialDeviceAssetVk MissingMaterialAsset;
@@ -169,7 +169,7 @@ namespace apemodevk {
             MissingMaterial.EmissiveFactor  = XMFLOAT3( 1, 0, 1 );    // Magenta
         }
 
-        void AddLoadedImage( uint32_t fileId, std::unique_ptr< LoadedImage > loadedImg ) {
+        void AddLoadedImage( uint32_t fileId, apemodevk::unique_ptr< LoadedImage > loadedImg ) {
             LoadedImgs.push_back( std::make_pair( fileId, std::move( loadedImg ) ) );
         }
 
@@ -565,7 +565,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         }
 
         apemodevk::ImageLoader imageLoader;
-        if ( false == imageLoader.Recreate( pParams->pNode, nullptr ) ) {
+        if ( false == imageLoader.Recreate( pParams->pNode ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
         }

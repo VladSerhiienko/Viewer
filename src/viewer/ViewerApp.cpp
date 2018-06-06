@@ -82,9 +82,9 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 //const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
 ViewerApp::ViewerApp( ) {
-    pCamInput      = apemodevk::make_unique< MouseKeyboardCameraControllerInput >( );
-    pCamController = apemodevk::make_unique< FreeLookCameraController >( );
-    //pCamController = apemodevk::make_unique< ModelViewCameraController >( );
+    pCamInput      = apemode::make_unique< MouseKeyboardCameraControllerInput >( );
+    pCamController = apemode::make_unique< FreeLookCameraController >( );
+    //pCamController = apemode::make_unique< ModelViewCameraController >( );
 }
 
 ViewerApp::~ViewerApp( ) {
@@ -106,12 +106,12 @@ bool ViewerApp::Initialize(  ) {
         mFileTracker.FilePatterns.push_back( interestingFilePattern );
         mFileTracker.ScanDirectory( assetsFolder, true );
 
-        pShaderFileReader = apemodevk::make_unique< apemode::ShaderFileReader >( );
+        pShaderFileReader = apemode::make_unique< apemode::ShaderFileReader >( );
         pShaderFileReader->mAssetManager = &mAssetManager;
 
-        pShaderFeedbackWriter = apemodevk::make_unique< apemode::ShaderFeedbackWriter >( );
+        pShaderFeedbackWriter = apemode::make_unique< apemode::ShaderFeedbackWriter >( );
 
-        pShaderCompiler = apemodevk::make_unique< apemodevk::ShaderCompiler >( );
+        pShaderCompiler = apemode::make_unique< apemodevk::ShaderCompiler >( );
         pShaderCompiler->SetShaderFileReader( pShaderFileReader.get( ) );
         pShaderCompiler->SetShaderFeedbackWriter( pShaderFeedbackWriter.get( ) );
 
@@ -165,14 +165,14 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        pSamplerManager = apemodevk::make_unique< apemodevk::SamplerManager >( );
+        pSamplerManager = apemode::make_unique< apemodevk::SamplerManager >( );
         if ( false == pSamplerManager->Recreate( &pAppSurface->Node ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
 
         apemodevk::ImageLoader imgLoader;
-        if ( false == imgLoader.Recreate( &pAppSurface->Node, nullptr ) ) {
+        if ( false == imgLoader.Recreate( &pAppSurface->Node ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
@@ -358,13 +358,13 @@ bool ViewerApp::Initialize(  ) {
         skyboxRendererRecreateParams.pDescPool       = DescriptorPool;
         skyboxRendererRecreateParams.FrameCount      = FrameCount;
 
-        pSkyboxRenderer = apemodevk::make_unique< apemodevk::SkyboxRenderer >( );
+        pSkyboxRenderer = apemode::make_unique< apemodevk::SkyboxRenderer >( );
         if ( false == pSkyboxRenderer->Recreate( &skyboxRendererRecreateParams ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
 
-        pSkybox                = apemodevk::make_unique< apemodevk::Skybox >( );
+        pSkybox                = apemode::make_unique< apemodevk::Skybox >( );
         pSkybox->pSampler      = pRadianceCubeMapSampler;
         pSkybox->pImgView      = RadianceLoadedImg->hImgView;
         pSkybox->Dimension     = RadianceLoadedImg->ImageCreateInfo.extent.width;

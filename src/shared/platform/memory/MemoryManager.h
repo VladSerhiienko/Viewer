@@ -32,7 +32,7 @@ namespace apemode {
      * @param alignment The byte alignment of the memory chunk.
      * @return The allocated memory chunk address.
      */
-    void* allocate( size_t size, size_t alignment, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc );
+    void* allocate( size_t size, size_t alignment, const char* pszSourceFile, const unsigned int sourceLine, const char* pszSourceFunc );
 
     /**
      * The regular calloc call with aligment.
@@ -42,7 +42,7 @@ namespace apemode {
      * @param alignment The byte alignment of the memory chunk.
      * @return The allocated memory chunk address.
      */
-    void* callocate( size_t num, size_t size, size_t alignment, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc );
+    void* callocate( size_t num, size_t size, size_t alignment, const char* pszSourceFile, const unsigned int sourceLine, const char* pszSourceFunc );
 
     /**
      * The regular realloc call with aligment.
@@ -51,41 +51,61 @@ namespace apemode {
      * @param alignment The byte alignment of the memory chunk.
      * @return The allocated memory chunk address.
      */
-    void* reallocate( void* p, size_t size, size_t alignment, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc );
+    void* reallocate( void* p, size_t size, size_t alignment, const char* pszSourceFile, const unsigned int sourceLine, const char* pszSourceFunc );
 
     /**
      * The regular free call.
      * @param p The memory chunk address.
      */
-    void deallocate( void* p, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc );
+    void deallocate( void* p, const char* pszSourceFile, const unsigned int sourceLine, const char* pszSourceFunc );
 
 } // namespace apemode
 
+#ifndef _THROW_BAD_ALLOC
+#define _THROW_BAD_ALLOC throw (  )
+#endif
+
+namespace apemode {
+    enum EAllocationTag { eAllocationTag = 0 };
+}
+
 void* operator new[]( std::size_t s,
                       std::nothrow_t const&,
-                      const char*        sourceFile,
-                      const unsigned int sourceLine,
-                      const char*        sourceFunc ) noexcept;
+                      apemode::EAllocationTag eAllocTag,
+                      const char*             pszSourceFile,
+                      const unsigned int      sourceLine,
+                      const char*             pszSourceFunc ) noexcept;
 
-void* operator new[]( std::size_t        s,
-                      const char*        sourceFile,
-                      const unsigned int sourceLine,
-                      const char*        sourceFunc ) _THROW_BAD_ALLOC;
+void* operator new[]( std::size_t             s,
+                      apemode::EAllocationTag eAllocTag,
+                      const char*             pszSourceFile,
+                      const unsigned int      sourceLine,
+                      const char*             pszSourceFunc ) _THROW_BAD_ALLOC;
 
-void operator delete[]( void* p, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc ) throw( );
+void operator delete[]( void*                   p,
+                        apemode::EAllocationTag eAllocTag,
+                        const char*             pszSourceFile,
+                        const unsigned int      sourceLine,
+                        const char*             pszSourceFunc ) _THROW_BAD_ALLOC;
 
 void* operator new( std::size_t s,
                     std::nothrow_t const&,
-                    const char*        sourceFile,
-                    const unsigned int sourceLine,
-                    const char*        sourceFunc ) noexcept;
+                    apemode::EAllocationTag eAllocTag,
+                    const char*             pszSourceFile,
+                    const unsigned int      sourceLine,
+                    const char*             pszSourceFunc ) noexcept;
 
-void* operator new( std::size_t        s,
-                    const char*        sourceFile,
-                    const unsigned int sourceLine,
-                    const char*        sourceFunc ) throw( );
+void* operator new( std::size_t             s,
+                    apemode::EAllocationTag eAllocTag,
+                    const char*             pszSourceFile,
+                    const unsigned int      sourceLine,
+                    const char*             pszSourceFunc ) _THROW_BAD_ALLOC;
 
-void operator delete( void* p, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc ) throw( );
+void operator delete( void*                   p,
+                      apemode::EAllocationTag eAllocTag,
+                      const char*             pszSourceFile,
+                      const unsigned int      sourceLine,
+                      const char*             pszSourceFunc ) _THROW_BAD_ALLOC;
 
 #if defined( APEMODE_USE_MEMORY_TRACKING )
 #include "FluidStudios/MemoryManager/mmgr.h"
@@ -104,5 +124,26 @@ void  apemode_free( void* p );
 
 #endif
 
-#define apemode_new new ( __FILE__, __LINE__, __FUNCTION__ )
-#define apemode_delete delete ( __FILE__, __LINE__, __FUNCTION__ )
+#define apemode_new             new ( apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
+#define apemode_delete( pObj )  operator delete( pObj, apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj= nullptr
+// #define apemode_delete delete ( apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
+
+namespace apemode {
+
+    struct TrakingDeleter {
+        void operator( )( void* pObj ) {
+            apemode_delete( pObj );
+        }
+    };
+
+    template < typename T >
+    using unique_ptr = std::unique_ptr< T, TrakingDeleter >;
+
+    /**
+     * @brief make_unique for all platforms
+     */
+    template < typename T, typename... Args >
+    unique_ptr< T > make_unique( Args&&... args ) {
+        return unique_ptr< T >( apemode_new T( std::forward< Args >( args )... ) );
+    }
+} // namespace apemode

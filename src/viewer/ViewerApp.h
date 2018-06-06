@@ -74,9 +74,9 @@ namespace apemode {
         apemodeos::FileTracker          mFileTracker;
         apemodeos::AssetManager         mAssetManager;
 
-        CameraProjectionController                   CamProjController;
-        std::unique_ptr< CameraControllerInputBase > pCamInput          = nullptr;
-        std::unique_ptr< CameraControllerBase >      pCamController     = nullptr;
+        CameraProjectionController                       CamProjController;
+        apemode::unique_ptr< CameraControllerInputBase > pCamInput      = nullptr;
+        apemode::unique_ptr< CameraControllerBase >      pCamController = nullptr;
 
         uint32_t                                        BackbufferIndices[ kMaxFrames ] = {0};
         apemodevk::DescriptorPool                       DescriptorPool;
@@ -101,30 +101,30 @@ namespace apemode {
         UniqueScenePtr  pScene;
         SceneSourceData pSceneSource;
 
-        std::unique_ptr< apemodevk::ShaderCompiler >       pShaderCompiler;
-        std::unique_ptr< apemodevk::ShaderFileReader >     pShaderFileReader;
-        std::unique_ptr< apemodevk::ShaderFeedbackWriter > pShaderFeedbackWriter;
-        std::unique_ptr< apemodevk::Skybox >               pSkybox;
-        std::unique_ptr< apemodevk::SkyboxRenderer >       pSkyboxRenderer;
-        std::unique_ptr< apemodevk::SamplerManager >       pSamplerManager;
-        std::unique_ptr< apemodevk::LoadedImage >          RadianceLoadedImg;
-        std::unique_ptr< apemodevk::LoadedImage >          IrradianceLoadedImg;
-        VkSampler                                          pRadianceCubeMapSampler   = nullptr;
-        VkSampler                                          pIrradianceCubeMapSampler = nullptr;
+        apemode::unique_ptr< apemodevk::ShaderCompiler >       pShaderCompiler;
+        apemode::unique_ptr< apemodevk::ShaderFileReader >     pShaderFileReader;
+        apemode::unique_ptr< apemodevk::ShaderFeedbackWriter > pShaderFeedbackWriter;
+        apemode::unique_ptr< apemodevk::Skybox >               pSkybox;
+        apemode::unique_ptr< apemodevk::SkyboxRenderer >       pSkyboxRenderer;
+        apemode::unique_ptr< apemodevk::SamplerManager >       pSamplerManager;
+        apemodevk::unique_ptr< apemodevk::LoadedImage >        RadianceLoadedImg;
+        apemodevk::unique_ptr< apemodevk::LoadedImage >        IrradianceLoadedImg;
+        VkSampler                                              pRadianceCubeMapSampler   = VK_NULL_HANDLE;
+        VkSampler                                              pIrradianceCubeMapSampler = VK_NULL_HANDLE;
 
     public:
         ViewerApp( );
         virtual ~ViewerApp( );
 
     public:
-        virtual bool                     Initialize( ) override;
-        virtual apemode::AppSurfaceBase* CreateAppSurface( ) override;
-        virtual const char* GetAppName( ) override { return "Viewer"; }
+        bool                     Initialize( ) override;
+        apemode::AppSurfaceBase* CreateAppSurface( ) override;
+        const char*              GetAppName( ) override { return "Viewer"; }
 
     public:
-        bool         OnResized( );
-        virtual void OnFrameMove( ) override;
-        virtual void Update( float deltaSecs, apemode::Input const& inputState ) override;
-        virtual bool IsRunning( ) override;
+        bool OnResized( );
+        void OnFrameMove( ) override;
+        void Update( float deltaSecs, apemode::Input const& inputState ) override;
+        bool IsRunning( ) override;
     };
 }

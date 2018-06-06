@@ -144,11 +144,11 @@ namespace apemodevk {
 
         /* @note No files, only ready to compile shader sources */
 
-        virtual std::unique_ptr< ICompiledShader > Compile( const std::string&                ShaderName,
-                                                            const std::string&                ShaderCode,
-                                                            const IMacroDefinitionCollection* pMacros,
-                                                            EShaderType                       eShaderKind,
-                                                            EShaderOptimizationType           eShaderOptimization );
+        virtual apemodevk::unique_ptr< ICompiledShader > Compile( const std::string&                ShaderName,
+                                                                  const std::string&                ShaderCode,
+                                                                  const IMacroDefinitionCollection* pMacros,
+                                                                  EShaderType                       eShaderKind,
+                                                                  EShaderOptimizationType           eShaderOptimization );
 
         /* @note Compiling from source files */
 
@@ -157,11 +157,11 @@ namespace apemodevk {
         virtual void                   SetShaderFileReader( IShaderFileReader* pShaderFileReader );
         virtual void                   SetShaderFeedbackWriter( IShaderFeedbackWriter* pShaderFeedbackWriter );
 
-        virtual std::unique_ptr< ICompiledShader > Compile( const std::string&                FilePath,
-                                                            const IMacroDefinitionCollection* pMacros,
-                                                            EShaderType                       eShaderKind,
-                                                            EShaderOptimizationType           eShaderOptimization,
-                                                            IIncludedFileSet*                 pOutIncludedFiles );
+        virtual apemodevk::unique_ptr< ICompiledShader > Compile( const std::string&                FilePath,
+                                                                  const IMacroDefinitionCollection* pMacros,
+                                                                  EShaderType                       eShaderKind,
+                                                                  EShaderOptimizationType           eShaderOptimization,
+                                                                  IIncludedFileSet*                 pOutIncludedFiles );
     };
 } // namespace apemodevk
 

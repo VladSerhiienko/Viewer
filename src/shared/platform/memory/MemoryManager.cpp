@@ -91,13 +91,13 @@ namespace apememext {
 #if defined( APEMODE_USE_MEMORY_TRACKING )
 
 #define apemode_internal_malloc( reportedSize ) \
-    m_allocator( sourceFile, sourceLine, sourceFunc, allocationType, ( reportedSize ) )
+    m_allocator( pszSourceFile, sourceLine, pszSourceFunc, allocationType, ( reportedSize ) )
 
 #define apemode_internal_realloc( reportedAddress, reportedSize ) \
-    m_reallocator( sourceFile, sourceLine, sourceFunc, allocationType, ( reportedSize ), ( reportedAddress ) )
+    m_reallocator( pszSourceFile, sourceLine, pszSourceFunc, allocationType, ( reportedSize ), ( reportedAddress ) )
 
 #define apemode_internal_free( reportedAddress ) \
-    m_deallocator( sourceFile, sourceLine, sourceFunc, deallocationType, ( reportedAddress ) )
+    m_deallocator( pszSourceFile, sourceLine, pszSourceFunc, deallocationType, ( reportedAddress ) )
 #else
 
 #define apemode_internal_malloc( reportedSize, flags ) apememint::allocate( reportedSize )
@@ -108,9 +108,9 @@ namespace apememext {
 
     void *aligned_malloc( const size_t       size,
                           const size_t       requestedAlignment,
-                          const char *       sourceFile,
+                          const char *       pszSourceFile,
                           const unsigned int sourceLine,
-                          const char *       sourceFunc,
+                          const char *       pszSourceFunc,
                           const unsigned int allocationType ) {
 
         if ( 0 == size ) {
@@ -136,9 +136,9 @@ namespace apememext {
     void *aligned_realloc( void *             p,
                            const size_t       size,
                            const size_t       requestedAlignment,
-                           const char *       sourceFile,
+                           const char *       pszSourceFile,
                            const unsigned int sourceLine,
-                           const char *       sourceFunc,
+                           const char *       pszSourceFunc,
                            const unsigned int allocationType ) {
                               
         if ( 0 == size ) {
@@ -146,7 +146,7 @@ namespace apememext {
         }
 
         if ( nullptr == p ) {
-            return aligned_malloc( size, requestedAlignment, sourceFile, sourceLine, sourceFunc, allocationType );
+            return aligned_malloc( size, requestedAlignment, pszSourceFile, sourceLine, pszSourceFunc, allocationType );
         }
 
         const size_t alignment = calculate_alignment( requestedAlignment );
@@ -168,9 +168,9 @@ namespace apememext {
     }
 
     void aligned_free( void *             p,
-                       const char *       sourceFile,
+                       const char *       pszSourceFile,
                        const unsigned int sourceLine,
-                       const char *       sourceFunc,
+                       const char *       pszSourceFunc,
                        const unsigned int deallocationType ) {
         if ( p ) {
             /* Get the address of the memory, stored at the start of our total memory area. */
@@ -180,20 +180,20 @@ namespace apememext {
     }
 }
 
-void *apemode::allocate( size_t size, size_t alignment, const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc ) {
-    return apememext::aligned_malloc( size, alignment, sourceFile, sourceLine, sourceFunc, m_alloc_malloc );
+void *apemode::allocate( size_t size, size_t alignment, const char *pszSourceFile, const unsigned int sourceLine, const char *pszSourceFunc ) {
+    return apememext::aligned_malloc( size, alignment, pszSourceFile, sourceLine, pszSourceFunc, m_alloc_malloc );
 }
 
-void *apemode::callocate( size_t num, size_t size, size_t alignment, const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc ) {
-    return memset( apememext::aligned_malloc( num * size, alignment, sourceFile, sourceLine, sourceFunc, m_alloc_calloc ), 0, num * size );
+void *apemode::callocate( size_t num, size_t size, size_t alignment, const char *pszSourceFile, const unsigned int sourceLine, const char *pszSourceFunc ) {
+    return memset( apememext::aligned_malloc( num * size, alignment, pszSourceFile, sourceLine, pszSourceFunc, m_alloc_calloc ), 0, num * size );
 }
 
-void *apemode::reallocate( void *p, size_t size, size_t alignment, const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc ) {
-    return apememext::aligned_realloc( p, size, alignment, sourceFile, sourceLine, sourceFunc, m_alloc_realloc );
+void *apemode::reallocate( void *pMemory, size_t size, size_t alignment, const char *pszSourceFile, const unsigned int sourceLine, const char *pszSourceFunc ) {
+    return apememext::aligned_realloc( pMemory, size, alignment, pszSourceFile, sourceLine, pszSourceFunc, m_alloc_realloc );
 }
 
-void apemode::deallocate( void *p, const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc ) {
-    return apememext::aligned_free( p, sourceFile, sourceLine, sourceFunc, m_alloc_free );
+void apemode::deallocate( void *pMemory, const char *pszSourceFile, const unsigned int sourceLine, const char *pszSourceFunc ) {
+    return apememext::aligned_free( pMemory, pszSourceFile, sourceLine, pszSourceFunc, m_alloc_free );
 }
 
 void *operator new[]( std::size_t size, std::nothrow_t const & ) noexcept {
@@ -213,47 +213,62 @@ void *operator new( std::size_t size ) _THROW_BAD_ALLOC {
     return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, __FUNCTION__, m_alloc_new );
 }
 
-void operator delete[]( void *p ) _THROW_BAD_ALLOC {
-    return apememext::aligned_free( p, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete_array );
+void operator delete[]( void *pMemory ) _THROW_BAD_ALLOC {
+    return apememext::aligned_free( pMemory, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete_array );
 }
 
-void operator delete( void *p ) throw( ) {
-    return apememext::aligned_free( p, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete );
+void operator delete( void *pMemory ) throw( ) {
+    return apememext::aligned_free( pMemory, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete );
 }
 
-void *operator new[]( std::size_t           size,
-                      std::nothrow_t const &nothrow,
-                      const char *          sourceFile,
-                      const unsigned int    sourceLine,
-                      const char *          sourceFunc ) noexcept {
-    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, sourceFile, sourceLine, sourceFunc, m_alloc_new_array );
+void *operator new[]( std::size_t             size,
+                      std::nothrow_t const &  nothrow,
+                      apemode::EAllocationTag eAllocTag,
+                      const char *            pszSourceFile,
+                      const unsigned int      sourceLine,
+                      const char *            pszSourceFunc ) noexcept {
+    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, pszSourceFile, sourceLine, pszSourceFunc, m_alloc_new_array );
 }
 
-void *operator new[]( std::size_t        size,
-                      const char *       sourceFile,
-                      const unsigned int sourceLine,
-                      const char *       sourceFunc ) _THROW_BAD_ALLOC {
-    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, sourceFile, sourceLine, sourceFunc, m_alloc_new_array );
+void *operator new[]( std::size_t             size,
+                      apemode::EAllocationTag eAllocTag,
+                      const char *            pszSourceFile,
+                      const unsigned int      sourceLine,
+                      const char *            pszSourceFunc ) _THROW_BAD_ALLOC {
+    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, pszSourceFile, sourceLine, pszSourceFunc, m_alloc_new_array );
 }
 
-void *operator new( std::size_t           size,
-                    std::nothrow_t const &nothrow,
-                    const char *          sourceFile,
-                    const unsigned int    sourceLine,
-                    const char *          sourceFunc ) noexcept {
+void *operator new( std::size_t             size,
+                    std::nothrow_t const &  nothrow,
+                    apemode::EAllocationTag eAllocTag,
+                    const char *            pszSourceFile,
+                    const unsigned int      sourceLine,
+                    const char *            pszSourceFunc ) noexcept {
     return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, __FUNCTION__, m_alloc_new );
 }
 
-void *operator new( std::size_t size, const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc ) throw( ) {
+void *operator new( std::size_t             size,
+                    apemode::EAllocationTag eAllocTag,
+                    const char *            pszSourceFile,
+                    const unsigned int      sourceLine,
+                    const char *            pszSourceFunc ) throw( ) {
     return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, __FUNCTION__, m_alloc_new );
 }
 
-void operator delete[]( void *p, const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc ) throw( ) {
-    return apememext::aligned_free( p, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete_array );
+void operator delete[]( void *                  pMemory,
+                        apemode::EAllocationTag eAllocTag,
+                        const char *            pszSourceFile,
+                        const unsigned int      sourceLine,
+                        const char *            pszSourceFunc ) throw( ) {
+    return apememext::aligned_free( pMemory, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete_array );
 }
 
-void operator delete( void *p, const char *sourceFile, const unsigned int sourceLine, const char *sourceFunc ) throw( ) {
-    return apememext::aligned_free( p, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete );
+void operator delete( void *                  pMemory,
+                      apemode::EAllocationTag eAllocTag,
+                      const char *            pszSourceFile,
+                      const unsigned int      sourceLine,
+                      const char *            pszSourceFunc ) throw( ) {
+    return apememext::aligned_free( pMemory, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete );
 }
 
 #if defined( USE_MEMORY_TRACKING )

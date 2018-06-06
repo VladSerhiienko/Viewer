@@ -23,7 +23,7 @@ struct AppStateScope {
 int main( int argc, char** argv ) {
     AppStateScope appStateScope( argc, (const char**) argv );
 
-    std::unique_ptr< apemode::AppBase > pAppImpl( CreateApp( ) );
+    apemode::unique_ptr< apemode::AppBase > pAppImpl( CreateApp( ) );
 
     if ( pAppImpl && pAppImpl->Initialize( ) ) {
         while ( pAppImpl->IsRunning( ) )

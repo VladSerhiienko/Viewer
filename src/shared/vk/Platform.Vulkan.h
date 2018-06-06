@@ -190,13 +190,29 @@ void operator delete( void *                    pMemory,
                       const unsigned int        sourceLine,
                       const char *              pszSourceFunc ) throw( );
 
-#define apemodevk_new new ( apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
-#define apemodevk_delete delete ( apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
+#define apemodevk_new              new ( apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
+#define apemodevk_create( T, ... ) new ( operator new( apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ) ) T( __VA_ARGS__ )
+#define apemodevk_delete( pObj )   operator delete( pObj, apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj = nullptr
 
 namespace apemodevk {
+
+    struct TrakingDeleter {
+        void operator( )( void* pObj ) {
+            apemodevk_delete( pObj );
+        }
+    };
+
+    template < typename T >
+    using unique_ptr = std::unique_ptr< T, TrakingDeleter >;
+
     template < typename T, typename... Args >
-    std::unique_ptr< T > make_unique( Args &&... args ) {
-        return std::unique_ptr< T >( apemodevk_new T( std::forward< Args >( args )... ) );
+    unique_ptr< T > make_unique( Args &&... args ) {
+        return unique_ptr< T >( apemodevk_new T( std::forward< Args >( args )... ) );
+    }
+
+    template < typename T, typename... Args >
+    std::unique_ptr< T > std_make_unique( Args &&... args ) {
+        return  std::unique_ptr< T >( new T( std::forward< Args >( args )... ) );
     }
 } // namespace apemodevk
 

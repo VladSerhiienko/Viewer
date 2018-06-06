@@ -9,6 +9,9 @@
 namespace apemode {
     class AppSurfaceSettings;
 
+    struct GraphicsLogger;
+    struct GraphicsAllocator;
+
     /**
      * Contains handle to window and graphics context.
      * For Vulkan it contains all the core things like VkInstance, VkDevice, VkSurfaceKHR, VkSwapchainKHR
@@ -28,11 +31,15 @@ namespace apemode {
         void*              GetGraphicsHandle( ) override;
         SceneRendererBase* CreateSceneRenderer( ) override;
 
-        uint32_t                  LastWidth;
-        uint32_t                  LastHeight;
+        apemode::unique_ptr< GraphicsAllocator > Alloc;
+        apemode::unique_ptr< GraphicsLogger >    Logger;
+
         apemodevk::Surface        Surface;
         apemodevk::Swapchain      Swapchain;
         apemodevk::GraphicsDevice Node;
-        std::vector< uint32_t >   PresentQueueFamilyIds;
+
+        uint32_t                LastWidth;
+        uint32_t                LastHeight;
+        std::vector< uint32_t > PresentQueueFamilyIds;
     };
 }

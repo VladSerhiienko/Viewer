@@ -249,17 +249,17 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback( VkDebugUtilsMessageSeveri
                                                        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
                                                        void*                                       pUserData );
 
-bool apemodevk::GraphicsManager::Initialize( uint32_t                      eFlags,
-                                             std::unique_ptr< IAllocator > pInAllocator,
-                                             std::unique_ptr< ILogger >    pInLogger,
-                                             const char*                   pszAppName,
-                                             const char*                   pszEngineName,
-                                             const char**                  ppszLayers,
-                                             size_t                        layerCount,
-                                             const char**                  ppszExtensions,
-                                             size_t                        extensionCount ) {
-    pAllocator = std::move( pInAllocator );
-    pLogger    = std::move( pInLogger );
+bool apemodevk::GraphicsManager::Initialize( uint32_t     eFlags,
+                                             IAllocator*  pInAlloc,
+                                             ILogger*     pInLogger,
+                                             const char*  pszAppName,
+                                             const char*  pszEngineName,
+                                             const char** ppszLayers,
+                                             size_t       layerCount,
+                                             const char** ppszExtensions,
+                                             size_t       extensionCount ) {
+    pAllocator = pInAlloc;
+    pLogger    = pInLogger;
 
     const bool bValidate = HasFlagEq( eFlags, kEnableValidation );
 
@@ -517,9 +517,63 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback( VkDebugUtilsMessageSeveri
     return false;
 }
 
+static apemodevk::GraphicsManager * sGraphicsManagerInstance;
+
 apemodevk::GraphicsManager* apemodevk::GetGraphicsManager( ) {
-    static apemodevk::GraphicsManager graphicsManagerInstance;
-    return &graphicsManagerInstance;
+    return sGraphicsManagerInstance;
+}
+
+void apemodevk::DestroyGraphicsManager( ) {
+    assert( sGraphicsManagerInstance );
+    if ( sGraphicsManagerInstance ) {
+        auto pAlloc  = sGraphicsManagerInstance->GetAllocator( );
+        auto pLogger = sGraphicsManagerInstance->GetLogger( );
+
+        sGraphicsManagerInstance->Destroy( );
+        sGraphicsManagerInstance->~GraphicsManager( );
+        pAlloc->Free( sGraphicsManagerInstance, __FILE__, __LINE__, __FUNCTION__ );
+        pLogger->Log( apemodevk::platform::LogLevel::Err, "Destroyed GraphicsManager." );
+    }
+}
+
+apemodevk::GraphicsManager* apemodevk::CreateGraphicsManager( uint32_t                                eFlags,
+                                                              apemodevk::GraphicsManager::IAllocator* pInAlloc,
+                                                              apemodevk::GraphicsManager::ILogger*    pInLogger,
+                                                              const char*                             pszAppName,
+                                                              const char*                             pszEngineName,
+                                                              const char**                            ppszLayers,
+                                                              size_t                                  layerCount,
+                                                              const char**                            ppszExtensions,
+                                                              size_t                                  extensionCount ) {
+    assert( sGraphicsManagerInstance == nullptr );
+
+    void* pGraphicsManagerMemory = pInAlloc->Malloc( sizeof( GraphicsManager ), apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
+    if ( !pGraphicsManagerMemory ) {
+        pInLogger->Log( apemodevk::platform::LogLevel::Err, "Failed to allocate memory for GraphicsManager." );
+        return nullptr;
+    }
+
+    sGraphicsManagerInstance = new ( pGraphicsManagerMemory ) GraphicsManager( );
+    if ( !sGraphicsManagerInstance->Initialize( eFlags,
+                                                pInAlloc,
+                                                pInLogger,
+                                                pszAppName,
+                                                pszEngineName,
+                                                ppszLayers,
+                                                layerCount,
+                                                ppszExtensions,
+                                                extensionCount ) ) {
+        sGraphicsManagerInstance->Destroy( );
+        sGraphicsManagerInstance->~GraphicsManager( );
+
+        pInAlloc->Free( pGraphicsManagerMemory, __FILE__, __LINE__, __FUNCTION__ );
+        pInLogger->Log( apemodevk::platform::LogLevel::Err, "Failed to initialize GraphicsManager" );
+
+        return nullptr;
+    }
+
+    pInLogger->Log( apemodevk::platform::LogLevel::Err, "Initialized GraphicsManager" );
+    return GetGraphicsManager( );
 }
 
 const VkAllocationCallbacks* apemodevk::GetAllocationCallbacks( ) {
@@ -533,11 +587,11 @@ apemodevk::GraphicsManager::~GraphicsManager( ) {
 }
 
 apemodevk::GraphicsManager::IAllocator* apemodevk::GraphicsManager::GetAllocator( ) {
-    return pAllocator.get( );
+    return pAllocator;
 }
 
 apemodevk::GraphicsManager::ILogger* apemodevk::GraphicsManager::GetLogger( ) {
-    return pLogger.get( );
+    return pLogger;
 }
 
 const VkAllocationCallbacks* apemodevk::GraphicsManager::GetAllocationCallbacks( ) const {

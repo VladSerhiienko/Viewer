@@ -14,14 +14,6 @@
 namespace apemode {
 
     /**
-    * @brief make_unique for all platforms
-    */
-    template < typename T, typename... Args >
-    std::unique_ptr< T > make_unique( Args&&... args ) {
-        return std::unique_ptr< T >( apemode_new T( std::forward< Args >( args )... ) );
-    }
-
-    /**
      * @class AppStoredValue
      * @brief Contains a value created and stored by the user
      */
@@ -38,7 +30,7 @@ namespace apemode {
     public:
         std::shared_ptr< spdlog::logger >                          Logger;       /* Prints to console and file */
         argh::parser                                               Cmdl;         /* User parameters */
-        std::map< std::string, std::unique_ptr< AppStoredValue > > StoredValues; /* User values */
+        std::map< std::string, apemode::unique_ptr< AppStoredValue > > StoredValues; /* User values */
 
         /**
          * @return Application state instance.

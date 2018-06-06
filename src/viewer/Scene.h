@@ -1,4 +1,6 @@
 
+#include <MemoryManager.h>
+
 #include <map>
 #include <vector>
 #include <memory>
@@ -165,8 +167,8 @@ namespace apemode {
         }
     };
 
-    using UniqueScenePtr     = typename std::unique_ptr< Scene >;
-    using UniqueScenePtrPair = typename std::pair< std::unique_ptr< Scene >, const apemodefb::SceneFb * >;
+    using UniqueScenePtr     = typename apemode::unique_ptr< Scene >;
+    using UniqueScenePtrPair = typename std::pair< UniqueScenePtr, const apemodefb::SceneFb * >;
 
     /* Loads scene from loaded .FBXP file
      * @return A pair of pointers: (1) a unique pointer to scene, (2) a pointer to a source scene

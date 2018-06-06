@@ -153,10 +153,10 @@ gli::texture LoadTexture( const uint8_t*                           pFileContent,
     return texture;
 }
 
-std::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture( apemodevk::GraphicsDevice*                 pNode,
-                                                                   apemodevk::HostBufferPool*                 pHostBufferPool,
-                                                                   gli::texture                               texture,
-                                                                   const apemodevk::ImageLoader::LoadOptions& loadOptions ) {
+apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture( apemodevk::GraphicsDevice*                 pNode,
+                                                                apemodevk::HostBufferPool*                 pHostBufferPool,
+                                                                gli::texture                               texture,
+                                                                const apemodevk::ImageLoader::LoadOptions& loadOptions ) {
     using namespace apemodevk;
 
     /* Check if the user needs mipmaps.
@@ -396,12 +396,11 @@ bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode ) {
 }
 
 void apemodevk::ImageLoader::Destroy( ) {
-    apemodevk_delete pHostBufferPool;
+    apemodevk_delete( pHostBufferPool );
 }
 
-std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromFileData( const uint8_t*     pFileContent,
-                                                                                         size_t             fileContentSize,
-                                                                                         LoadOptions const& loadOptions ) {
+apemodevk::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromFileData(
+    const uint8_t* pFileContent, size_t fileContentSize, LoadOptions const& loadOptions ) {
     if ( !pFileContent || !fileContentSize ) {
         return nullptr;
     }
@@ -414,10 +413,8 @@ std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromF
     return LoadImageFromGLITexture( pNode, pHostBufferPool, texture, loadOptions );
 }
 
-std::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromRawImgRGBA8( const uint8_t*     pImageBytes,
-                                                                                            uint16_t           imageWidth,
-                                                                                            uint16_t           imageHeight,
-                                                                                            LoadOptions const& loadOptions ) {
+apemodevk::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromRawImgRGBA8(
+    const uint8_t* pImageBytes, uint16_t imageWidth, uint16_t imageHeight, LoadOptions const& loadOptions ) {
     if ( !pImageBytes || !imageWidth || !imageHeight ) {
         return nullptr;
     }

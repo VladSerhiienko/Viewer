@@ -69,8 +69,10 @@ public:
 
     // Handles shaderc_include_result_release_fn callbacks.
     void ReleaseInclude( shaderc_include_result* data ) {
-        apemodevk_delete ((UserData*) data->user_data);
-        apemodevk_delete data;
+        apemodevk_delete( data->user_data );
+        apemodevk_delete( data );
+        // apemodevk_delete ((UserData*) data->user_data);
+        // apemodevk_delete data;
     }
 };
 
@@ -78,7 +80,7 @@ apemodevk::ShaderCompiler::ShaderCompiler( ) : pImpl( apemodevk_new Impl( ) ) {
 }
 
 apemodevk::ShaderCompiler::~ShaderCompiler( ) {
-    apemodevk_delete pImpl;
+    apemodevk_delete( pImpl );
 }
 
 apemodevk::ShaderCompiler::IShaderFileReader* apemodevk::ShaderCompiler::GetShaderFileReader( ) {
@@ -97,7 +99,7 @@ void apemodevk::ShaderCompiler::SetShaderFeedbackWriter( IShaderFeedbackWriter* 
     pImpl->pShaderFeedbackWriter = pShaderFeedbackWriter;
 }
 
-static std::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
+static apemodevk::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
     const std::string&                                           shaderName,
     const std::string&                                           shaderContent,
     const apemodevk::ShaderCompiler::IMacroDefinitionCollection* pMacros,
@@ -218,11 +220,12 @@ static std::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
     return apemodevk::make_unique< CompiledShader >( dwords );
 }
 
-std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile( const std::string&                shaderName,
-                                                                                  const std::string&                shaderContent,
-                                                                                  const IMacroDefinitionCollection* pMacros,
-                                                                                  const EShaderType                 eShaderKind,
-                                                                                  const EShaderOptimizationType     eShaderOptimization ) {
+apemodevk::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile(
+    const std::string&                shaderName,
+    const std::string&                shaderContent,
+    const IMacroDefinitionCollection* pMacros,
+    const EShaderType                 eShaderKind,
+    const EShaderOptimizationType     eShaderOptimization ) {
 
     shaderc::CompileOptions options;
     options.SetSourceLanguage( shaderc_source_language_glsl );
@@ -239,11 +242,13 @@ std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile
                             pImpl->pShaderFeedbackWriter );
 }
 
-std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile( const std::string&                InFilePath,
-                                                                                  const IMacroDefinitionCollection* pMacros,
-                                                                                  const EShaderType                 eShaderKind,
-                                                                                  const EShaderOptimizationType     eShaderOptimization,
-                                                                                  IIncludedFileSet*                 pOutIncludedFiles ) {
+apemodevk::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile(
+    const std::string&                InFilePath,
+    const IMacroDefinitionCollection* pMacros,
+    const EShaderType                 eShaderKind,
+    const EShaderOptimizationType     eShaderOptimization,
+    IIncludedFileSet*                 pOutIncludedFiles ) {
+
     if ( nullptr == pImpl->pShaderFileReader ) {
         platform::DebugTrace( platform::LogLevel::Err, "ShaderCompiler: pShaderFileReader must be set." );
         platform::DebugBreak( );
@@ -254,7 +259,7 @@ std::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile
     options.SetSourceLanguage( shaderc_source_language_glsl );
     options.SetOptimizationLevel( shaderc_optimization_level( eShaderOptimization ) );
     options.SetTargetEnvironment( shaderc_target_env_vulkan, 0 );
-    options.SetIncluder( apemodevk::make_unique< Includer >( *pImpl->pShaderFileReader, pOutIncludedFiles ) );
+    options.SetIncluder( apemodevk::std_make_unique< Includer >( *pImpl->pShaderFileReader, pOutIncludedFiles ) );
 
     std::string fullPath;
     std::string fileContent;

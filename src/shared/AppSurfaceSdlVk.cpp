@@ -14,7 +14,7 @@ apemode::AppSurfaceSdlVk::~AppSurfaceSdlVk( ) {
 }
 
 // clang-format off
-struct GraphicsAllocator : apemodevk::GraphicsManager::IAllocator {
+struct apemode::GraphicsAllocator : apemodevk::GraphicsManager::IAllocator {
     void* Malloc( size_t             size,
                   size_t             alignment,
                   const char*        sourceFile,
@@ -42,7 +42,7 @@ struct GraphicsAllocator : apemodevk::GraphicsManager::IAllocator {
 
 // clang-format on
 
-struct GraphicsLogger : apemodevk::GraphicsManager::ILogger {
+struct apemode::GraphicsLogger : apemodevk::GraphicsManager::ILogger {
     void Log( LogLevel level, const char* pszMsg ) override {
         apemode::AppState::Get( )->Logger->log( (spdlog::level::level_enum) level, pszMsg );
     }
@@ -82,29 +82,24 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
         ++layerCount;
     }
 
-    if ( !apemodevk::GetGraphicsManager( )->Initialize( graphicsManagerFlags,
-                                                        apemodevk::make_unique< GraphicsAllocator >( ),
-                                                        apemodevk::make_unique< GraphicsLogger >( ),
-                                                        "Viewer",
-                                                        "apemodevk",
-                                                        ppszLayers,
-                                                        layerCount,
-                                                        nullptr,
-                                                        0 ) ) {
+    Logger = apemode::make_unique< GraphicsLogger >( );
+    Alloc  = apemode::make_unique< GraphicsAllocator >( );
 
+    auto pGraphicsManager = apemodevk::CreateGraphicsManager( graphicsManagerFlags, Alloc.get( ), Logger.get( ), "Viewer", "VkApeEngine", ppszLayers, layerCount, nullptr, 0 );
+    if ( !pGraphicsManager ) {
         return false;
     }
 
-    if ( !Node.RecreateResourcesFor( 0, apemodevk::GetGraphicsManager( )->ppAdapters[ 0 ], nullptr, 0, nullptr, 0 ) ) {
+    if ( !Node.RecreateResourcesFor( 0, pGraphicsManager->ppAdapters[ 0 ], nullptr, 0, nullptr, 0 ) ) {
         return false;
     }
 
 #ifdef X_PROTOCOL
-    Surface.Recreate( Node.pPhysicalDevice, apemodevk::GetGraphicsManager( )->hInstance, pDisplayX11, pWindowX11 );
+    Surface.Recreate( Node.pPhysicalDevice, pGraphicsManager->hInstance, pDisplayX11, pWindowX11 );
 #endif
 
 #ifdef _WINDOWS_
-    Surface.Recreate( Node.pPhysicalDevice, apemodevk::GetGraphicsManager( )->hInstance, hInstance, hWnd );
+    Surface.Recreate( Node.pPhysicalDevice, pGraphicsManager->hInstance, hInstance, hWnd );
 #endif
 
     uint32_t queueFamilyIndex = 0;
@@ -175,7 +170,10 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
 
 void apemode::AppSurfaceSdlVk::Finalize( ) {
     Node.Destroy( );
-    apemodevk::GetGraphicsManager( )->Destroy( );
+
+    apemodevk::DestroyGraphicsManager( );
+    Logger.reset( nullptr );
+    Alloc.reset( nullptr );
 
     AppSurfaceSdlBase::Finalize( );
 }
