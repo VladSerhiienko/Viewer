@@ -1,3 +1,4 @@
+
 #include "AppSurfaceSdlBase.h"
 #include <AppState.h>
 
@@ -23,14 +24,14 @@ bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, co
             windowInfo.version.minor = SDL_MINOR_VERSION;
 
             if ( SDL_TRUE == SDL_GetWindowWMInfo( pSdlWindow, &windowInfo ) ) {
-#ifdef X_PROTOCOL
+#ifdef SDL_VIDEO_DRIVER_X11
                 pDisplayX11 = windowInfo.info.x11.display;
                 pWindowX11  = windowInfo.info.x11.window;
                 LogInfo( "AppSurfaceSdlBase: Resolved Xlib window handles." );
-#elif __APPLE__
-                pNSWindow = windowInfo.window.window;
+#elif SDL_VIDEO_DRIVER_COCOA
+                pNSWindow = windowInfo.info.cocoa.window;
                 LogInfo( "AppSurfaceSdlBase: Resolved Cocoa window handle." );
-#elif _WINDOWS_
+#elif SDL_VIDEO_DRIVER_WINDOWS
                 hWnd      = windowInfo.info.win.window;
                 hInstance = (HINSTANCE) GetWindowLongPtrA( windowInfo.info.win.window, GWLP_HINSTANCE );
                 LogInfo( "AppSurfaceSdlBase: Resolved Win32 handles." );

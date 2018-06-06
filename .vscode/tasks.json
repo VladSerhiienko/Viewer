@@ -52,11 +52,11 @@
             }
         },
         {
-            "label": "CMake/Viewer(Darwin/Makefile)",
+            "label": "CMake/Viewer(Darwin/Makefile/AppleClang)",
             "type": "shell",
             "command": "cmake",
             "args": [
-                "-H.", "-Bbuild_darwin_x86_64",
+                "-H.", "-Bbuild_darwin_x86_64_appleclang",
                 // "-DCMAKE_C_COMPILER=/usr/local/Cellar/gcc\\@7/7.3.0/bin/gcc-7",
                 // "-DCMAKE_CXX_COMPILER=/usr/local/Cellar/gcc\\@7/7.3.0/bin/g++-7",
                 // "-DCMAKE_C_COMPILER=/usr/local/opt/llvm@5/bin/clang",
@@ -71,17 +71,17 @@
             }
         },
         {
-            "label": "Make/Viewer(Darwin/Makefile)",
+            "label": "Make/Viewer(Darwin/Makefile/AppleClang)",
             "type": "shell",
             "command": "make",
             "options": {
-                "cwd": "${workspaceFolder}/build_darwin_x86_64"
+                "cwd": "${workspaceFolder}/build_darwin_x86_64_appleclang"
             },
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": [ "CMake/Viewer(Darwin/Makefile)"]
+            "dependsOn": [ "CMake/Viewer(Darwin/Makefile/AppleClang)"]
         },
         {
             "label": "Make/Viewer(Linux/Makefile/GNU)",

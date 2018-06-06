@@ -452,7 +452,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
         message( FATAL_ERROR "Unsupported configuration for ${CMAKE_CXX_COMPILER_ID} compiler." )
     endif()
 
-elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
 
     # using AppleClang
     add_definitions( "-g" )
@@ -683,14 +683,6 @@ if (APPLE)
     set(
         third_party_libs
         $ENV{VK_SDK_PATH}/lib/libvulkan.dylib
-        X11
-        Xext
-        Xcursor
-        Xinerama
-        Xrandr
-        pthread
-        c++experimental
-        ${sdl2_binary_dir}/libSDL2.a
         ${shaderc_binary_dir}/libshaderc/libshaderc_combined.a
         ${spirv_cross_binary_dir}/libspirv-cross-core.a
         ${spirv_cross_binary_dir}/libspirv-cross-cpp.a
@@ -699,7 +691,21 @@ if (APPLE)
         ${flatbuffers_binary_dir}/libflatbuffers.a
         ${eastl_binary_dir}/libEASTL.a
         ${eastl_binary_dir}/test/packages/EAStdC/libEAStdC.a
+        ${sdl2_binary_dir}/libSDL2.a
+        pthread
         dl
+        stdc++
+        objc
+        iconv
+        "-framework Foundation"
+        "-framework CoreFoundation"
+        "-framework CoreAudio"
+        "-framework CoreVideo"
+        "-framework IOKit"
+        "-framework Cocoa"
+        "-framework AudioToolbox"
+        "-framework ForceFeedback"
+        "-framework Carbon"
     )
 elseif (UNIX)
     set(
@@ -769,7 +775,7 @@ if(WIN32)
         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.dll
         # ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.pdb
         )
-else()
+elseif(UNIX AND NOT APPLE)
     set( viewer_dependencies_dlls_pdbs
         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/libSDL2-2.0.so
         )

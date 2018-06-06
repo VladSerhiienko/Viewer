@@ -84,6 +84,8 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "csignal": "cpp",
-        "parentbad": "cpp"
+        "parentbad": "cpp",
+        "__config": "cpp",
+        "__nullptr": "cpp"
     },
 }
