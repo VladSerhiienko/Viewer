@@ -37,7 +37,7 @@ namespace apemodevk {
         class IMacroDefinitionCollection {
         public:
             virtual ~IMacroDefinitionCollection( )                                = default;
-            virtual size_t          GetCount( ) const                              = 0;
+            virtual size_t          GetCount( ) const                             = 0;
             virtual MacroDefinition GetMacroDefinition( size_t macroIndex ) const = 0;
         };
 
@@ -196,7 +196,7 @@ namespace apemodevk {
             }
         }
 
-        size_t GetCount( ) const {
+        size_t GetCount( ) const override {
             return Macros.size( ) >> 1;
         }
 

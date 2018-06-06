@@ -202,11 +202,6 @@ void apemodevk::HostBufferPool::Reset( ) {
 }
 
 void apemodevk::HostBufferPool::Destroy( ) {
-    // std::for_each( Pages.begin( ), Pages.end( ), [&]( PagePtr & pPage ) {
-    //     assert( nullptr != pPage );
-    //     delete pPage;
-    // } );
-
     Pages.clear( );
 }
 

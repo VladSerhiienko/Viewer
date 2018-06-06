@@ -154,6 +154,9 @@ bool apemodevk::QueueFamilyPool::SupportsPresenting( VkSurfaceKHR pSurface ) con
             /* TODO: Cases we expect to happen, need to handle */
             apemodevk::platform::DebugBreak( );
             break;
+
+        default:
+            break;
     }
 
     return false;
@@ -461,12 +464,12 @@ VkResult apemodevk::WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t tim
     VkResult err;
     switch ( err = CheckedCall( vkGetFenceStatus( pDevice, pFence ) ) ) {
         case VK_NOT_READY:
-            switch ( err = CheckedCall( vkWaitForFences( pDevice, 1, &pFence, true, timeout ) ) ) {
-                case VK_ERROR_OUT_OF_HOST_MEMORY:
-                case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-                case VK_ERROR_DEVICE_LOST:
-                    break;
-            } break;
+             err = CheckedCall( vkWaitForFences( pDevice, 1, &pFence, true, timeout ) );
+            // case VK_ERROR_OUT_OF_HOST_MEMORY:
+            // case VK_ERROR_OUT_OF_DEVICE_MEMORY:
+            // case VK_ERROR_DEVICE_LOST:
+        default:
+            break;
     }
 
     return err;

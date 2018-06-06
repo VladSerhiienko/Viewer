@@ -221,6 +221,9 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture( apemode
         case VK_IMAGE_VIEW_TYPE_2D_ARRAY: {
             loadedImage->ImageCreateInfo.flags |= VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT;
         } break;
+
+        default:
+            break;
     }
 
     imageBufferSuballocResult = pHostBufferPool->Suballocate( texture.data( ), (uint32_t) texture.size( ) );

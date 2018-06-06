@@ -250,7 +250,8 @@ void InputManager::Update( Input& InOutState, float const DeltaTime ) {
         }
     }
 
-    if ( InOutState.bIsUsingTouch = ( SDL_GetNumTouchDevices( ) > 0 ) ) {
+    InOutState.bIsUsingTouch = SDL_GetNumTouchDevices( ) > 0;
+    if ( InOutState.bIsUsingTouch ) {
         // Since input update will be called only from main thread,
         // I made this array static, why allocate it each time.
         static SDL_Event peepedEvents[ kDigitalInput_TouchMaxCount ];

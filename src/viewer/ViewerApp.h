@@ -57,12 +57,13 @@ namespace apemode {
         float    totalSecs = 0.0f;
         nk_color diffColor;
         nk_color specColor;
-        uint32_t width      = 0;
-        uint32_t height     = 0;
         uint32_t resetFlags = 0;
         uint32_t envId      = 0;
         uint32_t sceneId    = 0;
         uint32_t maskId     = 0;
+        
+        uint32_t Width      = 0;
+        uint32_t Height     = 0;
         uint32_t FrameCount = 0;
         uint32_t FrameIndex = 0;
         uint64_t FrameId    = 0;

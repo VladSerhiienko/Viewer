@@ -384,8 +384,8 @@ bool ViewerApp::Initialize(  ) {
 bool apemode::ViewerApp::OnResized( ) {
     if ( auto appSurface = static_cast< AppSurfaceSdlVk* >( GetSurface( ) ) ) {
 
-            width  = appSurface->GetWidth( );
-            height = appSurface->GetHeight( );
+            Width  = appSurface->GetWidth( );
+            Height = appSurface->GetHeight( );
 
             VkImageCreateInfo depthImgCreateInfo;
             InitializeStruct( depthImgCreateInfo );
@@ -622,7 +622,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
     }
     nk_end(ctx);
 
-    pCamInput->Update( deltaSecs, inputState, {float( width ), float( height )} );
+    pCamInput->Update( deltaSecs, inputState, {float( Width ), float( Height )} );
     pCamController->Orbit( pCamInput->OrbitDelta );
     pCamController->Dolly( pCamInput->DollyDelta );
     pCamController->Update( deltaSecs );
@@ -646,7 +646,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         const uint32_t width  = pAppSurface->GetWidth( );
         const uint32_t height = pAppSurface->GetHeight( );
 
-        if ( width != width || height != height ) {
+        if ( Width != width || Height != height ) {
             CheckedCall( vkDeviceWaitIdle( device ) );
             OnResized( );
         }

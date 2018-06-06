@@ -360,17 +360,17 @@ namespace apemodevk {
 
         template < typename T >
         inline void ZeroMemory( T &pObj ) {
-            memset( &pObj, 0, sizeof( T ) );
+            memset( static_cast< void * >( &pObj ), 0, sizeof( T ) );
         }
 
         template < typename T, size_t TCount >
         inline void ZeroMemory( T ( &pObj )[ TCount ] ) {
-            memset( &pObj[ 0 ], 0, sizeof( T ) * TCount );
+            memset( static_cast< void * >( &pObj[ 0 ] ), 0, sizeof( T ) * TCount );
         }
 
         template < typename T >
         inline void ZeroMemory( T *pObj, size_t Count ) {
-            memset( pObj, 0, sizeof( T ) * Count );
+            memset(  static_cast< void * >( pObj ), 0, sizeof( T ) * Count );
         }
 
         template < typename T, typename... TArgs >
@@ -447,31 +447,6 @@ namespace apemodevk {
     }
 
     typedef TDataHandle<> GenericUserDataHandle;
-} // namespace apemodevk
-
-namespace apemodevk {
-    template < typename T >
-    static void TSafeDeleteObj( T *&pObj ) {
-        if ( apemode_likely( pObj != nullptr ) )
-            delete pObj, pObj = nullptr;
-    }
-
-    template < typename T >
-    static void TSafeDeleteObj( T const *&pObj ) {
-        if ( apemode_likely( pObj != nullptr ) )
-            delete const_cast< T * >( pObj ), pObj = nullptr;
-    }
-
-    template < class TDecoratedObj >
-    struct TSafeDeleteObjOp {
-        using TObj = typename std::decay< TDecoratedObj >::type;
-        void operator( )( TObj *pObj ) {
-            apemodevk::TSafeDeleteObj< TObj >( pObj );
-        }
-        void operator( )( TObj const *pObj ) {
-            apemodevk::TSafeDeleteObj< TObj >( pObj );
-        }
-    };
 } // namespace apemodevk
 
 namespace apemodevk {

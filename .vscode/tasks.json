@@ -35,6 +35,23 @@
             }
         },
         {
+            "label": "CMake/Viewer(Linux/Makefile/Clang)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-H.", "-Bbuild_linux_x86_64_clang",
+                "-DCMAKE_C_COMPILER=/usr/bin/clang-5.0",
+                "-DCMAKE_CXX_COMPILER=/usr/bin/clang++-5.0",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
             "label": "CMake/Viewer(Darwin/Makefile)",
             "type": "shell",
             "command": "cmake",
@@ -78,6 +95,19 @@
                 "isDefault": true
             },
             "dependsOn": [ "CMake/Viewer(Linux/Makefile)"]
+        },
+        {
+            "label": "Make/Viewer(Linux/Makefile/Clang)",
+            "type": "shell",
+            "command": "make",
+            "options": {
+                "cwd": "${workspaceFolder}/build_linux_x86_64_clang"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [ "CMake/Viewer(Linux/Makefile/Clang)"]
         }
     ]
 }

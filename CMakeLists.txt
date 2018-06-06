@@ -10,7 +10,7 @@ message(STATUS "CMAKE_SYSTEM = ${CMAKE_SYSTEM}")
 message(STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
 message(STATUS "CMAKE_BINARY_DIR = ${CMAKE_BINARY_DIR}")
 
-set(BUILD_FOLDER_SUFFIX "build_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}")
+set(BUILD_FOLDER_SUFFIX "build_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}_${CMAKE_CXX_COMPILER_ID}")
 string(TOLOWER  ${BUILD_FOLDER_SUFFIX} BUILD_FOLDER_SUFFIX)
 message(STATUS "BUILD_FOLDER_SUFFIX = ${BUILD_FOLDER_SUFFIX}")
 
@@ -22,12 +22,9 @@ if (WIN32)
         -B${BUILD_FOLDER_SUFFIX} "-H."
     )
 elseif(APPLE)
-    add_definitions("-std=c++1y")
     set(
         default_cmake_args
         -B${BUILD_FOLDER_SUFFIX} -H.
-        #-DCMAKE_C_COMPILER=${CMAKE_C_COMPILER} 
-        #-DCMAKE_CXX_COMPILER=${CMAKE_CXX_COMPILER}
     )
 else()
     set(
@@ -443,19 +440,36 @@ if (WIN32)
     set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_CRT_SECURE_NO_WARNINGS")
 endif()
 
-if (UNIX)
+set( CMAKE_CXX_STANDARD 11 )
+
+if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+
+    # using Clang
+
+elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+
+    # using AppleClang
+
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+
+    # using GCC
     add_definitions("-g")
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
 
-    if (CMAKE_VERSION VERSION_LESS "3.1")
-      if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-        set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
-      endif ()
-    else ()
-      set (CMAKE_CXX_STANDARD 11)
-    endif ()
+    add_definitions( "-DHAVE_PTHREAD" )
+    set( CONFIGURATION_SUFFIX "" )
 
-    add_definitions("-DHAVE_PTHREAD")
-    set(CONFIGURATION_SUFFIX "")
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+
+    # using Intel C++
+
+elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+
+    # using Microsoft Visual C++
+    set( CONFIGURATION_SUFFIX "/$(Configuration)" )
+    set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_CRT_SECURE_NO_WARNINGS" )
+    set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_CRT_SECURE_NO_WARNINGS" )
+
 endif()
 
 #

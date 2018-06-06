@@ -41,11 +41,13 @@ void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
             if ( file.is_reg ) {
                 appState->Logger->info( "AssetManager: Processing file: {}", file.path );
                 callback( file.path, file );
-            } else if ( r && file.is_dir && strcmp( file.name, "." ) != 0 && strcmp( file.name, ".." ) != 0 ) {
-                tinydir_dir subdir;
-                if ( tinydir_open_sorted( &subdir, file.path ) != -1 ) {
-                    ProcessFiles( callback, subdir, r );
-                    tinydir_close( &subdir );
+            } else {
+                if ( r && file.is_dir && ( strcmp( file.name, "." ) != 0 ) && ( strcmp( file.name, ".." ) != 0 ) ) {
+                    tinydir_dir subdir;
+                    if ( tinydir_open_sorted( &subdir, file.path ) != -1 ) {
+                        ProcessFiles( callback, subdir, r );
+                        tinydir_close( &subdir );
+                    }
                 }
             }
     }

@@ -1,6 +1,10 @@
 
 #pragma once
+
 #include <new>
+#include <ctime>
+#include <cstdlib>
+#include <cassert>
 #include <memory>
 #include <memory.h>
 
@@ -61,8 +65,12 @@ namespace apemode {
 
 } // namespace apemode
 
-#ifndef _THROW_BAD_ALLOC
-#define _THROW_BAD_ALLOC throw (  )
+#ifndef APEMODE_THROW_BAD_ALLOC
+#define APEMODE_THROW_BAD_ALLOC throw( std::bad_alloc )
+#endif
+
+#ifndef APEMODE_NO_EXCEPT
+#define APEMODE_NO_EXCEPT noexcept
 #endif
 
 namespace apemode {
@@ -74,38 +82,38 @@ void* operator new[]( std::size_t s,
                       apemode::EAllocationTag eAllocTag,
                       const char*             pszSourceFile,
                       const unsigned int      sourceLine,
-                      const char*             pszSourceFunc ) noexcept;
+                      const char*             pszSourceFunc ) APEMODE_NO_EXCEPT;
 
 void* operator new[]( std::size_t             s,
                       apemode::EAllocationTag eAllocTag,
                       const char*             pszSourceFile,
                       const unsigned int      sourceLine,
-                      const char*             pszSourceFunc ) _THROW_BAD_ALLOC;
+                      const char*             pszSourceFunc ) APEMODE_THROW_BAD_ALLOC;
 
 void operator delete[]( void*                   p,
                         apemode::EAllocationTag eAllocTag,
                         const char*             pszSourceFile,
                         const unsigned int      sourceLine,
-                        const char*             pszSourceFunc ) _THROW_BAD_ALLOC;
+                        const char*             pszSourceFunc ) APEMODE_NO_EXCEPT;
 
 void* operator new( std::size_t s,
                     std::nothrow_t const&,
                     apemode::EAllocationTag eAllocTag,
                     const char*             pszSourceFile,
                     const unsigned int      sourceLine,
-                    const char*             pszSourceFunc ) noexcept;
+                    const char*             pszSourceFunc ) APEMODE_NO_EXCEPT;
 
 void* operator new( std::size_t             s,
                     apemode::EAllocationTag eAllocTag,
                     const char*             pszSourceFile,
                     const unsigned int      sourceLine,
-                    const char*             pszSourceFunc ) _THROW_BAD_ALLOC;
+                    const char*             pszSourceFunc ) APEMODE_THROW_BAD_ALLOC;
 
 void operator delete( void*                   p,
                       apemode::EAllocationTag eAllocTag,
                       const char*             pszSourceFile,
                       const unsigned int      sourceLine,
-                      const char*             pszSourceFunc ) _THROW_BAD_ALLOC;
+                      const char*             pszSourceFunc ) APEMODE_NO_EXCEPT;
 
 #if defined( APEMODE_USE_MEMORY_TRACKING )
 #include "FluidStudios/MemoryManager/mmgr.h"
@@ -126,7 +134,6 @@ void  apemode_free( void* p );
 
 #define apemode_new             new ( apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
 #define apemode_delete( pObj )  operator delete( pObj, apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj= nullptr
-// #define apemode_delete delete ( apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
 
 namespace apemode {
 

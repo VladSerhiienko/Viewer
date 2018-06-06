@@ -32,10 +32,12 @@
 *.app
 /dependencies/
 /third_party/SDL2-2.0.7
-/build_linux_x86-64
 /build_darwin_x86_64
 /build_linux_x86_64
+/build_linux_x86_64_gcc
+/build_linux_x86_64_clang
 /build_windows_amd64
+/build_windows_amd64_msvc
 /FbxSdk
 .vscode/*.bat
 assets/images/*

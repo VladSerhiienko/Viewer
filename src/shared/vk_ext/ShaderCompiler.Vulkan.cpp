@@ -17,7 +17,7 @@ public:
     CompiledShader( std::vector< uint32_t > dwords ) : Dwords( dwords ), Glsl( dwords ) {
     }
 
-    const spirv_cross::CompilerGLSL& GetGlsl( ) const {
+    const spirv_cross::CompilerGLSL& GetGlsl( ) const override {
         return Glsl;
     }
 
