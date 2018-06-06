@@ -71,7 +71,7 @@ void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
 
     for ( size_t i = 0; i < dir.n_files; i++ ) {
         tinydir_file file;
-        if ( tinydir_readfile_n( &dir, &file, i ) != -1 )
+        if ( tinydir_readfile_n( &dir, &file, i ) != -1 ) {
             if ( file.is_reg ) {
                 appState->Logger->info( "AssetManager: Processing file: {}", file.path );
                 callback( file.path, file );
@@ -84,6 +84,7 @@ void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
                     }
                 }
             }
+        }
     }
 }
 

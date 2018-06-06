@@ -431,20 +431,16 @@ message(STATUS "VulkanMemoryAllocator_source_dir = ${VulkanMemoryAllocator_sourc
 #
 #
 
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG")
-
-if (WIN32)
-    set(CONFIGURATION_SUFFIX "/$(Configuration)")
-    set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_CRT_SECURE_NO_WARNINGS")
-    set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_CRT_SECURE_NO_WARNINGS")
-endif()
-
 set( CMAKE_CXX_STANDARD 11 )
+set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG" )
+set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG" )
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 
     # using Clang
+    add_definitions("-g")
+    add_definitions( "-DHAVE_PTHREAD" )
+    set( CONFIGURATION_SUFFIX "" )
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 
@@ -453,9 +449,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
     # using GCC
-    add_definitions("-g")
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
-
+    add_definitions( "-g" )
     add_definitions( "-DHAVE_PTHREAD" )
     set( CONFIGURATION_SUFFIX "" )
 
@@ -498,8 +492,6 @@ set(
     ${CMAKE_SOURCE_DIR}/src/shared/vk/QueuePools.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/shared/vk/Swapchain.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/vk/Swapchain.Vulkan.h
-    # ${CMAKE_SOURCE_DIR}/src/shared/vk/CommandQueue.Vulkan.cpp
-    # ${CMAKE_SOURCE_DIR}/src/shared/vk/CommandQueue.Vulkan.h
 )
 
 set(
