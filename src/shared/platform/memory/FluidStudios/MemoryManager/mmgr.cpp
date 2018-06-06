@@ -284,6 +284,17 @@ typedef CRITICAL_SECTION MUTEX;
     EnterCriticalSection( MUTEX );
 #define MUTEX_UNLOCK( MUTEX ) LeaveCriticalSection( MUTEX );
 
+#elif __APPLE__
+
+// Mutex definition in other OSes or single thread programs
+typedef pthread_rwlock_t MUTEX;
+#define MUTEX_LOCK( pMutex )     \
+    if ( !pMutex ) {             \
+        pMutex = CreateMutex( ); \
+    }                            \
+    pthread_rwlock_wrlock( pMutex );
+#define MUTEX_UNLOCK( pMutex ) pthread_rwlock_unlock( pMutex );
+
 #else
 
 // Mutex definition in other OSes or single thread programs
@@ -1620,6 +1631,8 @@ MUTEX *CreateMutex( ) {
 
 #ifdef WIN32
     InitializeCriticalSectionAndSpinCount( mutex, 0x0400 );
+#elif __APPLE__
+	*mutex = PTHREAD_RWLOCK_INITIALIZER;
 #else
     pthread_spin_init( mutex, 0x0400 );
 #endif
@@ -1631,6 +1644,8 @@ void RemoveMutex( MUTEX *&mutex ) {
     if ( mutex ) {
 #ifdef WIN32
         DeleteCriticalSection( mutex );
+#elif __APPLE__
+        pthread_rwlock_destroy( mutex );
 #else
         pthread_spin_destroy( mutex );
 #endif

@@ -200,7 +200,8 @@ void *operator new[]( std::size_t size, std::nothrow_t const & ) noexcept {
     return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, __FUNCTION__, m_alloc_new_array );
 }
 
-void *operator new[]( std::size_t size ) throw( ) {
+void *operator new[]( std::size_t size ) _THROW_BAD_ALLOC {
+// void *operator new[]( std::size_t size ) throw( ) {
     return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, __FUNCTION__, m_alloc_new_array );
 }
 
@@ -208,11 +209,11 @@ void *operator new( std::size_t size, std::nothrow_t const & ) noexcept {
     return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, __FUNCTION__, m_alloc_new );
 }
 
-void *operator new( std::size_t size ) throw( ) {
+void *operator new( std::size_t size ) _THROW_BAD_ALLOC {
     return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, __FUNCTION__, m_alloc_new );
 }
 
-void operator delete[]( void *p ) throw( ) {
+void operator delete[]( void *p ) _THROW_BAD_ALLOC {
     return apememext::aligned_free( p, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete_array );
 }
 
@@ -231,7 +232,7 @@ void *operator new[]( std::size_t           size,
 void *operator new[]( std::size_t        size,
                       const char *       sourceFile,
                       const unsigned int sourceLine,
-                      const char *       sourceFunc ) throw( ) {
+                      const char *       sourceFunc ) _THROW_BAD_ALLOC {
     return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, sourceFile, sourceLine, sourceFunc, m_alloc_new_array );
 }
 

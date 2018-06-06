@@ -70,7 +70,7 @@ void* operator new[]( std::size_t s,
 void* operator new[]( std::size_t        s,
                       const char*        sourceFile,
                       const unsigned int sourceLine,
-                      const char*        sourceFunc ) throw( );
+                      const char*        sourceFunc ) _THROW_BAD_ALLOC;
 
 void operator delete[]( void* p, const char* sourceFile, const unsigned int sourceLine, const char* sourceFunc ) throw( );
 
