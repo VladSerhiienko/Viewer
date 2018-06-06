@@ -464,8 +464,7 @@ namespace apemodevk
         }
     };
 
-#if _WIN32
-
+#ifdef VK_USE_PLATFORM_WIN32_KHR
     template <>
     struct THandle< VkSurfaceKHR > : public THandleBase< VkSurfaceKHR > {
         bool Recreate( VkInstance InInstanceHandle, VkWin32SurfaceCreateInfoKHR const &CreateInfo ) {
@@ -476,9 +475,7 @@ namespace apemodevk
             return VK_SUCCESS == CheckedCall( vkCreateWin32SurfaceKHR( InInstanceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
-
-#else
-
+#elif VK_USE_PLATFORM_XLIB_KHR
     template <>
     struct THandle< VkSurfaceKHR > : public THandleBase< VkSurfaceKHR > {
         bool Recreate( VkInstance InInstanceHandle, VkXlibSurfaceCreateInfoKHR const &CreateInfo ) {
@@ -489,7 +486,28 @@ namespace apemodevk
             return VK_SUCCESS == CheckedCall( vkCreateXlibSurfaceKHR( InInstanceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
+#elif VK_USE_PLATFORM_MACOS_MVK
+    template <>
+    struct THandle< VkSurfaceKHR > : public THandleBase< VkSurfaceKHR > {
+        bool Recreate( VkInstance InInstanceHandle, VkMacOSSurfaceCreateInfoMVK const &CreateInfo ) {
+            apemode_assert( InInstanceHandle != VK_NULL_HANDLE, "Instance is required." );
 
+            Deleter( Handle );
+            Deleter.hInstance = InInstanceHandle;
+            return VK_SUCCESS == CheckedCall( vkCreateMacOSSurfaceMVK( InInstanceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+        }
+    };
+#elif VK_USE_PLATFORM_IOS_MVK
+    template <>
+    struct THandle< VkSurfaceKHR > : public THandleBase< VkSurfaceKHR > {
+        bool Recreate( VkInstance InInstanceHandle, VkIOSSurfaceCreateInfoMVK const &CreateInfo ) {
+            apemode_assert( InInstanceHandle != VK_NULL_HANDLE, "Instance is required." );
+
+            Deleter( Handle );
+            Deleter.hInstance = InInstanceHandle;
+            return VK_SUCCESS == CheckedCall( vkCreateIOSSurfaceMVK( InInstanceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+        }
+    };
 #endif
 
     template <>

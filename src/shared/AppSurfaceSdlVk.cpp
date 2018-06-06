@@ -94,12 +94,12 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
         return false;
     }
 
-#ifdef X_PROTOCOL
+#ifdef VK_USE_PLATFORM_XLIB_KHR
     Surface.Recreate( Node.pPhysicalDevice, pGraphicsManager->hInstance, pDisplayX11, pWindowX11 );
-#endif
-
-#ifdef _WINDOWS_
+#elif VK_USE_PLATFORM_WIN32_KHR
     Surface.Recreate( Node.pPhysicalDevice, pGraphicsManager->hInstance, hInstance, hWnd );
+#elif VK_USE_PLATFORM_MACOS_MVK || VK_USE_PLATFORM_IOS_MVK
+    Surface.Recreate( Node.pPhysicalDevice, pGraphicsManager->hInstance, pNSWindow );
 #endif
 
     uint32_t queueFamilyIndex = 0;

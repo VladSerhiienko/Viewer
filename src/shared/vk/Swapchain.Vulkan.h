@@ -20,12 +20,64 @@ namespace apemodevk {
         VkPresentModeKHR           ePresentMode;
         THandle< VkSurfaceKHR >    hSurface;
 
-#ifdef _WINDOWS_
-        bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, HINSTANCE hInstance, HWND hWindow );
+#ifdef VK_USE_PLATFORM_WIN32_KHR
+        bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, HINSTANCE hInstance, HWND hWindow ) {
+            assert( nullptr != pInInstance );
+            assert( nullptr != pInPhysicalDevice );
+            assert( nullptr != hWindow );
+            assert( nullptr != hInstance );
+
+            pInstance       = pInInstance;
+            pPhysicalDevice = pInPhysicalDevice;
+
+            VkWin32SurfaceCreateInfoKHR win32SurfaceCreateInfoKHR;
+            InitializeStruct( win32SurfaceCreateInfoKHR );
+
+            win32SurfaceCreateInfoKHR.hwnd      = hWindow;
+            win32SurfaceCreateInfoKHR.hinstance = hInstance;
+
+            return hSurface.Recreate( pInInstance, win32SurfaceCreateInfoKHR ) && SetSurfaceProperties( );
+        }
+#elif VK_USE_PLATFORM_MACOS_MVK || VK_USE_PLATFORM_IOS_MVK
+        bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, void* pView ) {
+            assert( nullptr != pInPhysicalDevice );
+            assert( nullptr != pInInstance );
+            assert( nullptr != pView );
+
+            pInstance       = pInInstance;
+            pPhysicalDevice = pInPhysicalDevice;
+
+#if VK_USE_PLATFORM_IOS_MVK
+            VkIOSSurfaceCreateInfoMVK surfaceCreateInfoMVK;
+#elif VK_USE_PLATFORM_MACOS_MVK
+            VkMacOSSurfaceCreateInfoMVK surfaceCreateInfoMVK;
 #endif
 
-#ifdef X_PROTOCOL
-        bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, Display* pDisplayX11, Window pWindowX11 );
+            InitializeStruct( surfaceCreateInfoMVK );
+            surfaceCreateInfoMVK.sType = VK_STRUCTURE_TYPE_IOS_SURFACE_CREATE_INFO_MVK;
+            surfaceCreateInfoMVK.pNext = NULL;
+            surfaceCreateInfoMVK.flags = 0;
+            surfaceCreateInfoMVK.pView = pView;
+
+            return hSurface.Recreate( pInInstance, surfaceCreateInfoMVK ) && SetSurfaceProperties( );
+        }
+#elif VK_USE_PLATFORM_XLIB_KHR
+        bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, Display* pDisplayX11, Window pWindowX11 ) {
+            assert( nullptr != pInPhysicalDevice );
+            assert( nullptr != pInInstance );
+            assert( nullptr != pDisplayX11 );
+
+            pInstance       = pInInstance;
+            pPhysicalDevice = pInPhysicalDevice;
+
+            VkXlibSurfaceCreateInfoKHR xlibSurfaceCreateInfoKHR;
+            InitializeStruct( xlibSurfaceCreateInfoKHR );
+
+            xlibSurfaceCreateInfoKHR.window = pWindowX11;
+            xlibSurfaceCreateInfoKHR.dpy    = pDisplayX11;
+
+            return hSurface.Recreate( pInInstance, xlibSurfaceCreateInfoKHR ) && SetSurfaceProperties( );
+        }
 #endif
 
     protected:

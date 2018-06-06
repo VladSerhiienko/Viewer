@@ -169,6 +169,7 @@ namespace apemodevk {
 #ifdef APEMODE_DEFAULT_SHADERCOMPILER_INTERFACE_IMPLEMENTATIONS
 
 #include <set>
+#include <map>
 #include <vector>
 
 namespace apemodevk {

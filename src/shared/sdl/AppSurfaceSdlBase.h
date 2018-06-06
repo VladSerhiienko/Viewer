@@ -2,21 +2,42 @@
 
 #include "AppSurfaceBase.h"
 
-#ifdef __unix__
+#ifdef _WIN32 // ------------------------------------------------------------------
+
+#ifndef STRICT
+#define STRICT
+#endif
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#ifndef WIN32_LEAN_AND_MEAN
+#define WIN32_LEAN_AND_MEAN
+#endif
+
+#include <Windows.h>
+
+#elif __APPLE__ // ------------------------------------------------------------------
+
+#include "TargetConditionals.h"
+#import <Cocoa/Cocoa.h>
+
+#ifndef SDL_VIDEO_DRIVER_COCOA
+#define SDL_VIDEO_DRIVER_COCOA 1
+#endif
+
+#elif __linux__ // ------------------------------------------------------------------
+
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xresource.h>
 #include <X11/Xlocale.h>
+
 #ifndef SDL_VIDEO_DRIVER_X11
 #define SDL_VIDEO_DRIVER_X11 1
 #endif
-#endif
 
-#ifdef _WIN32
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN
-#endif
-#include <Windows.h>
+#else
+#error "Unsupported platform"
 #endif
 
 #include <SDL.h>
@@ -47,11 +68,11 @@ namespace apemode {
 #ifdef X_PROTOCOL
         Display* pDisplayX11 = nullptr;
         Window   pWindowX11;
-#endif
-
-#ifdef _WINDOWS_
+#elif _WINDOWS_
         HWND      hWnd      = NULL;
         HINSTANCE hInstance = NULL;
+#elif __APPLE__
+        NSWindow* pNSWindow = nullptr;
 #endif
     };
 }

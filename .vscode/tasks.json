@@ -20,11 +20,11 @@
             }
         },
         {
-            "label": "CMake/Viewer(Linux/Makefile/GCC)",
+            "label": "CMake/Viewer(Linux/Makefile/GNU)",
             "type": "shell",
             "command": "cmake",
             "args": [
-                "-H.", "-Bbuild_linux_x86_64_gcc"
+                "-H.", "-Bbuild_linux_x86_64_gnu"
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -84,17 +84,17 @@
             "dependsOn": [ "CMake/Viewer(Darwin/Makefile)"]
         },
         {
-            "label": "Make/Viewer(Linux/Makefile/GCC)",
+            "label": "Make/Viewer(Linux/Makefile/GNU)",
             "type": "shell",
             "command": "make",
             "options": {
-                "cwd": "${workspaceFolder}/build_linux_x86_64_gcc"
+                "cwd": "${workspaceFolder}/build_linux_x86_64_gnu"
             },
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": [ "CMake/Viewer(Linux/Makefile/GCC)"]
+            "dependsOn": [ "CMake/Viewer(Linux/Makefile/GNU)"]
         },
         {
             "label": "Make/Viewer(Linux/Makefile/Clang)",

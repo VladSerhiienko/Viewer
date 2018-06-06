@@ -2,6 +2,8 @@
 
 #include <GraphicsManager.Vulkan.h>
 
+#include <atomic>
+
 namespace apemodevk {
 
     class GraphicsDevice;

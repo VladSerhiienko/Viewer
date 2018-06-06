@@ -26,13 +26,14 @@ bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, co
 #ifdef X_PROTOCOL
                 pDisplayX11 = windowInfo.info.x11.display;
                 pWindowX11  = windowInfo.info.x11.window;
-                LogInfo( "apemode/AppSurfaceSdlBase/Initialize: Resolved Xlib handles." );
-#endif
-
-#ifdef _WINDOWS_
+                LogInfo( "AppSurfaceSdlBase: Resolved Xlib window handles." );
+#elif __APPLE__
+                pNSWindow = windowInfo.window.window;
+                LogInfo( "AppSurfaceSdlBase: Resolved Cocoa window handle." );
+#elif _WINDOWS_
                 hWnd      = windowInfo.info.win.window;
                 hInstance = (HINSTANCE) GetWindowLongPtrA( windowInfo.info.win.window, GWLP_HINSTANCE );
-                LogInfo( "apemode/AppSurfaceSdlBase/Initialize: Resolved Win32 handles." );
+                LogInfo( "AppSurfaceSdlBase: Resolved Win32 handles." );
 #endif
             }
         }

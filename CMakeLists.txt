@@ -442,9 +442,32 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
     add_definitions( "-DHAVE_PTHREAD" )
     set( CONFIGURATION_SUFFIX "" )
 
+    if (UNIX AND NOT APPLE)
+        set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DVK_USE_PLATFORM_XLIB_KHR" )
+        set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DVK_USE_PLATFORM_XLIB_KHR" )
+    elseif (WIN32)
+        set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DVK_USE_PLATFORM_WIN32_KHR" )
+        set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DVK_USE_PLATFORM_WIN32_KHR" )
+    else()
+        message( FATAL_ERROR "Unsupported configuration for ${CMAKE_CXX_COMPILER_ID} compiler." )
+    endif()
+
 elseif ("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 
     # using AppleClang
+    add_definitions( "-g" )
+    add_definitions( "-DHAVE_PTHREAD" )
+    set( CONFIGURATION_SUFFIX "" )
+
+    if (UNIX AND APPLE)
+        set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DVK_USE_PLATFORM_MACOS_MVK" )
+        set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DVK_USE_PLATFORM_MACOS_MVK" )
+    elseif( DEFINED IOS_PLATFORM )
+        set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DVK_USE_PLATFORM_IOS_MVK" )
+        set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DVK_USE_PLATFORM_IOS_MVK" )
+    else()
+        message( FATAL_ERROR "Unsupported configuration for ${CMAKE_CXX_COMPILER_ID} compiler." )
+    endif()
 
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
 
@@ -453,10 +476,14 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     add_definitions( "-DHAVE_PTHREAD" )
     set( CONFIGURATION_SUFFIX "" )
 
-elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
+    if (UNIX)
+        set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DVK_USE_PLATFORM_XLIB_KHR" )
+        set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DVK_USE_PLATFORM_XLIB_KHR" )
+    else()
+        message( FATAL_ERROR "Unsupported configuration for ${CMAKE_CXX_COMPILER_ID} compiler." )
+    endif()
 
-    # using Intel C++
-
+# elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Intel")
 elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
 
     # using Microsoft Visual C++
@@ -464,6 +491,15 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
     set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_CRT_SECURE_NO_WARNINGS" )
     set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_CRT_SECURE_NO_WARNINGS" )
 
+    if (WIN32)
+        set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DVK_USE_PLATFORM_WIN32_KHR" )
+        set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DVK_USE_PLATFORM_WIN32_KHR" )
+    else()
+        message( FATAL_ERROR "Unsupported configuration for ${CMAKE_CXX_COMPILER_ID} compiler." )
+    endif()
+
+else()
+    message( FATAL_ERROR "Unsupported configuration for ${CMAKE_CXX_COMPILER_ID} compiler." )
 endif()
 
 #

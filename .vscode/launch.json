@@ -2,19 +2,19 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Pipeline (Run)",
+            "name": "Run Viewer (Clang)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/third_party/FbxPipeline/build_linux_x86_64/FbxPipeline",
+            "program": "${workspaceRoot}/build_linux_x86_64_clang/Viewer",
             "args": [
-                "-i",
-                "/home/user/vserhiienko/models/stesla-elephant-steam-engines/source/stesla.fbx",
-                "-o",
-                "/home/user/vserhiienko/models/stesla-elephant-steam-engines/source/stesla.fbxp",
-                "-p"
+                "--assets", "\"../assets/**\"",
+                "--scene", "/home/user/vserhiienko/models/rainier-ak-3d.fbxp",
+                // "--scene", "/home/user/vserhiienko/models/warmonger_sword.fbxp",
+                // "--scene", "/home/user/vserhiienko/models/dreamsong.fbxp",
+                // "--scene", "/home/user/vserhiienko/models/zis-101a-sport-1938.fbxp",
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceRoot}/third_party/FbxPipeline/build_linux_x86_64/",
+            "cwd": "${workspaceRoot}/build_linux_x86_64_clang",
             "environment": [],
             "externalConsole": true,
             "MIMode": "gdb",
@@ -24,13 +24,14 @@
                     "text": "-enable-pretty-printing",
                     "ignoreFailures": true
                 }
-            ]
+            ],
+            "preLaunchTask": "Make/Viewer(Linux/Makefile)"
         },
         {
-            "name": "Viewer (Run)",
+            "name": "Run Viewer (GCC)",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceRoot}/build_linux_x86_64/Viewer",
+            "program": "${workspaceRoot}/build_linux_x86_64_gnu/Viewer",
             "args": [
                 "--assets", "\"../assets/**\"",
                 "--scene", "/home/user/vserhiienko/models/rainier-ak-3d.fbxp",
@@ -39,7 +40,7 @@
                 // "--scene", "/home/user/vserhiienko/models/zis-101a-sport-1938.fbxp",
             ],
             "stopAtEntry": false,
-            "cwd": "${workspaceRoot}/build_linux_x86_64",
+            "cwd": "${workspaceRoot}/build_linux_x86_64_gnu",
             "environment": [],
             "externalConsole": true,
             "MIMode": "gdb",
