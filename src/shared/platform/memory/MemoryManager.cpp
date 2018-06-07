@@ -1,6 +1,8 @@
 
 #include "MemoryManager.h"
 
+#include <stdio.h>
+
 #ifdef APEMODE_USE_MEMORY_TRACKING
 #define USE_MEMORY_TRACKING 1
 #endif
@@ -118,6 +120,9 @@ namespace apememext {
             /* Store the address of the malloc() above the beginning of our total memory area. */
             *( (void **) ( (size_t) ptr - ptr_size ) ) = p;
 
+            char cc[ 128 ] = {0};
+            sprintf( cc, "%p", p );
+
             /* Return the address of aligned memory */
             return ptr;
         }
@@ -160,15 +165,19 @@ namespace apememext {
         return nullptr;
     }
 
-    void aligned_free( void *             p,
+    void aligned_free( void *             ptr,
                        const char *       pszSourceFile,
                        const unsigned int sourceLine,
                        const char *       pszSourceFunc,
                        const unsigned int deallocationType ) {
-        if ( p ) {
+        if ( ptr ) {
             /* Get the address of the memory, stored at the start of our total memory area. */
-            void *ptr = *( (void **) ( (size_t) p - sizeof( void * ) ) );
-            return apemode_internal_free( ptr );
+            void *p = *( (void **) ( (size_t) ptr - sizeof( void * ) ) );
+
+            char cc[ 128 ] = {0};
+            sprintf( cc, "%p", p );
+
+            return apemode_internal_free( p );
         }
     }
 }
@@ -189,29 +198,77 @@ void apemode::deallocate( void *pMemory, const char *pszSourceFile, const unsign
     return apememext::aligned_free( pMemory, pszSourceFile, sourceLine, pszSourceFunc, m_alloc_free );
 }
 
+#if 0 // __GNUC__
+
+#include <execinfo.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+
+#define BT_BUF_SIZE 100
+
+#define APEMODE_SUPPORT_CALLER_LOCATION
+
+void WriteCallerLocation( char *pszBuffer, size_t bufferSize, void *pReturnAddress ) {
+    // void * buffer[ BT_BUF_SIZE ] = {0};
+
+    // int    nptrs = backtrace( buffer, BT_BUF_SIZE );
+    // char **strings = backtrace_symbols( buffer, nptrs );
+
+    // for ( int j = 0; strings && j < nptrs; j++ )
+    //     if ( buffer[ j ] == pReturnAddress ) {
+    //         printf( "%s\n", strings[ j ] );
+    //         sprintf( pszBuffer, "%s", strings[ j ] );
+    //         free( strings );
+    //         return;
+    //     }
+
+    // if ( strings )
+    //     free( strings );
+    // snprintf( pszBuffer, sizeof( bufferSize ), "%p", pReturnAddress );
+}
+
+#define APEMODE_NEW_GET_CALLER_FUNCTION \
+    char szCallerBuffer[ 512 ] = {0};   \
+    WriteCallerLocation( szCallerBuffer, sizeof( szCallerBuffer ), __builtin_return_address( 0 ) )
+
+#define APEMODE_NEW_CALLER_FUNCTION_NAME szCallerBuffer
+
+#else
+
+#define APEMODE_NEW_GET_CALLER_FUNCTION
+#define APEMODE_NEW_CALLER_FUNCTION_NAME __FUNCTION__
+
+#endif
+
 void *operator new[]( std::size_t size, std::nothrow_t const & ) APEMODE_NO_EXCEPT {
-    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, __FUNCTION__, m_alloc_new_array );
+    APEMODE_NEW_GET_CALLER_FUNCTION;
+    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, APEMODE_NEW_CALLER_FUNCTION_NAME, m_alloc_new_array );
 }
 
 void *operator new[]( std::size_t size ) APEMODE_THROW_BAD_ALLOC {
-// void *operator new[]( std::size_t size ) APEMODE_THROW_BAD_ALLOC {
-    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, __FUNCTION__, m_alloc_new_array );
+    APEMODE_NEW_GET_CALLER_FUNCTION;
+    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, APEMODE_NEW_CALLER_FUNCTION_NAME, m_alloc_new_array );
 }
 
 void *operator new( std::size_t size, std::nothrow_t const & ) APEMODE_NO_EXCEPT {
-    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, __FUNCTION__, m_alloc_new );
+    APEMODE_NEW_GET_CALLER_FUNCTION;
+    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, APEMODE_NEW_CALLER_FUNCTION_NAME, m_alloc_new );
 }
 
 void *operator new( std::size_t size ) APEMODE_THROW_BAD_ALLOC {
-    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, __FUNCTION__, m_alloc_new );
+    APEMODE_NEW_GET_CALLER_FUNCTION;
+    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, APEMODE_NEW_CALLER_FUNCTION_NAME, m_alloc_new );
 }
 
 void operator delete[]( void *pMemory ) APEMODE_NO_EXCEPT {
-    return apememext::aligned_free( pMemory, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete_array );
+    APEMODE_NEW_GET_CALLER_FUNCTION;
+    return apememext::aligned_free( pMemory, __FILE__, __LINE__, APEMODE_NEW_CALLER_FUNCTION_NAME, m_alloc_delete_array );
 }
 
 void operator delete( void *pMemory ) APEMODE_NO_EXCEPT {
-    return apememext::aligned_free( pMemory, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete );
+    APEMODE_NEW_GET_CALLER_FUNCTION;
+    return apememext::aligned_free( pMemory, __FILE__, __LINE__, APEMODE_NEW_CALLER_FUNCTION_NAME, m_alloc_delete );
 }
 
 void *operator new[]( std::size_t             size,

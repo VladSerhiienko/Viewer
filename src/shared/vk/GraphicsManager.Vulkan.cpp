@@ -524,13 +524,15 @@ apemodevk::GraphicsManager* apemodevk::GetGraphicsManager( ) {
 }
 
 void apemodevk::DestroyGraphicsManager( ) {
-    assert( sGraphicsManagerInstance );
+    // assert( sGraphicsManagerInstance );
     if ( sGraphicsManagerInstance ) {
         auto pAlloc  = sGraphicsManagerInstance->GetAllocator( );
         auto pLogger = sGraphicsManagerInstance->GetLogger( );
 
         sGraphicsManagerInstance->Destroy( );
         sGraphicsManagerInstance->~GraphicsManager( );
+        sGraphicsManagerInstance = nullptr;
+
         pAlloc->Free( sGraphicsManagerInstance, __FILE__, __LINE__, __FUNCTION__ );
         pLogger->Log( apemodevk::platform::LogLevel::Err, "Destroyed GraphicsManager." );
     }
@@ -565,6 +567,7 @@ apemodevk::GraphicsManager* apemodevk::CreateGraphicsManager( uint32_t          
                                                 extensionCount ) ) {
         sGraphicsManagerInstance->Destroy( );
         sGraphicsManagerInstance->~GraphicsManager( );
+        sGraphicsManagerInstance = nullptr;
 
         pInAlloc->Free( pGraphicsManagerMemory, __FILE__, __LINE__, __FUNCTION__ );
         pInLogger->Log( apemodevk::platform::LogLevel::Err, "Failed to initialize GraphicsManager" );

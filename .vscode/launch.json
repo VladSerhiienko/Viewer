@@ -33,7 +33,7 @@
             "preLaunchTask": "Make/Viewer(Darwin/Makefile/AppleClang)"
         },
         {
-            "name": "Run Viewer (GCC)",
+            "name": "Run Viewer (GNU)",
             "type": "cppdbg",
             "request": "launch",
             "program": "${workspaceRoot}/build_linux_x86_64_gnu/Viewer",
@@ -56,7 +56,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "Make/Viewer(Linux/Makefile)"
+            "preLaunchTask": "Make/Viewer(Linux/Makefile/GNU)"
         }
     ]
 }
