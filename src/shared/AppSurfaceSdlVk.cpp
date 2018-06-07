@@ -1,4 +1,4 @@
-#include <fbxvpch.h>
+
 
 #include <AppState.h>
 #include <AppSurfaceSdlVk.h>
@@ -43,8 +43,9 @@ struct apemode::GraphicsAllocator : apemodevk::GraphicsManager::IAllocator {
 // clang-format on
 
 struct apemode::GraphicsLogger : apemodevk::GraphicsManager::ILogger {
-    void Log( LogLevel level, const char* pszMsg ) override {
-        apemode::AppState::Get( )->Logger->log( (spdlog::level::level_enum) level, pszMsg );
+    spdlog::logger* pLogger = apemode::AppState::Get( )->GetLogger( );
+    void Log( const LogLevel eLevel, const char* pszMsg ) override {
+        pLogger->log( static_cast< spdlog::level::level_enum >( eLevel ), pszMsg );
     }
 };
 

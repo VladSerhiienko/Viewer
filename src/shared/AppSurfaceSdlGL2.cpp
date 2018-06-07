@@ -2,7 +2,7 @@
 #include <GL/glew.h>
 #include <GLFW/glfw3.h>
 
-#include <fbxvpch.h>
+
 #include <AppSurface.h>
 #include <nuklear.h>
 

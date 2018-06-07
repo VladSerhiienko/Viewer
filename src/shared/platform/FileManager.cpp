@@ -67,13 +67,13 @@ std::string ToCanonicalAbsolutPath( const std::string & relativePath ) {
 template < typename TFileCallback >
 void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
     auto appState = apemode::AppState::Get( );
-    appState->Logger->info( "AssetManager: Entering folder: {}", dir.path );
+    apemode::LogInfo( "AssetManager: Entering folder: {}", dir.path );
 
     for ( size_t i = 0; i < dir.n_files; i++ ) {
         tinydir_file file;
         if ( tinydir_readfile_n( &dir, &file, i ) != -1 ) {
             if ( file.is_reg ) {
-                appState->Logger->info( "AssetManager: Processing file: {}", file.path );
+                apemode::LogInfo( "AssetManager: Processing file: {}", file.path );
                 callback( file.path, file );
             } else {
                 if ( r && file.is_dir && strcmp( file.name, "." ) != 0 && strcmp( file.name, ".." ) != 0 ) {
@@ -89,8 +89,6 @@ void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
 }
 
 bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool bRemoveDeletedFiles ) {
-    auto appState = apemode::AppState::Get( );
-
     if ( storageDirectory.empty( ) )
         storageDirectory = "./";
 
@@ -127,7 +125,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
 
                 auto fileIt = Files.find( filePath );
                 if ( fileIt == Files.end( ) ) {
-                    appState->Logger->info( "FileScanner: Added: {} ({})", filePath.c_str( ), lastWriteTime );
+                    apemode::LogInfo( "FileScanner: Added: {} ({})", filePath.c_str( ), lastWriteTime );
                 }
 
                 auto& fileState = Files[ filePath ];
@@ -138,7 +136,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
                 } else {
                     /* Set to error state. */
                     fileState.CurrTime = 0;
-                    appState->Logger->info( "FileScanner: Error state: {}", filePath );
+                    apemode::LogInfo( "FileScanner: Error state: {}", filePath );
                 }
             }
         };
@@ -148,7 +146,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
             /* Remove from Files. */
             for ( ; fileIt != Files.end( ); ) {
                 if ( false == FileExists( fileIt->first ) ) {
-                    appState->Logger->debug( "FileScanner: Deleted: {}", fileIt->first.c_str( ) );
+                    apemode::LogInfo( "FileScanner: Deleted: {}", fileIt->first.c_str( ) );
                     fileIt = Files.erase( fileIt );
                 } else {
                     ++fileIt;
@@ -158,7 +156,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
             /* Set to deleted state. */
             for ( ; fileIt != Files.end( ); ) {
                 if ( false == FileExists( fileIt->first ) ) {
-                    appState->Logger->debug( "FileScanner: Deleted state: {}", fileIt->first.c_str( ) );
+                    apemode::LogInfo( "FileScanner: Deleted state: {}", fileIt->first.c_str( ) );
                     fileIt->second.CurrTime = 0;
                     fileIt->second.PrevTime = 0;
                 }

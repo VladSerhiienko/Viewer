@@ -32,14 +32,13 @@ std::string ToCanonicalAbsolutPath( const std::string & relativePath );
 
 template < typename TFileCallback >
 void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
-    auto appState = apemode::AppState::Get( );
-    appState->Logger->info( "AssetManager: Entering folder: {}", dir.path );
+    apemode::LogInfo( "AssetManager: Entering folder: {}", dir.path );
 
     for ( size_t i = 0; i < dir.n_files; i++ ) {
         tinydir_file file;
         if ( tinydir_readfile_n( &dir, &file, i ) != -1 ) {
             if ( file.is_reg ) {
-                appState->Logger->info( "AssetManager: Processing file: {}", file.path );
+                apemode::LogInfo( "AssetManager: Processing file: {}", file.path );
                 callback( file.path, file );
             } else {
                 if ( r && file.is_dir && ( strcmp( file.name, "." ) != 0 ) && ( strcmp( file.name, ".." ) != 0 ) ) {
@@ -56,8 +55,6 @@ void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
 
 void apemodeos::AssetManager::AddFilesFromDirectory( const std::string&                InStorageDirectory,
                                                      const std::vector< std::string >& InFilePatterns ) {
-    auto appState = apemode::AppState::Get( );
-
     std::string storageDirectory = InStorageDirectory;
 
     if ( storageDirectory.empty( ) ) {
@@ -97,9 +94,9 @@ void apemodeos::AssetManager::AddFilesFromDirectory( const std::string&         
 
                 auto assetIt = AssetFiles.find( relativePath );
                 if ( assetIt == AssetFiles.end( ) ) {
-                    appState->Logger->info( "AssetManager: Added: {}", fullPath );
+                    apemode::LogInfo( "AssetManager: Added: {}", fullPath );
                 } else {
-                    appState->Logger->warn( "AssetManager: Replaced: {} -> {}", assetIt->second.FullPath, fullPath );
+                    apemode::LogWarn( "AssetManager: Replaced: {} -> {}", assetIt->second.FullPath, fullPath );
                 }
 
                 AssetFiles[ relativePath ].RelPath  = relativePath;

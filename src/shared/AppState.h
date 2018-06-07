@@ -6,10 +6,12 @@
 #pragma warning( disable: 4244 )
 
 #include <argh.h>
-#include <spdlog/spdlog.h>
+#include <spdlog/logger.h>
 #include <spdlog/fmt/ostr.h>
 
 #pragma warning( pop )
+
+#include <utility>
 
 namespace apemode {
 
@@ -28,9 +30,7 @@ namespace apemode {
      */
     class AppState {
     public:
-        std::shared_ptr< spdlog::logger >                          Logger;       /* Prints to console and file */
-        argh::parser                                               Cmdl;         /* User parameters */
-        std::map< std::string, apemode::unique_ptr< AppStoredValue > > StoredValues; /* User values */
+        virtual ~AppState( ) = default;
 
         /**
          * @return Application state instance.
@@ -40,9 +40,8 @@ namespace apemode {
         static void      OnMain( int argc, const char** argv );
         static void      OnExit( );
 
-    private:
-        AppState( int args, const char** argv );
-        ~AppState( );
+        spdlog::logger*  GetLogger( );
+        argh::parser*    GetArgs( );
     };
 
     /**
@@ -52,53 +51,80 @@ namespace apemode {
      **/
     template < typename TOption >
     inline TOption TGetOption( const char* const optionName, const TOption& defaultValue ) {
-        if ( AppState::Get( ) && AppState::Get( )->Cmdl[ {optionName} ] ) {
-            TOption option;
-            if ( AppState::Get( )->Cmdl( {optionName} ) >> option )
-                return option;
-        }
+        if ( auto pAppState = AppState::Get( ) )
+            if ( auto pArgs = pAppState->GetArgs( ) ) {
+                if ( pArgs->operator[]( {optionName} ) ) {
+                    TOption option;
+                    if ( pArgs->operator( )( {optionName} ) >> option )
+                        return option;
+                }
+            }
 
         return defaultValue;
     }
 
-    template < >
+    template <>
     inline bool TGetOption( const char* const optionName, const bool& defaultValue ) {
-        if ( AppState::Get( ) && AppState::Get( )->Cmdl[ {optionName} ] ) {
-            return AppState::Get( )->Cmdl[ {optionName} ];
-        }
+        if ( auto pAppState = AppState::Get( ) )
+            if ( auto pArgs = pAppState->GetArgs( ) ) {
+                return pArgs->operator[]( {optionName} );
+            }
 
         return defaultValue;
     }
 
     template <>
     inline std::string TGetOption( const char* const optionName, const std::string& defaultValue ) {
-        if ( AppState::Get( ) && AppState::Get( )->Cmdl( {optionName} ) ) {
-            std::string option = AppState::Get( )->Cmdl( {optionName} ).str( );
-            return option;
-        }
+        if ( auto pAppState = AppState::Get( ) )
+            if ( auto pArgs = pAppState->GetArgs( ) ) {
+                if ( pArgs->operator[]( {optionName} ) ) {
+                    std::string option = pArgs->operator( )( {optionName} ).str( );
+                    return option;
+                }
+            }
 
         return defaultValue;
     }
 
+    enum LogLevel {
+        Trace    = 0,
+        Debug    = 1,
+        Info     = 2,
+        Warn     = 3,
+        Err      = 4,
+        Critical = 5,
+    };
+
     template < typename... Args >
-    inline void LogInfo( const char* szFmt, const Args&... args ) {
-        if ( auto l = AppState::Get( )->Logger.get( ) ) {
-            l->info( szFmt, args... );
-        }
+    inline void Log( LogLevel eLevel, const char* szFmt, Args &&... args ) {
+        if ( auto pAppState = AppState::Get( ) )
+            if ( auto pLogger = pAppState->GetLogger( ) ) {
+                pLogger->log( static_cast< spdlog::level::level_enum >( eLevel ), szFmt, std::forward< Args >( args )... );
+            }
     }
 
     template < typename... Args >
-    inline void LogError( const char* szFmt, const Args&... args ) {
-        if ( auto l = AppState::Get( )->Logger.get( ) ) {
-            l->error( szFmt, args... );
-        }
+    inline void LogInfo( const char* szFmt, Args &&... args ) {
+        if ( auto pAppState = AppState::Get( ) )
+            if ( auto pLogger = pAppState->GetLogger( ) ) {
+                pLogger->info( szFmt, std::forward< Args >( args )... );
+            }
     }
 
     template < typename... Args >
-    inline void LogWarn( const char* szFmt, const Args&... args ) {
-        if ( auto l = AppState::Get( )->Logger.get( ) ) {
-            l->warn( szFmt, args... );
-        }
+    inline void LogError( const char* szFmt, Args &&... args ) {
+        if ( auto pAppState = AppState::Get( ) )
+            if ( auto pLogger = pAppState->GetLogger( ) ) {
+                pLogger->error( szFmt, std::forward< Args >( args )... );
+            }
+    }
+
+    template < typename... Args >
+    inline void LogWarn( const char* szFmt, Args &&... args ) {
+        if ( auto pAppState = AppState::Get( ) )
+            if ( auto pLogger = pAppState->GetLogger( ) ) {
+                pLogger->warn( szFmt, std::forward< Args >( args )... );
+            }
     }
 
 } // namespace apemode

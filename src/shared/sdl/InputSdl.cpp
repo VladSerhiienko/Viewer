@@ -1,5 +1,9 @@
 #include <Input.h>
-#include <fbxvpch.h>
+
+#include <SDL.h>
+#include <cassert>
+#include <memory.h>
+#include <algorithm>
 
 using namespace apemode;
 

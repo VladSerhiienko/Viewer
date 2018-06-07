@@ -1,9 +1,12 @@
+#include <AppState.h>
+
+#include <spdlog/spdlog.h>
+#include <spdlog/fmt/ostr.h>
 
 #include <fstream>
 #include <iostream>
 #include <iomanip>
 
-#include <AppState.h>
 #include <MemoryManager.h>
 
 
@@ -13,21 +16,39 @@
 #include <spdlog/sinks/stdout_sinks.h>
 #pragma warning( pop )
 
-apemode::AppState* gState = nullptr;
+namespace apemode {
+    class ImplementedAppState : public AppState {
+    public:
+        std::shared_ptr< spdlog::logger > Logger; /* Prints to console and file */
+        argh::parser                      Cmdl;   /* User parameters */
+
+        ImplementedAppState( int args, const char** argv );
+        virtual ~ImplementedAppState( ) = default;
+    };
+}
+
+apemode::ImplementedAppState* gState = nullptr;
 
 apemode::AppState* apemode::AppState::Get( ) {
     return gState;
 }
 
+spdlog::logger* apemode::AppState::GetLogger( ) {
+    return static_cast< ImplementedAppState* >( this )->Logger.get( );
+}
+
+argh::parser* apemode::AppState::GetArgs( ) {
+    return &static_cast< ImplementedAppState* >( this )->Cmdl;
+}
+
 void apemode::AppState::OnMain( int args, const char** ppArgs ) {
     if ( nullptr == gState )
-        gState = apemode_new AppState( args, ppArgs );
+        gState = apemode_new ImplementedAppState( args, ppArgs );
 }
 
 void apemode::AppState::OnExit( ) {
     if ( nullptr != gState ) {
         apemode_delete( gState );
-        // gState = nullptr;
     }
 }
 
@@ -92,10 +113,7 @@ std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, s
     return logger;
 }
 
-apemode::AppState::AppState( int argc, const char** argv )
+apemode::ImplementedAppState::ImplementedAppState( int argc, const char** argv )
     : Logger( CreateLogger( spdlog::level::trace, ComposeLogFile( ) ) )
     , Cmdl( argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION ) {
-}
-
-apemode::AppState::~AppState( ) {
 }

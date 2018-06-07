@@ -63,17 +63,17 @@ void ShaderFeedbackWriter::WriteFeedback( EFeedbackType                         
     const auto feedbackCompilationError = eType & eFeedbackType_CompilationStatusMask;
 
     if ( eFeedbackType_CompilationStatus_Success != feedbackCompilationError ) {
-        AppState::Get( )->Logger->error( "ShaderCompiler: {} / {} / {}",
-                                         EFeedbackTypeWithOStream( feedbackStage ),
-                                         EFeedbackTypeWithOStream( feedbackCompilationError ),
-                                         FullFilePath );
-        AppState::Get( )->Logger->error( "           Msg: {}", (const char*) pContent );
+        LogError( "ShaderCompiler: {} / {} / {}",
+                  EFeedbackTypeWithOStream( feedbackStage ),
+                  EFeedbackTypeWithOStream( feedbackCompilationError ),
+                  FullFilePath );
+        LogError( "           Msg: {}", (const char*) pContent );
         apemode::platform::DebugBreak( );
     } else {
-        AppState::Get( )->Logger->info( "ShaderCompiler: {} / {} / {}",
-                                        EFeedbackTypeWithOStream( feedbackStage ),
-                                        EFeedbackTypeWithOStream( feedbackCompilationError ),
-                                        FullFilePath );
+        LogInfo( "ShaderCompiler: {} / {} / {}",
+                 EFeedbackTypeWithOStream( feedbackStage ),
+                 EFeedbackTypeWithOStream( feedbackCompilationError ),
+                 FullFilePath );
         // TODO: Store compiled shader to file system
     }
 }

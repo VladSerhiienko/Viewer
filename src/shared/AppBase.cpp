@@ -10,11 +10,11 @@ void apemode::AppBase::HandleWindowSizeChanged( ) {
 }
 
 apemode::AppBase::AppBase( ) : pSurface( nullptr ) {
-    AppState::Get( )->Logger->debug( "AppBase/Create" );
+    apemode::LogInfo( "AppBase/Create" );
 }
 
 apemode::AppBase::~AppBase( ) {
-    AppState::Get( )->Logger->debug( "AppBase/Destroy" );
+    apemode::LogInfo( "AppBase/Destroy" );
 
     if ( pSurface )
         pSurface->Finalize( );
@@ -25,7 +25,7 @@ const char* apemode::AppBase::GetAppName( ) {
 }
 
 bool apemode::AppBase::Initialize( ) {
-    AppState::Get( )->Logger->debug( "AppBase/Initialize" );
+    apemode::LogInfo( "AppBase/Initialize" );
 
     pSurface = CreateAppSurface( );
     SDL_assert( pSurface && "Surface is required." );
@@ -36,7 +36,7 @@ bool apemode::AppBase::Initialize( ) {
         return true;
     }
 
-    AppState::Get( )->Logger->error( "AppBase/Initialize: Failed" );
+    apemode::LogError( "AppBase/Initialize: Failed" );
     return false;
 }
 

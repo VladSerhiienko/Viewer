@@ -1,5 +1,5 @@
 #include <Stopwatch.h>
-#include <fbxvpch.h>
+#include <SDL.h>
 
 apemode::Stopwatch::Stopwatch( ) : mFrequency( 0 ), mStartPoint( 0 ), mFinishPoint( 0 ) {
 }
