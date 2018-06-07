@@ -29,7 +29,7 @@
         },
         {
             "name": "Run Viewer (AppleClang)",
-            "type": "cppdbg",
+            "type": "lldb",
             "request": "launch",
             "program": "${workspaceRoot}/build_darwin_x86_64_appleclang/Viewer",
             "args": [
@@ -39,18 +39,7 @@
                 // "--scene", "/home/user/vserhiienko/models/dreamsong.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/zis-101a-sport-1938.fbxp",
             ],
-            "stopAtEntry": false,
-            "cwd": "${workspaceRoot}/build_darwin_x86_64_appleclang",
-            "environment": [],
-            "externalConsole": true,
-            "MIMode": "gdb",
-            "setupCommands": [
-                {
-                    "description": "Enable pretty-printing for gdb",
-                    "text": "-enable-pretty-printing",
-                    "ignoreFailures": true
-                }
-            ],
+            
             "preLaunchTask": "Make/Viewer(Darwin/Makefile/AppleClang)"
         },
         {
