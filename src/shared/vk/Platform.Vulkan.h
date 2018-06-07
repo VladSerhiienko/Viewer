@@ -120,20 +120,31 @@ void operator delete( void *                    pMemory,
                       const unsigned int        sourceLine,
                       const char *              pszSourceFunc ) throw( );
 
+namespace apemodevk {
+    namespace platform {
+        template < typename T >
+        void CallDestructor( T *pObj ) {
+            if ( pObj )
+                pObj->~T( );
+        }
+    } // namespace platform
+} // namespace apemodevk
+
 #define apemodevk_new              new ( apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
 #define apemodevk_create( T, ... ) new ( operator new( apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ) ) T( __VA_ARGS__ )
-#define apemodevk_delete( pObj )   operator delete( pObj, apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj = nullptr
+#define apemodevk_delete( pObj )   apemodevk::platform::CallDestructor( pObj ), operator delete( pObj, apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj = nullptr
 
 namespace apemodevk {
 
-    struct TrakingDeleter {
-        void operator( )( void* pObj ) {
+    template < typename T >
+    struct TTrakingDeleter {
+        void operator( )( T *pObj ) {
             apemodevk_delete( pObj );
         }
     };
 
     template < typename T >
-    using unique_ptr = std::unique_ptr< T, TrakingDeleter >;
+    using unique_ptr = std::unique_ptr< T, TTrakingDeleter< T > >;
 
     template < typename T, typename... Args >
     unique_ptr< T > make_unique( Args &&... args ) {

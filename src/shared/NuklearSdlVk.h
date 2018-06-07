@@ -61,9 +61,10 @@ namespace apemode {
         std::vector< uint8_t > BufferContent;
 
     public:
+        virtual ~NuklearRendererSdlVk( ) = default;
+
         bool  Render( RenderParametersBase *pRenderParams ) override;   /* RenderParametersVk* */
         bool  DeviceCreate( InitParametersBase *pInitParams ) override; /* InitParametersVk* */
-        void  DeviceDestroy( ) override;
         void *DeviceUploadAtlas( InitParametersBase *pInitParams, /* InitParametersVk* */
                                  const void *        pImgData,
                                  uint32_t            imgWidth,

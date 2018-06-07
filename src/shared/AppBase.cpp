@@ -9,7 +9,7 @@
 void apemode::AppBase::HandleWindowSizeChanged( ) {
 }
 
-apemode::AppBase::AppBase( ) : pSurface( nullptr ) {
+apemode::AppBase::AppBase( ) {
     apemode::LogInfo( "AppBase/Create" );
 }
 
@@ -27,7 +27,7 @@ const char* apemode::AppBase::GetAppName( ) {
 bool apemode::AppBase::Initialize( ) {
     apemode::LogInfo( "AppBase/Initialize" );
 
-    pSurface = CreateAppSurface( );
+    pSurface = std::move( CreateAppSurface( ) );
     SDL_assert( pSurface && "Surface is required." );
 
     if ( pSurface && pSurface->Initialize( 1280, 800, GetAppName( ) ) && InputManager.Initialize( ) ) {
@@ -40,12 +40,12 @@ bool apemode::AppBase::Initialize( ) {
     return false;
 }
 
-apemode::AppSurfaceBase* apemode::AppBase::CreateAppSurface( ) {
-    return apemode_new AppSurfaceBase( );
+apemode::unique_ptr< apemode::AppSurfaceBase > apemode::AppBase::CreateAppSurface( ) {
+    return apemode::unique_ptr< apemode::AppSurfaceBase >( apemode_new AppSurfaceBase( ) );
 }
 
 apemode::AppSurfaceBase* apemode::AppBase::GetSurface( ) {
-    return pSurface;
+    return pSurface.get( );
 }
 
 void apemode::AppBase::OnFrameMove( ) {

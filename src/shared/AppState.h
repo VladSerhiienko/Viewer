@@ -77,10 +77,10 @@ namespace apemode {
     inline std::string TGetOption( const char* const optionName, const std::string& defaultValue ) {
         if ( auto pAppState = AppState::Get( ) )
             if ( auto pArgs = pAppState->GetArgs( ) ) {
-                if ( pArgs->operator[]( {optionName} ) ) {
+                // if ( pArgs->operator[]( {optionName} ) ) {
                     std::string option = pArgs->operator( )( {optionName} ).str( );
                     return option;
-                }
+                // }
             }
 
         return defaultValue;

@@ -154,9 +154,6 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
     return true;
 }
 
-void apemode::NuklearRendererSdlVk::DeviceDestroy( ) {
-}
-
 bool apemode::NuklearRendererSdlVk::DeviceCreate( InitParametersBase* pInitParamsBase ) {
     const char* vertex_shader =
         "#version 450\n"

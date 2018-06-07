@@ -65,6 +65,8 @@ namespace apemode {
         void SetStyle( Theme eTheme );
 
     public:
+        virtual ~NuklearRendererSdlBase( ) = default;
+
         virtual bool  Init( InitParametersBase *pInitParams );
         virtual bool  Render( RenderParametersBase *pRenderParams );
         virtual void  DeviceDestroy( );

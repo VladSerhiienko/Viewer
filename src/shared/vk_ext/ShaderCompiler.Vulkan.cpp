@@ -69,7 +69,7 @@ public:
 
     // Handles shaderc_include_result_release_fn callbacks.
     void ReleaseInclude( shaderc_include_result* data ) {
-        apemodevk_delete( data->user_data );
+        apemodevk_delete( ( (UserData*&) data->user_data ) );
         apemodevk_delete( data );
         // apemodevk_delete ((UserData*) data->user_data);
         // apemodevk_delete data;
@@ -217,7 +217,8 @@ static apemodevk::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
     dwords.resize( dwordCount );
     memcpy( dwords.data( ), spvCompilationResult.cbegin( ), byteCount );
 
-    return apemodevk::make_unique< CompiledShader >( dwords );
+    ICompiledShader* pCompiledShader = apemodevk_new CompiledShader( dwords );
+    return apemodevk::unique_ptr< ICompiledShader >( pCompiledShader );
 }
 
 apemodevk::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::Compile(

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <AppBase.h>
+#include <MemoryManager.h>
 #include <AppSurfaceBase.h>
 
 #include <Input.h>
@@ -9,13 +9,13 @@
 namespace apemode {
 
     class AppBase {
-        apemode::AppSurfaceBase* pSurface = nullptr;
-        apemode::Stopwatch       Stopwatch;
-        apemode::Input           InputState;
-        apemode::InputManager    InputManager;
+        apemode::unique_ptr< AppSurfaceBase > pSurface;
+        apemode::Stopwatch                    Stopwatch;
+        apemode::Input                        InputState;
+        apemode::InputManager                 InputManager;
 
-        void                    HandleWindowSizeChanged( );
-        virtual AppSurfaceBase* CreateAppSurface( );
+        void                                          HandleWindowSizeChanged( );
+        virtual apemode::unique_ptr< AppSurfaceBase > CreateAppSurface( );
 
     public:
         AppBase( );

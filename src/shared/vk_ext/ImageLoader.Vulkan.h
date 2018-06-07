@@ -37,6 +37,9 @@ namespace apemodevk {
         GraphicsDevice* pNode           = nullptr;
         HostBufferPool* pHostBufferPool = nullptr;
 
+        ImageLoader() = default;
+        ~ImageLoader();
+
         bool Recreate( GraphicsDevice* pNode );
         void Destroy( );
 

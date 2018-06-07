@@ -132,19 +132,30 @@ void  apemode_free( void* p );
 
 #endif
 
+namespace apemode {
+    namespace platform {
+        template < typename T >
+        void CallDestructor( T* pObj ) {
+            if ( pObj )
+                pObj->~T( );
+        }
+    } // namespace platform
+} // namespace apemode
+
 #define apemode_new             new ( apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
-#define apemode_delete( pObj )  operator delete( pObj, apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj= nullptr
+#define apemode_delete( pObj )  apemode::platform::CallDestructor( pObj ), operator delete( pObj, apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj= nullptr
 
 namespace apemode {
 
-    struct TrakingDeleter {
-        void operator( )( void* pObj ) {
+    template < typename T >
+    struct TTrakingDeleter {
+        void operator( )( T* pObj ) {
             apemode_delete( pObj );
         }
     };
 
     template < typename T >
-    using unique_ptr = std::unique_ptr< T, TrakingDeleter >;
+    using unique_ptr = std::unique_ptr< T, TTrakingDeleter< T > >;
 
     /**
      * @brief make_unique for all platforms

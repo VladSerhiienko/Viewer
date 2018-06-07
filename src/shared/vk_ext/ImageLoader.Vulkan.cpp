@@ -390,6 +390,10 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture( apemode
     return std::move( loadedImage );
 }
 
+apemodevk::ImageLoader::~ImageLoader( ) {
+    Destroy( );
+}
+
 bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode ) {
     pNode           = pInNode;
     pHostBufferPool = apemodevk_new HostBufferPool( );

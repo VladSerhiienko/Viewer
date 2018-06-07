@@ -23,7 +23,21 @@ namespace apemode {
         argh::parser                      Cmdl;   /* User parameters */
 
         ImplementedAppState( int args, const char** argv );
-        virtual ~ImplementedAppState( ) = default;
+        virtual ~ImplementedAppState( ) {
+            LogInfo( "ImplementedAppState: Destroying." );
+
+            spdlog::set_pattern( "%v" );
+            Logger->info( "" );
+            Logger->info( "\t    _____          " );
+            Logger->info( "\t   / __ /__  _____ " );
+            Logger->info( "\t  / __  / / / / _ \\" );
+            Logger->info( "\t / /_/ / /_/ /  __/" );
+            Logger->info( "\t/_____/\\__, /\\___/ " );
+            Logger->info( "\t      /____/       " );
+
+            spdlog::set_pattern( "%c" );
+            Logger->info( "" );
+        }
     };
 }
 

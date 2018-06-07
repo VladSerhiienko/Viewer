@@ -1092,7 +1092,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
                                                                    &includedFiles );
 
     if ( nullptr == compiledVertexShader ) {
-        platform::DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
@@ -1103,7 +1103,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
                                                                      &includedFiles );
 
     if ( nullptr == compiledFragmentShader ) {
-        platform::DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
@@ -1121,7 +1121,7 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     THandle< VkShaderModule > hFragmentShaderModule;
     if ( false == hVertexShaderModule.Recreate( *pParams->pNode, vertexShaderCreateInfo ) ||
          false == hFragmentShaderModule.Recreate( *pParams->pNode, fragmentShaderCreateInfo ) ) {
-        platform::DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
@@ -1390,12 +1390,12 @@ bool apemode::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBa
     //
 
     if ( false == hPipelineCache.Recreate( *pParams->pNode, pipelineCacheCreateInfo ) ) {
-        platform::DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 
     if ( false == hPipeline.Recreate( *pParams->pNode, hPipelineCache, graphicsPipelineCreateInfo ) ) {
-        platform::DebugBreak( );
+        apemodevk::platform::DebugBreak( );
         return false;
     }
 

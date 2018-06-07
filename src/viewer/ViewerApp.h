@@ -54,14 +54,8 @@ namespace apemode {
         friend AppState;
         friend AppContent;
 
-        float    totalSecs = 0.0f;
-        nk_color diffColor;
-        nk_color specColor;
-        uint32_t resetFlags = 0;
-        uint32_t envId      = 0;
-        uint32_t sceneId    = 0;
-        uint32_t maskId     = 0;
-        
+        float TotalSecs = 0.0f;
+
         uint32_t Width      = 0;
         uint32_t Height     = 0;
         uint32_t FrameCount = 0;
@@ -118,9 +112,9 @@ namespace apemode {
         virtual ~ViewerApp( );
 
     public:
-        bool                     Initialize( ) override;
-        apemode::AppSurfaceBase* CreateAppSurface( ) override;
-        const char*              GetAppName( ) override { return "Viewer"; }
+        bool                                           Initialize( ) override;
+        apemode::unique_ptr< apemode::AppSurfaceBase > CreateAppSurface( ) override;
+        const char*                                    GetAppName( ) override { return "Viewer"; }
 
     public:
         bool OnResized( );
