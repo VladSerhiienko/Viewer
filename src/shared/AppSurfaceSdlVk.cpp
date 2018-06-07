@@ -65,6 +65,9 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
     const char* ppszLayers[ 3 ] = {nullptr};
     size_t layerCount = 0;
 
+    const char** ppszExtensions = nullptr;
+    size_t extentionCount = 0;
+
     if ( TGetOption< bool >( "renderdoc", false ) ) {
         ppszLayers[ layerCount ] = "VK_LAYER_RENDERDOC_Capture";
         graphicsManagerFlags = 0;
@@ -86,7 +89,15 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
     Logger = apemode::make_unique< GraphicsLogger >( );
     Alloc  = apemode::make_unique< GraphicsAllocator >( );
 
-    auto pGraphicsManager = apemodevk::CreateGraphicsManager( graphicsManagerFlags, Alloc.get( ), Logger.get( ), "Viewer", "VkApeEngine", ppszLayers, layerCount, nullptr, 0 );
+    auto pGraphicsManager = apemodevk::CreateGraphicsManager( graphicsManagerFlags,
+                                                              Alloc.get( ),
+                                                              Logger.get( ),
+                                                              "Viewer",
+                                                              "VkApeEngine",
+                                                              ppszLayers,
+                                                              layerCount,
+                                                              ppszExtensions,
+                                                              extentionCount );
     if ( !pGraphicsManager ) {
         return false;
     }
