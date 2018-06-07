@@ -129,7 +129,7 @@ bool ViewerApp::Initialize(  ) {
 
         OnResized();
 
-        for (uint32_t i = 0; i < FrameCount; ++i) {
+        for ( uint32_t i = 0; i < FrameCount; ++i ) {
             VkCommandPoolCreateInfo cmdPoolCreateInfo;
             InitializeStruct( cmdPoolCreateInfo );
             cmdPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
