@@ -41,3 +41,4 @@
 /FbxSdk
 .vscode/*.bat
 assets/images/*
+.DS_Store

@@ -682,6 +682,7 @@ target_include_directories(
 if (APPLE)
     set(
         third_party_libs
+        $ENV{VK_SDK_PATH}/lib/libMoltenVK.dylib
         $ENV{VK_SDK_PATH}/lib/libvulkan.dylib
         ${shaderc_binary_dir}/libshaderc/libshaderc_combined.a
         ${spirv_cross_binary_dir}/libspirv-cross-core.a
