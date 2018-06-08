@@ -9,6 +9,10 @@ apemode::AppSurfaceSdlBase::~AppSurfaceSdlBase( ) {
     Finalize( );
 }
 
+#ifdef SDL_VIDEO_DRIVER_COCOA
+void* GetNSViewFromNSWindow( void* pNSWindow );
+#endif
+
 bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, const char* name ) {
     apemode_memory_allocation_scope;
 
@@ -31,7 +35,7 @@ bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, co
                 pWindowX11  = windowInfo.info.x11.window;
                 LogInfo( "AppSurfaceSdlBase: Resolved Xlib window handles." );
 #elif SDL_VIDEO_DRIVER_COCOA
-                pNSWindow = windowInfo.info.cocoa.window;
+                pView = GetNSViewFromNSWindow( windowInfo.info.cocoa.window );
                 LogInfo( "AppSurfaceSdlBase: Resolved Cocoa window handle." );
 #elif SDL_VIDEO_DRIVER_WINDOWS
                 hWnd      = windowInfo.info.win.window;

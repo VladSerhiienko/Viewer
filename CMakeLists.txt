@@ -553,6 +553,13 @@ set(
     ${CMAKE_SOURCE_DIR}/src/shared/sdl/Stopwatch.h
 )
 
+if (APPLE)
+    set ( shared_sdl_source_files
+          ${shared_sdl_source_files} 
+          ${CMAKE_SOURCE_DIR}/src/shared/sdl/AppSurfaceSdlBaseCocoa.mm
+          )
+endif()
+
 set(
     shared_platform_source_files
     ${CMAKE_SOURCE_DIR}/src/shared/platform/AssetManager.h
@@ -596,6 +603,7 @@ set(
     ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.h
 )
+
 
 # vert|frag|comp|geom|tesc|tese|h|inl|inc|fx
 file(

@@ -73,7 +73,7 @@ namespace apemode {
         HWND      hWnd      = NULL;
         HINSTANCE hInstance = NULL;
 #elif SDL_VIDEO_DRIVER_COCOA
-        void* pNSWindow = nullptr;
+        void* pView = nullptr;
 #endif
     };
 }
