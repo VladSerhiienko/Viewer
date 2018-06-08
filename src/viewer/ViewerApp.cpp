@@ -183,16 +183,18 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-#if 0
+        #if 1
+
         apemodevk::ImageLoader imgLoader;
         if ( false == imgLoader.Recreate( &pAppSurface->Node ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
 
-        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/bolonga_lod.dds" ) ) {
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/kyoto_lod.dds" ) ) {
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_skybox.dds" ) ) {
+        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/bolonga_lod.dds" ) ) {
+            apemode_memory_allocation_scope;
             {
                 const std::vector< uint8_t > texAssetBin = pTexAsset->AsBin( );
 
@@ -202,9 +204,7 @@ bool ViewerApp::Initialize(  ) {
                 loadOptions.bImgView         = true;
                 loadOptions.bGenerateMipMaps = true;
 
-                RadianceLoadedImg = imgLoader.LoadImageFromFileData( texAssetBin.data( ),
-                                                                 texAssetBin.size( ),
-                                                                 loadOptions ); /* Await */
+                RadianceLoadedImg = imgLoader.LoadImageFromFileData( texAssetBin.data( ), texAssetBin.size( ), loadOptions ); /* Await */
             }
 
             VkSamplerCreateInfo samplerCreateInfo;
@@ -231,9 +231,10 @@ bool ViewerApp::Initialize(  ) {
             pRadianceCubeMapSampler = pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
         }
 
-        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/bolonga_irr.dds" ) ) {
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/kyoto_irr.dds" ) ) {
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_iem.dds" ) ) {
+        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/bolonga_irr.dds" ) ) {
+            apemode_memory_allocation_scope;
             {
                 const std::vector< uint8_t > texAssetBin = pTexAsset->AsBin( );
 
@@ -243,9 +244,7 @@ bool ViewerApp::Initialize(  ) {
                 loadOptions.bImgView         = true;
                 loadOptions.bGenerateMipMaps = false;
 
-                IrradianceLoadedImg = imgLoader.LoadImageFromFileData( texAssetBin.data( ),
-                                                                   texAssetBin.size( ),
-                                                                   loadOptions );
+                IrradianceLoadedImg = imgLoader.LoadImageFromFileData( texAssetBin.data( ), texAssetBin.size( ), loadOptions );
             }
 
             VkSamplerCreateInfo samplerCreateInfo;
@@ -271,7 +270,8 @@ bool ViewerApp::Initialize(  ) {
 
             pIrradianceCubeMapSampler = pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
         }
-#endif
+
+        #endif
 
         pNkRenderer = apemode::unique_ptr< NuklearRendererSdlBase >( apemode_new NuklearRendererSdlVk( ) );
 

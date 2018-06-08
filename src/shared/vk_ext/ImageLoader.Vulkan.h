@@ -15,6 +15,9 @@ namespace apemodevk {
         VkImageLayout             eImgLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
         uint32_t                  QueueId       = kInvalidIndex;
         uint32_t                  QueueFamilyId = kInvalidIndex;
+
+        ~LoadedImage( );
+        void Destroy( );
     };
 
     class ImageLoader {

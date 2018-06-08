@@ -12,6 +12,21 @@
 #include <gli/generate_mipmaps.hpp>
 #pragma warning(default:4309)
 
+apemodevk::LoadedImage::~LoadedImage( ) {
+    Destroy( );
+}
+
+void apemodevk::LoadedImage::Destroy( ) {
+    apemodevk_memory_allocation_scope;
+
+    hImgView.Destroy( );
+    hImg.Destroy( );
+
+    eImgLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
+    QueueId       = kInvalidIndex;
+    QueueFamilyId = kInvalidIndex;
+}
+
 /**
  * Exactly the same, no need for explicit mapping.
  * But still decided to leave it as a function in case GLI stops maintain such compatibility.
@@ -51,6 +66,7 @@ VkImageViewType ToImgViewType( const gli::target eTextureTarget ) {
 }
 
 gli::texture DuplicateWithMipMaps( const gli::texture& originalTexture ) {
+    apemodevk_memory_allocation_scope;
 
     if ( originalTexture.empty( ) ) {
         return gli::texture( );
@@ -75,6 +91,7 @@ gli::texture DuplicateWithMipMaps( const gli::texture& originalTexture ) {
 }
 
 gli::texture GenerateMipMaps( const gli::texture& texture ) {
+    apemodevk_memory_allocation_scope;
 
     if ( texture.empty( ) ) {
         return gli::texture( );
@@ -106,6 +123,8 @@ gli::texture GenerateMipMaps( const gli::texture& texture ) {
 }
 
 gli::texture LoadTexture( const uint8_t* pImageBytes, uint32_t imageWidth, uint32_t imageHeight ) {
+    apemodevk_memory_allocation_scope;
+
     assert( pImageBytes && imageWidth && imageHeight );
     gli::texture texture =
         gli::texture2d( gli::format::FORMAT_RGBA8_UNORM_PACK8,
@@ -120,6 +139,8 @@ gli::texture LoadTexture( const uint8_t* pImageBytes, uint32_t imageWidth, uint3
 gli::texture LoadTexture( const uint8_t*                           pFileContent,
                           size_t                                   fileContentSize,
                           apemodevk::ImageLoader::EImageFileFormat eFileFormat ) {
+    apemodevk_memory_allocation_scope;
+
     assert( pFileContent && fileContentSize );
 
     gli::texture texture;
@@ -153,10 +174,13 @@ gli::texture LoadTexture( const uint8_t*                           pFileContent,
     return texture;
 }
 
-apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture( apemodevk::GraphicsDevice*                 pNode,
-                                                                apemodevk::HostBufferPool*                 pHostBufferPool,
-                                                                gli::texture                               texture,
-                                                                const apemodevk::ImageLoader::LoadOptions& loadOptions ) {
+apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
+    apemodevk::GraphicsDevice*                 pNode,
+    apemodevk::HostBufferPool*                 pHostBufferPool,
+    gli::texture                               texture,
+    const apemodevk::ImageLoader::LoadOptions& loadOptions ) {
+    apemodevk_memory_allocation_scope;
+
     using namespace apemodevk;
 
     /* Check if the user needs mipmaps.
@@ -233,6 +257,8 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture( apemode
 
     for ( size_t mipLevel = 0; mipLevel < texture.levels( ); ++mipLevel ) {
         for ( size_t face = 0; face < texture.faces( ); ++face ) {
+            apemodevk_memory_allocation_scope;
+
             auto& bufferImageCopy = bufferImageCopies[ bufferImageCopyIndex++ ];
             InitializeStruct( bufferImageCopy );
 
@@ -395,6 +421,8 @@ apemodevk::ImageLoader::~ImageLoader( ) {
 }
 
 bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode ) {
+    apemodevk_memory_allocation_scope;
+
     pNode           = pInNode;
     pHostBufferPool = apemodevk_new HostBufferPool( );
     pHostBufferPool->Recreate( pNode, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, false );
@@ -403,11 +431,13 @@ bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode ) {
 }
 
 void apemodevk::ImageLoader::Destroy( ) {
+    apemodevk_memory_allocation_scope;
     apemodevk_delete( pHostBufferPool );
 }
 
 apemodevk::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromFileData(
     const uint8_t* pFileContent, size_t fileContentSize, LoadOptions const& loadOptions ) {
+    apemodevk_memory_allocation_scope;
     if ( !pFileContent || !fileContentSize ) {
         return nullptr;
     }
@@ -422,6 +452,8 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImag
 
 apemodevk::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromRawImgRGBA8(
     const uint8_t* pImageBytes, uint16_t imageWidth, uint16_t imageHeight, LoadOptions const& loadOptions ) {
+    apemodevk_memory_allocation_scope;
+
     if ( !pImageBytes || !imageWidth || !imageHeight ) {
         return nullptr;
     }
