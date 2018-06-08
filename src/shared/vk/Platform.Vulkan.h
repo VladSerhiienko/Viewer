@@ -50,6 +50,20 @@
     #error "Unsupported Vk platform"
 #endif
 
+#include <assert.h>
+#include <inttypes.h>
+#include <memory.h>
+#include <stdarg.h>
+#include <limits>
+#include <iostream>
+
+#include <vulkan/vulkan.h>
+#include <vk_mem_alloc.h>
+
+#undef min
+#undef max
+#include <spirv_glsl.hpp>
+
 #ifndef _In_
 #define _In_
 #endif
@@ -57,15 +71,6 @@
 #ifndef _Out_
 #define _Out_
 #endif
-
-#include <assert.h>
-#include <inttypes.h>
-#include <memory.h>
-#include <stdarg.h>
-
-#include <vulkan/vulkan.h>
-#include <vk_mem_alloc.h>
-#include <spirv_glsl.hpp>
 
 #ifndef APEMODEVK_DEFAULT_ALIGNMENT
 #define APEMODEVK_DEFAULT_ALIGNMENT ( sizeof( void* ) << 1 )

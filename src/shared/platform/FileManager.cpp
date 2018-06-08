@@ -29,12 +29,13 @@ bool apemodeos::FileExists( const std::string& filePath ) {
 }
 
 uint64_t GetLastModifiedTime( const std::string& filePath ) {
-    struct stat statBuffer;
 
 #if _WIN32
-    if ( _stat( filePath.c_str( ), &statBuffer ) != 0 )
+    struct _stat64i32 statBuffer;
+    if ( _stat64i32( filePath.c_str( ), &statBuffer ) != 0 )
         return 0;
 #else
+    struct stat statBuffer;
     if ( stat( filePath.c_str( ), &statBuffer ) != 0 )
         return 0;
 #endif
@@ -42,8 +43,12 @@ uint64_t GetLastModifiedTime( const std::string& filePath ) {
     return statBuffer.st_mtime;
 }
 
-std::string ToCanonicalAbsolutPath( const std::string & relativePath ) {
-    char canonicalAbsolutePathBuffer[ PATH_MAX ] = {0};
+#ifndef APEMODE_PATH_MAX
+#define APEMODE_PATH_MAX 4096
+#endif
+
+std::string ToCanonicalAbsolutPath( const std::string& relativePath ) {
+    char canonicalAbsolutePathBuffer[ APEMODE_PATH_MAX ] = {0};
 
 #if _WIN32
     if ( !_fullpath( canonicalAbsolutePathBuffer, relativePath.c_str( ), sizeof( canonicalAbsolutePathBuffer ) ) ) {
