@@ -36,6 +36,8 @@ void *apemode::NuklearRendererSdlBase::DeviceUploadAtlas( InitParametersBase *pI
 }
 
 bool apemode::NuklearRendererSdlBase::Init( InitParametersBase *pInitParamsBase ) {
+    apemode_memory_allocation_scope;
+
     if ( nullptr == pInitParamsBase->pFontAsset ) {
         return false;
     }
@@ -67,12 +69,16 @@ bool apemode::NuklearRendererSdlBase::Init( InitParametersBase *pInitParamsBase 
 }
 
 void apemode::NuklearRendererSdlBase::FontStashBegin( nk_font_atlas **ppAtlas ) {
+    apemode_memory_allocation_scope;
+
     nk_font_atlas_init_default( &Atlas );
     nk_font_atlas_begin( &Atlas );
     *ppAtlas = &Atlas;
 }
 
 bool apemode::NuklearRendererSdlBase::FontStashEnd( InitParametersBase *pInitParamsBase ) {
+    apemode_memory_allocation_scope;
+
     int imageWidth  = 0;
     int imageHeight = 0;
 
@@ -99,6 +105,8 @@ bool apemode::NuklearRendererSdlBase::Render( RenderParametersBase *pRenderParam
 }
 
 void apemode::NuklearRendererSdlBase::Shutdown( ) {
+    apemode_memory_allocation_scope;
+
     nk_font_atlas_clear( &Atlas );
     nk_free( &Context );
 
@@ -117,6 +125,7 @@ bool apemode::NuklearRendererSdlBase::DeviceCreate( InitParametersBase *pInitPar
 }
 
 void apemode::NuklearRendererSdlBase::SetStyle( Theme eTheme ) {
+    apemode_memory_allocation_scope;
 
     auto ctx = &Context;
     struct nk_color table[ NK_COLOR_COUNT ];

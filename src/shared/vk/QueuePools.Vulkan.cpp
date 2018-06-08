@@ -31,6 +31,7 @@ bool apemodevk::QueuePool::Inititalize( VkDevice                       pInDevice
                                         const VkQueueFamilyProperties* pQueuePropsEnd,
                                         const float*                   pQueuePrioritiesIt,
                                         const float*                   pQueuePrioritiesItEnd ) {
+    apemodevk_memory_allocation_scope;
 
     pDevice = pInDevice;
     pPhysicalDevice = pInPhysicalDevice;
@@ -81,6 +82,8 @@ const apemodevk::QueueFamilyPool* apemodevk::QueuePool::GetPool( VkQueueFlags qu
 }
 
 apemodevk::AcquiredQueue apemodevk::QueuePool::Acquire( bool bIgnoreFenceStatus, VkQueueFlags queueFlags, bool match ) {
+    apemodevk_memory_allocation_scope;
+
     /* Try to find something usable. */
     if ( auto pool = GetPool( queueFlags, match ) ) {
         auto acquiredQueue = pool->Acquire( bIgnoreFenceStatus );
@@ -93,6 +96,8 @@ apemodevk::AcquiredQueue apemodevk::QueuePool::Acquire( bool bIgnoreFenceStatus,
 }
 
 apemodevk::AcquiredQueue apemodevk::QueuePool::Acquire( bool bIgnoreFenceStatus, uint32_t queueFamilyIndex ) {
+    apemodevk_memory_allocation_scope;
+
     /* Try to find something usable. */
     if ( auto pool = GetPool( queueFamilyIndex ) ) {
         auto acquiredQueue = pool->Acquire( bIgnoreFenceStatus );
@@ -112,6 +117,8 @@ bool apemodevk::QueueFamilyPool::Inititalize( VkDevice                       pIn
                                               VkPhysicalDevice               pInPhysicalDevice,
                                               uint32_t                       InQueueFamilyIndex,
                                               VkQueueFamilyProperties const& InQueueFamilyProps ) {
+    apemodevk_memory_allocation_scope;
+
     pDevice          = pInDevice;
     pPhysicalDevice  = pInPhysicalDevice;
     queueFamilyId    = InQueueFamilyIndex;
@@ -122,6 +129,8 @@ bool apemodevk::QueueFamilyPool::Inititalize( VkDevice                       pIn
 }
 
 void apemodevk::QueueFamilyPool::Destroy( ) {
+    apemodevk_memory_allocation_scope;
+
     if ( false == Queues.empty( ) ) {
         uint32_t queueIndex = queueFamilyProps.queueCount;
         while ( queueIndex-- ) {
@@ -191,6 +200,8 @@ bool apemodevk::QueueFamilyBased::SupportsTransfer( ) const {
 }
 
 apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence ) {
+    apemodevk_memory_allocation_scope;
+
     uint32_t queueIndex = 0;
 
     /* Loop through queues */
@@ -235,6 +246,7 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
 }
 
 bool apemodevk::QueueFamilyPool::Release( const apemodevk::AcquiredQueue& acquiredQueue ) {
+    apemodevk_memory_allocation_scope;
 
     /* Check if the queue was acquired */
     if ( VK_NULL_HANDLE != acquiredQueue.pQueue ) {
@@ -267,6 +279,8 @@ bool apemodevk::CommandBufferPool::Inititalize( VkDevice                       p
                                                 VkPhysicalDevice               pInPhysicalDevice,
                                                 const VkQueueFamilyProperties* pQueuePropsIt,
                                                 const VkQueueFamilyProperties* pQueuePropsEnd ) {
+    apemodevk_memory_allocation_scope;
+
     pDevice         = pInDevice;
     pPhysicalDevice = pInPhysicalDevice;
 
@@ -315,6 +329,8 @@ const apemodevk::CommandBufferFamilyPool* apemodevk::CommandBufferPool::GetPool(
 apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferPool::Acquire( bool         bIgnoreFenceStatus,
                                                                         VkQueueFlags eRequiredQueueFlags,
                                                                         bool         bExactMatchByFlags ) {
+    apemodevk_memory_allocation_scope;
+
     /* Try to find something usable. */
     if ( auto pool = GetPool( eRequiredQueueFlags, bExactMatchByFlags ) ) {
         auto acquiredQueue = pool->Acquire( bIgnoreFenceStatus );
@@ -361,6 +377,7 @@ apemodevk::CommandBufferFamilyPool::~CommandBufferFamilyPool( ) {
 
 void InitializeCommandBufferInPool( VkDevice pDevice, uint32_t queueFamilyId, apemodevk::CommandBufferInPool& cmdBuffer ) {
     using namespace apemodevk;
+    apemodevk_memory_allocation_scope;
 
     VkCommandPoolCreateInfo commandPoolCreateInfo;
     InitializeStruct( commandPoolCreateInfo );
@@ -381,6 +398,8 @@ void InitializeCommandBufferInPool( VkDevice pDevice, uint32_t queueFamilyId, ap
 }
 
 apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bool bIgnoreFence ) {
+    apemodevk_memory_allocation_scope;
+
     uint32_t              cmdBufferIndex = 0;
     AcquiredCommandBuffer acquiredCommandBuffer;
 
@@ -426,6 +445,7 @@ apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bo
 }
 
 bool apemodevk::CommandBufferFamilyPool::Release( const AcquiredCommandBuffer& acquiredCmdBuffer ) {
+    apemodevk_memory_allocation_scope;
 
     /* Check if the command buffer was acquired */
     if ( VK_NULL_HANDLE != acquiredCmdBuffer.pCmdBuffer ) {
@@ -460,6 +480,7 @@ apemodevk::CommandBufferInPool::CommandBufferInPool( const CommandBufferInPool& 
 }
 
 VkResult apemodevk::WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t timeout ) {
+    apemodevk_memory_allocation_scope;
 
     VkResult err;
     switch ( err = CheckedCall( vkGetFenceStatus( pDevice, pFence ) ) ) {

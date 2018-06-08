@@ -198,77 +198,102 @@ void apemode::deallocate( void *pMemory, const char *pszSourceFile, const unsign
     return apememext::aligned_free( pMemory, pszSourceFile, sourceLine, pszSourceFunc, m_alloc_free );
 }
 
-#if 0 // __GNUC__
+#define APEMODE_ENABLE_MEMORY_ALLOCATION_SCOPES
+#ifdef APEMODE_ENABLE_MEMORY_ALLOCATION_SCOPES
 
-#include <execinfo.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <unistd.h>
+thread_local apemode::MemoryAllocationScope::CodeLocation gCurrLocation;
 
-#define BT_BUF_SIZE 100
-
-#define APEMODE_SUPPORT_CALLER_LOCATION
-
-void WriteCallerLocation( char *pszBuffer, size_t bufferSize, void *pReturnAddress ) {
-    // void * buffer[ BT_BUF_SIZE ] = {0};
-
-    // int    nptrs = backtrace( buffer, BT_BUF_SIZE );
-    // char **strings = backtrace_symbols( buffer, nptrs );
-
-    // for ( int j = 0; strings && j < nptrs; j++ )
-    //     if ( buffer[ j ] == pReturnAddress ) {
-    //         printf( "%s\n", strings[ j ] );
-    //         sprintf( pszBuffer, "%s", strings[ j ] );
-    //         free( strings );
-    //         return;
-    //     }
-
-    // if ( strings )
-    //     free( strings );
-    // snprintf( pszBuffer, sizeof( bufferSize ), "%p", pReturnAddress );
+void apemode::GetPrevMemoryAllocationScope( const char *&pszSourceFile, unsigned int &sourceLine, const char *&pszSourceFunc ) {
+    pszSourceFile = gCurrLocation.pszSourceFile;
+    sourceLine    = gCurrLocation.SourceLine;
+    pszSourceFunc = gCurrLocation.pszSourceFunc;
 }
 
-#define APEMODE_NEW_GET_CALLER_FUNCTION \
-    char szCallerBuffer[ 512 ] = {0};   \
-    WriteCallerLocation( szCallerBuffer, sizeof( szCallerBuffer ), __builtin_return_address( 0 ) )
+void apemode::StartMemoryAllocationScope( const char * pszSourceFile, const unsigned int sourceLine, const char * pszSourceFunc ) {
+    gCurrLocation.pszSourceFile = pszSourceFile;
+    gCurrLocation.SourceLine    = sourceLine;
+    gCurrLocation.pszSourceFunc = pszSourceFunc;
+}
 
-#define APEMODE_NEW_CALLER_FUNCTION_NAME szCallerBuffer
+void apemode::EndMemoryAllocationScope( const char *pszSourceFile, const unsigned int sourceLine, const char *pszSourceFunc ) {
+    gCurrLocation.pszSourceFile = pszSourceFile;
+    gCurrLocation.SourceLine    = sourceLine;
+    gCurrLocation.pszSourceFunc = pszSourceFunc;
+}
+
+apemode::MemoryAllocationScope::MemoryAllocationScope( const char *       pszSourceFile,
+                                                       const unsigned int sourceLine,
+                                                       const char *       pszSourceFunc ) {
+    GetPrevMemoryAllocationScope( PrevLocation.pszSourceFile, PrevLocation.SourceLine, PrevLocation.pszSourceFunc );
+    StartMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
+}
+
+apemode::MemoryAllocationScope::~MemoryAllocationScope( ) {
+    EndMemoryAllocationScope( PrevLocation.pszSourceFile, PrevLocation.SourceLine, PrevLocation.pszSourceFunc );
+}
+
+#define APEMODE_GLOBAL_NEW_DELETE_FILE gCurrLocation.pszSourceFile
+#define APEMODE_GLOBAL_NEW_DELETE_LINE gCurrLocation.SourceLine
+#define APEMODE_GLOBAL_NEW_DELETE_FUNC gCurrLocation.pszSourceFunc
 
 #else
 
-#define APEMODE_NEW_GET_CALLER_FUNCTION
-#define APEMODE_NEW_CALLER_FUNCTION_NAME __FUNCTION__
+#define APEMODE_GLOBAL_NEW_DELETE_FILE __FILE__
+#define APEMODE_GLOBAL_NEW_DELETE_LINE __LINE__
+#define APEMODE_GLOBAL_NEW_DELETE_FUNC __FUNCTION__
 
 #endif
 
 void *operator new[]( std::size_t size, std::nothrow_t const & ) APEMODE_NO_EXCEPT {
-    APEMODE_NEW_GET_CALLER_FUNCTION;
-    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, APEMODE_NEW_CALLER_FUNCTION_NAME, m_alloc_new_array );
+    return apememext::aligned_malloc( size,
+                                      APEMODE_DEFAULT_ALIGNMENT,
+                                      APEMODE_GLOBAL_NEW_DELETE_FILE,
+                                      APEMODE_GLOBAL_NEW_DELETE_LINE,
+                                      APEMODE_GLOBAL_NEW_DELETE_FUNC,
+                                      m_alloc_new_array );
 }
 
 void *operator new[]( std::size_t size ) APEMODE_THROW_BAD_ALLOC {
-    APEMODE_NEW_GET_CALLER_FUNCTION;
-    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, APEMODE_NEW_CALLER_FUNCTION_NAME, m_alloc_new_array );
+    return apememext::aligned_malloc( size,
+                                      APEMODE_DEFAULT_ALIGNMENT,
+                                      APEMODE_GLOBAL_NEW_DELETE_FILE,
+                                      APEMODE_GLOBAL_NEW_DELETE_LINE,
+                                      APEMODE_GLOBAL_NEW_DELETE_FUNC,
+                                      m_alloc_new_array );
 }
 
 void *operator new( std::size_t size, std::nothrow_t const & ) APEMODE_NO_EXCEPT {
-    APEMODE_NEW_GET_CALLER_FUNCTION;
-    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, APEMODE_NEW_CALLER_FUNCTION_NAME, m_alloc_new );
+    return apememext::aligned_malloc( size,
+                                      APEMODE_DEFAULT_ALIGNMENT,
+                                      APEMODE_GLOBAL_NEW_DELETE_FILE,
+                                      APEMODE_GLOBAL_NEW_DELETE_LINE,
+                                      APEMODE_GLOBAL_NEW_DELETE_FUNC,
+                                      m_alloc_new );
 }
 
 void *operator new( std::size_t size ) APEMODE_THROW_BAD_ALLOC {
-    APEMODE_NEW_GET_CALLER_FUNCTION;
-    return apememext::aligned_malloc( size, APEMODE_DEFAULT_ALIGNMENT, __FILE__, __LINE__, APEMODE_NEW_CALLER_FUNCTION_NAME, m_alloc_new );
+    return apememext::aligned_malloc( size,
+                                      APEMODE_DEFAULT_ALIGNMENT,
+                                      APEMODE_GLOBAL_NEW_DELETE_FILE,
+                                      APEMODE_GLOBAL_NEW_DELETE_LINE,
+                                      APEMODE_GLOBAL_NEW_DELETE_FUNC,
+                                      m_alloc_new );
 }
 
 void operator delete[]( void *pMemory ) APEMODE_NO_EXCEPT {
-    APEMODE_NEW_GET_CALLER_FUNCTION;
-    return apememext::aligned_free( pMemory, __FILE__, __LINE__, APEMODE_NEW_CALLER_FUNCTION_NAME, m_alloc_delete_array );
+    return apememext::aligned_free( pMemory,
+                                    APEMODE_GLOBAL_NEW_DELETE_FILE,
+                                    APEMODE_GLOBAL_NEW_DELETE_LINE,
+                                    APEMODE_GLOBAL_NEW_DELETE_FUNC,
+                                    m_alloc_delete_array );
 }
 
 void operator delete( void *pMemory ) APEMODE_NO_EXCEPT {
-    APEMODE_NEW_GET_CALLER_FUNCTION;
-    return apememext::aligned_free( pMemory, __FILE__, __LINE__, APEMODE_NEW_CALLER_FUNCTION_NAME, m_alloc_delete );
+    return apememext::aligned_free( pMemory,
+                                    APEMODE_GLOBAL_NEW_DELETE_FILE,
+                                    APEMODE_GLOBAL_NEW_DELETE_LINE,
+                                    APEMODE_GLOBAL_NEW_DELETE_FUNC,
+                                    m_alloc_delete );
 }
 
 void *operator new[]( std::size_t             size,

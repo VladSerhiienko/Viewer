@@ -7,6 +7,8 @@ bool apemodevk::SamplerManager::Recreate( apemodevk::GraphicsDevice* pInNode ) {
 }
 
 void apemodevk::SamplerManager::Release( apemodevk::GraphicsDevice* pNode ) {
+    apemodevk_memory_allocation_scope;
+
     THandle< VkSampler > hSampler;
     for ( auto& storedSampler : StoredSamplers ) {
         hSampler.Handle = storedSampler.pSampler;
@@ -18,6 +20,8 @@ void apemodevk::SamplerManager::Release( apemodevk::GraphicsDevice* pNode ) {
 constexpr uint32_t kInvalidSamplerIndex = 0xffffffff;
 
 uint32_t apemodevk::SamplerManager::GetSamplerIndex( const VkSamplerCreateInfo& samplerCreateInfo ) {
+    apemodevk_memory_allocation_scope;
+
     const auto samplerHash = apemode::CityHash64( samplerCreateInfo );
     const auto samplerIt = std::find_if( StoredSamplers.begin( ),
                                          StoredSamplers.end( ),

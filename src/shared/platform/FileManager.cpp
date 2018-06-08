@@ -94,6 +94,8 @@ void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
 }
 
 bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool bRemoveDeletedFiles ) {
+    apemode_memory_allocation_scope;
+
     if ( storageDirectory.empty( ) )
         storageDirectory = "./";
 
@@ -178,6 +180,8 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
 }
 
 void apemodeos::FileTracker::CollectChangedFiles( std::vector< std::string >& OutChangedFiles ) {
+    apemode_memory_allocation_scope;
+
     uint32_t changedFileCount = 0;
 
     for ( auto& file : Files )

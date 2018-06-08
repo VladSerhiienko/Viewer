@@ -1,11 +1,43 @@
 #include <NuklearSdlVk.h>
 #include <ArrayUtils.h>
+#include <AppState.h>
 
 namespace apemode {
     using namespace apemodevk;
 }
 
+apemode::NuklearRendererSdlVk::~NuklearRendererSdlVk( ) {
+    apemode::LogInfo( "NuklearRendererSdlVk: Destroying." );
+    Shutdown( );
+}
+
+void apemode::NuklearRendererSdlVk::DeviceDestroy( ) {
+    apemode_memory_allocation_scope;
+
+    apemode::LogInfo( "NuklearRendererSdlVk: Destroying device resources." );
+
+    hUploadBuffer.Destroy( );
+    for ( auto& h : hVertexBuffer )
+        h.Destroy( );
+    for ( auto& h : hIndexBuffer )
+        h.Destroy( );
+    for ( auto& h : hUniformBuffer )
+        h.Destroy( );
+
+    hFontImgView.Destroy( );
+    hFontImg.Destroy( );
+    hFontSampler.Destroy( );
+    hPipeline.Destroy( );
+    hPipelineCache.Destroy( );
+    hDescSetLayout.Destroy( );
+    hPipelineLayout.Destroy( );
+
+    NuklearRendererSdlBase::DeviceDestroy( );
+}
+
 bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsBase ) {
+    apemode_memory_allocation_scope;
+
     auto pRenderParams = (RenderParametersVk*) pRenderParamsBase;
     auto frameIndex   = ( pRenderParams->FrameIndex ) % kMaxFrameCount;
 
@@ -114,14 +146,13 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
     /* Setup scale and translation */
     {
         float offsetScale[ 4 ] = {
-            -1.0f,               /* Translation X */
-            -1.0f,               /* Translation Y */
+            -1.0f,                               /* Translation X */
+            -1.0f,                               /* Translation Y */
             2.0f / pRenderParamsBase->Dims[ 0 ], /* Scaling X */
             2.0f / pRenderParamsBase->Dims[ 1 ], /* Scaling Y */
         };
 
-        vkCmdPushConstants(
-            pRenderParams->pCmdBuffer, hPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( float[ 4 ] ), offsetScale );
+        vkCmdPushConstants( pRenderParams->pCmdBuffer, hPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( float[ 4 ] ), offsetScale );
     }
 
     const nk_draw_command* cmd        = nullptr;
@@ -155,6 +186,8 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
 }
 
 bool apemode::NuklearRendererSdlVk::DeviceCreate( InitParametersBase* pInitParamsBase ) {
+    apemode_memory_allocation_scope;
+
     const char* vertex_shader =
         "#version 450\n"
         "#extension GL_ARB_separate_shader_objects : enable\n"

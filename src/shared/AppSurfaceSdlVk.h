@@ -11,6 +11,7 @@ namespace apemode {
 
     struct GraphicsLogger;
     struct GraphicsAllocator;
+    struct GraphicsMemoryAllocationScope;
 
     /**
      * Contains handle to window and graphics context.
@@ -31,8 +32,9 @@ namespace apemode {
         void*              GetGraphicsHandle( ) override;
         SceneRendererBase* CreateSceneRenderer( ) override;
 
-        apemode::unique_ptr< GraphicsAllocator > Alloc;
-        apemode::unique_ptr< GraphicsLogger >    Logger;
+        apemode::unique_ptr< GraphicsAllocator >             Alloc;
+        apemode::unique_ptr< GraphicsLogger >                Logger;
+        apemode::unique_ptr< GraphicsMemoryAllocationScope > AllocScope;
 
         apemodevk::Surface        Surface;
         apemodevk::Swapchain      Swapchain;

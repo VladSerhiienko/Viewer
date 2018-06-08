@@ -61,7 +61,8 @@ namespace apemode {
         std::vector< uint8_t > BufferContent;
 
     public:
-        virtual ~NuklearRendererSdlVk( ) = default;
+        virtual ~NuklearRendererSdlVk( );
+        void  DeviceDestroy( ) override;
 
         bool  Render( RenderParametersBase *pRenderParams ) override;   /* RenderParametersVk* */
         bool  DeviceCreate( InitParametersBase *pInitParams ) override; /* InitParametersVk* */

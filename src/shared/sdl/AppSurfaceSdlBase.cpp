@@ -10,6 +10,8 @@ apemode::AppSurfaceSdlBase::~AppSurfaceSdlBase( ) {
 }
 
 bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, const char* name ) {
+    apemode_memory_allocation_scope;
+
     LogInfo( "apemode/AppSurfaceSdlBase/Initialize" );
 
     if ( nullptr == pSdlWindow && !SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS ) ) {

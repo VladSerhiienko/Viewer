@@ -55,6 +55,7 @@ void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
 
 void apemodeos::AssetManager::AddFilesFromDirectory( const std::string&                InStorageDirectory,
                                                      const std::vector< std::string >& InFilePatterns ) {
+    apemode_memory_allocation_scope;
     std::string storageDirectory = InStorageDirectory;
 
     if ( storageDirectory.empty( ) ) {

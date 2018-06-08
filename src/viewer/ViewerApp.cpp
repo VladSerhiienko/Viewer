@@ -43,6 +43,7 @@ struct EFeedbackTypeWithOStream {
 bool ShaderFileReader::ReadShaderTxtFile( const std::string& InFilePath,
                                           std::string&       OutFileFullPath,
                                           std::string&       OutFileContent ) {
+    apemode_memory_allocation_scope;
     if ( auto pAsset = mAssetManager->GetAsset( InFilePath ) ) {
         OutFileContent  = pAsset->AsTxt( );
         OutFileFullPath = pAsset->GetId( );
@@ -58,6 +59,7 @@ void ShaderFeedbackWriter::WriteFeedback( EFeedbackType                         
                                           const ShaderCompiler::IMacroDefinitionCollection* pMacros,
                                           const void*                                       pContent,
                                           const void*                                       pContentEnd ) {
+    apemode_memory_allocation_scope;
 
     const auto feedbackStage            = eType & eFeedbackType_CompilationStageMask;
     const auto feedbackCompilationError = eType & eFeedbackType_CompilationStatusMask;
@@ -82,6 +84,7 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 //const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
 ViewerApp::ViewerApp( ) {
+    apemode_memory_allocation_scope;
     pCamInput      = apemode::unique_ptr< CameraControllerInputBase >( apemode_new MouseKeyboardCameraControllerInput( ) );
     pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new FreeLookCameraController( ) );
     // pCamController = apemode::make_unique< ModelViewCameraController >( );
@@ -97,6 +100,7 @@ apemode::unique_ptr< apemode::AppSurfaceBase > ViewerApp::CreateAppSurface( ) {
 }
 
 bool ViewerApp::Initialize(  ) {
+    apemode_memory_allocation_scope;
     LogInfo( "ViewerApp: Initializing." );
 
     if ( AppBase::Initialize( ) ) {
@@ -110,11 +114,15 @@ bool ViewerApp::Initialize(  ) {
         mFileTracker.ScanDirectory( assetsFolder, true );
 
         pShaderFileReader = apemode::make_unique< apemode::ShaderFileReader >( );
+        pShaderFeedbackWriter = apemode::make_unique< apemode::ShaderFeedbackWriter >( );
         pShaderFileReader->mAssetManager = &mAssetManager;
 
-        pShaderFeedbackWriter = apemode::make_unique< apemode::ShaderFeedbackWriter >( );
+        {   // https://github.com/google/shaderc/issues/356
+            // https://github.com/google/shaderc/issues?utf8=%E2%9C%93&q=leak
+            apemode_named_memory_allocation_scope( leakingShaderCompiler );
+            pShaderCompiler = apemode::make_unique< apemodevk::ShaderCompiler >( );
+        }
 
-        pShaderCompiler = apemode::make_unique< apemodevk::ShaderCompiler >( );
         pShaderCompiler->SetShaderFileReader( pShaderFileReader.get( ) );
         pShaderCompiler->SetShaderFeedbackWriter( pShaderFeedbackWriter.get( ) );
 
@@ -133,9 +141,10 @@ bool ViewerApp::Initialize(  ) {
         OnResized();
 
         for ( uint32_t i = 0; i < FrameCount; ++i ) {
+
             VkCommandPoolCreateInfo cmdPoolCreateInfo;
             InitializeStruct( cmdPoolCreateInfo );
-            cmdPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+            cmdPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
             cmdPoolCreateInfo.queueFamilyIndex = pAppSurface->PresentQueueFamilyIds[0];
 
             if ( false == hCmdPool[ i ].Recreate( pAppSurface->Node, cmdPoolCreateInfo ) ) {
@@ -264,7 +273,7 @@ bool ViewerApp::Initialize(  ) {
         }
 #endif
 
-        pNkRenderer = apemode_new NuklearRendererSdlVk();
+        pNkRenderer = apemode::unique_ptr< NuklearRendererSdlBase >( apemode_new NuklearRendererSdlVk( ) );
 
         auto queueFamilyPool = pAppSurface->Node.GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
         apemodevk::AcquiredQueue acquiredQueue;
@@ -295,7 +304,7 @@ bool ViewerApp::Initialize(  ) {
         initParamsDbg.FrameCount      = FrameCount;
 
 #if 0
-        pDebugRenderer = apemode_new DebugRendererVk();
+        pDebugRenderer = apemode::unique_ptr< DebugRendererVk >( apemode_new DebugRendererVk() );
         pDebugRenderer->RecreateResources( &initParamsDbg );
 
         pSceneRendererBase = pAppSurface->CreateSceneRenderer( );
@@ -365,13 +374,13 @@ bool ViewerApp::Initialize(  ) {
         skyboxRendererRecreateParams.pDescPool       = DescriptorPool;
         skyboxRendererRecreateParams.FrameCount      = FrameCount;
 
+#if 0
         pSkyboxRenderer = apemode::make_unique< apemodevk::SkyboxRenderer >( );
         if ( false == pSkyboxRenderer->Recreate( &skyboxRendererRecreateParams ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
 
-#if 0
         pSkybox                = apemode::make_unique< apemodevk::Skybox >( );
         pSkybox->pSampler      = pRadianceCubeMapSampler;
         pSkybox->pImgView      = RadianceLoadedImg->hImgView;
@@ -391,6 +400,8 @@ bool ViewerApp::Initialize(  ) {
 }
 
 bool apemode::ViewerApp::OnResized( ) {
+    apemode_memory_allocation_scope;
+
     if ( auto appSurface = static_cast< AppSurfaceSdlVk* >( GetSurface( ) ) ) {
 
             Width  = appSurface->GetWidth( );
@@ -545,6 +556,7 @@ bool apemode::ViewerApp::OnResized( ) {
 }
 
 void ViewerApp::OnFrameMove( ) {
+    apemode_memory_allocation_scope;
     nk_input_begin( &pNkRenderer->Context ); {
         SDL_Event evt;
         while ( SDL_PollEvent( &evt ) )
@@ -559,6 +571,7 @@ void ViewerApp::OnFrameMove( ) {
 }
 
 void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
+    apemode_memory_allocation_scope;
     TotalSecs += deltaSecs;
 
     bool hovered = false;
@@ -637,6 +650,8 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
     pCamController->Update( deltaSecs );
 
     if ( auto pAppSurface = static_cast< AppSurfaceSdlVk* >( GetSurface( ) ) ) {
+        apemode_memory_allocation_scope;
+
         auto queueFamilyPool = pAppSurface->Node.GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
         auto acquiredQueue   = queueFamilyPool->Acquire( true );
         while ( acquiredQueue.pQueue == nullptr ) {
@@ -851,9 +866,11 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 }
 
 bool ViewerApp::IsRunning( ) {
+    apemode_memory_allocation_scope;
     return AppBase::IsRunning( );
 }
 
 extern "C" AppBase* CreateApp( ) {
+    apemode_memory_allocation_scope;
     return apemode_new ViewerApp( );
 }

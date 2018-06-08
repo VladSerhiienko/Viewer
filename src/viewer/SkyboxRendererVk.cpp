@@ -26,19 +26,11 @@ struct SkyboxVertex {
     float texcoords[ 2 ];
 };
 
-inline void DebugBreak( ) {
-    apemodevk::platform::DebugBreak( );
-}
-
-inline void OutputDebugStringA( const char* pDebugStringA ) {
-    // SDL_LogInfo( SDL_LOG_CATEGORY_RENDER, pDebugStringA );
-}
-
 bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
+    apemodevk_memory_allocation_scope;
     if ( nullptr == pParams->pNode ) {
         return false;
     }
-
 
     apemodevk::ShaderCompilerIncludedFileSet includedFiles;
 
@@ -254,12 +246,13 @@ bool apemodevk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
     return true;
 }
 
-void apemodevk::SkyboxRenderer::Reset(uint32_t FrameIndex)
-{
+void apemodevk::SkyboxRenderer::Reset( uint32_t FrameIndex ) {
+    apemodevk_memory_allocation_scope;
     BufferPools[ FrameIndex ].Reset( );
 }
 
 bool apemodevk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pParams ) {
+    apemodevk_memory_allocation_scope;
 
     auto FrameIndex = (pParams->FrameIndex) % kMaxFrameCount;
 
@@ -334,7 +327,6 @@ bool apemodevk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPara
     return true;
 }
 
-void apemodevk::SkyboxRenderer::Flush(uint32_t FrameIndex)
-{
+void apemodevk::SkyboxRenderer::Flush( uint32_t FrameIndex ) {
     BufferPools[ FrameIndex ].Flush( );
 }

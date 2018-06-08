@@ -75,13 +75,28 @@ namespace apemodevk {
                                const char*        sourceFunc ) = 0;
         };
 
+        /* Allocator interface, allows tracking. */
+        struct IMemoryAllocationScope {
+            virtual void GetPrevMemoryAllocationScope( const char*&  pszPrevSourceFile,
+                                                       unsigned int& prevSourceLine,
+                                                       const char*&  pszPrevSourceFunc ) const  = 0;
+            virtual void StartMemoryAllocationScope( const char*        pszSourceFile,
+                                                     const unsigned int sourceLine,
+                                                     const char*        pszSourceFunc ) const   = 0;
+            virtual void EndMemoryAllocationScope( const char*        pszPrevSourceFile,
+                                                   const unsigned int prevSourceLine,
+                                                   const char*        pszPrevSourceFunc ) const = 0;
+        };
+
         /* Destruction order must be preserved */
 
         IAllocator*                     pAllocator;
+        IMemoryAllocationScope*         pMemoryAllocationScope;
         ILogger*                        pLogger;
         APIVersion                      Version;
         THandle< VkInstance >           hInstance;
         std::vector< VkPhysicalDevice > ppAdapters;
+        VkAllocationCallbacks           AllocCallbacks;
 
         struct {
             PFN_vkGetDeviceProcAddr                       GetDeviceProcAddr                            = nullptr;
@@ -102,31 +117,34 @@ namespace apemodevk {
         } Ext;
 
         /* Initializes and returns GraphicsManager instance. */
-        friend GraphicsManager* CreateGraphicsManager( uint32_t     eFlags,
-                                                       IAllocator*  pInAlloc,
-                                                       ILogger*     pInLogger,
-                                                       const char*  pszAppName,
-                                                       const char*  pszEngineName,
-                                                       const char** ppszLayers,
-                                                       size_t       layerCount,
-                                                       const char** ppszExtensions,
-                                                       size_t       extensionCount );
+        friend GraphicsManager* CreateGraphicsManager( uint32_t                eFlags,
+                                                       IAllocator*             pInAlloc,
+                                                       ILogger*                pInLogger,
+                                                       IMemoryAllocationScope* pMemoryAllocationScope,
+                                                       const char*             pszAppName,
+                                                       const char*             pszEngineName,
+                                                       const char**            ppszLayers,
+                                                       size_t                  layerCount,
+                                                       const char**            ppszExtensions,
+                                                       size_t                  extensionCount );
         friend GraphicsManager* GetGraphicsManager( );
         friend void             DestroyGraphicsManager( );
 
-        bool Initialize( uint32_t     flags,
-                         IAllocator*  pAlloc,
-                         ILogger*     pLogger,
-                         const char*  pszAppName,
-                         const char*  pszEngineName,
-                         const char** ppszLayers,
-                         size_t       layerCount,
-                         const char** ppszExtensions,
-                         size_t       extensionCount );
+        bool Initialize( uint32_t                flags,
+                         IAllocator*             pAlloc,
+                         ILogger*                pLogger,
+                         IMemoryAllocationScope* pMemoryAllocationScope,
+                         const char*             pszAppName,
+                         const char*             pszEngineName,
+                         const char**            ppszLayers,
+                         size_t                  layerCount,
+                         const char**            ppszExtensions,
+                         size_t                  extensionCount );
         void Destroy( );
 
-        IAllocator* GetAllocator( );
-        ILogger*    GetLogger( );
+        IAllocator*             GetAllocator( );
+        ILogger*                GetLogger( );
+        const IMemoryAllocationScope* GetMemoryAllocationScope( ) const;
 
         const VkAllocationCallbacks* GetAllocationCallbacks( ) const;
 
@@ -136,15 +154,16 @@ namespace apemodevk {
     };
 
     /* Returns GraphicsManager instance */
-    GraphicsManager* CreateGraphicsManager( uint32_t                     eFlags,
-                                            GraphicsManager::IAllocator* pInAlloc,
-                                            GraphicsManager::ILogger*    pInLogger,
-                                            const char*                  pszAppName,
-                                            const char*                  pszEngineName,
-                                            const char**                 ppszLayers,
-                                            size_t                       layerCount,
-                                            const char**                 ppszExtensions,
-                                            size_t                       extensionCount );
+    GraphicsManager* CreateGraphicsManager( uint32_t                                 eFlags,
+                                            GraphicsManager::IAllocator*             pInAlloc,
+                                            GraphicsManager::ILogger*                pInLogger,
+                                            GraphicsManager::IMemoryAllocationScope* pMemoryAllocationScope,
+                                            const char*                              pszAppName,
+                                            const char*                              pszEngineName,
+                                            const char**                             ppszLayers,
+                                            size_t                                   layerCount,
+                                            const char**                             ppszExtensions,
+                                            size_t                                   extensionCount );
     GraphicsManager* GetGraphicsManager( );
     void             DestroyGraphicsManager( );
 

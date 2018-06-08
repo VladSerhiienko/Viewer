@@ -21,13 +21,16 @@ struct AppStateScope {
 #endif
 
 int main( int argc, char** argv ) {
+    apemode_memory_allocation_scope;
+
     AppStateScope appStateScope( argc, (const char**) argv );
+    apemode::unique_ptr< apemode::AppBase > app( CreateApp( ) );
 
-    apemode::unique_ptr< apemode::AppBase > pAppImpl( CreateApp( ) );
+    if ( app && app->Initialize( ) ) {
+        apemode_memory_allocation_scope;
 
-    if ( pAppImpl && pAppImpl->Initialize( ) ) {
-        while ( pAppImpl->IsRunning( ) )
-            pAppImpl->OnFrameMove( );
+        while ( app->IsRunning( ) )
+            app->OnFrameMove( );
     }
 
     return 0;

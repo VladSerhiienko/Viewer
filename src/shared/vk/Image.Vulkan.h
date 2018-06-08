@@ -45,6 +45,7 @@ namespace apemodevk {
         bool Recreate( VmaAllocator                    pAllocator,
                        const VkImageCreateInfo  &      createInfo,
                        const VmaAllocationCreateInfo & allocInfo ) {
+            apemodevk_memory_allocation_scope;
 
             Deleter( Handle );
             Handle.pAllocator = pAllocator;

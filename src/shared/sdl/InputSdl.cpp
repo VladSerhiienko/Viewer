@@ -1,5 +1,7 @@
 #include <Input.h>
 
+#include <MemoryManager.h>
+
 #include <SDL.h>
 #include <cassert>
 #include <memory.h>
@@ -8,6 +10,8 @@
 using namespace apemode;
 
 void BuildSdlKeyMapping( uint32_t* pOutKeyMapping ) {
+    apemode_memory_allocation_scope;
+
     pOutKeyMapping[ kDigitalInput_KeyEscape ]       = SDL_SCANCODE_ESCAPE;
     pOutKeyMapping[ kDigitalInput_Key1 ]            = SDL_SCANCODE_1;
     pOutKeyMapping[ kDigitalInput_Key2 ]            = SDL_SCANCODE_2;
@@ -177,6 +181,8 @@ InputManager::~InputManager( ) {
 }
 
 bool InputManager::Initialize( ) {
+    apemode_memory_allocation_scope;
+
     memset( KeyMapping, 0, sizeof( KeyMapping ) );
     BuildSdlKeyMapping( KeyMapping );
     return true;
@@ -209,6 +215,8 @@ static void LogTouches( uint32_t stateIndex, bool const* touchButtonsState ) {
 }
 
 void InputManager::Update( Input& InOutState, float const DeltaTime ) {
+    apemode_memory_allocation_scope;
+
     SDL_PumpEvents( );
 
     SDL_Event      events[ 16 ];

@@ -29,6 +29,7 @@ bool apemodevk::DescriptorPool::RecreateResourcesFor( GraphicsDevice& graphicsNo
                                                       uint32_t        maxDynamicUniformBufferCount,
                                                       uint32_t        maxDynamicStorageBufferCount,
                                                       uint32_t        maxInputAttachmentCount ) {
+    apemodevk_memory_allocation_scope;
     DescSetCounter = maxSets;
 
     // This array is used for creating descriptor pool.
@@ -91,6 +92,8 @@ apemodevk::DescriptorPool::operator VkDescriptorPool( ) const {
 bool apemodevk::DescriptorSetPool::Recreate( VkDevice              pInLogicalDevice,
                                              VkDescriptorPool      pInDescPool,
                                              VkDescriptorSetLayout pInLayout ) {
+    apemodevk_memory_allocation_scope;
+
     pLogicalDevice       = pInLogicalDevice;
     pDescriptorPool      = pInDescPool;
     pDescriptorSetLayout = pInLayout;
@@ -100,6 +103,7 @@ bool apemodevk::DescriptorSetPool::Recreate( VkDevice              pInLogicalDev
 }
 
 VkDescriptorSet apemodevk::DescriptorSetPool::GetDescSet( const DescriptorSetBase* pDescriptorSetBase ) {
+    apemodevk_memory_allocation_scope;
 
     apemode::CityHash64Wrapper cityHashBuilder;
     for ( uint32_t i = 0; i < pDescriptorSetBase->BindingCount; ++i ) {
@@ -137,6 +141,8 @@ VkDescriptorSet apemodevk::DescriptorSetPool::GetDescSet( const DescriptorSetBas
     std::for_each( pDescriptorSetBase->pBinding,
                    pDescriptorSetBase->pBinding + pDescriptorSetBase->BindingCount,
                    [&]( const DescriptorSetBase::Binding& descriptorSetBinding ) {
+                       apemodevk_memory_allocation_scope;
+
                        TempWrites.emplace_back( );
 
                        auto& writeDescriptorSet = TempWrites.back( );

@@ -10,20 +10,30 @@ uint32_t const apemodevk::Swapchain::kExtentMatchWindow     = 0;
 uint64_t const apemodevk::Swapchain::kMaxTimeout            = uint64_t( -1 );
 uint32_t const apemodevk::Swapchain::kMaxImgs               = 3;
 
+apemodevk::Surface::~Surface( ) {
+    Destroy( );
+}
+
+void apemodevk::Surface::Destroy( ) {
+    hSurface.Destroy( );
+}
+
 apemodevk::Swapchain::Swapchain( ) {
 }
 
 apemodevk::Swapchain::~Swapchain( ) {
-    for ( auto& hBuffer : hImgs )
-        if ( hBuffer ) {
-            apemodevk::THandle< VkImage > hImg;
-            hImg.Deleter.hLogicalDevice = pDevice;
-            hImg.Handle                 = hBuffer;
-            hImg.Destroy( );
-        }
+    Destroy( );
+}
+
+void apemodevk::Swapchain::Destroy( ) {
+    for ( auto& h : hImgViews )
+        h.Destroy( );
+
+    hSwapchain.Destroy( );
 }
 
 bool apemodevk::Swapchain::ExtractSwapchainBuffers( VkImage* OutBufferImgs ) {
+    apemodevk_memory_allocation_scope;
     apemode_assert( hSwapchain.IsNotNull( ), "Not initialized." );
 
     uint32_t swapchainBufferCount = 0;
@@ -53,6 +63,8 @@ bool apemodevk::Swapchain::Recreate( VkDevice                   pInDevice,
                                      VkColorSpaceKHR            eColorSpace,
                                      VkSurfaceTransformFlagsKHR eSurfaceTransform,
                                      VkPresentModeKHR           ePresentMode ) {
+    apemodevk_memory_allocation_scope;
+
     pSurface        = pInSurface;
     pDevice         = pInDevice;
     pPhysicalDevice = pInPhysicalDevice;
@@ -124,6 +136,8 @@ uint32_t apemodevk::Swapchain::GetBufferCount( ) const {
     return ImgCount;
 }
 bool apemodevk::Surface::SetSurfaceProperties( ) {
+    apemodevk_memory_allocation_scope;
+
     if ( hSurface.IsNotNull( ) ) {
         uint32_t surfaceFormatCount = 0;
         if ( VK_SUCCESS == CheckedCall( vkGetPhysicalDeviceSurfaceFormatsKHR( pPhysicalDevice, hSurface, &surfaceFormatCount, nullptr ) ) ) {

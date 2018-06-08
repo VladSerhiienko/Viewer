@@ -9,6 +9,8 @@
 bool apemodevk::GraphicsDevice::ScanDeviceQueues( std::vector< VkQueueFamilyProperties >& QueueProps,
                                                   std::vector< VkDeviceQueueCreateInfo >& QueueReqs,
                                                   std::vector< float >&                   QueuePriorities ) {
+    apemodevk_memory_allocation_scope;
+
     uint32_t QueuesFound = 0;
     vkGetPhysicalDeviceQueueFamilyProperties( pPhysicalDevice, &QueuesFound, NULL );
 
@@ -68,6 +70,7 @@ bool EnumerateLayersAndExtensions( apemodevk::GraphicsDevice*  pNode,
                                    size_t                      layerCount,
                                    const char**                ppszExtensions,
                                    size_t                      extensionCount ) {
+    apemodevk_memory_allocation_scope;
     VkResult err = VK_SUCCESS;
 
     uint32_t deviceLayerCount = 0;
@@ -175,6 +178,8 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( uint32_t         flags,
                                                       size_t           layerCount,
                                                       const char**     ppszExtensions,
                                                       size_t           extensionCount ) {
+    apemodevk_memory_allocation_scope;
+
     pPhysicalDevice = pInPhysicalDevice;
     assert( pPhysicalDevice );
 

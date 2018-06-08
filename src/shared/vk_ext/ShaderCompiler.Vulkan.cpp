@@ -7,6 +7,10 @@ struct apemodevk::ShaderCompiler::Impl {
     shaderc::Compiler                                 Compiler;
     apemodevk::ShaderCompiler::IShaderFileReader*     pShaderFileReader     = nullptr;
     apemodevk::ShaderCompiler::IShaderFeedbackWriter* pShaderFeedbackWriter = nullptr;
+
+    ~Impl( ) {
+        platform::Log( platform::LogLevel::Info, "ShaderCompiler::Impl: Destroying." );
+    }
 };
 
 class CompiledShader : public apemodevk::ICompiledShader {
@@ -15,6 +19,11 @@ public:
     spirv_cross::CompilerGLSL Glsl;
 
     CompiledShader( std::vector< uint32_t > dwords ) : Dwords( dwords ), Glsl( dwords ) {
+        apemodevk::platform::Log( apemodevk::platform::LogLevel::Info, "CompiledShader: Created." );
+    }
+
+    virtual ~CompiledShader( ) {
+        apemodevk::platform::Log( apemodevk::platform::LogLevel::Info, "CompiledShader: Destroying." );
     }
 
     const spirv_cross::CompilerGLSL& GetGlsl( ) const override {
@@ -50,6 +59,7 @@ public:
                                         shaderc_include_type eShaderIncludeType,
                                         const char*          pszRequestingSource,
                                         size_t               includeDepth ) {
+        apemodevk_memory_allocation_scope;
 
         auto userData = apemodevk::make_unique< UserData >( );
         if ( userData && pIncludedFiles && FileReader.ReadShaderTxtFile( pszRequestedSource, userData->Path, userData->Content ) ) {
@@ -69,10 +79,9 @@ public:
 
     // Handles shaderc_include_result_release_fn callbacks.
     void ReleaseInclude( shaderc_include_result* data ) {
+        apemodevk_memory_allocation_scope;
         apemodevk_delete( ( (UserData*&) data->user_data ) );
         apemodevk_delete( data );
-        // apemodevk_delete ((UserData*) data->user_data);
-        // apemodevk_delete data;
     }
 };
 
@@ -109,6 +118,7 @@ static apemodevk::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
     shaderc::Compiler*                                           pCompiler,
     apemodevk::ShaderCompiler::IShaderFeedbackWriter*            pShaderFeedbackWriter ) {
     using namespace apemodevk;
+    apemodevk_memory_allocation_scope;
 
     if ( nullptr == pCompiler ) {
         return nullptr;
@@ -227,6 +237,7 @@ apemodevk::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::C
     const IMacroDefinitionCollection* pMacros,
     const EShaderType                 eShaderKind,
     const EShaderOptimizationType     eShaderOptimization ) {
+    apemodevk_memory_allocation_scope;
 
     shaderc::CompileOptions options;
     options.SetSourceLanguage( shaderc_source_language_glsl );
@@ -249,6 +260,7 @@ apemodevk::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::C
     const EShaderType                 eShaderKind,
     const EShaderOptimizationType     eShaderOptimization,
     IIncludedFileSet*                 pOutIncludedFiles ) {
+    apemodevk_memory_allocation_scope;
 
     if ( nullptr == pImpl->pShaderFileReader ) {
         platform::DebugTrace( platform::LogLevel::Err, "ShaderCompiler: pShaderFileReader must be set." );

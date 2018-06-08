@@ -51,6 +51,8 @@ namespace apemode {
      **/
     template < typename TOption >
     inline TOption TGetOption( const char* const optionName, const TOption& defaultValue ) {
+        apemode_memory_allocation_scope;
+
         if ( auto pAppState = AppState::Get( ) )
             if ( auto pArgs = pAppState->GetArgs( ) ) {
                 if ( pArgs->operator[]( {optionName} ) ) {
@@ -65,6 +67,8 @@ namespace apemode {
 
     template <>
     inline bool TGetOption( const char* const optionName, const bool& defaultValue ) {
+        apemode_memory_allocation_scope;
+
         if ( auto pAppState = AppState::Get( ) )
             if ( auto pArgs = pAppState->GetArgs( ) ) {
                 return pArgs->operator[]( {optionName} );
@@ -75,6 +79,8 @@ namespace apemode {
 
     template <>
     inline std::string TGetOption( const char* const optionName, const std::string& defaultValue ) {
+        apemode_memory_allocation_scope;
+
         if ( auto pAppState = AppState::Get( ) )
             if ( auto pArgs = pAppState->GetArgs( ) ) {
                 // if ( pArgs->operator[]( {optionName} ) ) {
@@ -97,6 +103,8 @@ namespace apemode {
 
     template < typename... Args >
     inline void Log( LogLevel eLevel, const char* szFmt, Args &&... args ) {
+        apemode_memory_allocation_scope;
+
         if ( auto pAppState = AppState::Get( ) )
             if ( auto pLogger = pAppState->GetLogger( ) ) {
                 pLogger->log( static_cast< spdlog::level::level_enum >( eLevel ), szFmt, std::forward< Args >( args )... );
@@ -105,6 +113,8 @@ namespace apemode {
 
     template < typename... Args >
     inline void LogInfo( const char* szFmt, Args &&... args ) {
+        apemode_memory_allocation_scope;
+
         if ( auto pAppState = AppState::Get( ) )
             if ( auto pLogger = pAppState->GetLogger( ) ) {
                 pLogger->info( szFmt, std::forward< Args >( args )... );
@@ -113,6 +123,8 @@ namespace apemode {
 
     template < typename... Args >
     inline void LogError( const char* szFmt, Args &&... args ) {
+        apemode_memory_allocation_scope;
+
         if ( auto pAppState = AppState::Get( ) )
             if ( auto pLogger = pAppState->GetLogger( ) ) {
                 pLogger->error( szFmt, std::forward< Args >( args )... );
@@ -121,6 +133,8 @@ namespace apemode {
 
     template < typename... Args >
     inline void LogWarn( const char* szFmt, Args &&... args ) {
+        apemode_memory_allocation_scope;
+
         if ( auto pAppState = AppState::Get( ) )
             if ( auto pLogger = pAppState->GetLogger( ) ) {
                 pLogger->warn( szFmt, std::forward< Args >( args )... );

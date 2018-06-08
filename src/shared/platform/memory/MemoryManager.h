@@ -165,3 +165,26 @@ namespace apemode {
         return unique_ptr< T >( apemode_new T( std::forward< Args >( args )... ) );
     }
 } // namespace apemode
+
+namespace apemode {
+
+    void GetPrevMemoryAllocationScope( const char*& pszSourceFile, unsigned int& sourceLine, const char*& pszSourceFunc );
+    void StartMemoryAllocationScope( const char* pszSourceFile, const unsigned int sourceLine, const char* pszSourceFunc );
+    void EndMemoryAllocationScope( const char* pszSourceFile, const unsigned int sourceLine, const char* pszSourceFunc );
+
+    struct MemoryAllocationScope {
+        struct CodeLocation {
+            const char*  pszSourceFile;
+            unsigned int SourceLine;
+            const char*  pszSourceFunc;
+        };
+
+        CodeLocation PrevLocation;
+
+        MemoryAllocationScope( const char* pszSourceFile, const unsigned int sourceLine, const char* pszSourceFunc );
+        ~MemoryAllocationScope( );
+    };
+} // namespace apemode
+
+#define apemode_named_memory_allocation_scope( name ) apemode::MemoryAllocationScope _##name##MemoryAllocationScope( __FILE__, __LINE__, __FUNCTION__ )
+#define apemode_memory_allocation_scope apemode_named_memory_allocation_scope( default )

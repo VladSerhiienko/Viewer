@@ -14,6 +14,8 @@ bool apemodevk::HostBufferPool::Page::Recreate( GraphicsDevice *      pInNode,
                                                 uint32_t              bufferRange,
                                                 VkBufferUsageFlags    bufferUsageFlags,
                                                 VkMemoryPropertyFlags memoryPropertyFlags ) {
+    apemodevk_memory_allocation_scope;
+
     pNode                = pInNode;
     eMemoryPropertyFlags = memoryPropertyFlags;
     TotalOffsetCount     = bufferRange / alignment;
@@ -46,6 +48,8 @@ bool apemodevk::HostBufferPool::Page::Recreate( GraphicsDevice *      pInNode,
 }
 
 bool apemodevk::HostBufferPool::Page::Reset( ) {
+    apemodevk_memory_allocation_scope;
+
     if ( false == HasFlagEq( eMemoryPropertyFlags, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) ) {
 #if _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges
         if ( nullptr != pMapped && false == Ranges.empty( ) ) {
@@ -89,6 +93,8 @@ bool apemodevk::HostBufferPool::Page::Reset( ) {
 }
 
 bool apemodevk::HostBufferPool::Page::Flush( ) {
+    apemodevk_memory_allocation_scope;
+
     if ( nullptr != pMapped ) {
         if ( false == HasFlagEq( eMemoryPropertyFlags, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) ) {
 #if _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges
@@ -122,6 +128,8 @@ bool apemodevk::HostBufferPool::Page::Flush( ) {
 }
 
 void apemodevk::HostBufferPool::Recreate( GraphicsDevice *pInNode, VkBufferUsageFlags bufferUsageFlags, bool bInHostCoherent ) {
+    apemodevk_memory_allocation_scope;
+
     Destroy( );
 
     pNode = pInNode;
@@ -152,6 +160,8 @@ void apemodevk::HostBufferPool::Recreate( GraphicsDevice *pInNode, VkBufferUsage
 }
 
 apemodevk::HostBufferPool::Page *apemodevk::HostBufferPool::FindPage( uint32_t dataStructureSize ) {
+    apemodevk_memory_allocation_scope;
+
     /* Ensure it is possible to allocate that space. */
     if ( dataStructureSize > MaxPageRange ) {
         apemodevk::platform::DebugBreak( );
@@ -206,6 +216,8 @@ void apemodevk::HostBufferPool::Destroy( ) {
 }
 
 uint32_t apemodevk::HostBufferPool::Page::Push( const void *pDataStructure, uint32_t ByteSize ) {
+    apemodevk_memory_allocation_scope;
+
     const uint32_t coveredOffsetCount   = ByteSize / Alignment + ( uint32_t )( 0 != ByteSize % Alignment );
     const uint32_t availableOffsetCount = TotalOffsetCount - CurrentOffsetIndex;
 
@@ -237,6 +249,8 @@ uint32_t apemodevk::HostBufferPool::Page::Push( const void *pDataStructure, uint
 
 apemodevk::HostBufferPool::SuballocResult apemodevk::HostBufferPool::Suballocate( const void *pDataStructure,
                                                                                   uint32_t    ByteSize ) {
+    apemodevk_memory_allocation_scope;
+
     SuballocResult suballocResult;
     InitializeStruct( suballocResult.DescriptorBufferInfo );
 

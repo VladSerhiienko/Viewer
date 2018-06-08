@@ -163,6 +163,33 @@ namespace apemodevk {
 } // namespace apemodevk
 
 namespace apemodevk {
+    void GetPrevMemoryAllocationScope( const char *&pszSourceFile, unsigned int &sourceLine, const char *&pszSourceFunc );
+    void StartMemoryAllocationScope( const char *pszSourceFile, const unsigned int sourceLine, const char *pszSourceFunc );
+    void EndMemoryAllocationScope( const char *pszSourceFile, const unsigned int sourceLine, const char *pszSourceFunc );
+
+    struct MemoryAllocationScope {
+        struct CodeLocation {
+            const char * pszSourceFile;
+            unsigned int SourceLine;
+            const char * pszSourceFunc;
+        };
+
+        CodeLocation PrevLocation;
+
+        MemoryAllocationScope( const char *pszSourceFile, const unsigned int sourceLine, const char *pszSourceFunc ) {
+            GetPrevMemoryAllocationScope( PrevLocation.pszSourceFile, PrevLocation.SourceLine, PrevLocation.pszSourceFunc );
+            StartMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
+        }
+
+        ~MemoryAllocationScope( ) {
+            EndMemoryAllocationScope( PrevLocation.pszSourceFile, PrevLocation.SourceLine, PrevLocation.pszSourceFunc );
+        }
+    };
+} // namespace apemodevk
+
+#define apemodevk_memory_allocation_scope apemodevk::MemoryAllocationScope memoryAllocationScope( __FILE__, __LINE__, __FUNCTION__ )
+
+namespace apemodevk {
 
     constexpr uint32_t kInvalidIndex   = uint32_t( -1 );
     constexpr uint64_t kInvalidIndex64 = uint64_t( -1 );

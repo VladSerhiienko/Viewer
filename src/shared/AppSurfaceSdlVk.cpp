@@ -42,6 +42,24 @@ struct apemode::GraphicsAllocator : apemodevk::GraphicsManager::IAllocator {
 
 // clang-format on
 
+struct apemode::GraphicsMemoryAllocationScope : apemodevk::GraphicsManager::IMemoryAllocationScope {
+    void GetPrevMemoryAllocationScope( const char*&  pszPrevSourceFile,
+                                       unsigned int& prevSourceLine,
+                                       const char*&  pszPrevSourceFunc ) const override {
+        apemode::GetPrevMemoryAllocationScope( pszPrevSourceFile, prevSourceLine, pszPrevSourceFunc );
+    }
+    void StartMemoryAllocationScope( const char*        pszSourceFile,
+                                     const unsigned int sourceLine,
+                                     const char*        pszSourceFunc ) const override {
+        apemode::StartMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
+    }
+    void EndMemoryAllocationScope( const char*        pszPrevSourceFile,
+                                   const unsigned int prevSourceLine,
+                                   const char*        pszPrevSourceFunc ) const override {
+        apemode::EndMemoryAllocationScope( pszPrevSourceFile, prevSourceLine, pszPrevSourceFunc );
+    }
+};
+
 struct apemode::GraphicsLogger : apemodevk::GraphicsManager::ILogger {
     spdlog::logger* pLogger = apemode::AppState::Get( )->GetLogger( );
     void Log( const LogLevel eLevel, const char* pszMsg ) override {
@@ -50,6 +68,9 @@ struct apemode::GraphicsLogger : apemodevk::GraphicsManager::ILogger {
 };
 
 bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, const char* name ) {
+    apemode_memory_allocation_scope;
+
+
     LogInfo( "apemode/AppSurfaceSdlVk/Initialize" );
 
     if ( !AppSurfaceSdlBase::Initialize( width, height, name ) ) {
@@ -86,12 +107,14 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
         ++layerCount;
     }
 
-    Logger = apemode::make_unique< GraphicsLogger >( );
-    Alloc  = apemode::make_unique< GraphicsAllocator >( );
+    Logger     = apemode::make_unique< GraphicsLogger >( );
+    Alloc      = apemode::make_unique< GraphicsAllocator >( );
+    AllocScope = apemode::make_unique< GraphicsMemoryAllocationScope >( );
 
     auto pGraphicsManager = apemodevk::CreateGraphicsManager( graphicsManagerFlags,
                                                               Alloc.get( ),
                                                               Logger.get( ),
+                                                              AllocScope.get( ),
                                                               "Viewer",
                                                               "VkApeEngine",
                                                               ppszLayers,
@@ -181,6 +204,10 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
 }
 
 void apemode::AppSurfaceSdlVk::Finalize( ) {
+    apemode_memory_allocation_scope;
+
+    Surface.Destroy( );
+    Swapchain.Destroy( );
     Node.Destroy( );
 
     apemodevk::DestroyGraphicsManager( );
@@ -195,6 +222,7 @@ void apemode::AppSurfaceSdlVk::OnFrameMove( ) {
     const uint32_t height = GetHeight( );
 
     if ( width != LastWidth || height != LastHeight ) {
+        apemode_memory_allocation_scope;
         apemodevk::CheckedCall( vkDeviceWaitIdle( Node ) );
 
         LastWidth  = width;
@@ -220,5 +248,6 @@ void* apemode::AppSurfaceSdlVk::GetGraphicsHandle( ) {
 }
 
 apemode::SceneRendererBase* apemode::AppSurfaceSdlVk::CreateSceneRenderer( ) {
+    apemode_memory_allocation_scope;
     return apemode_new apemode::SceneRendererVk( );
 }

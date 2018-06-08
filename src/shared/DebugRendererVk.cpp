@@ -8,6 +8,8 @@ namespace apemode {
 }
 
 bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams ) {
+    apemodevk_memory_allocation_scope;
+
     if ( nullptr == pInitParams )
         return false;
 
@@ -346,6 +348,8 @@ void apemode::DebugRendererVk::Reset( uint32_t frameIndex ) {
 }
 
 bool apemode::DebugRendererVk::Render( RenderParametersVk* renderParams ) {
+    apemodevk_memory_allocation_scope;
+
     auto frameIndex = ( renderParams->FrameIndex ) % kMaxFrameCount;
 
     auto suballocResult = BufferPools[ frameIndex ].TSuballocate( *renderParams->pFrameData );

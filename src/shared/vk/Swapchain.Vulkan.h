@@ -20,8 +20,13 @@ namespace apemodevk {
         VkPresentModeKHR           ePresentMode;
         THandle< VkSurfaceKHR >    hSurface;
 
+        ~Surface( );
+        void Destroy( );
+
 #ifdef VK_USE_PLATFORM_WIN32_KHR
-        bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, HINSTANCE hInstance, HWND hWindow ) {
+        inline bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, HINSTANCE hInstance, HWND hWindow ) {
+            apemodevk_memory_allocation_scope;
+
             assert( nullptr != pInInstance );
             assert( nullptr != pInPhysicalDevice );
             assert( nullptr != hWindow );
@@ -39,7 +44,9 @@ namespace apemodevk {
             return hSurface.Recreate( pInInstance, win32SurfaceCreateInfoKHR ) && SetSurfaceProperties( );
         }
 #elif VK_USE_PLATFORM_MACOS_MVK || VK_USE_PLATFORM_IOS_MVK
-        bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, void* pView ) {
+        inline bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, void* pView ) {
+            apemodevk_memory_allocation_scope;
+
             assert( nullptr != pInPhysicalDevice );
             assert( nullptr != pInInstance );
             assert( nullptr != pView );
@@ -62,7 +69,9 @@ namespace apemodevk {
             return hSurface.Recreate( pInInstance, surfaceCreateInfoMVK ) && SetSurfaceProperties( );
         }
 #elif VK_USE_PLATFORM_XLIB_KHR
-        bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, Display* pDisplayX11, Window pWindowX11 ) {
+        inline bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, Display* pDisplayX11, Window pWindowX11 ) {
+            apemodevk_memory_allocation_scope;
+
             assert( nullptr != pInPhysicalDevice );
             assert( nullptr != pInInstance );
             assert( nullptr != pDisplayX11 );
@@ -93,6 +102,8 @@ namespace apemodevk {
 
         Swapchain( );
         ~Swapchain( );
+
+        void Destroy( );
 
         /**
          * Initialized surface, render targets` and depth stencils` views.

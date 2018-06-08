@@ -41,9 +41,10 @@ namespace apemodevk {
         BufferComposite Handle;
         TDeleter        Deleter;
 
-        bool Recreate( VmaAllocator                    pAllocator,
-                       const VkBufferCreateInfo  &     createInfo,
-                       const VmaAllocationCreateInfo & allocInfo ) {
+        bool Recreate( VmaAllocator                   pAllocator,
+                       const VkBufferCreateInfo &     createInfo,
+                       const VmaAllocationCreateInfo &allocInfo ) {
+            apemodevk_memory_allocation_scope;
 
             Deleter( Handle );
             Handle.pAllocator = pAllocator;

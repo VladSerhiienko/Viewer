@@ -87,15 +87,6 @@ namespace apemode {
         apemodevk::THandle< VkImageView >               hDepthImgViews[ kMaxFrames ];
         apemodevk::THandle< VkDeviceMemory >            hDepthImgMemory[ kMaxFrames ];
 
-        NuklearRendererSdlBase*                      pNkRenderer        = nullptr;
-        DebugRendererVk*                             pDebugRenderer     = nullptr;
-        SceneRendererBase*                           pSceneRendererBase = nullptr;
-
-        using SceneSourceData = std::pair< const apemodefb::SceneFb *, std::vector< uint8_t > >;
-
-        UniqueScenePtr  pScene;
-        SceneSourceData pSceneSource;
-
         apemode::unique_ptr< apemodevk::ShaderCompiler >       pShaderCompiler;
         apemode::unique_ptr< apemodevk::ShaderFileReader >     pShaderFileReader;
         apemode::unique_ptr< apemodevk::ShaderFeedbackWriter > pShaderFeedbackWriter;
@@ -106,6 +97,14 @@ namespace apemode {
         apemodevk::unique_ptr< apemodevk::LoadedImage >        IrradianceLoadedImg;
         VkSampler                                              pRadianceCubeMapSampler   = VK_NULL_HANDLE;
         VkSampler                                              pIrradianceCubeMapSampler = VK_NULL_HANDLE;
+
+        apemode::unique_ptr< NuklearRendererSdlBase > pNkRenderer;
+        apemode::unique_ptr< DebugRendererVk >        pDebugRenderer;
+        apemode::unique_ptr< SceneRendererBase >      pSceneRendererBase;
+
+        using SceneSourceData = std::pair< const apemodefb::SceneFb *, std::vector< uint8_t > >;
+        UniqueScenePtr  pScene;
+        SceneSourceData pSceneSource;
 
     public:
         ViewerApp( );
