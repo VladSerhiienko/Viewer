@@ -214,53 +214,35 @@ static void LogTouches( uint32_t stateIndex, bool const* touchButtonsState ) {
                  touchButtonsState[ 15 ] );
 }
 
-void InputManager::Update( Input& InOutState, float const DeltaTime ) {
+void InputManagerUpdateMouse( Input& InOutState, float const DeltaTime ) {
     apemode_memory_allocation_scope;
 
-    SDL_PumpEvents( );
+    int RelativeMouseDeltaX, RelativeMouseDeltaY;
+    const uint32_t PressedMouseButtonBitmask = SDL_GetMouseState( &RelativeMouseDeltaX, &RelativeMouseDeltaY );
 
-    SDL_Event      events[ 16 ];
-    uint32_t const eventCount = SDL_arraysize( events );
+    const bool bIsAnyMousePressed = !!PressedMouseButtonBitmask;
 
-    InOutState.bSizeChanged = false;
+    // At this point we can trigger tracking flags.
+    InOutState.bIsAnyPressed |= bIsAnyMousePressed;
+    InOutState.bIsTrackingTouchesOrMousePressed |= bIsAnyMousePressed;
 
-    if ( 0 != SDL_PeepEvents( events, eventCount, SDL_PEEKEVENT, SDL_WINDOWEVENT, SDL_WINDOWEVENT ) ) {
-        for ( int i = 0; i < eventCount; ++i ) {
-            SDL_Event const& windowEvent = events[ i ];
-            if ( windowEvent.window.type == SDL_WINDOWEVENT_SIZE_CHANGED ||
-                 windowEvent.window.type == SDL_WINDOWEVENT_RESIZED ) {
-                SDL_LogWarn( SDL_LOG_CATEGORY_APPLICATION, "apemode/InputManager: Window size changed." );
-                InOutState.bSizeChanged = true;
-            } else if ( windowEvent.window.type == SDL_WINDOWEVENT_FOCUS_GAINED ) {
-                SDL_LogWarn( SDL_LOG_CATEGORY_APPLICATION, "apemode/InputManager: Window gained focus." );
-                InOutState.bFocused = true;
-            } else if ( windowEvent.window.type == SDL_WINDOWEVENT_FOCUS_LOST ) {
-                SDL_LogWarn( SDL_LOG_CATEGORY_APPLICATION, "apemode/InputManager: Window lost focus." );
-                InOutState.bFocused = false;
-            }
-        }
-    }
+    InOutState.Analogs[ kAnalogInput_MouseX ] = static_cast< float >( RelativeMouseDeltaX );
+    InOutState.Analogs[ kAnalogInput_MouseY ] = static_cast< float >( RelativeMouseDeltaY );
 
-    InOutState.bIsQuitRequested = SDL_PeepEvents( nullptr, 0, SDL_PEEKEVENT, SDL_QUIT, SDL_QUIT ) > 0;
+    // Check each available mouse key if it is pressed.
+    if ( ( PressedMouseButtonBitmask & SDL_BUTTON_LMASK ) == SDL_BUTTON_LMASK )
+        InOutState.Buttons[ 0 ][ kDigitalInput_Mouse0 ] = true;
+    if ( ( PressedMouseButtonBitmask & SDL_BUTTON_RMASK ) == SDL_BUTTON_RMASK )
+        InOutState.Buttons[ 0 ][ kDigitalInput_Mouse1 ] = true;
+    if ( ( PressedMouseButtonBitmask & SDL_BUTTON_MMASK ) == SDL_BUTTON_MMASK )
+        InOutState.Buttons[ 0 ][ kDigitalInput_Mouse2 ] = true;
+    if ( ( PressedMouseButtonBitmask & SDL_BUTTON_X1MASK ) == SDL_BUTTON_X1MASK )
+        InOutState.Buttons[ 0 ][ kDigitalInput_Mouse3 ] = true;
+    if ( ( PressedMouseButtonBitmask & SDL_BUTTON_X2MASK ) == SDL_BUTTON_X2MASK )
+        InOutState.Buttons[ 0 ][ kDigitalInput_Mouse4 ] = true;
+}
 
-    // Preserve previous values
-    memcpy( InOutState.Buttons[ 1 ], InOutState.Buttons[ 0 ], sizeof( InOutState.Buttons[ 0 ] ) );
-
-    // Clear tracking flags.
-    InOutState.bIsAnyPressed = false;
-    InOutState.bIsTrackingTouchesOrMousePressed = false;
-
-    // Clear dynamic per-frame values.
-    memset( InOutState.Buttons[ 0 ], 0, sizeof( bool ) * ( kDigitalInput_Touch0 ) );
-    memset( InOutState.Analogs, 0, sizeof( bool ) * kAnalogInput_Touch0X );
-
-    if ( auto SdlKeybuffer = SDL_GetKeyboardState( nullptr ) ) {
-        for ( uint32_t BtnIdx = 0; BtnIdx < kDigitalInput_NumKeys; ++BtnIdx ) {
-            const bool IsBtnPressed = SdlKeybuffer[ KeyMapping[ BtnIdx ] ] != 0;
-            InOutState.Buttons[ 0 ][ BtnIdx ] = IsBtnPressed;
-            InOutState.bIsAnyPressed |= IsBtnPressed;
-        }
-    }
+void InputManagerUpdateTouches( Input& InOutState, float const DeltaTime ) {
 
     InOutState.bIsUsingTouch = SDL_GetNumTouchDevices( ) > 0;
     if ( InOutState.bIsUsingTouch ) {
@@ -331,32 +313,60 @@ void InputManager::Update( Input& InOutState, float const DeltaTime ) {
                 }
             }
         }
-
-    } else {
-        int RelativeMouseDeltaX, RelativeMouseDeltaY;
-
-        auto const PressedMouseButtonBitmask = SDL_GetMouseState( &RelativeMouseDeltaX, &RelativeMouseDeltaY );
-        bool const bIsAnyMousePressed        = !!PressedMouseButtonBitmask;
-
-        // At this point we can trigger tracking flags.
-        InOutState.bIsAnyPressed |= bIsAnyMousePressed;
-        InOutState.bIsTrackingTouchesOrMousePressed |= bIsAnyMousePressed;
-
-        InOutState.Analogs[ kAnalogInput_MouseX ] = static_cast< float >( RelativeMouseDeltaX );
-        InOutState.Analogs[ kAnalogInput_MouseY ] = static_cast< float >( RelativeMouseDeltaY );
-
-        // Check each available mouse key if it is pressed.
-        if ( ( PressedMouseButtonBitmask & SDL_BUTTON_LMASK ) == SDL_BUTTON_LMASK )
-            InOutState.Buttons[ 0 ][ kDigitalInput_Mouse0 ] = true;
-        if ( ( PressedMouseButtonBitmask & SDL_BUTTON_RMASK ) == SDL_BUTTON_RMASK )
-            InOutState.Buttons[ 0 ][ kDigitalInput_Mouse1 ] = true;
-        if ( ( PressedMouseButtonBitmask & SDL_BUTTON_MMASK ) == SDL_BUTTON_MMASK )
-            InOutState.Buttons[ 0 ][ kDigitalInput_Mouse2 ] = true;
-        if ( ( PressedMouseButtonBitmask & SDL_BUTTON_X1MASK ) == SDL_BUTTON_X1MASK )
-            InOutState.Buttons[ 0 ][ kDigitalInput_Mouse3 ] = true;
-        if ( ( PressedMouseButtonBitmask & SDL_BUTTON_X2MASK ) == SDL_BUTTON_X2MASK )
-            InOutState.Buttons[ 0 ][ kDigitalInput_Mouse4 ] = true;
     }
+
+}
+
+void InputManager::Update( Input& InOutState, float const DeltaTime ) {
+    apemode_memory_allocation_scope;
+
+    SDL_PumpEvents( );
+
+    SDL_Event events[ 16 ];
+    uint32_t const eventCount = SDL_arraysize( events );
+
+    InOutState.bSizeChanged = false;
+
+    if ( 0 != SDL_PeepEvents( events, eventCount, SDL_PEEKEVENT, SDL_WINDOWEVENT, SDL_WINDOWEVENT ) ) {
+        for ( int i = 0; i < eventCount; ++i ) {
+            SDL_Event const& windowEvent = events[ i ];
+            if ( windowEvent.window.type == SDL_WINDOWEVENT_SIZE_CHANGED ||
+                 windowEvent.window.type == SDL_WINDOWEVENT_RESIZED ) {
+                SDL_LogWarn( SDL_LOG_CATEGORY_APPLICATION, "InputManager: Window size changed." );
+                InOutState.bSizeChanged = true;
+            } else if ( windowEvent.window.type == SDL_WINDOWEVENT_FOCUS_GAINED ) {
+                SDL_LogWarn( SDL_LOG_CATEGORY_APPLICATION, "InputManager: Window gained focus." );
+                InOutState.bFocused = true;
+            } else if ( windowEvent.window.type == SDL_WINDOWEVENT_FOCUS_LOST ) {
+                SDL_LogWarn( SDL_LOG_CATEGORY_APPLICATION, "InputManager: Window lost focus." );
+                InOutState.bFocused = false;
+            }
+        }
+    }
+
+    InOutState.bIsQuitRequested = SDL_PeepEvents( nullptr, 0, SDL_PEEKEVENT, SDL_QUIT, SDL_QUIT ) > 0;
+
+    // Preserve previous values
+    memcpy( InOutState.Buttons[ 1 ], InOutState.Buttons[ 0 ], sizeof( InOutState.Buttons[ 0 ] ) );
+
+    // Clear tracking flags.
+    InOutState.bIsAnyPressed = false;
+    InOutState.bIsTrackingTouchesOrMousePressed = false;
+
+    // Clear dynamic per-frame values.
+    memset( InOutState.Buttons[ 0 ], 0, sizeof( bool ) * ( kDigitalInput_Touch0 ) );
+    memset( InOutState.Analogs, 0, sizeof( bool ) * kAnalogInput_Touch0X );
+
+    if ( auto SdlKeybuffer = SDL_GetKeyboardState( nullptr ) ) {
+        for ( uint32_t BtnIdx = 0; BtnIdx < kDigitalInput_NumKeys; ++BtnIdx ) {
+            const bool IsBtnPressed = SdlKeybuffer[ KeyMapping[ BtnIdx ] ] != 0;
+            InOutState.Buttons[ 0 ][ BtnIdx ] = IsBtnPressed;
+            InOutState.bIsAnyPressed |= IsBtnPressed;
+        }
+    }
+
+    InputManagerUpdateTouches( InOutState, DeltaTime );
+    InputManagerUpdateMouse( InOutState, DeltaTime );
 
     // Update time duration for buttons pressed
     for ( uint32_t BtnIdx = 0; BtnIdx < kDigitalInput_NumInputs; ++BtnIdx ) {

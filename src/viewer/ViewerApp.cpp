@@ -678,17 +678,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         VkFramebuffer framebufferNk = hNkFramebuffers[ FrameIndex ];
         VkFramebuffer framebufferDbg = hDbgFramebuffers[ FrameIndex ];
 
-        while (true) {
-            const auto waitForFencesErrorHandle = vkWaitForFences( device, 1, &fence, VK_TRUE, 100 );
-            if ( VK_SUCCESS == waitForFencesErrorHandle ) {
-                break;
-            } else if ( VK_TIMEOUT == waitForFencesErrorHandle ) {
-                continue;
-            } else {
-                assert( false );
-                return;
-            }
-        }
+        CheckedCall( WaitForFence( device, fence ) );
 
         CheckedCall( vkAcquireNextImageKHR( device,
             swapchain,
@@ -867,7 +857,15 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 
 bool ViewerApp::IsRunning( ) {
     apemode_memory_allocation_scope;
-    return AppBase::IsRunning( );
+
+    if ( AppBase::IsRunning( ) )
+        return true;
+
+    AppSurfaceBase*  pSurfaceBase = GetSurface( );
+    AppSurfaceSdlVk* pSurface = static_cast< AppSurfaceSdlVk* >( pSurfaceBase );
+
+    CheckedCall( vkDeviceWaitIdle( pSurface->Node ) );
+    return false;
 }
 
 extern "C" AppBase* CreateApp( ) {
