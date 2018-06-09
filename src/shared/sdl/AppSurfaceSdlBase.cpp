@@ -19,7 +19,7 @@ bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, co
     LogInfo( "apemode/AppSurfaceSdlBase/Initialize" );
 
     if ( nullptr == pSdlWindow && !SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS ) ) {
-        const uint32_t sdlWindowProps = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE;
+        const uint32_t sdlWindowProps = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN;
         pSdlWindow = SDL_CreateWindow( name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, sdlWindowProps );
 
         if ( pSdlWindow ) {

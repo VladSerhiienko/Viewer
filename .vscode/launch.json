@@ -23,7 +23,7 @@
             "program": "${workspaceRoot}/build_darwin_x86_64_appleclang/Viewer",
             "cwd": "${workspaceRoot}/build_darwin_x86_64_appleclang",
             "args": [
-                "--assets", "\"../assets/**\"",
+                "--assets", "../assets/**",
                 "--scene", "/home/user/vserhiienko/models/rainier-ak-3d.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/warmonger_sword.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/dreamsong.fbxp",

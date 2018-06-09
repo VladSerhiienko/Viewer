@@ -715,6 +715,7 @@ if (APPLE)
         "-framework AudioToolbox"
         "-framework ForceFeedback"
         "-framework Carbon"
+        "-framework QuartzCore"
     )
 elseif (UNIX)
     set(
