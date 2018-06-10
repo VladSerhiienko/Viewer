@@ -959,7 +959,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
             materialData.MetallicRoughnessFactor.x = pMaterial->MetallicFactor;
             materialData.MetallicRoughnessFactor.y = pMaterial->RoughnessFactor;
             materialData.MetallicRoughnessFactor.z = 1;
-            materialData.MetallicRoughnessFactor.w = pParams->RadianceMap.MipLevels;
+            materialData.MetallicRoughnessFactor.w = static_cast< float >( pParams->RadianceMap.MipLevels );
             materialData.Flags.x = flags;
 
             auto objectDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( objectData );

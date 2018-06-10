@@ -294,7 +294,7 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
                      pMaterialFb->properties( ) ? pMaterialFb->properties( )->size( ) : 0,
                      pMaterialFb->texture_properties( ) ? pMaterialFb->texture_properties( )->size( ) : 0 );
 
-            materialIdRemap[ materialId ] = pScene->Materials.size( );
+            materialIdRemap[ materialId ] = static_cast< uint32_t >( pScene->Materials.size( ) );
 
             pScene->Materials.emplace_back( );
             auto &material = pScene->Materials.back( );
