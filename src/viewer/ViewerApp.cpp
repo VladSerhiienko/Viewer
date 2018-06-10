@@ -183,8 +183,6 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        #if 1
-
         apemodevk::ImageLoader imgLoader;
         if ( false == imgLoader.Recreate( &pAppSurface->Node ) ) {
             apemode::platform::DebugBreak( );
@@ -271,8 +269,6 @@ bool ViewerApp::Initialize(  ) {
             pIrradianceCubeMapSampler = pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
         }
 
-        #endif
-
         pNkRenderer = apemode::unique_ptr< NuklearRendererSdlBase >( apemode_new NuklearRendererSdlVk( ) );
 
         auto queueFamilyPool = pAppSurface->Node.GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
@@ -303,11 +299,10 @@ bool ViewerApp::Initialize(  ) {
         initParamsDbg.pDescPool       = DescriptorPool;
         initParamsDbg.FrameCount      = FrameCount;
 
-#if 0
         pDebugRenderer = apemode::unique_ptr< DebugRendererVk >( apemode_new DebugRendererVk() );
         pDebugRenderer->RecreateResources( &initParamsDbg );
 
-        pSceneRendererBase = pAppSurface->CreateSceneRenderer( );
+        pSceneRendererBase = apemode::unique_ptr< apemode::SceneRendererBase >( pAppSurface->CreateSceneRenderer( ) );
 
         SceneRendererVk::RecreateParametersVk recreateParams;
         recreateParams.pNode           = &pAppSurface->Node;
@@ -365,7 +360,6 @@ bool ViewerApp::Initialize(  ) {
             apemode::platform::DebugBreak( );
             return false;
         }
-#endif
 
         apemodevk::SkyboxRenderer::RecreateParameters skyboxRendererRecreateParams;
         skyboxRendererRecreateParams.pNode           = &pAppSurface->Node;
@@ -374,7 +368,6 @@ bool ViewerApp::Initialize(  ) {
         skyboxRendererRecreateParams.pDescPool       = DescriptorPool;
         skyboxRendererRecreateParams.FrameCount      = FrameCount;
 
-#if 0
         pSkyboxRenderer = apemode::make_unique< apemodevk::SkyboxRenderer >( );
         if ( false == pSkyboxRenderer->Recreate( &skyboxRendererRecreateParams ) ) {
             apemode::platform::DebugBreak( );
@@ -388,7 +381,6 @@ bool ViewerApp::Initialize(  ) {
         pSkybox->eImgLayout    = RadianceLoadedImg->eImgLayout;
         pSkybox->Exposure      = 3;
         pSkybox->LevelOfDetail = 0;
-#endif
 
         LightDirection = XMFLOAT4( 0, 1, 0, 1 );
         LightColor     = XMFLOAT4( 1, 1, 1, 1 );
@@ -724,9 +716,9 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         XMStoreFloat4x4( &frameData.ViewMatrix, viewMatrix );
         frameData.Color = {1, 0, 0, 1};
 
-        // pSkyboxRenderer->Reset( FrameIndex );
-        // pDebugRenderer->Reset( FrameIndex );
-        // pSceneRendererBase->Reset( pScene.get( ), FrameIndex );
+        pSkyboxRenderer->Reset( FrameIndex );
+        pDebugRenderer->Reset( FrameIndex );
+        pSceneRendererBase->Reset( pScene.get( ), FrameIndex );
 
         apemodevk::SkyboxRenderer::RenderParameters skyboxRenderParams;
         XMStoreFloat4x4( &skyboxRenderParams.InvViewMatrix, invViewMatrix );
@@ -741,7 +733,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         skyboxRenderParams.pNode       = &pAppSurface->Node;
         skyboxRenderParams.FieldOfView = apemodexm::DegreesToRadians( 67 );
 
-        // pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
+        pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
 
         DebugRendererVk::RenderParametersVk renderParamsDbg;
         renderParamsDbg.Dims[ 0 ]  = float( width );
@@ -759,18 +751,18 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         worldMatrix = XMMatrixScaling( scale, scale * 2, scale ) * XMMatrixTranslation( 0, scale * 3, 0 );
         XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
         frameData.Color = {0, 1, 0, 1};
-        // pDebugRenderer->Render( &renderParamsDbg );
+        pDebugRenderer->Render( &renderParamsDbg );
 
         worldMatrix = XMMatrixScaling( scale, scale, scale * 2 ) * XMMatrixTranslation( 0, 0, scale * 3 );
         XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
         frameData.Color = {0, 0, 1, 1};
-        // pDebugRenderer->Render( &renderParamsDbg );
+        pDebugRenderer->Render( &renderParamsDbg );
 
 
         worldMatrix = XMMatrixScaling( scale * 2, scale, scale ) * XMMatrixTranslation( scale * 3, 0, 0 );
         XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
         frameData.Color = { 1, 0, 0, 1 };
-        // pDebugRenderer->Render( &renderParamsDbg );
+        pDebugRenderer->Render( &renderParamsDbg );
 
         XMMATRIX rootMatrix = XMMatrixRotationY( WorldRotationY );
 
@@ -782,14 +774,14 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         sceneRenderParameters.FrameIndex               = FrameIndex;
         sceneRenderParameters.pCmdBuffer               = pCmdBuffer;
         sceneRenderParameters.pNode                    = &pAppSurface->Node;
-        // sceneRenderParameters.RadianceMap.eImgLayout   = RadianceLoadedImg->eImgLayout;
-        // sceneRenderParameters.RadianceMap.pImgView     = RadianceLoadedImg->hImgView;
-        // sceneRenderParameters.RadianceMap.pSampler     = pRadianceCubeMapSampler;
-        // sceneRenderParameters.RadianceMap.MipLevels    = RadianceLoadedImg->ImageCreateInfo.mipLevels;
-        // sceneRenderParameters.IrradianceMap.eImgLayout = IrradianceLoadedImg->eImgLayout;
-        // sceneRenderParameters.IrradianceMap.pImgView   = IrradianceLoadedImg->hImgView;
-        // sceneRenderParameters.IrradianceMap.pSampler   = pIrradianceCubeMapSampler;
-        // sceneRenderParameters.IrradianceMap.MipLevels  = IrradianceLoadedImg->ImageCreateInfo.mipLevels;
+        sceneRenderParameters.RadianceMap.eImgLayout   = RadianceLoadedImg->eImgLayout;
+        sceneRenderParameters.RadianceMap.pImgView     = RadianceLoadedImg->hImgView;
+        sceneRenderParameters.RadianceMap.pSampler     = pRadianceCubeMapSampler;
+        sceneRenderParameters.RadianceMap.MipLevels    = RadianceLoadedImg->ImageCreateInfo.mipLevels;
+        sceneRenderParameters.IrradianceMap.eImgLayout = IrradianceLoadedImg->eImgLayout;
+        sceneRenderParameters.IrradianceMap.pImgView   = IrradianceLoadedImg->hImgView;
+        sceneRenderParameters.IrradianceMap.pSampler   = pIrradianceCubeMapSampler;
+        sceneRenderParameters.IrradianceMap.MipLevels  = IrradianceLoadedImg->ImageCreateInfo.mipLevels;
         sceneRenderParameters.LightColor               = LightColor;
         sceneRenderParameters.LightDirection           = LightDirection;
         XMStoreFloat4x4( &sceneRenderParameters.ProjMatrix, projMatrix );
@@ -797,7 +789,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );
         XMStoreFloat4x4( &sceneRenderParameters.InvProjMatrix, invProjMatrix );
         XMStoreFloat4x4( &sceneRenderParameters.RootMatrix, rootMatrix );
-        // pSceneRendererBase->RenderScene( pScene.get( ), &sceneRenderParameters );
+        pSceneRendererBase->RenderScene( pScene.get( ), &sceneRenderParameters );
 
         NuklearRendererSdlVk::RenderParametersVk renderParamsNk;
         renderParamsNk.Dims[ 0 ]            = float( width );
@@ -815,9 +807,9 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 
         vkCmdEndRenderPass( pCmdBuffer );
 
-        // pDebugRenderer->Flush( FrameIndex );
-        // pSceneRendererBase->Flush( pScene.get( ), FrameIndex );
-        // pSkyboxRenderer->Flush( FrameIndex );
+        pDebugRenderer->Flush( FrameIndex );
+        pSceneRendererBase->Flush( pScene.get( ), FrameIndex );
+        pSkyboxRenderer->Flush( FrameIndex );
 
         VkPipelineStageFlags waitPipelineStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 

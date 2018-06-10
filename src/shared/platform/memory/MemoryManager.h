@@ -65,6 +65,12 @@ namespace apemode {
 
 } // namespace apemode
 
+#ifdef _WIN32
+#ifndef APEMODE_THROW_BAD_ALLOC
+#define APEMODE_THROW_BAD_ALLOC
+#endif
+#endif
+
 #ifndef APEMODE_THROW_BAD_ALLOC
 #define APEMODE_THROW_BAD_ALLOC throw( std::bad_alloc )
 #endif
