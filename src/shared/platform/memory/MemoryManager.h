@@ -8,15 +8,17 @@
 #include <memory>
 #include <memory.h>
 
-// #if _WIN32
+#ifndef APEMODE_NO_MEMORY_TRACKING
 #ifndef APEMODE_USE_MEMORY_TRACKING
 #define APEMODE_USE_MEMORY_TRACKING
 #endif
+#endif
 
+#ifndef APEMODE_NO_DLMALLOC
 #ifndef APEMODE_USE_DLMALLOC
 #define APEMODE_USE_DLMALLOC
 #endif
-// #endif
+#endif
 
 #ifndef APEMODE_DEFAULT_ALIGNMENT
 #define APEMODE_DEFAULT_ALIGNMENT ( sizeof( void* ) << 1 )
@@ -66,6 +68,7 @@ namespace apemode {
 } // namespace apemode
 
 #ifdef _WIN32
+// Lots of warnings on Windows, MSVC ignores throw specifications, except declspec(nothrow).
 #ifndef APEMODE_THROW_BAD_ALLOC
 #define APEMODE_THROW_BAD_ALLOC
 #endif
@@ -121,22 +124,23 @@ void operator delete( void*                   p,
                       const unsigned int      sourceLine,
                       const char*             pszSourceFunc ) APEMODE_NO_EXCEPT;
 
-#if defined( APEMODE_USE_MEMORY_TRACKING )
+#ifdef APEMODE_USE_MEMORY_TRACKING
+
 #include "FluidStudios/MemoryManager/mmgr.h"
 
-#define apemode_malloc( size, alignment )        apemode::allocate( size, alignment, __FILE__, __LINE__, __FUNCTION__ )
-#define apemode_calloc( count, size, alignment ) apemode::callocate( count, size, alignment,  __FILE__, __LINE__, __FUNCTION__ )
-#define apemode_realloc( ptr, size, alignment )  apemode::reallocate( ptr, size, alignment, __FILE__, __LINE__, __FUNCTION__ )
-#define apemode_free( ptr )                      apemode::deallocate( ptr, __FILE__, __LINE__, __FUNCTION__ )
+#define apemode_malloc( size, alignment )        apemode::allocate( (size), (alignment), __FILE__, __LINE__, __FUNCTION__ )
+#define apemode_calloc( count, size, alignment ) apemode::callocate( (count), (size), (alignment),  __FILE__, __LINE__, __FUNCTION__ )
+#define apemode_realloc( ptr, size, alignment )  apemode::reallocate( (ptr), (size), (alignment), __FILE__, __LINE__, __FUNCTION__ )
+#define apemode_free( ptr )                      apemode::deallocate( (ptr), __FILE__, __LINE__, __FUNCTION__ )
 
-#else
+#else // APEMODE_USE_MEMORY_TRACKING
 
 void* apemode_malloc( size_t size, size_t alignment = APEMODE_DEFAULT_ALIGNMENT );
 void* apemode_calloc( size_t count, size_t size, size_t alignment = APEMODE_DEFAULT_ALIGNMENT );
 void* apemode_realloc( void* p, size_t size, size_t alignment = APEMODE_DEFAULT_ALIGNMENT );
 void  apemode_free( void* p );
 
-#endif
+#endif // !APEMODE_USE_MEMORY_TRACKING
 
 namespace apemode {
     namespace platform {
@@ -149,7 +153,7 @@ namespace apemode {
 } // namespace apemode
 
 #define apemode_new             new ( apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
-#define apemode_delete( pObj )  apemode::platform::CallDestructor( pObj ), operator delete( pObj, apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj= nullptr
+#define apemode_delete( pObj )  apemode::platform::CallDestructor( (pObj) ), operator delete( (pObj), apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj= nullptr
 
 namespace apemode {
 
@@ -172,6 +176,7 @@ namespace apemode {
     }
 } // namespace apemode
 
+#ifdef APEMODE_USE_MEMORY_TRACKING
 namespace apemode {
 
     void GetPrevMemoryAllocationScope( const char*& pszSourceFile, unsigned int& sourceLine, const char*& pszSourceFunc );
@@ -193,4 +198,11 @@ namespace apemode {
 } // namespace apemode
 
 #define apemode_named_memory_allocation_scope( name ) apemode::MemoryAllocationScope _##name##MemoryAllocationScope( __FILE__, __LINE__, __FUNCTION__ )
+
+#endif // APEMODE_USE_MEMORY_TRACKING
+
+#ifdef apemode_named_memory_allocation_scope
 #define apemode_memory_allocation_scope apemode_named_memory_allocation_scope( default )
+#else
+#define apemode_memory_allocation_scope
+#endif

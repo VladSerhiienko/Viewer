@@ -198,7 +198,10 @@ void apemode::deallocate( void *pMemory, const char *pszSourceFile, const unsign
     return apememext::aligned_free( pMemory, pszSourceFile, sourceLine, pszSourceFunc, m_alloc_free );
 }
 
+#ifndef APEMODE_NO_MEMORY_ALLOCATION_SCOPES
 #define APEMODE_ENABLE_MEMORY_ALLOCATION_SCOPES
+#endif
+
 #ifdef APEMODE_ENABLE_MEMORY_ALLOCATION_SCOPES
 
 thread_local apemode::MemoryAllocationScope::CodeLocation gCurrLocation;
@@ -243,6 +246,12 @@ apemode::MemoryAllocationScope::~MemoryAllocationScope( ) {
 #define APEMODE_GLOBAL_NEW_DELETE_FUNC __FUNCTION__
 
 #endif
+
+#ifndef APEMODE_NO_GLOBAL_NEW_DELETE_OP_OVERRIDES
+#define APEMODE_ENABLE_GLOBAL_NEW_DELETE_OP_OVERRIDES
+#endif
+
+#ifdef APEMODE_ENABLE_GLOBAL_NEW_DELETE_OP_OVERRIDES
 
 void *operator new[]( std::size_t size, std::nothrow_t const & ) APEMODE_NO_EXCEPT {
     return apememext::aligned_malloc( size,
@@ -296,6 +305,8 @@ void operator delete( void *pMemory ) APEMODE_NO_EXCEPT {
                                     m_alloc_delete );
 }
 
+#endif
+
 void *operator new[]( std::size_t             size,
                       std::nothrow_t const &  nothrow,
                       apemode::EAllocationTag eAllocTag,
@@ -346,7 +357,7 @@ void operator delete( void *                  pMemory,
     return apememext::aligned_free( pMemory, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete );
 }
 
-#if defined( USE_MEMORY_TRACKING )
+#ifdef USE_MEMORY_TRACKING
 
 #undef apemode_malloc
 #undef apemode_calloc

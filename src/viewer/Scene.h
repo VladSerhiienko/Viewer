@@ -22,7 +22,7 @@ namespace apemode {
 
     /* Shortcut for the device asset pointer.
      */
-    using SceneDeviceAssetPtr = std::unique_ptr< SceneDeviceAsset >;
+    using SceneDeviceAssetPtr = apemode::unique_ptr< SceneDeviceAsset >;
 
     /* Represents the material asset class.
      */
