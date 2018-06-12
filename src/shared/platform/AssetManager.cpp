@@ -7,19 +7,19 @@
 #include <stdlib.h>
 #include <regex>
 
-const std::string& apemodeos::AssetFile::GetName( ) const {
-    return RelPath;
+const char* apemodeos::AssetFile::GetName( ) const {
+    return RelPath.c_str( );
 }
 
-const std::string& apemodeos::AssetFile::GetId( ) const {
-    return FullPath;
+const char* apemodeos::AssetFile::GetId( ) const {
+    return FullPath.c_str( );
 }
 
-std::string apemodeos::AssetFile::AsTxt( ) const {
+apemodeos::AssetContentBuffer apemodeos::AssetFile::GetContentAsTextBuffer( ) const {
     return FileReader( ).ReadTxtFile( FullPath );
 }
 
-std::vector< uint8_t > apemodeos::AssetFile::AsBin( ) const {
+apemodeos::AssetContentBuffer apemodeos::AssetFile::GetContentAsBinaryBuffer( ) const {
     return FileReader( ).ReadBinFile( FullPath );
 }
 

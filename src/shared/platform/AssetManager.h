@@ -11,11 +11,14 @@ namespace apemodeos {
         std::string RelPath;
         std::string FullPath;
 
-        virtual ~AssetFile( ) { }
-        virtual const std::string&     GetName( ) const override;
-        virtual const std::string&     GetId( ) const override;
-        virtual std::string            AsTxt( ) const override;
-        virtual std::vector< uint8_t > AsBin( ) const override;
+        virtual ~AssetFile( ) = default;
+
+        const char*        GetName( ) const                  override;
+        const char*        GetId( ) const                    override;
+        AssetContentBuffer GetContentAsTextBuffer( ) const   override;
+        AssetContentBuffer GetContentAsBinaryBuffer( ) const override;
+        uint64_t           GetCurrentVersion( ) const        override;
+        void               SetCurrentVersion( uint64_t )     override;
     };
 
     struct AssetManager : IAssetManager {
