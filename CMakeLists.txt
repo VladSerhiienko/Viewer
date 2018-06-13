@@ -564,6 +564,8 @@ endif()
 
 set(
     shared_platform_source_files
+    ${CMAKE_SOURCE_DIR}/src/shared/platform/IAssetManager.h
+    ${CMAKE_SOURCE_DIR}/src/shared/platform/IAssetManager.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/AssetManager.h
     ${CMAKE_SOURCE_DIR}/src/shared/platform/AssetManager.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/FileManager.cpp

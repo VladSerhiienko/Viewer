@@ -196,35 +196,32 @@ void apemodeos::FileTracker::CollectChangedFiles( std::vector< std::string >& Ou
     }
 }
 
-std::vector< uint8_t > apemodeos::FileReader::ReadBinFile( const std::string& filePath ) {
-    const std::string resolvedFilePath = ToCanonicalAbsolutPath( filePath );
+apemodeos::AssetContentBuffer ReadFile( const char * pszFilePath, const char * pszMode ) {
+    // const std::string resolvedFilePath = ToCanonicalAbsolutPath( pszFilePath );
 
-    std::ifstream fileStream( resolvedFilePath, std::ios::binary | std::ios::ate );
-    if ( fileStream.good( ) ) {
+    FILE* pFile = fopen( pszFilePath, pszMode );
+    if ( !pFile )
+        return {};
 
-        std::streamsize fileSize = fileStream.tellg( );
-        fileStream.seekg( 0, std::ios::beg );
-        std::vector< uint8_t > fileBuffer( fileSize );
+    fseek( pFile, 0, SEEK_END );
+    long fileSize = ftell( pFile );
+    fseek( pFile, 0, SEEK_SET );
 
-        /* Read file and return */
-        if ( fileStream.read( (char*) fileBuffer.data( ), fileSize ).good( ) ) {
-            return fileBuffer;
-        }
-    }
+    apemodeos::AssetContentBuffer assetContentBuffer;
+    assetContentBuffer.Alloc( fileSize );
+    if ( !assetContentBuffer.pData )
+        return {};
 
-    return {};
+    fread( assetContentBuffer.pData, fileSize, 1, pFile );
+    fclose( pFile );
+
+    return std::move( assetContentBuffer );
 }
 
-std::string apemodeos::FileReader::ReadTxtFile( const std::string& filePath ) {
-    const std::string resolvedFilePath = ToCanonicalAbsolutPath( filePath );
+apemodeos::AssetContentBuffer apemodeos::FileReader::ReadBinFile( const char* pszFilePath ) {
+    return ReadFile( pszFilePath, "rb" );
+}
 
-    std::ifstream fileStream( resolvedFilePath );
-    if ( fileStream.good( ) ) {
-
-        /* Read file and return */
-        return std::string( std::istreambuf_iterator< char >( fileStream ),
-                            std::istreambuf_iterator< char >( ) );
-    }
-
-    return "";
+apemodeos::AssetContentBuffer apemodeos::FileReader::ReadTxtFile( const char* pszFilePath ) {
+    return ReadFile( pszFilePath, "r" );
 }

@@ -177,6 +177,8 @@ namespace apemode {
 } // namespace apemode
 
 #ifdef APEMODE_USE_MEMORY_TRACKING
+#ifndef apemode_named_memory_allocation_scope
+
 namespace apemode {
 
     void GetPrevMemoryAllocationScope( const char*& pszSourceFile, unsigned int& sourceLine, const char*& pszSourceFunc );
@@ -198,7 +200,7 @@ namespace apemode {
 } // namespace apemode
 
 #define apemode_named_memory_allocation_scope( name ) apemode::MemoryAllocationScope _##name##MemoryAllocationScope( __FILE__, __LINE__, __FUNCTION__ )
-
+#endif // apemode_named_memory_allocation_scope
 #endif // APEMODE_USE_MEMORY_TRACKING
 
 #ifdef apemode_named_memory_allocation_scope

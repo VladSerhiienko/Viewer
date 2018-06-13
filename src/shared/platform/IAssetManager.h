@@ -1,14 +1,33 @@
 #pragma once
 
-#include <vector>
-#include <string>
-#include <stdint.h>
+#include <MemoryManager.h>
 
 namespace apemodeos {
+
+    struct AssetContentData {
+        using FreeFn = void ( * )( AssetContentData );
+
+        uint8_t* pData    = nullptr;
+        size_t   dataSize = 0;
+        FreeFn   pFreeFn  = nullptr;
+    };
 
     struct AssetContentBuffer {
         uint8_t* pData    = nullptr;
         size_t   dataSize = 0;
+
+        ~AssetContentBuffer( );
+
+        AssetContentData Release( );
+        void             Alloc( size_t size, size_t alignment = APEMODE_DEFAULT_ALIGNMENT );
+        void             Free( );
+
+        static void Free( AssetContentData assetContentData ) {
+            AssetContentBuffer assetContentBuffer;
+            assetContentBuffer.pData    = assetContentData.pData;
+            assetContentBuffer.dataSize = assetContentData.dataSize;
+            assetContentBuffer.Free( );
+        }
     };
 
     struct IAsset {
@@ -22,7 +41,7 @@ namespace apemodeos {
     };
 
     struct IAssetManager {
-        virtual ~IAssetManager( ) { }
-        virtual const IAsset * GetAsset( const std::string& InAssetName ) const = 0;
+        virtual ~IAssetManager( )                                        = default;
+        virtual const IAsset* GetAsset( const char* pszAssetName ) const = 0;
     };
 }

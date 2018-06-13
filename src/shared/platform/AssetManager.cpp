@@ -8,19 +8,19 @@
 #include <regex>
 
 const char* apemodeos::AssetFile::GetName( ) const {
-    return RelPath.c_str( );
+    return Name.c_str( );
 }
 
 const char* apemodeos::AssetFile::GetId( ) const {
-    return FullPath.c_str( );
+    return Path.c_str( );
 }
 
 apemodeos::AssetContentBuffer apemodeos::AssetFile::GetContentAsTextBuffer( ) const {
-    return FileReader( ).ReadTxtFile( FullPath );
+    return FileReader( ).ReadTxtFile( Path.c_str( ) );
 }
 
 apemodeos::AssetContentBuffer apemodeos::AssetFile::GetContentAsBinaryBuffer( ) const {
-    return FileReader( ).ReadBinFile( FullPath );
+    return FileReader( ).ReadBinFile( Path.c_str( ) );
 }
 
 const apemodeos::IAsset* apemodeos::AssetManager::GetAsset( const std::string& InAssetName ) const {
@@ -40,13 +40,11 @@ void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
             if ( file.is_reg ) {
                 apemode::LogInfo( "AssetManager: Processing file: {}", file.path );
                 callback( file.path, file );
-            } else {
-                if ( r && file.is_dir && ( strcmp( file.name, "." ) != 0 ) && ( strcmp( file.name, ".." ) != 0 ) ) {
-                    tinydir_dir subdir;
-                    if ( tinydir_open_sorted( &subdir, file.path ) != -1 ) {
-                        ProcessFiles( callback, subdir, r );
-                        tinydir_close( &subdir );
-                    }
+            } else if ( r && file.is_dir && ( strcmp( file.name, "." ) != 0 ) && ( strcmp( file.name, ".." ) != 0 ) ) {
+                tinydir_dir subdir;
+                if ( tinydir_open_sorted( &subdir, file.path ) != -1 ) {
+                    ProcessFiles( callback, subdir, r );
+                    tinydir_close( &subdir );
                 }
             }
         }
@@ -97,11 +95,11 @@ void apemodeos::AssetManager::AddFilesFromDirectory( const std::string&         
                 if ( assetIt == AssetFiles.end( ) ) {
                     apemode::LogInfo( "AssetManager: Added: {}", fullPath );
                 } else {
-                    apemode::LogWarn( "AssetManager: Replaced: {} -> {}", assetIt->second.FullPath, fullPath );
+                    apemode::LogWarn( "AssetManager: Replaced: {} -> {}", assetIt->second.Path, fullPath );
                 }
 
-                AssetFiles[ relativePath ].RelPath  = relativePath;
-                AssetFiles[ relativePath ].FullPath = fullPath;
+                AssetFiles[ relativePath ].Name  = relativePath;
+                AssetFiles[ relativePath ].Path = fullPath;
             }
         };
 

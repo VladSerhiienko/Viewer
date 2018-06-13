@@ -8,8 +8,8 @@
 namespace apemodeos {
 
     struct AssetFile : IAsset  {
-        std::string RelPath;
-        std::string FullPath;
+        std::string Name;
+        std::string Path;
 
         virtual ~AssetFile( ) = default;
 

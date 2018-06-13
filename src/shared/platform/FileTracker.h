@@ -2,6 +2,7 @@
 
 #include <map>
 #include <FileReader.h>
+#include <IAssetManager.h>
 
 namespace apemodeos {
 
@@ -34,5 +35,7 @@ namespace apemodeos {
          * @param OutChangedFiles Full file paths, that were changed.
          **/
         void CollectChangedFiles( std::vector< std::string >& OutChangedFiles );
+
+        void UpdateAssetVersions( IAssetManager * pAssetManager );
     };
 }
