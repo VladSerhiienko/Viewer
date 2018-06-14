@@ -23,12 +23,21 @@ apemodeos::AssetContentBuffer apemodeos::AssetFile::GetContentAsBinaryBuffer( ) 
     return FileReader( ).ReadBinFile( Path.c_str( ) );
 }
 
-const apemodeos::IAsset* apemodeos::AssetManager::GetAsset( const std::string& InAssetName ) const {
-    auto assetIt = AssetFiles.find( InAssetName );
+uint64_t apemodeos::AssetFile::GetCurrentVersion( ) const {
+    return LastTimeModified;
+}
+
+void apemodeos::AssetFile::SetCurrentVersion( uint64_t version ) {
+    LastTimeModified = version;
+}
+
+const apemodeos::IAsset* apemodeos::AssetManager::GetAsset( const char * pszAssetName ) const {
+    auto assetIt = AssetFiles.find( pszAssetName );
     return assetIt == AssetFiles.end( ) ? 0 : &assetIt->second;
 }
 
-std::string ToCanonicalAbsolutPath( const std::string & relativePath );
+std::string ToCanonicalAbsolutPath( const char * pszRelativePath );
+uint64_t GetLastModifiedTime( const char * pszFilePath );
 
 template < typename TFileCallback >
 void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
@@ -51,10 +60,11 @@ void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
     }
 }
 
-void apemodeos::AssetManager::AddFilesFromDirectory( const std::string&                InStorageDirectory,
-                                                     const std::vector< std::string >& InFilePatterns ) {
+void apemodeos::AssetManager::AddFilesFromDirectory( const char*  pszFolderPath,
+                                                     const char** ppszFilePatterns,
+                                                     size_t       filePatternCount ) {
     apemode_memory_allocation_scope;
-    std::string storageDirectory = InStorageDirectory;
+    std::string storageDirectory = pszFolderPath;
 
     if ( storageDirectory.empty( ) ) {
         storageDirectory = "./";
@@ -73,33 +83,42 @@ void apemodeos::AssetManager::AddFilesFromDirectory( const std::string&         
     }
 
     tinydir_dir dir;
-    std::string storageDirectoryFull = ToCanonicalAbsolutPath( storageDirectory );
+    std::string storageDirectoryFull = ToCanonicalAbsolutPath( storageDirectory.c_str( ) );
     if ( !storageDirectoryFull.empty( ) && tinydir_open_sorted( &dir, storageDirectoryFull.c_str( ) ) != -1 ) {
 
         auto addFileFn = [&]( const std::string& filePath, tinydir_file file ) {
 
             /* Check if file matches the patterns */
-            bool matches = InFilePatterns.empty( );
-            for ( const auto& f : InFilePatterns ) {
-                if ( std::regex_match( filePath, std::regex( f ) ) ) {
+            bool matches = ( filePatternCount == 0 );
+
+            for ( size_t i = 0; i < filePatternCount; ++i ) {
+                if ( std::regex_match( filePath, std::regex( ppszFilePatterns[ i ] ) ) ) {
                     matches = true;
                     break;
                 }
             }
 
             if ( matches ) {
-                const std::string fullPath = ToCanonicalAbsolutPath( filePath );
+                const std::string fullPath = ToCanonicalAbsolutPath( filePath.c_str( ) );
                 const std::string relativePath = fullPath.substr( storageDirectoryFull.size( ) + ( storageDirectoryFull.back( ) != '/' ) );
+                const uint64_t lastWriteTime = GetLastModifiedTime( filePath.c_str( ) );
+
+                apemodeos::AssetFile* pAsset = nullptr;
 
                 auto assetIt = AssetFiles.find( relativePath );
                 if ( assetIt == AssetFiles.end( ) ) {
+                    pAsset = &AssetFiles[ relativePath ];
+
+                    pAsset->Name = relativePath;
+                    pAsset->Path = fullPath;
+
                     apemode::LogInfo( "AssetManager: Added: {}", fullPath );
                 } else {
-                    apemode::LogWarn( "AssetManager: Replaced: {} -> {}", assetIt->second.Path, fullPath );
+                    pAsset = &assetIt->second;
                 }
 
-                AssetFiles[ relativePath ].Name  = relativePath;
-                AssetFiles[ relativePath ].Path = fullPath;
+                if ( pAsset )
+                    pAsset->SetCurrentVersion( lastWriteTime );
             }
         };
 

@@ -21,13 +21,6 @@ namespace apemodeos {
         AssetContentData Release( );
         void             Alloc( size_t size, size_t alignment = APEMODE_DEFAULT_ALIGNMENT );
         void             Free( );
-
-        static void Free( AssetContentData assetContentData ) {
-            AssetContentBuffer assetContentBuffer;
-            assetContentBuffer.pData    = assetContentData.pData;
-            assetContentBuffer.dataSize = assetContentData.dataSize;
-            assetContentBuffer.Free( );
-        }
     };
 
     struct IAsset {

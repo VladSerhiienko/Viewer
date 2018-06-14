@@ -28,15 +28,15 @@ bool apemodeos::FileExists( const std::string& filePath ) {
 #endif
 }
 
-uint64_t GetLastModifiedTime( const std::string& filePath ) {
+uint64_t GetLastModifiedTime( const char * pszFilePath ) {
 
 #if _WIN32
     struct _stat64i32 statBuffer;
-    if ( _stat64i32( filePath.c_str( ), &statBuffer ) != 0 )
+    if ( _stat64i32( pszFilePath, &statBuffer ) != 0 )
         return 0;
 #else
     struct stat statBuffer;
-    if ( stat( filePath.c_str( ), &statBuffer ) != 0 )
+    if ( stat( pszFilePath, &statBuffer ) != 0 )
         return 0;
 #endif
 
@@ -47,19 +47,19 @@ uint64_t GetLastModifiedTime( const std::string& filePath ) {
 #define APEMODE_PATH_MAX 4096
 #endif
 
-std::string ToCanonicalAbsolutPath( const std::string& relativePath ) {
+std::string ToCanonicalAbsolutPath( const char * pszRelativePath ) {
     char canonicalAbsolutePathBuffer[ APEMODE_PATH_MAX ] = {0};
 
 #if _WIN32
-    if ( !_fullpath( canonicalAbsolutePathBuffer, relativePath.c_str( ), sizeof( canonicalAbsolutePathBuffer ) ) ) {
+    if ( !_fullpath( canonicalAbsolutePathBuffer, pszRelativePath, sizeof( canonicalAbsolutePathBuffer ) ) ) {
         return "";
     }
 #else
     struct stat statBuffer;
-    if ( stat( relativePath.c_str( ), &statBuffer ) != 0 )
+    if ( stat( pszRelativePath, &statBuffer ) != 0 )
         return "";
 
-    realpath( relativePath.c_str( ), canonicalAbsolutePathBuffer );
+    realpath( pszRelativePath, canonicalAbsolutePathBuffer );
 #endif
 
     char* canonicalAbsolutePathIt    = canonicalAbsolutePathBuffer;
@@ -111,7 +111,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
     }
 
     tinydir_dir dir;
-    std::string storageDirectoryFull = ToCanonicalAbsolutPath( storageDirectory );
+    std::string storageDirectoryFull = ToCanonicalAbsolutPath( storageDirectory.c_str( ) );
     if ( !storageDirectoryFull.empty( ) && tinydir_open_sorted( &dir, storageDirectoryFull.c_str( ) ) != -1 ) {
 
         /* Lambda to check the path and the file to Files. */
@@ -128,7 +128,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
 
             if ( matches ) {
                 /* Update file state */
-                const uint64_t lastWriteTime = GetLastModifiedTime( filePath );
+                const uint64_t lastWriteTime = GetLastModifiedTime( filePath.c_str( ) );
 
                 auto fileIt = Files.find( filePath );
                 if ( fileIt == Files.end( ) ) {

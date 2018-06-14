@@ -44,8 +44,12 @@ bool ShaderFileReader::ReadShaderTxtFile( const std::string& InFilePath,
                                           std::string&       OutFileFullPath,
                                           std::string&       OutFileContent ) {
     apemode_memory_allocation_scope;
-    if ( auto pAsset = mAssetManager->GetAsset( InFilePath ) ) {
-        OutFileContent  = pAsset->AsTxt( );
+    if ( auto pAsset = mAssetManager->GetAsset( InFilePath.c_str( ) ) ) {
+
+        const auto assetText = pAsset->GetContentAsTextBuffer( );
+        OutFileContent.resize( assetText.dataSize );
+        memcpy( &OutFileContent[ 0 ], assetText.pData, assetText.dataSize );
+
         OutFileFullPath = pAsset->GetId( );
         return true;
     }
@@ -104,9 +108,8 @@ bool ViewerApp::Initialize(  ) {
     LogInfo( "ViewerApp: Initializing." );
 
     if ( AppBase::Initialize( ) ) {
-
         std::string assetsFolder = TGetOption< std::string >( "--assets", "./" );
-        mAssetManager.AddFilesFromDirectory( assetsFolder, {} );
+        mAssetManager.AddFilesFromDirectory( assetsFolder.c_str( ), nullptr, 0 );
 
         // Shaders and possible headers ...
         std::string interestingFilePattern = ".*\\.(vert|frag|comp|geom|tesc|tese|h|inl|inc|fx)$";
@@ -194,7 +197,7 @@ bool ViewerApp::Initialize(  ) {
         if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/bolonga_lod.dds" ) ) {
             apemode_memory_allocation_scope;
             {
-                const std::vector< uint8_t > texAssetBin = pTexAsset->AsBin( );
+                const auto texAssetBin = pTexAsset->GetContentAsBinaryBuffer( );
 
                 apemodevk::ImageLoader::LoadOptions loadOptions;
                 loadOptions.eFileFormat    = apemodevk::ImageLoader::eImageFileFormat_DDS;
@@ -202,7 +205,7 @@ bool ViewerApp::Initialize(  ) {
                 loadOptions.bImgView         = true;
                 loadOptions.bGenerateMipMaps = true;
 
-                RadianceLoadedImg = imgLoader.LoadImageFromFileData( texAssetBin.data( ), texAssetBin.size( ), loadOptions ); /* Await */
+                RadianceLoadedImg = imgLoader.LoadImageFromFileData( texAssetBin.pData, texAssetBin.dataSize, loadOptions ); /* Await */
             }
 
             VkSamplerCreateInfo samplerCreateInfo;
@@ -234,7 +237,7 @@ bool ViewerApp::Initialize(  ) {
         if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/bolonga_irr.dds" ) ) {
             apemode_memory_allocation_scope;
             {
-                const std::vector< uint8_t > texAssetBin = pTexAsset->AsBin( );
+                const auto texAssetBin = pTexAsset->GetContentAsBinaryBuffer( );
 
                 apemodevk::ImageLoader::LoadOptions loadOptions;
                 loadOptions.eFileFormat    = apemodevk::ImageLoader::eImageFileFormat_DDS;
@@ -242,7 +245,7 @@ bool ViewerApp::Initialize(  ) {
                 loadOptions.bImgView         = true;
                 loadOptions.bGenerateMipMaps = false;
 
-                IrradianceLoadedImg = imgLoader.LoadImageFromFileData( texAssetBin.data( ), texAssetBin.size( ), loadOptions );
+                IrradianceLoadedImg = imgLoader.LoadImageFromFileData( texAssetBin.pData, texAssetBin.dataSize, loadOptions );
             }
 
             VkSamplerCreateInfo samplerCreateInfo;
@@ -348,8 +351,8 @@ bool ViewerApp::Initialize(  ) {
         }
 
         auto sceneFile = TGetOption< std::string >( "scene", "" ); {
-            auto sceneFileContent = apemodeos::FileReader( ).ReadBinFile( sceneFile );
-            auto loadedScene = LoadSceneFromBin( sceneFileContent.data( ), sceneFileContent.size( ) );
+            auto sceneFileContent = apemodeos::FileReader( ).ReadBinFile( sceneFile.c_str( ) );
+            auto loadedScene = LoadSceneFromBin( sceneFileContent.pData, sceneFileContent.dataSize );
 
             pScene = std::move( loadedScene.first );
             pSceneSource = SceneSourceData( loadedScene.second, std::move( sceneFileContent ) );

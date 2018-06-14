@@ -7,9 +7,10 @@
 
 namespace apemodeos {
 
-    struct AssetFile : IAsset  {
+    struct AssetFile : IAsset {
         std::string Name;
         std::string Path;
+        uint64_t    LastTimeModified = 0;
 
         virtual ~AssetFile( ) = default;
 
@@ -24,9 +25,10 @@ namespace apemodeos {
     struct AssetManager : IAssetManager {
         std::map< std::string, AssetFile > AssetFiles;
 
-        virtual ~AssetManager( ) { }
-        virtual const IAsset* GetAsset( const std::string& InAssetName ) const override;
+        virtual ~AssetManager( ) = default;
 
-        void AddFilesFromDirectory( const std::string& InStorageDirectory, const std::vector< std::string >& InFilePatterns );
+        const IAsset* GetAsset( const char* InAssetName ) const override;
+
+        void AddFilesFromDirectory( const char* InStorageDirectory, const char** ppszFilePatterns, size_t filePatternCount );
     };
 }

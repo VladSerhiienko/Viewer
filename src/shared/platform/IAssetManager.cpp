@@ -17,12 +17,19 @@ void apemodeos::AssetContentBuffer::Free( ) {
     }
 }
 
+void AssetContentBufferFree( apemodeos::AssetContentData assetContentData ) {
+    apemodeos::AssetContentBuffer assetContentBuffer;
+    assetContentBuffer.pData    = assetContentData.pData;
+    assetContentBuffer.dataSize = assetContentData.dataSize;
+    assetContentBuffer.Free( );
+}
+
 apemodeos::AssetContentData apemodeos::AssetContentBuffer::Release( ) {
     apemodeos::AssetContentData assetContentData;
 
     assetContentData.pData    = pData;
     assetContentData.dataSize = dataSize;
-    assetContentData.pFreeFn  = &AssetContentBuffer::Free;
+    assetContentData.pFreeFn  = &AssetContentBufferFree;
 
     pData    = nullptr;
     dataSize = 0;
@@ -32,11 +39,4 @@ apemodeos::AssetContentData apemodeos::AssetContentBuffer::Release( ) {
 
 apemodeos::AssetContentBuffer::~AssetContentBuffer( ) {
     Free( );
-}
-
-void apemodeos::AssetContentBuffer::Free( AssetContentData assetContentData ) {
-    AssetContentBuffer assetContentBuffer;
-    assetContentBuffer.pData    = assetContentData.pData;
-    assetContentBuffer.dataSize = assetContentData.dataSize;
-    assetContentBuffer.Free( );
 }

@@ -102,7 +102,7 @@ namespace apemode {
         apemode::unique_ptr< DebugRendererVk >        pDebugRenderer;
         apemode::unique_ptr< SceneRendererBase >      pSceneRendererBase;
 
-        using SceneSourceData = std::pair< const apemodefb::SceneFb *, std::vector< uint8_t > >;
+        using SceneSourceData = std::pair< const apemodefb::SceneFb *, apemodeos::AssetContentBuffer >;
         UniqueScenePtr  pScene;
         SceneSourceData pSceneSource;
 
