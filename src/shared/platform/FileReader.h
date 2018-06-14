@@ -12,8 +12,8 @@ namespace apemodeos {
     // Set of functions and classes to interact with file system.
     //
 
-    bool DirectoryExists( const std::string& InPath );
-    bool FileExists( const std::string& InPath );
+    bool DirectoryExists( const char * pszPath );
+    bool FileExists( const char * pszPath );
     // ...
 
     /**

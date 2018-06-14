@@ -8,23 +8,23 @@
 #include <fstream>
 #include <iterator>
 
-bool apemodeos::DirectoryExists( const std::string& directoryPath ) {
+bool apemodeos::DirectoryExists( const char * pszPath ) {
 #if _WIN32
-    DWORD dwAttrib = GetFileAttributes( directoryPath.c_str( ) );
+    DWORD dwAttrib = GetFileAttributes( pszPath );
     return ( dwAttrib != INVALID_FILE_ATTRIBUTES && ( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
 #else
     struct stat statBuffer;
-    return ( stat( directoryPath.c_str( ), &statBuffer ) == 0 ) && S_ISDIR( statBuffer.st_mode );
+    return ( stat( pszPath, &statBuffer ) == 0 ) && S_ISDIR( statBuffer.st_mode );
 #endif
 }
 
-bool apemodeos::FileExists( const std::string& filePath ) {
+bool apemodeos::FileExists(  const char * pszPath ) {
 #if _WIN32
-    DWORD dwAttrib = GetFileAttributes( filePath.c_str( ) );
+    DWORD dwAttrib = GetFileAttributes( pszPath );
     return ( dwAttrib != INVALID_FILE_ATTRIBUTES && !( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
 #else
     struct stat statBuffer;
-    return ( stat( filePath.c_str( ), &statBuffer ) == 0 ) && S_ISREG( statBuffer.st_mode );
+    return ( stat( pszPath, &statBuffer ) == 0 ) && S_ISREG( statBuffer.st_mode );
 #endif
 }
 
@@ -152,7 +152,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
         if ( bRemoveDeletedFiles ) {
             /* Remove from Files. */
             for ( ; fileIt != Files.end( ); ) {
-                if ( false == FileExists( fileIt->first ) ) {
+                if ( false == FileExists( fileIt->first.c_str( ) ) ) {
                     apemode::LogInfo( "FileScanner: Deleted: {}", fileIt->first.c_str( ) );
                     fileIt = Files.erase( fileIt );
                 } else {
@@ -162,7 +162,7 @@ bool apemodeos::FileTracker::ScanDirectory( std::string storageDirectory, bool b
         } else {
             /* Set to deleted state. */
             for ( ; fileIt != Files.end( ); ) {
-                if ( false == FileExists( fileIt->first ) ) {
+                if ( false == FileExists( fileIt->first.c_str( ) ) ) {
                     apemode::LogInfo( "FileScanner: Deleted state: {}", fileIt->first.c_str( ) );
                     fileIt->second.CurrTime = 0;
                     fileIt->second.PrevTime = 0;
