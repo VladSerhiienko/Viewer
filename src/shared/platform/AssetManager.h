@@ -2,33 +2,55 @@
 
 #include <map>
 #include <stdint.h>
+#include <atomic>
 
 #include <IAssetManager.h>
 
 namespace apemodeos {
 
+    struct AssetManager;
+
     struct AssetFile : IAsset {
-        std::string Name;
-        std::string Path;
-        uint64_t    LastTimeModified = 0;
+
+        static constexpr uint64_t kVersionDeleted = ~0;
 
         virtual ~AssetFile( ) = default;
 
-        const char*        GetName( ) const                  override;
-        const char*        GetId( ) const                    override;
-        AssetContentBuffer GetContentAsTextBuffer( ) const   override;
-        AssetContentBuffer GetContentAsBinaryBuffer( ) const override;
-        uint64_t           GetCurrentVersion( ) const        override;
-        void               SetCurrentVersion( uint64_t )     override;
+        const char*        GetName( ) const                                 override;
+        const char*        GetId( ) const                                   override;
+        AssetContentBuffer GetContentAsTextBuffer( ) const                  override;
+        AssetContentBuffer GetContentAsBinaryBuffer( ) const                override;
+        uint64_t           GetCurrentVersion( ) const                       override;
+        void               SetCurrentVersion( uint64_t lastTimeModified )   override;
+
+        void SetName( const char* pszAssetName );
+        void SetId( const char* pszAssetPath );
+
+    protected:
+        std::string          Name;
+        std::string          Path;
+        std::atomic_uint64_t LastTimeModified = 0;
     };
 
+    /* The class is designed to be thread-safe. */
     struct AssetManager : IAssetManager {
-        std::map< std::string, AssetFile > AssetFiles;
 
         virtual ~AssetManager( ) = default;
 
-        const IAsset* GetAsset( const char* InAssetName ) const override;
+        const IAsset* Acquire( const char* pszAssetName ) const override;
+        void          Release( const IAsset* pAsset ) const     override;
 
-        void AddFilesFromDirectory( const char* InStorageDirectory, const char** ppszFilePatterns, size_t filePatternCount );
+        void UpdateAssets( const char*  pszFolderPath,
+                           const char** ppszFilePatterns,
+                           size_t       filePatternCount );
+
+    protected:
+        struct AssetFileItem {
+            mutable std::atomic_uint32_t UseCount;
+            AssetFile                    Asset;
+        };
+
+        std::atomic_uint32_t                   UseCount;
+        std::map< std::string, AssetFileItem > AssetFiles;
     };
 }

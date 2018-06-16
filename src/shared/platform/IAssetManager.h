@@ -16,6 +16,12 @@ namespace apemodeos {
         uint8_t* pData    = nullptr;
         size_t   dataSize = 0;
 
+        AssetContentBuffer( );
+        AssetContentBuffer( AssetContentBuffer&& );
+        AssetContentBuffer& operator=( AssetContentBuffer&& );
+        AssetContentBuffer( const AssetContentBuffer& ) = delete;
+        AssetContentBuffer& operator=( const AssetContentBuffer& ) = delete;
+
         ~AssetContentBuffer( );
 
         AssetContentData Release( );
@@ -34,7 +40,8 @@ namespace apemodeos {
     };
 
     struct IAssetManager {
-        virtual ~IAssetManager( )                                        = default;
-        virtual const IAsset* GetAsset( const char* pszAssetName ) const = 0;
+        virtual ~IAssetManager( )                                       = default;
+        virtual const IAsset* Acquire( const char* pszAssetName ) const = 0;
+        virtual void          Release( const IAsset* pAsset ) const     = 0;
     };
 }

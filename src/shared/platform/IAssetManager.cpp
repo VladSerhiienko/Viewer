@@ -15,6 +15,25 @@ void apemodeos::AssetContentBuffer::Free( ) {
     }
 }
 
+apemodeos::AssetContentBuffer::AssetContentBuffer( ) {
+}
+
+apemodeos::AssetContentBuffer::AssetContentBuffer( AssetContentBuffer&& o ) {
+    Free( );
+    pData    = o.pData;
+    dataSize = o.dataSize;
+    o.Release();
+}
+
+apemodeos::AssetContentBuffer& apemodeos::AssetContentBuffer::operator=( AssetContentBuffer&& o ) {
+    Free( );
+    pData    = o.pData;
+    dataSize = o.dataSize;
+    o.Release( );
+
+    return *this;
+}
+
 void AssetContentBufferFree( apemodeos::AssetContentData assetContentData ) {
     apemodeos::AssetContentBuffer assetContentBuffer;
     assetContentBuffer.pData    = assetContentData.pData;

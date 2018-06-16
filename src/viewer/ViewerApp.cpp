@@ -44,13 +44,11 @@ bool ShaderFileReader::ReadShaderTxtFile( const std::string& InFilePath,
                                           std::string&       OutFileFullPath,
                                           std::string&       OutFileContent ) {
     apemode_memory_allocation_scope;
-    if ( auto pAsset = mAssetManager->GetAsset( InFilePath.c_str( ) ) ) {
-
+    if ( auto pAsset = mAssetManager->Acquire( InFilePath.c_str( ) ) ) {
         const auto assetText = pAsset->GetContentAsTextBuffer( );
-        OutFileContent.resize( assetText.dataSize );
-        memcpy( &OutFileContent[ 0 ], assetText.pData, assetText.dataSize );
-
+        OutFileContent = reinterpret_cast< const char* >( assetText.pData );
         OutFileFullPath = pAsset->GetId( );
+        mAssetManager->Release( pAsset );
         return true;
     }
 
@@ -109,7 +107,7 @@ bool ViewerApp::Initialize(  ) {
 
     if ( AppBase::Initialize( ) ) {
         std::string assetsFolder = TGetOption< std::string >( "--assets", "./" );
-        mAssetManager.AddFilesFromDirectory( assetsFolder.c_str( ), nullptr, 0 );
+        mAssetManager.UpdateAssets( assetsFolder.c_str( ), nullptr, 0 );
 
         // Shaders and possible headers ...
         std::string interestingFilePattern = ".*\\.(vert|frag|comp|geom|tesc|tese|h|inl|inc|fx)$";
@@ -194,10 +192,11 @@ bool ViewerApp::Initialize(  ) {
 
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/kyoto_lod.dds" ) ) {
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_skybox.dds" ) ) {
-        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/bolonga_lod.dds" ) ) {
+        if ( auto pTexAsset = mAssetManager.Acquire( "images/Environment/bolonga_lod.dds" ) ) {
             apemode_memory_allocation_scope;
             {
                 const auto texAssetBin = pTexAsset->GetContentAsBinaryBuffer( );
+                mAssetManager.Release( pTexAsset );
 
                 apemodevk::ImageLoader::LoadOptions loadOptions;
                 loadOptions.eFileFormat    = apemodevk::ImageLoader::eImageFileFormat_DDS;
@@ -234,10 +233,11 @@ bool ViewerApp::Initialize(  ) {
 
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/kyoto_irr.dds" ) ) {
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_iem.dds" ) ) {
-        if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/bolonga_irr.dds" ) ) {
+        if ( auto pTexAsset = mAssetManager.Acquire( "images/Environment/bolonga_irr.dds" ) ) {
             apemode_memory_allocation_scope;
             {
                 const auto texAssetBin = pTexAsset->GetContentAsBinaryBuffer( );
+                mAssetManager.Release( pTexAsset );
 
                 apemodevk::ImageLoader::LoadOptions loadOptions;
                 loadOptions.eFileFormat    = apemodevk::ImageLoader::eImageFileFormat_DDS;
@@ -281,10 +281,12 @@ bool ViewerApp::Initialize(  ) {
             acquiredQueue = queueFamilyPool->Acquire( false );
         }
 
+        auto pFontAsset = mAssetManager.Acquire( "fonts/iosevka-ss07-medium.ttf" );
+
         NuklearRendererSdlVk::InitParametersVk initParamsNk;
         initParamsNk.pNode           = &pAppSurface->Node;
         initParamsNk.pShaderCompiler = pShaderCompiler.get( );
-        initParamsNk.pFontAsset      = mAssetManager.GetAsset( "fonts/iosevka-ss07-medium.ttf" );
+        initParamsNk.pFontAsset      = pFontAsset;
         initParamsNk.pDescPool       = DescriptorPool;
         initParamsNk.pQueue          = acquiredQueue.pQueue;
         initParamsNk.QueueFamilyId   = acquiredQueue.QueueFamilyId;
@@ -292,6 +294,7 @@ bool ViewerApp::Initialize(  ) {
         // initParamsNk.pRenderPass     = hNkRenderPass;
 
         pNkRenderer->Init( &initParamsNk );
+        mAssetManager.Release( pFontAsset );
 
         queueFamilyPool->Release( acquiredQueue );
 
@@ -354,11 +357,12 @@ bool ViewerApp::Initialize(  ) {
             auto sceneFileContent = apemodeos::FileReader( ).ReadBinFile( sceneFile.c_str( ) );
             auto loadedScene = LoadSceneFromBin( sceneFileContent.pData, sceneFileContent.dataSize );
 
-            pScene = std::move( loadedScene.first );
-            pSceneSource = SceneSourceData( loadedScene.second, std::move( sceneFileContent ) );
+            pScene         = std::move( loadedScene.first );
+            pSrcScene      = loadedScene.second;
+            SrcSceneBuffer = std::move( sceneFileContent );
         }
 
-        updateParams.pSrcScene = pSceneSource.first;
+        updateParams.pSrcScene = pSrcScene;
         if ( false == pSceneRendererBase->UpdateScene( pScene.get( ), &updateParams ) ) {
             apemode::platform::DebugBreak( );
             return false;

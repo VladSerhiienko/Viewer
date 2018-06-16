@@ -16,24 +16,50 @@ const char* apemodeos::AssetFile::GetId( ) const {
 }
 
 apemodeos::AssetContentBuffer apemodeos::AssetFile::GetContentAsTextBuffer( ) const {
-    return FileReader( ).ReadTxtFile( Path.c_str( ) );
+    apemode_memory_allocation_scope;
+    return std::move( FileReader( ).ReadTxtFile( Path.c_str( ) ) );
 }
 
 apemodeos::AssetContentBuffer apemodeos::AssetFile::GetContentAsBinaryBuffer( ) const {
-    return FileReader( ).ReadBinFile( Path.c_str( ) );
+    apemode_memory_allocation_scope;
+    return std::move( FileReader( ).ReadBinFile( Path.c_str( ) ) );
 }
 
 uint64_t apemodeos::AssetFile::GetCurrentVersion( ) const {
-    return LastTimeModified;
+    return LastTimeModified.load(  );
+}
+
+void apemodeos::AssetFile::SetName( const char* pszAssetName ) {
+    Name = pszAssetName;
+}
+
+void apemodeos::AssetFile::SetId( const char* pszAssetPath ) {
+    Path = pszAssetPath;
 }
 
 void apemodeos::AssetFile::SetCurrentVersion( uint64_t version ) {
-    LastTimeModified = version;
+    LastTimeModified.store( version );
 }
 
-const apemodeos::IAsset* apemodeos::AssetManager::GetAsset( const char * pszAssetName ) const {
+const apemodeos::IAsset* apemodeos::AssetManager::Acquire( const char* pszAssetName ) const {
     auto assetIt = AssetFiles.find( pszAssetName );
-    return assetIt == AssetFiles.end( ) ? 0 : &assetIt->second;
+
+    if ( assetIt == AssetFiles.end( ) ) {
+        return 0;
+    }
+
+    const apemodeos::AssetFile* pAsset = &assetIt->second.Asset;
+    std::atomic_fetch_add( &assetIt->second.UseCount, 1 );
+    return pAsset;
+}
+
+void apemodeos::AssetManager::Release( const apemodeos::IAsset* pAsset ) const {
+    if ( const AssetFile* pAssetFile = static_cast< const AssetFile* >( pAsset ) ) {
+        auto assetIt = AssetFiles.find( pAssetFile->GetName( ) );
+        if ( assetIt != AssetFiles.end( ) ) {
+            std::atomic_fetch_sub( &assetIt->second.UseCount, 1 );
+        }
+    }
 }
 
 std::string ToCanonicalAbsolutPath( const char * pszRelativePath );
@@ -41,6 +67,8 @@ uint64_t GetLastModifiedTime( const char * pszFilePath );
 
 template < typename TFileCallback >
 void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
+    apemode_memory_allocation_scope;
+
     apemode::LogInfo( "AssetManager: Entering folder: {}", dir.path );
 
     for ( size_t i = 0; i < dir.n_files; i++ ) {
@@ -60,10 +88,50 @@ void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
     }
 }
 
-void apemodeos::AssetManager::AddFilesFromDirectory( const char*  pszFolderPath,
-                                                     const char** ppszFilePatterns,
-                                                     size_t       filePatternCount ) {
+void apemodeos::AssetManager::UpdateAssets( const char*  pszFolderPath,
+                                            const char** ppszFilePatterns,
+                                            size_t       filePatternCount ) {
     apemode_memory_allocation_scope;
+
+    /* Protect asset files, no need to lock the function. */
+
+    if ( std::atomic_fetch_add( &UseCount, 1 ) > 1 )
+        return;
+
+    /* Process existing assets. */
+
+    auto assetIt = AssetFiles.begin();
+    for ( ; assetIt != AssetFiles.end( ); ++assetIt ) {
+
+        /* Check if the file, that is referenced by the asset item exists. */
+
+        const bool bAssetExists = apemodeos::FileExists( assetIt->second.Asset.GetId() );
+
+        /* File was marked as deleted, destroy asset item. */
+
+        if ( ( AssetFile::kVersionDeleted == assetIt->second.Asset.GetCurrentVersion( ) ) && !bAssetExists ) {
+            if ( ( !std::atomic_load( &assetIt->second.UseCount ) ) ) {
+                apemode::LogInfo( "AssetManager: Deleted file: {}", assetIt->second.Asset.GetId( ) );
+                assetIt = AssetFiles.erase( assetIt );
+                continue;
+            }
+
+            ++assetIt;
+            continue;
+        }
+
+        /* File was deleted, schedule the asset for destruction. */
+
+        if ( ( AssetFile::kVersionDeleted != assetIt->second.Asset.GetCurrentVersion( ) ) && !bAssetExists ) {
+            apemode::LogInfo( "AssetManager: Marked file as deleted: {}", assetIt->second.Asset.GetId( ) );
+            assetIt->second.Asset.SetCurrentVersion( AssetFile::kVersionDeleted );
+            ++assetIt;
+            continue;
+        }
+    }
+
+    /* Process storage folder argument */
+
     std::string storageDirectory = pszFolderPath;
 
     if ( storageDirectory.empty( ) ) {
@@ -82,47 +150,63 @@ void apemodeos::AssetManager::AddFilesFromDirectory( const char*  pszFolderPath,
         }
     }
 
+    /* Update versions of the existing asset items. */
+
     tinydir_dir dir;
     std::string storageDirectoryFull = ToCanonicalAbsolutPath( storageDirectory.c_str( ) );
     if ( !storageDirectoryFull.empty( ) && tinydir_open_sorted( &dir, storageDirectoryFull.c_str( ) ) != -1 ) {
 
-        auto addFileFn = [&]( const std::string& filePath, tinydir_file file ) {
+        auto addFileFn = [&]( const char * pszFilePath, tinydir_file file ) {
 
             /* Check if file matches the patterns */
-            bool matches = ( filePatternCount == 0 );
+            bool bMatches = ( filePatternCount == 0 );
 
             for ( size_t i = 0; i < filePatternCount; ++i ) {
-                if ( std::regex_match( filePath, std::regex( ppszFilePatterns[ i ] ) ) ) {
-                    matches = true;
+                if ( std::regex_match( pszFilePath, std::regex( ppszFilePatterns[ i ] ) ) ) {
+                    bMatches = true;
                     break;
                 }
             }
 
-            if ( matches ) {
-                const std::string fullPath = ToCanonicalAbsolutPath( filePath.c_str( ) );
+            if ( bMatches ) {
+                const std::string fullPath = ToCanonicalAbsolutPath( pszFilePath );
                 const std::string relativePath = fullPath.substr( storageDirectoryFull.size( ) + ( storageDirectoryFull.back( ) != '/' ) );
-                const uint64_t lastWriteTime = GetLastModifiedTime( filePath.c_str( ) );
 
                 apemodeos::AssetFile* pAsset = nullptr;
 
                 auto assetIt = AssetFiles.find( relativePath );
                 if ( assetIt == AssetFiles.end( ) ) {
-                    pAsset = &AssetFiles[ relativePath ];
 
-                    pAsset->Name = relativePath;
-                    pAsset->Path = fullPath;
+                    /* Create a new file asset. */
 
-                    apemode::LogInfo( "AssetManager: Added: {}", fullPath );
+                    auto &assetItem = AssetFiles[ relativePath ];
+
+                    pAsset = &assetItem.Asset;
+                    pAsset->SetName( relativePath.c_str( ) );
+                    pAsset->SetId( fullPath.c_str( ) );
+
+                    apemode::LogInfo( "AssetManager: Added file: {}", fullPath );
                 } else {
-                    pAsset = &assetIt->second;
+                    pAsset = &assetIt->second.Asset;
                 }
 
-                if ( pAsset )
+                const uint64_t lastWriteTime = GetLastModifiedTime( pszFilePath );
+
+                if ( pAsset && ( pAsset->GetCurrentVersion( ) != lastWriteTime ) ) {
+
+                    /* Update the asset version. */
+
+                    apemode::LogInfo( "AssetManager: Updated file version: {}", fullPath );
                     pAsset->SetCurrentVersion( lastWriteTime );
+                }
             }
         };
 
         ProcessFiles( addFileFn, dir, addSubDirectories );
         tinydir_close( &dir );
     }
+
+    /* Unlock. */
+
+    std::atomic_fetch_sub( &UseCount, 1 );
 }
