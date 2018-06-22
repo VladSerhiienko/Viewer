@@ -57,6 +57,30 @@ message(STATUS "argh_source_dir = ${argh_source_dir}")
 
 #
 #
+# TaskScheduler
+#
+#
+
+ExternalProject_Add(
+    TaskScheduler
+    GIT_REPOSITORY "git@github.com:SergeyMakeev/TaskScheduler.git"
+    GIT_TAG "master"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler"
+    # CONFIGURE_COMMAND "pushd ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler && premake4 gmake && pushd Build/gmake/ && make config=debug64 && popd && mkdir BinDebug64 && cp Bin/ BinDebug64/ && popd"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    LOG_DOWNLOAD ON
+)
+
+ExternalProject_Get_Property(TaskScheduler SOURCE_DIR)
+set(TaskScheduler_source_dir ${SOURCE_DIR})
+message(STATUS "TaskScheduler_source_dir = ${TaskScheduler_source_dir}")
+
+#
+#
 # spdlog
 #
 #
@@ -655,6 +679,7 @@ add_dependencies(
     gli
     sdl2
     VulkanMemoryAllocator
+    TaskScheduler
 )
 
 message(STATUS "VK_SDK_PATH = $ENV{VK_SDK_PATH}")

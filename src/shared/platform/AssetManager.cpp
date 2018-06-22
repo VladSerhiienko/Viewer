@@ -49,7 +49,7 @@ const apemodeos::IAsset* apemodeos::AssetManager::Acquire( const char* pszAssetN
     }
 
     const apemodeos::AssetFile* pAsset = &assetIt->second.Asset;
-    std::atomic_fetch_add( &assetIt->second.UseCount, 1 );
+    std::atomic_fetch_add( &assetIt->second.UseCount, uint32_t( 1 ) );
     return pAsset;
 }
 
@@ -57,7 +57,7 @@ void apemodeos::AssetManager::Release( const apemodeos::IAsset* pAsset ) const {
     if ( const AssetFile* pAssetFile = static_cast< const AssetFile* >( pAsset ) ) {
         auto assetIt = AssetFiles.find( pAssetFile->GetName( ) );
         if ( assetIt != AssetFiles.end( ) ) {
-            std::atomic_fetch_sub( &assetIt->second.UseCount, 1 );
+            std::atomic_fetch_sub( &assetIt->second.UseCount, uint32_t( 1 ) );
         }
     }
 }
@@ -95,8 +95,10 @@ void apemodeos::AssetManager::UpdateAssets( const char*  pszFolderPath,
 
     /* Protect asset files, no need to lock the function. */
 
-    if ( std::atomic_fetch_add( &UseCount, 1 ) > 1 )
+    if ( std::atomic_fetch_add( &UseCount, uint32_t( 1 ) ) > 1 ) {
+        std::atomic_fetch_sub( &UseCount, uint32_t( 1 ) );
         return;
+    }
 
     /* Process existing assets. */
 
@@ -208,5 +210,5 @@ void apemodeos::AssetManager::UpdateAssets( const char*  pszFolderPath,
 
     /* Unlock. */
 
-    std::atomic_fetch_sub( &UseCount, 1 );
+    std::atomic_fetch_sub( &UseCount, uint32_t( 1 ) );
 }

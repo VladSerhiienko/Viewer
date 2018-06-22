@@ -27,9 +27,9 @@ namespace apemodeos {
         void SetId( const char* pszAssetPath );
 
     protected:
-        std::string          Name;
-        std::string          Path;
-        std::atomic_uint64_t LastTimeModified = 0;
+        std::string             Name;
+        std::string             Path;
+        std::atomic< uint64_t > LastTimeModified;
     };
 
     /* The class is designed to be thread-safe. */
@@ -46,11 +46,11 @@ namespace apemodeos {
 
     protected:
         struct AssetFileItem {
-            mutable std::atomic_uint32_t UseCount;
-            AssetFile                    Asset;
+            mutable std::atomic< uint32_t > UseCount;
+            AssetFile                       Asset;
         };
 
-        std::atomic_uint32_t                   UseCount;
+        std::atomic< uint32_t >                UseCount;
         std::map< std::string, AssetFileItem > AssetFiles;
     };
 }
