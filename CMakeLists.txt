@@ -379,6 +379,31 @@ message(STATUS "shaderc_binary_dir = ${shaderc_binary_dir}")
 
 #
 #
+# TaskScheduler
+#
+#
+
+ExternalProject_Add(
+    TaskScheduler
+    GIT_REPOSITORY "git@github.com:VladSerhiienko/TaskScheduler.git"
+    GIT_TAG "master"
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler"
+    CMAKE_ARGS ${default_cmake_args}
+    TEST_COMMAND ""
+    INSTALL_COMMAND ""
+)
+
+ExternalProject_Get_Property(TaskScheduler SOURCE_DIR)
+ExternalProject_Get_Property(TaskScheduler BINARY_DIR)
+set(TaskScheduler_source_dir ${SOURCE_DIR})
+set(TaskScheduler_binary_dir ${BINARY_DIR})
+message(STATUS "TaskScheduler_source_dir = ${TaskScheduler_source_dir}")
+message(STATUS "TaskScheduler_binary_dir = ${TaskScheduler_binary_dir}")
+
+#
+#
 # zlib
 #
 #
@@ -390,7 +415,7 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/zlib"
-    CMAKE_ARGS -B${BUILD_FOLDER_SUFFIX} -H.
+    CMAKE_ARGS ${default_cmake_args}
     TEST_COMMAND ""
     INSTALL_COMMAND ""
 )
@@ -568,9 +593,6 @@ set(
     ${CMAKE_SOURCE_DIR}/src/shared/platform/IAssetManager.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/AssetManager.h
     ${CMAKE_SOURCE_DIR}/src/shared/platform/AssetManager.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/platform/FileManager.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/platform/FileTracker.h
-    ${CMAKE_SOURCE_DIR}/src/shared/platform/FileReader.h
     ${CMAKE_SOURCE_DIR}/src/shared/platform/memory/MemoryManager.cpp
     ${CMAKE_SOURCE_DIR}/src/shared/platform/memory/MemoryManager.h
 )
@@ -655,6 +677,7 @@ add_dependencies(
     gli
     sdl2
     VulkanMemoryAllocator
+    TaskScheduler
 )
 
 message(STATUS "VK_SDK_PATH = $ENV{VK_SDK_PATH}")
@@ -705,6 +728,7 @@ if (APPLE)
         ${eastl_binary_dir}/libEASTL.a
         ${eastl_binary_dir}/test/packages/EAStdC/libEAStdC.a
         ${sdl2_binary_dir}/libSDL2.a
+        ${TaskScheduler_binary_dir}/libTaskScheduler.a
         pthread
         dl
         stdc++
@@ -741,6 +765,7 @@ elseif (UNIX)
         ${flatbuffers_binary_dir}/libflatbuffers.a
         ${eastl_binary_dir}/libEASTL.a
         ${eastl_binary_dir}/test/packages/EAStdC/libEAStdC.a
+        ${TaskScheduler_binary_dir}/libTaskScheduler.a
         dl
     )
 elseif(WIN32)
@@ -763,6 +788,7 @@ elseif(WIN32)
         ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-util.lib
         ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-cpp.lib
         ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-glsl.lib
+        ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/TaskScheduler.lib
     )
 endif()
 

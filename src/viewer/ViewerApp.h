@@ -17,7 +17,6 @@
 #include <Scene.h>
 #include <Camera.h>
 #include <AssetManager.h>
-#include <FileTracker.h>
 #include <CameraControllerInputMouseKeyboard.h>
 #include <CameraControllerProjection.h>
 #include <CameraControllerModelView.h>
@@ -66,7 +65,6 @@ namespace apemode {
         XMFLOAT4 LightDirection;
         XMFLOAT4 LightColor;
 
-        apemodeos::FileTracker          mFileTracker;
         apemodeos::AssetManager         mAssetManager;
 
         CameraProjectionController                       CamProjController;
