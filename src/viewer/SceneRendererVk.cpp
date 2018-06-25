@@ -199,66 +199,6 @@ namespace apemodevk {
         VkAccessFlags  eDstAccessFlags = 0;
     };
 
-    template < typename TFillCmdBufferFunc >
-    bool TSubmitCmdBuffer( GraphicsDevice*     pNode,
-                           VkQueueFlags        eQueueFlags,
-                           TFillCmdBufferFunc  fillCmdsFunc ) {
-
-        /* Get queue from pool (only copying) */
-        auto pQueuePool = pNode->GetQueuePool( );
-
-        auto acquiredQueue = pQueuePool->Acquire( false, eQueueFlags, false );
-        while ( acquiredQueue.pQueue == nullptr ) {
-            acquiredQueue = pQueuePool->Acquire( false, eQueueFlags, false );
-        }
-
-        /* Get command buffer from pool */
-        auto pCmdBufferPool = pNode->GetCommandBufferPool( );
-        auto acquiredCmdBuffer = pCmdBufferPool->Acquire( false, acquiredQueue.QueueFamilyId );
-
-        /* Reset command pool */
-        if ( VK_SUCCESS != CheckedCall( vkResetCommandPool( pNode->hLogicalDevice, acquiredCmdBuffer.pCmdPool, 0 ) ) ) {
-            return false;
-        }
-
-        /* Begin recording commands to command buffer */
-        VkCommandBufferBeginInfo commandBufferBeginInfo;
-        InitializeStruct( commandBufferBeginInfo );
-
-        commandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        if ( VK_SUCCESS != CheckedCall( vkBeginCommandBuffer( acquiredCmdBuffer.pCmdBuffer, &commandBufferBeginInfo ) ) ) {
-            apemodevk::platform::DebugBreak( );
-            return false;
-        }
-
-        fillCmdsFunc( acquiredCmdBuffer.pCmdBuffer );
-
-        vkEndCommandBuffer( acquiredCmdBuffer.pCmdBuffer );
-
-        if ( VK_SUCCESS != WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence ) ) {
-            return false;
-        }
-
-        VkSubmitInfo submitInfo;
-        InitializeStruct( submitInfo );
-
-        submitInfo.pCommandBuffers = &acquiredCmdBuffer.pCmdBuffer;
-        submitInfo.commandBufferCount = 1;
-
-        vkResetFences( pNode->hLogicalDevice, 1, &acquiredQueue.pFence );
-        vkQueueSubmit( acquiredQueue.pQueue, 1, &submitInfo, acquiredQueue.pFence );
-
-        if ( VK_SUCCESS != WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence ) ) {
-            return false;
-        }
-
-        acquiredCmdBuffer.pFence = acquiredQueue.pFence;
-        pCmdBufferPool->Release( acquiredCmdBuffer );
-        pQueuePool->Release( acquiredQueue );
-
-        return true;
-    }
-
     VkSamplerCreateInfo GetDefaultSamplerCreateInfo( const float maxLod ) {
         VkSamplerCreateInfo samplerCreateInfo;
         InitializeStruct( samplerCreateInfo );
@@ -292,7 +232,9 @@ namespace apemodevk {
                 pBinding->ImageInfo.imageView   = pImgView;
                 pBinding->ImageInfo.sampler     = pSampler;
                 return true;
-            } else if ( pMissingImgView && pMissingSampler ) {
+            }
+
+            if ( pMissingImgView && pMissingSampler ) {
                 pBinding->eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
                 pBinding->ImageInfo.imageLayout = eImgLayout;
                 pBinding->ImageInfo.imageView   = pMissingImgView;
@@ -405,8 +347,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         const apemodevk::MeshBufferFillIntent* const pIntent    = bufferFillIntents.data( );
         const apemodevk::MeshBufferFillIntent* const pIntentEnd = pIntent + bufferFillIntents.size( );
 
-        apemodevk::TSubmitCmdBuffer( pNode, VK_QUEUE_GRAPHICS_BIT, [&]( VkCommandBuffer pCmdBuffer ) {
-
+        apemodevk::TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
             /* Stage buffers. */
             if ( auto pCurrIntent = pIntent )
                 while ( pCurrIntent != pIntentEnd ) {
@@ -434,6 +375,8 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
                     ++pCurrIntent;
                 }
+
+            return true;
         } );
 
         /* Host storage pool */
@@ -471,8 +414,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                 /* Get the queue pool and acquire a queue.
                  * Allocate a command buffer and give it to the lambda that pushes copy commands into it.
                  */
-                apemodevk::TSubmitCmdBuffer( pNode, VK_QUEUE_GRAPHICS_BIT, [&]( VkCommandBuffer pCmdBuffer ) {
-
+                apemodevk::TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
                     /* While there are elements that need to be uploaded. */
                     while ( pCurrIntent != pIntentEnd ) {
 
@@ -511,7 +453,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                     /* End command buffer.
                      * Submit and sync.
                      */
-
+                    return true;
                 } ); /* TSubmitCmdBuffer */
             }
         }
@@ -521,8 +463,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         /* This piece of code is easier to understand.
          * It allocates all staging buffers, fills it with src data and copies to the GPU buffers.
          */
-        apemodevk::TSubmitCmdBuffer( pNode, VK_QUEUE_GRAPHICS_BIT, [&]( VkCommandBuffer pCmdBuffer ) {
-
+        apemodevk::TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
             /* Fill buffers. */
             if ( auto pCurrIntent = pIntent )
                 while ( pCurrIntent != pIntentEnd ) {
@@ -544,6 +485,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                 }
 
             bufferPool.Flush( );
+            return true;
         } );
 
 #endif /* APEMODE_SCENERENDERERVK_PORTIONED_UPLOADING */

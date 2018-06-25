@@ -71,6 +71,50 @@
             }
         },
         {
+            "label": "Make/Viewer(Windows/VS2017/Debug)",
+            "type": "shell",
+            "command": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/MSBuild/15.0/Bin/MSBuild.exe",
+            "args": [
+                "${workspaceFolder}/build_windows_amd64_msvc/Viewer.sln",
+                "/m",
+                "/nologo",
+                "/verbosity:normal",  // "enum": ["quiet", "minimal", "normal", "detailed", "diagnostic"]
+                "/p:Configuration=Debug"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build_windows_amd64_msvc"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "CMake/Viewer(Windows/VS2017)"
+            ]
+        },
+        {
+            "label": "Make/Viewer(Windows/VS2017/Release)",
+            "type": "shell",
+            "command": "C:/Program Files (x86)/Microsoft Visual Studio/2017/Community/MSBuild/15.0/Bin/MSBuild.exe",
+            "args": [
+                "${workspaceFolder}/build_windows_amd64_msvc/Viewer.sln",
+                "/m",
+                "/nologo",
+                "/verbosity:diagnostic",  // "enum": ["quiet", "minimal", "normal", "detailed", "diagnostic"]
+                "/p:Configuration=Release"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build_windows_amd64_msvc"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "CMake/Viewer(Windows/VS2017)"
+            ]
+        },
+        {
             "label": "Make/Viewer(Darwin/Makefile/AppleClang)",
             "type": "shell",
             "command": "make",

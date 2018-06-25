@@ -111,8 +111,6 @@ bool ViewerApp::Initialize(  ) {
 
         // Shaders and possible headers ...
         std::string interestingFilePattern = ".*\\.(vert|frag|comp|geom|tesc|tese|h|inl|inc|fx)$";
-        mFileTracker.FilePatterns.push_back( interestingFilePattern );
-        mFileTracker.ScanDirectory( assetsFolder, true );
 
         pShaderFileReader = apemode::make_unique< apemode::ShaderFileReader >( );
         pShaderFeedbackWriter = apemode::make_unique< apemode::ShaderFeedbackWriter >( );

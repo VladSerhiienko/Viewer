@@ -1,11 +1,75 @@
 #include "AssetManager.h"
 
-#include <FileReader.h>
 #include <AppState.h>
 #include <tinydir.h>
 
-#include <stdlib.h>
+#include <fstream>
+#include <iterator>
 #include <regex>
+#include <set>
+
+#include <stdlib.h>
+
+bool apemodeos::DirectoryExists( const char * pszPath ) {
+#if _WIN32
+    DWORD dwAttrib = GetFileAttributes( pszPath );
+    return ( dwAttrib != INVALID_FILE_ATTRIBUTES && ( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
+#else
+    struct stat statBuffer;
+    return ( stat( pszPath, &statBuffer ) == 0 ) && S_ISDIR( statBuffer.st_mode );
+#endif
+}
+
+bool apemodeos::FileExists(  const char * pszPath ) {
+#if _WIN32
+    DWORD dwAttrib = GetFileAttributes( pszPath );
+    return ( dwAttrib != INVALID_FILE_ATTRIBUTES && !( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
+#else
+    struct stat statBuffer;
+    return ( stat( pszPath, &statBuffer ) == 0 ) && S_ISREG( statBuffer.st_mode );
+#endif
+}
+
+uint64_t GetLastModifiedTime( const char * pszFilePath ) {
+
+#if _WIN32
+    struct _stat64i32 statBuffer;
+    if ( _stat64i32( pszFilePath, &statBuffer ) != 0 )
+        return 0;
+#else
+    struct stat statBuffer;
+    if ( stat( pszFilePath, &statBuffer ) != 0 )
+        return 0;
+#endif
+
+    return statBuffer.st_mtime;
+}
+
+#ifndef APEMODE_PATH_MAX
+#define APEMODE_PATH_MAX 4096
+#endif
+
+std::string ToCanonicalAbsolutPath( const char * pszRelativePath ) {
+    char canonicalAbsolutePathBuffer[ APEMODE_PATH_MAX ] = {0};
+
+#if _WIN32
+    if ( !_fullpath( canonicalAbsolutePathBuffer, pszRelativePath, sizeof( canonicalAbsolutePathBuffer ) ) ) {
+        return "";
+    }
+#else
+    struct stat statBuffer;
+    if ( stat( pszRelativePath, &statBuffer ) != 0 )
+        return "";
+
+    realpath( pszRelativePath, canonicalAbsolutePathBuffer );
+#endif
+
+    char* canonicalAbsolutePathIt    = canonicalAbsolutePathBuffer;
+    char* canonicalAbsolutePathEndIt = canonicalAbsolutePathBuffer + strlen( canonicalAbsolutePathBuffer );
+
+    std::replace( canonicalAbsolutePathIt, canonicalAbsolutePathEndIt, '\\', '/' );
+    return canonicalAbsolutePathBuffer;
+}
 
 const char* apemodeos::AssetFile::GetName( ) const {
     return Name.c_str( );
@@ -211,4 +275,38 @@ void apemodeos::AssetManager::UpdateAssets( const char*  pszFolderPath,
     /* Unlock. */
 
     std::atomic_fetch_sub( &UseCount, uint32_t( 1 ) );
+}
+
+template < bool bTextMode >
+apemodeos::AssetContentBuffer TReadFile( const char* pszFilePath ) {
+    apemodeos::AssetContentBuffer assetContentBuffer;
+
+    FILE* pFile = fopen( pszFilePath, "rb" );
+    if ( !pFile )
+        return {};
+
+    fseek( pFile, 0, SEEK_END );
+    const size_t size = static_cast< size_t >( ftell( pFile ) );
+    fseek( pFile, 0, SEEK_SET );
+
+    assetContentBuffer.Alloc( size + bTextMode );
+    if ( !assetContentBuffer.pData )
+        return {};
+
+    fread( assetContentBuffer.pData, size, 1, pFile );
+    fclose( pFile );
+
+    if ( bTextMode ) {
+        assetContentBuffer.pData[ size ] = 0;
+    }
+
+    return std::move( assetContentBuffer );
+}
+
+apemodeos::AssetContentBuffer apemodeos::FileReader::ReadBinFile( const char* pszFilePath ) {
+    return std::move( TReadFile< false >( pszFilePath ) );
+}
+
+apemodeos::AssetContentBuffer apemodeos::FileReader::ReadTxtFile( const char* pszFilePath ) {
+    return std::move( TReadFile< true >( pszFilePath ) );
 }
