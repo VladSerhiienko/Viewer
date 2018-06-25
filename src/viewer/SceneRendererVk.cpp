@@ -8,6 +8,7 @@
 #include <ImageLoader.Vulkan.h>
 #include <Buffer.Vulkan.h>
 #include <ImageLoader.Vulkan.h>
+#include <TOneTimeCmdBufferSubmit.Vulkan.h>
 
 #include <SceneRendererVk.h>
 #include <Scene.h>

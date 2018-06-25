@@ -1,3 +1,7 @@
+// Copyright (c) 2018 Vladyslav Serhiienko <vlad.serhiienko@gmail.com>
+// This software is released under the MIT License.
+// https://opensource.org/licenses/MIT
+
 #include <QueuePools.Vulkan.h>
 #include <GraphicsDevice.Vulkan.h>
 

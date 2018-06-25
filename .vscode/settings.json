@@ -89,4 +89,8 @@
         "__nullptr": "cpp",
         "cassert": "cpp"
     },
+
+    "licenser.license": "MIT",
+    "licenser.author": "Vladyslav Serhiienko <vlad.serhiienko@gmail.com>",
+    "licenser.projectName": "Viewer",
 }
