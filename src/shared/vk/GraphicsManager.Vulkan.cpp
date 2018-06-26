@@ -387,19 +387,19 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                eFlags,
              Ext.CmdBeginDebugUtilsLabelEXT && Ext.CmdEndDebugUtilsLabelEXT && Ext.CmdInsertDebugUtilsLabelEXT &&
              Ext.SetDebugUtilsObjectNameEXT ) {
 
-            if ( VK_SUCCESS != CheckedCall( Ext.CreateDebugUtilsMessengerEXT( hInstance, &debugUtilsMessengerCreateInfoEXT, NULL, &Ext.DebugUtilsMessengerEXT ) ) ) {
+            if ( VK_SUCCESS != CheckedResult( Ext.CreateDebugUtilsMessengerEXT( hInstance, &debugUtilsMessengerCreateInfoEXT, NULL, &Ext.DebugUtilsMessengerEXT ) ) ) {
                 return false;
             }
         }
     }
 
     uint32_t GPUCount = 0;
-    if ( VK_SUCCESS != CheckedCall( vkEnumeratePhysicalDevices( hInstance, &GPUCount, NULL ) ) || !GPUCount ) {
+    if ( VK_SUCCESS != CheckedResult( vkEnumeratePhysicalDevices( hInstance, &GPUCount, NULL ) ) || !GPUCount ) {
         return false;
     }
 
     ppAdapters.resize( GPUCount );
-    if ( VK_SUCCESS != CheckedCall( vkEnumeratePhysicalDevices( hInstance, &GPUCount, ppAdapters.data( ) ) ) ) {
+    if ( VK_SUCCESS != CheckedResult( vkEnumeratePhysicalDevices( hInstance, &GPUCount, ppAdapters.data( ) ) ) ) {
         return false;
     }
 
@@ -748,4 +748,14 @@ void operator delete( void*                     pMemory,
                       const unsigned int        sourceLine,
                       const char*               pszSourceFunc ) throw( ) {
     return apemodevk::GetGraphicsManager( )->GetAllocator( )->Free( pMemory, __FILE__, __LINE__, __FUNCTION__ );
+}
+
+#include <chrono>
+
+uint64_t apemodevk::GetPerformanceCounter( ) {
+    return std::chrono::high_resolution_clock::now( ).time_since_epoch( ).count( );
+}
+
+uint64_t apemodevk::GetNanoseconds( uint64_t counter ) {
+    return std::chrono::nanoseconds( counter ).count( );
 }

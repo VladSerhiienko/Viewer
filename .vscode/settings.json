@@ -87,7 +87,8 @@
         "parentbad": "cpp",
         "__config": "cpp",
         "__nullptr": "cpp",
-        "cassert": "cpp"
+        "cassert": "cpp",
+        "csetjmp": "cpp"
     },
 
     "licenser.license": "MIT",

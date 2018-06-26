@@ -75,7 +75,7 @@ namespace apemodevk
             //TODO: Decrement descriptor set counter for the descriptor pool.
             //TODO: Checks
 
-            return VK_SUCCESS == CheckedCall( vkAllocateDescriptorSets( hNode, &descriptorSetAllocateInfo, hSets ) );
+            return VK_SUCCESS == CheckedResult( vkAllocateDescriptorSets( hNode, &descriptorSetAllocateInfo, hSets ) );
         }
 
         void BindTo( CommandBuffer& CmdBuffer, VkPipelineBindPoint InBindPoint, const uint32_t ( &DynamicOffsets )[ TCount ] ) {

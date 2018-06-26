@@ -211,32 +211,64 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
     /* Loop through queues */
     for ( auto& queue : Queues ) {
 
-        /* If the queue is not used by other thread and it is not executing cmd lists, it will be returned */
+        /* If the queue is not used by the other thread and it is not executing cmd lists, it will be returned */
         /* Note that queue can suspend the execution of the commands, or discard "one time" buffers. */
         if ( false == queue.bInUse.exchange( true, std::memory_order_acquire ) ) {
 
+            /* Get device queue, return DEVICE_LOST if failed. */
             if ( VK_NULL_HANDLE == queue.hQueue ) {
+                vkGetDeviceQueue( pDevice, QueueFamilyId, queueIndex, &queue.hQueue );
+                assert( queue.hQueue );
+
+                if ( !queue.hQueue ) {
+                    /* Move back to unused state */
+                    queue.bInUse.exchange( false, std::memory_order_release );
+
+                    AcquiredQueue deviceLostQueue;
+                    deviceLostQueue.eResult = VK_ERROR_DEVICE_LOST;
+                    return deviceLostQueue;
+                }
+            }
+
+            /* Create related fence, return false the error code if failed. */
+            if ( !queue.hFence ) {
                 VkFenceCreateInfo fenceCreateInfo;
                 InitializeStruct( fenceCreateInfo );
 
                 /* Since the queue is free to use after creation. */
                 /* @note Must be reset before usage. */
                 fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-                if ( VK_SUCCESS != CheckedCall( vkCreateFence( pDevice, &fenceCreateInfo, GetAllocationCallbacks( ), &queue.hFence ) ) ) {
+
+                const VkResult eCreateFenceResult = vkCreateFence( pDevice, &fenceCreateInfo, GetAllocationCallbacks( ), &queue.hFence );
+                if ( ( VK_SUCCESS != CheckedResult( eCreateFenceResult ) ) || !queue.hFence ) {
+                    /* Move back to unused state */
                     queue.bInUse.exchange( false, std::memory_order_release );
-                    continue;
+
+                    // VK_ERROR_OUT_OF_HOST_MEMORY
+                    // VK_ERROR_OUT_OF_DEVICE_MEMORY
+                    AcquiredQueue outOfMemoryQueue;
+                    outOfMemoryQueue.eResult = eCreateFenceResult;
+                    return outOfMemoryQueue;
                 }
-
-                vkGetDeviceQueue( pDevice, QueueFamilyId, queueIndex, &queue.hQueue );
             }
-
-            assert( queue.hQueue );
-            assert( queue.hFence );
 
             /* vkGetFenceStatus -> VK_SUCCESS: The fence is signaled. */
             /* vkGetFenceStatus -> VK_NOT_READY: The fence is unsignaled. */
             /* vkGetFenceStatus -> VK_ERROR_DEVICE_LOST: The device is lost. */
-            if ( queue.hQueue && queue.hFence && ( bIgnoreFence || VK_SUCCESS == vkGetFenceStatus( pDevice, queue.hFence ) ) ) {
+
+            const VkResult eFenceStatus = vkGetFenceStatus( pDevice, queue.hFence );
+
+            if ( VK_SUCCESS > CheckedResult( eFenceStatus ) ) {
+                /* Move back to unused state */
+                queue.bInUse.exchange( false, std::memory_order_release );
+
+                // VK_ERROR_DEVICE_LOST
+                AcquiredQueue deviceLostQueue;
+                deviceLostQueue.eResult = eFenceStatus;
+                return deviceLostQueue;
+            }
+
+            if ( bIgnoreFence || ( VK_SUCCESS == eFenceStatus ) ) {
                 AcquiredQueue acquiredQueue;
 
                 acquiredQueue.pQueue        = queue.hQueue;
@@ -255,7 +287,9 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
     }
 
     /* If no free queue found, null is returned */
-    return {};
+    AcquiredQueue errorQueue;
+    errorQueue.eResult = VK_NOT_READY;
+    return errorQueue;
 }
 
 bool apemodevk::QueueFamilyPool::Release( const apemodevk::AcquiredQueue& acquiredQueue ) {
@@ -266,10 +300,7 @@ bool apemodevk::QueueFamilyPool::Release( const apemodevk::AcquiredQueue& acquir
 
         /* No longer used, ok */
         const bool previouslyUsed = Queues[ acquiredQueue.QueueId ].bInUse.exchange( false, std::memory_order_release );
-
-        /* Try to track incorrect usage or atomic mess. */
-        if ( false == previouslyUsed )
-            apemodevk::platform::DebugBreak( );
+        assert( previouslyUsed && "Trying to release unused queue." );
 
         return true;
     }
@@ -278,8 +309,7 @@ bool apemodevk::QueueFamilyPool::Release( const apemodevk::AcquiredQueue& acquir
     return false;
 }
 
-apemodevk::QueueInPool::QueueInPool( )
-    : bInUse( false ) {
+apemodevk::QueueInPool::QueueInPool( ) : bInUse( false ) {
 }
 
 apemodevk::QueueInPool::QueueInPool( const QueueInPool& other )
@@ -388,17 +418,21 @@ void apemodevk::CommandBufferFamilyPool::Destroy( ) {
 apemodevk::CommandBufferFamilyPool::~CommandBufferFamilyPool( ) {
 }
 
-void InitializeCommandBufferInPool( VkDevice pDevice, uint32_t queueFamilyId, apemodevk::CommandBufferInPool& cmdBuffer ) {
+VkResult InitializeCommandBufferInPool( VkDevice pDevice, uint32_t queueFamilyId, apemodevk::CommandBufferInPool& cmdBuffer ) {
     using namespace apemodevk;
     apemodevk_memory_allocation_scope;
+
+    VkResult eResult;
 
     VkCommandPoolCreateInfo commandPoolCreateInfo;
     InitializeStruct( commandPoolCreateInfo );
     commandPoolCreateInfo.queueFamilyIndex = queueFamilyId;
     commandPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    vkCreateCommandPool( pDevice, &commandPoolCreateInfo, GetAllocationCallbacks( ), &cmdBuffer.pCmdPool );
-    assert( cmdBuffer.pCmdPool );
+    eResult = vkCreateCommandPool( pDevice, &commandPoolCreateInfo, GetAllocationCallbacks( ), &cmdBuffer.pCmdPool );
+    if ( VK_SUCCESS != CheckedResult( eResult ) ) {
+        return eResult;
+    }
 
     VkCommandBufferAllocateInfo commandBufferAllocateInfo;
     InitializeStruct( commandBufferAllocateInfo );
@@ -406,8 +440,7 @@ void InitializeCommandBufferInPool( VkDevice pDevice, uint32_t queueFamilyId, ap
     commandBufferAllocateInfo.commandPool        = cmdBuffer.pCmdPool;
     commandBufferAllocateInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-    vkAllocateCommandBuffers( pDevice, &commandBufferAllocateInfo, &cmdBuffer.pCmdBuffer );
-    assert( cmdBuffer.pCmdBuffer );
+    return vkAllocateCommandBuffers( pDevice, &commandBufferAllocateInfo, &cmdBuffer.pCmdBuffer );
 }
 
 apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bool bIgnoreFence ) {
@@ -417,14 +450,21 @@ apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bo
     AcquiredCommandBuffer acquiredCommandBuffer;
 
     /* Loop through command buffers */
-    for (auto& cmdBuffer : CmdBuffers) {
+    for ( auto& cmdBuffer : CmdBuffers ) {
         /* If the command buffer is not used by other thread and it is not being executed, it will be returned */
         if ( false == cmdBuffer.bInUse.exchange( true, std::memory_order_acquire ) ) {
-            if ( bIgnoreFence ||                       /* Fence won't be checked */
-                 VK_NULL_HANDLE == cmdBuffer.pFence || /* Fence is not passed when releasing (synchronized) */
-                 VK_SUCCESS == vkGetFenceStatus( pDevice, cmdBuffer.pFence ) ) {
+
+            /* Fence is not passed when releasing (synchronized). */
+            /* Fence won't be checked. */
+            /* Check if the fence is signaled. */
+            if ( VK_NULL_HANDLE == cmdBuffer.pFence || bIgnoreFence ||
+                 VK_SUCCESS == CheckedResult( vkGetFenceStatus( pDevice, cmdBuffer.pFence ) ) ) {
+
+                /* Check if the buffer is allocated. */
                 if ( VK_NULL_HANDLE == cmdBuffer.pCmdBuffer ) {
-                    InitializeCommandBufferInPool( pDevice, QueueFamilyId, cmdBuffer );
+                    cmdBuffer.bInUse.exchange( false, std::memory_order_release );
+                    acquiredCommandBuffer.eResult = VK_ERROR_DEVICE_LOST;
+                    return acquiredCommandBuffer;
                 }
 
                 acquiredCommandBuffer.pCmdBuffer    = cmdBuffer.pCmdBuffer;
@@ -446,7 +486,13 @@ apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bo
 
     CommandBufferInPool cmdBuffer;
     cmdBuffer.bInUse.exchange( true, std::memory_order_relaxed );
-    InitializeCommandBufferInPool( pDevice, QueueFamilyId, cmdBuffer );
+
+    /* Allocate buffer. */
+    acquiredCommandBuffer.eResult = InitializeCommandBufferInPool( pDevice, QueueFamilyId, cmdBuffer );
+    if ( VK_SUCCESS != acquiredCommandBuffer.eResult ) {
+        return acquiredCommandBuffer;
+    }
+
     CmdBuffers.emplace_back( cmdBuffer );
 
     acquiredCommandBuffer.QueueFamilyId = QueueFamilyId;
@@ -496,9 +542,9 @@ VkResult apemodevk::WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t tim
     apemodevk_memory_allocation_scope;
 
     VkResult err;
-    switch ( err = CheckedCall( vkGetFenceStatus( pDevice, pFence ) ) ) {
+    switch ( err = CheckedResult( vkGetFenceStatus( pDevice, pFence ) ) ) {
         case VK_NOT_READY:
-             err = CheckedCall( vkWaitForFences( pDevice, 1, &pFence, true, timeout ) );
+             err = CheckedResult( vkWaitForFences( pDevice, 1, &pFence, true, timeout ) );
             // case VK_ERROR_OUT_OF_HOST_MEMORY:
             // case VK_ERROR_OUT_OF_DEVICE_MEMORY:
             // case VK_ERROR_DEVICE_LOST:

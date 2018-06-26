@@ -11,38 +11,23 @@
 
 namespace apemodevk {
 
-    /**
-     * @brief OneTimeCmdBufferSubmitResult structure contains result values for the buffer creation and submission stages.
-     *        Since some of the API functions might return OUT_OF_MEMORY or DEVICE_LOST error codes,
-     *        the user must have a way to handle it on time.
-     */
+    /** @brief Contains the error code of the failed stage or the SUCCESS if the buffer was populated and submitted. */
     struct OneTimeCmdBufferSubmitResult {
-        VkResult eResetCmdPoolResult    = VK_SUCCESS;
-        VkResult eBeginCmdBuffer        = VK_SUCCESS;
-        VkResult eEndCmdBuffer          = VK_SUCCESS;
-        VkResult eWaitForFence          = VK_SUCCESS;
-        VkResult eResetFence            = VK_SUCCESS;
-        bool     bAcquiredQueue         = true;
-        VkResult eQueueSubmit           = VK_SUCCESS;
-        VkResult eWaitForSubmittedFence = VK_SUCCESS;
-        uint32_t QueueFamilyId          = VK_QUEUE_FAMILY_IGNORED;
-        uint32_t QueueId                = VK_QUEUE_FAMILY_IGNORED;
+        VkResult eResult = VK_SUCCESS;              /* The error code of the failed stage. */
+        uint32_t QueueId = VK_QUEUE_FAMILY_IGNORED; /* The queue id that executes the command buffer. */
     };
 
     /**
-     * @return Returns true if TOneTimeCmdBufferSubmit() succeeded, false otherwise.
+     * @brief Checks if the returned structure indicates that the operation succeeded.
+     * @param oneTimeCmdBufferSubmitResult  The returned result structure.
+     * @return True of succeeded, false otherwise.
      */
-    inline bool Succeeded( const OneTimeCmdBufferSubmitResult& result ) {
-        return result.bAcquiredQueue &&
-                ( VK_SUCCESS == result.eResetCmdPoolResult ) &&
-                ( VK_SUCCESS == result.eBeginCmdBuffer ) &&
-                ( VK_SUCCESS == result.eEndCmdBuffer ) &&
-                ( VK_SUCCESS == result.eWaitForFence ) &&
-                ( VK_SUCCESS == result.eQueueSubmit ) &&
-                ( ( VK_SUCCESS == result.eWaitForSubmittedFence ) ||
-                    ( ( VK_QUEUE_FAMILY_IGNORED != result.QueueId ) &&
-                        ( VK_QUEUE_FAMILY_IGNORED != result.QueueFamilyId ) ) );
+    inline bool IsOk( const OneTimeCmdBufferSubmitResult& oneTimeCmdBufferSubmitResult ) {
+        return ( VK_SUCCESS == oneTimeCmdBufferSubmitResult.eResult ) &&
+               ( VK_QUEUE_FAMILY_IGNORED != oneTimeCmdBufferSubmitResult.QueueId );
     }
+
+    constexpr uint64_t kDefaultQueueTimeoutNanos = 16 * 1000000; /* 16 ms */
 
     /**
      * @brief The utlitly functon is used for populating and submitting the command buffer.
@@ -55,28 +40,39 @@ namespace apemodevk {
      * @param signalSemaphoreCount The number of semaphores that will be signaled.
      * @param pWaitSemaphores The semaphores that the queue will wait on before executing the populated command buffer.
      * @param waitSemaphoreCount The number of semaphores that will be awaited.
-     * @return The OneTimeCmdBufferSubmitResult instance that will contain the per-stage error codes.
-     * @see Please find 'bool Succeeded( const OneTimeCmdBufferSubmitResult& )' utility function for checking the error status of the operation.
+     * @return VK_SUCCESS if succeeded, VK_ERROR_OUT_OF_HOST_MEMORY, 
+     * @see Please find 'bool Succeeded( const OneTimeCmdBufferSubmitResult& )' utility function for checking the error status
+     * of the operation.
      */
-    template < typename TPopulateCmdBufferFn /* = std::function< bool( VkCommandBuffer ) > */ >
-    OneTimeCmdBufferSubmitResult TOneTimeCmdBufferSubmit( GraphicsDevice*      pNode,
-                                                          uint32_t             queueFamilyId, /* = 0 */
-                                                          bool                 pAwaitQueue,   /* = true */
-                                                          TPopulateCmdBufferFn populateCmdBufferFn,
-                                                          const VkSemaphore*   pSignalSemaphores    = nullptr,
-                                                          uint32_t             signalSemaphoreCount = 0,
-                                                          const VkSemaphore*   pWaitSemaphores      = nullptr,
-                                                          uint32_t             waitSemaphoreCount   = 0 ) {
-        OneTimeCmdBufferSubmitResult result{};
-
+    template < typename TPopulateCmdBufferFn /* = bool( VkCommandBuffer ) { ... } */ >
+    inline OneTimeCmdBufferSubmitResult TOneTimeCmdBufferSubmit( GraphicsDevice*      pNode,
+                                                                 uint32_t             queueFamilyId, /* = 0 */
+                                                                 bool                 pAwaitQueue,   /* = true */
+                                                                 TPopulateCmdBufferFn populateCmdBufferFn,
+                                                                 uint64_t             queueAcquireTimeout  = kDefaultQueueTimeoutNanos,
+                                                                 uint64_t             queueAwaitTimeout    = ( ~0ULL ),
+                                                                 const VkSemaphore*   pSignalSemaphores    = nullptr,
+                                                                 uint32_t             signalSemaphoreCount = 0,
+                                                                 const VkSemaphore*   pWaitSemaphores      = nullptr,
+                                                                 uint32_t             waitSemaphoreCount   = 0 ) {
+        OneTimeCmdBufferSubmitResult result {};
         /* Get command buffer from pool */
-        auto pCmdBufferPool = pNode->GetCommandBufferPool( );
+        auto pCmdBufferPool = pNode ? pNode->GetCommandBufferPool( ) : nullptr;
+        if ( !pCmdBufferPool ) {
+            result.eResult = VK_NOT_READY;
+            return result;
+        }
+
         auto acquiredCmdBuffer = pCmdBufferPool->Acquire( false, queueFamilyId );
+        if ( !acquiredCmdBuffer.pCmdBuffer || !acquiredCmdBuffer.pCmdPool ) {
+            result.eResult = VK_NOT_READY;
+            return result;
+        }
 
         /* Reset command pool */
 
-        result.eResetCmdPoolResult = vkResetCommandPool( pNode->hLogicalDevice, acquiredCmdBuffer.pCmdPool, 0 );
-        if ( VK_SUCCESS != CheckedCall( result.eResetCmdPoolResult ) ) {
+        result.eResult = vkResetCommandPool( pNode->hLogicalDevice, acquiredCmdBuffer.pCmdPool, 0 );
+        if ( VK_SUCCESS != CheckedResult( result.eResult ) ) {
             // VK_ERROR_OUT_OF_HOST_MEMORY
             // VK_ERROR_OUT_OF_DEVICE_MEMORY
             return result;
@@ -87,8 +83,8 @@ namespace apemodevk {
         InitializeStruct( commandBufferBeginInfo );
         commandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
-        result.eBeginCmdBuffer = vkBeginCommandBuffer( acquiredCmdBuffer.pCmdBuffer, &commandBufferBeginInfo );
-        if ( VK_SUCCESS != CheckedCall( result.eBeginCmdBuffer ) ) {
+        result.eResult = vkBeginCommandBuffer( acquiredCmdBuffer.pCmdBuffer, &commandBufferBeginInfo );
+        if ( VK_SUCCESS != CheckedResult( result.eResult ) ) {
             // VK_ERROR_OUT_OF_HOST_MEMORY
             // VK_ERROR_OUT_OF_DEVICE_MEMORY
             return result;
@@ -96,73 +92,94 @@ namespace apemodevk {
 
         const bool bPopulated = populateCmdBufferFn( acquiredCmdBuffer.pCmdBuffer );
 
-        result.eEndCmdBuffer = vkEndCommandBuffer( acquiredCmdBuffer.pCmdBuffer );
-        if ( VK_SUCCESS != CheckedCall( result.eEndCmdBuffer ) ) {
+        result.eResult = vkEndCommandBuffer( acquiredCmdBuffer.pCmdBuffer );
+        if ( VK_SUCCESS != CheckedResult( result.eResult ) ) {
             // VK_ERROR_OUT_OF_HOST_MEMORY
             // VK_ERROR_OUT_OF_DEVICE_MEMORY
             return result;
         }
 
         if ( bPopulated ) {
+            assert( pNode );
 
             /* Get queue from pool */
-            auto pQueuePool = pNode->GetQueuePool( );
-            assert( pQueuePool );
+            auto pQueuePool       = pNode->GetQueuePool( );
+            auto pQueueFamilyPool = pQueuePool ? pQueuePool->GetPool( queueFamilyId ) : nullptr;
 
-            auto pQueueFamilyPool = pQueuePool->GetPool( queueFamilyId );
-            assert( pQueueFamilyPool );
+            if ( !pQueueFamilyPool ) {
+                result.eResult = VK_ERROR_DEVICE_LOST;
+                return result;
+            }
 
             AcquiredQueue acquiredQueue = pQueueFamilyPool->Acquire( false );
+            const uint64_t queueTimeStart = GetPerformanceCounter( );
+
             while ( acquiredQueue.pQueue == nullptr ) {
-                acquiredQueue = pQueueFamilyPool->Acquire( true );
+
+                const uint64_t queueTimeDelta = GetPerformanceCounter( ) - queueTimeStart;
+                if ( queueAcquireTimeout < GetNanoseconds( queueTimeDelta ) ) {
+                    result.eResult = VK_TIMEOUT;
+                    return result;
+                }
+
+                switch ( acquiredQueue.eResult ) {
+                    case VK_NOT_READY:
+                        acquiredQueue = pQueueFamilyPool->Acquire( true );
+                        break;
+
+                    default:
+                        // VK_ERROR_DEVICE_LOST
+                        // VK_ERROR_OUT_OF_HOST_MEMORY
+                        // VK_ERROR_OUT_OF_DEVICE_MEMORY
+                        result.eResult = acquiredQueue.eResult;
+                        return result;
+                }
             }
 
-            assert( acquiredQueue.pQueue );
-            assert( acquiredQueue.pFence );
-
-            result.eWaitForFence = WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence );
-            if ( VK_SUCCESS != result.eWaitForFence ) {
-                // case VK_ERROR_OUT_OF_HOST_MEMORY:
-                // case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-                // case VK_ERROR_DEVICE_LOST:
-                return result;
-            }
-
-            VkSubmitInfo submitInfo;
-            InitializeStruct( submitInfo );
-
-            submitInfo.pSignalSemaphores  = pSignalSemaphores;
-            submitInfo.pWaitSemaphores    = pWaitSemaphores;
-            submitInfo.waitSemaphoreCount = waitSemaphoreCount;
-            submitInfo.pCommandBuffers    = &acquiredCmdBuffer.pCmdBuffer;
-            submitInfo.commandBufferCount = 1;
-
-            result.eResetFence = vkResetFences( pNode->hLogicalDevice, 1, &acquiredQueue.pFence );
-            if ( VK_SUCCESS != CheckedCall( result.eResetFence ) ) {
-                // VK_ERROR_OUT_OF_HOST_MEMORY
-                // VK_ERROR_OUT_OF_DEVICE_MEMORY
-                return result;
-            }
-
-            result.eQueueSubmit = vkQueueSubmit( acquiredQueue.pQueue, 1, &submitInfo, acquiredQueue.pFence );
-            if ( VK_SUCCESS != CheckedCall( result.eQueueSubmit ) ) {
+            result.eResult = WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence, queueAcquireTimeout );
+            if ( VK_SUCCESS != result.eResult ) {
                 // VK_ERROR_OUT_OF_HOST_MEMORY
                 // VK_ERROR_OUT_OF_DEVICE_MEMORY
                 // VK_ERROR_DEVICE_LOST
                 return result;
             }
 
+            result.eResult = vkResetFences( pNode->hLogicalDevice, 1, &acquiredQueue.pFence );
+            if ( VK_SUCCESS != CheckedResult( result.eResult ) ) {
+                // VK_ERROR_OUT_OF_HOST_MEMORY
+                // VK_ERROR_OUT_OF_DEVICE_MEMORY
+                return result;
+            }
+
+            VkSubmitInfo submitInfo;
+            InitializeStruct( submitInfo );
+
+            submitInfo.pSignalSemaphores    = pSignalSemaphores;
+            submitInfo.signalSemaphoreCount = signalSemaphoreCount;
+            submitInfo.pWaitSemaphores      = pWaitSemaphores;
+            submitInfo.waitSemaphoreCount   = waitSemaphoreCount;
+            submitInfo.pCommandBuffers      = &acquiredCmdBuffer.pCmdBuffer;
+            submitInfo.commandBufferCount   = 1;
+
+            result.eResult = vkQueueSubmit( acquiredQueue.pQueue, 1, &submitInfo, acquiredQueue.pFence );
+            if ( VK_SUCCESS != CheckedResult( result.eResult ) ) {
+                // VK_ERROR_OUT_OF_HOST_MEMORY
+                // VK_ERROR_OUT_OF_DEVICE_MEMORY
+                // VK_ERROR_DEVICE_LOST
+                return result;
+            }
+
+            result.QueueId = acquiredQueue.QueueId;
+
             if ( pAwaitQueue ) {
-                result.eWaitForSubmittedFence = WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence );
-                if ( VK_SUCCESS != result.eWaitForSubmittedFence ) {
-                    // case VK_ERROR_OUT_OF_HOST_MEMORY:
-                    // case VK_ERROR_OUT_OF_DEVICE_MEMORY:
-                    // case VK_ERROR_DEVICE_LOST:
+
+                result.eResult = WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence, queueAwaitTimeout );
+                if ( VK_SUCCESS > result.eResult ) {
+                    // VK_ERROR_OUT_OF_HOST_MEMORY
+                    // VK_ERROR_OUT_OF_DEVICE_MEMORY
+                    // VK_ERROR_DEVICE_LOST
                     return result;
                 }
-
-                result.QueueId       = acquiredQueue.QueueId;
-                result.QueueFamilyId = acquiredQueue.QueueFamilyId;
             }
 
             acquiredCmdBuffer.pFence = acquiredQueue.pFence;

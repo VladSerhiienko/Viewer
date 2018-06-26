@@ -355,12 +355,9 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
         return true;
     } );
 
-    if ( Succeeded( imgLoadedResult ) ) {
-        if ( !loadOptions.bAwaitLoading ) {
-            loadedImage->QueueId       = imgLoadedResult.QueueId;
-            loadedImage->QueueFamilyId = imgLoadedResult.QueueFamilyId;
-        }
-
+    if ( VK_SUCCESS == imgLoadedResult.eResult ) {
+        loadedImage->QueueId       = imgLoadedResult.QueueId;
+        loadedImage->QueueFamilyId = 0;
         return std::move( loadedImage );
     }
 
@@ -388,6 +385,7 @@ void apemodevk::ImageLoader::Destroy( ) {
 
 apemodevk::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromFileData(
     const uint8_t* pFileContent, size_t fileContentSize, LoadOptions const& loadOptions ) {
+
     apemodevk_memory_allocation_scope;
     if ( !pFileContent || !fileContentSize ) {
         return nullptr;

@@ -576,7 +576,7 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
         VkCommandBufferBeginInfo cmdBufferBeginInfo;
         InitializeStruct( cmdBufferBeginInfo );
         cmdBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        if ( VK_SUCCESS != CheckedCall( vkBeginCommandBuffer( cmdBuffer, &cmdBufferBeginInfo ) ) ) {
+        if ( VK_SUCCESS != CheckedResult( vkBeginCommandBuffer( cmdBuffer, &cmdBufferBeginInfo ) ) ) {
             return nullptr;
         }
     }
@@ -641,15 +641,15 @@ void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init
         submitInfo.commandBufferCount = 1;
         submitInfo.pCommandBuffers    = cmdBuffer;
 
-        if ( VK_SUCCESS != CheckedCall( vkEndCommandBuffer( cmdBuffer ) ) ) {
+        if ( VK_SUCCESS != CheckedResult( vkEndCommandBuffer( cmdBuffer ) ) ) {
             return nullptr;
         }
 
-        if ( VK_SUCCESS != CheckedCall( vkQueueSubmit( pParams->pQueue, 1, &submitInfo, VK_NULL_HANDLE ) ) ) {
+        if ( VK_SUCCESS != CheckedResult( vkQueueSubmit( pParams->pQueue, 1, &submitInfo, VK_NULL_HANDLE ) ) ) {
             return nullptr;
         }
 
-        if ( VK_SUCCESS != CheckedCall( vkDeviceWaitIdle( pParams->pNode->hLogicalDevice ) ) ) {
+        if ( VK_SUCCESS != CheckedResult( vkDeviceWaitIdle( pParams->pNode->hLogicalDevice ) ) ) {
             return nullptr;
         }
     }

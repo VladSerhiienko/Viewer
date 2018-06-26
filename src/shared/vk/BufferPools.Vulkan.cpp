@@ -77,7 +77,7 @@ bool apemodevk::HostBufferPool::Page::Reset( ) {
         /* If it failed to map buffer upon the creation, try to map it here. Return false if failed. */
         if ( hBuffer.Handle.allocInfo.pMappedData ) {
             pMapped = reinterpret_cast< uint8_t * >( hBuffer.Handle.allocInfo.pMappedData );
-        } else if ( VK_SUCCESS != CheckedCall( vmaMapMemory( pNode->hAllocator, hBuffer.Handle.pAllocation, (void **) ( &pMapped ) ) ) ) {
+        } else if ( VK_SUCCESS != CheckedResult( vmaMapMemory( pNode->hAllocator, hBuffer.Handle.pAllocation, (void **) ( &pMapped ) ) ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
         }

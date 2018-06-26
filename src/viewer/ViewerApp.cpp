@@ -668,28 +668,28 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         const uint32_t height = pAppSurface->GetHeight( );
 
         if ( Width != width || Height != height ) {
-            CheckedCall( vkDeviceWaitIdle( device ) );
+            CheckedResult( vkDeviceWaitIdle( device ) );
             OnResized( );
         }
 
         VkFramebuffer framebufferNk = hNkFramebuffers[ FrameIndex ];
         VkFramebuffer framebufferDbg = hDbgFramebuffers[ FrameIndex ];
 
-        CheckedCall( WaitForFence( device, fence ) );
+        CheckedResult( WaitForFence( device, fence ) );
 
-        CheckedCall( vkAcquireNextImageKHR( device,
+        CheckedResult( vkAcquireNextImageKHR( device,
             swapchain,
             UINT64_MAX,
             presentCompleteSemaphore,
             VK_NULL_HANDLE,
             &BackbufferIndices[ FrameIndex ] ) );
 
-        CheckedCall( vkResetCommandPool( device, pCmdPool, 0 ) );
+        CheckedResult( vkResetCommandPool( device, pCmdPool, 0 ) );
 
         VkCommandBufferBeginInfo commandBufferBeginInfo;
         InitializeStruct( commandBufferBeginInfo );
         commandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        CheckedCall( vkBeginCommandBuffer( pCmdBuffer, &commandBufferBeginInfo ) );
+        CheckedResult( vkBeginCommandBuffer( pCmdBuffer, &commandBufferBeginInfo ) );
 
         VkClearValue clearValue[ 2 ];
         clearValue[ 0 ].color.float32[ 0 ]   = clearColor[ 0 ];
@@ -828,9 +828,9 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         submitInfo.commandBufferCount   = 1;
         submitInfo.pCommandBuffers      = &pCmdBuffer;
 
-        CheckedCall( vkEndCommandBuffer( pCmdBuffer ) );
-        CheckedCall( vkResetFences( device, 1, &fence ) );
-        CheckedCall( vkQueueSubmit( queue, 1, &submitInfo, fence ) );
+        CheckedResult( vkEndCommandBuffer( pCmdBuffer ) );
+        CheckedResult( vkResetFences( device, 1, &fence ) );
+        CheckedResult( vkQueueSubmit( queue, 1, &submitInfo, fence ) );
 
         if ( FrameId ) {
             uint32_t    presentIndex    = ( FrameIndex + FrameCount - 1 ) % FrameCount;
@@ -844,7 +844,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
             presentInfoKHR.pSwapchains        = &swapchain;
             presentInfoKHR.pImageIndices      = &BackbufferIndices[ presentIndex ];
 
-            CheckedCall( vkQueuePresentKHR( queue, &presentInfoKHR ) );
+            CheckedResult( vkQueuePresentKHR( queue, &presentInfoKHR ) );
         }
 
         queueFamilyPool->Release(acquiredQueue);
@@ -861,7 +861,7 @@ bool ViewerApp::IsRunning( ) {
     AppSurfaceBase*  pSurfaceBase = GetSurface( );
     AppSurfaceSdlVk* pSurface = static_cast< AppSurfaceSdlVk* >( pSurfaceBase );
 
-    CheckedCall( vkDeviceWaitIdle( pSurface->Node ) );
+    CheckedResult( vkDeviceWaitIdle( pSurface->Node ) );
     return false;
 }
 

@@ -170,4 +170,7 @@ namespace apemodevk {
     /* Returns allocation callbacks of the GraphicsManager.
      * @see GraphicsManager::GetAllocationCallbacks() */
     const VkAllocationCallbacks* GetAllocationCallbacks( );
+
+    uint64_t GetPerformanceCounter( );
+    uint64_t GetNanoseconds( uint64_t counter );
 }

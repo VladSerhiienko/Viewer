@@ -49,7 +49,7 @@ namespace apemodevk {
 
             Deleter( Handle );
             Handle.pAllocator = pAllocator;
-            return VK_SUCCESS == CheckedCall( vmaCreateImage( pAllocator,
+            return VK_SUCCESS == CheckedResult( vmaCreateImage( pAllocator,
                                                               &createInfo,
                                                               &allocInfo,
                                                               &Handle.pImg,

@@ -120,7 +120,7 @@ namespace apemodevk {
             Deleter( Handle );
             Deleter.pAllocator = pAllocator;
 
-            return VK_SUCCESS == CheckedCall( vmaCreatePool( pAllocator, &poolCreateInfo, &Handle ) );
+            return VK_SUCCESS == CheckedResult( vmaCreatePool( pAllocator, &poolCreateInfo, &Handle ) );
         }
 
     };

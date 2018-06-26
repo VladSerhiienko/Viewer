@@ -37,13 +37,13 @@ bool apemodevk::Swapchain::ExtractSwapchainBuffers( VkImage* OutBufferImgs ) {
     apemode_assert( hSwapchain.IsNotNull( ), "Not initialized." );
 
     uint32_t swapchainBufferCount = 0;
-    if ( apemode_likely( VK_SUCCESS == CheckedCall( vkGetSwapchainImagesKHR( pDevice, hSwapchain, &swapchainBufferCount, nullptr ) ) ) ) {
+    if ( apemode_likely( VK_SUCCESS == CheckedResult( vkGetSwapchainImagesKHR( pDevice, hSwapchain, &swapchainBufferCount, nullptr ) ) ) ) {
         if ( swapchainBufferCount > kMaxImgs ) {
             platform::DebugBreak( );
             return false;
         }
 
-        if ( apemode_likely( VK_SUCCESS == CheckedCall( vkGetSwapchainImagesKHR( pDevice, hSwapchain, &swapchainBufferCount, OutBufferImgs ) ) ) )
+        if ( apemode_likely( VK_SUCCESS == CheckedResult( vkGetSwapchainImagesKHR( pDevice, hSwapchain, &swapchainBufferCount, OutBufferImgs ) ) ) )
             return true;
     }
 
@@ -140,10 +140,10 @@ bool apemodevk::Surface::SetSurfaceProperties( ) {
 
     if ( hSurface.IsNotNull( ) ) {
         uint32_t surfaceFormatCount = 0;
-        if ( VK_SUCCESS == CheckedCall( vkGetPhysicalDeviceSurfaceFormatsKHR( pPhysicalDevice, hSurface, &surfaceFormatCount, nullptr ) ) ) {
+        if ( VK_SUCCESS == CheckedResult( vkGetPhysicalDeviceSurfaceFormatsKHR( pPhysicalDevice, hSurface, &surfaceFormatCount, nullptr ) ) ) {
 
             std::vector< VkSurfaceFormatKHR > SurfaceFormats( surfaceFormatCount );
-            if ( VK_SUCCESS == CheckedCall( vkGetPhysicalDeviceSurfaceFormatsKHR( pPhysicalDevice, hSurface, &surfaceFormatCount, SurfaceFormats.data( ) ) ) ) {
+            if ( VK_SUCCESS == CheckedResult( vkGetPhysicalDeviceSurfaceFormatsKHR( pPhysicalDevice, hSurface, &surfaceFormatCount, SurfaceFormats.data( ) ) ) ) {
                 const bool bCanChooseAny = surfaceFormatCount == 1 && SurfaceFormats[ 0 ].format == VK_FORMAT_UNDEFINED;
                 eColorFormat             = bCanChooseAny ? VK_FORMAT_B8G8R8A8_UNORM : SurfaceFormats[ 0 ].format;
                 eColorSpace              = SurfaceFormats[ 0 ].colorSpace;
@@ -154,12 +154,12 @@ bool apemodevk::Surface::SetSurfaceProperties( ) {
         ePresentMode = VK_PRESENT_MODE_FIFO_KHR;
 
         uint32_t presentModeCount = 0;
-        if ( VK_SUCCESS == CheckedCall( vkGetPhysicalDeviceSurfacePresentModesKHR( pPhysicalDevice, hSurface, &presentModeCount, nullptr ) ) ) {
+        if ( VK_SUCCESS == CheckedResult( vkGetPhysicalDeviceSurfacePresentModesKHR( pPhysicalDevice, hSurface, &presentModeCount, nullptr ) ) ) {
 
             std::vector< VkPresentModeKHR > presentModes;
             presentModes.resize( presentModeCount );
 
-            if ( VK_SUCCESS == CheckedCall( vkGetPhysicalDeviceSurfacePresentModesKHR( pPhysicalDevice, hSurface, &presentModeCount, presentModes.data( ) ) ) ) {
+            if ( VK_SUCCESS == CheckedResult( vkGetPhysicalDeviceSurfacePresentModesKHR( pPhysicalDevice, hSurface, &presentModeCount, presentModes.data( ) ) ) ) {
                 for ( auto i = 0u; i < presentModeCount; i++ ) {
                     auto& currentPresentMode = presentModes[ i ];
                     if ( currentPresentMode == VK_PRESENT_MODE_MAILBOX_KHR ) {
@@ -175,7 +175,7 @@ bool apemodevk::Surface::SetSurfaceProperties( ) {
                 }
             }
 
-            if ( VK_SUCCESS != CheckedCall( vkGetPhysicalDeviceSurfaceCapabilitiesKHR( pPhysicalDevice, hSurface, &SurfaceCaps ) ) ) {
+            if ( VK_SUCCESS != CheckedResult( vkGetPhysicalDeviceSurfaceCapabilitiesKHR( pPhysicalDevice, hSurface, &SurfaceCaps ) ) ) {
                 apemode_halt( "vkGetPhysicalDeviceSurfaceCapabilitiesKHR failed." );
                 return false;
             }

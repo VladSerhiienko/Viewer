@@ -435,7 +435,7 @@ namespace apemodevk
     struct THandle< VkInstance > : public THandleBase< VkInstance > {
         bool Recreate( VkInstanceCreateInfo const &CreateInfo ) {
             Deleter( Handle );
-            return VK_SUCCESS == CheckedCall( vkCreateInstance( &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateInstance( &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -445,7 +445,7 @@ namespace apemodevk
             apemode_assert( pPhysicalDevice != VK_NULL_HANDLE, "Device is required." );
 
             Deleter( Handle );
-            return VK_SUCCESS == CheckedCall( vkCreateDevice( pPhysicalDevice, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateDevice( pPhysicalDevice, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -472,7 +472,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hInstance = InInstanceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateWin32SurfaceKHR( InInstanceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateWin32SurfaceKHR( InInstanceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 #elif VK_USE_PLATFORM_XLIB_KHR
@@ -483,7 +483,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hInstance = InInstanceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateXlibSurfaceKHR( InInstanceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateXlibSurfaceKHR( InInstanceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 #elif VK_USE_PLATFORM_MACOS_MVK
@@ -494,7 +494,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hInstance = InInstanceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateMacOSSurfaceMVK( InInstanceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateMacOSSurfaceMVK( InInstanceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 #elif VK_USE_PLATFORM_IOS_MVK
@@ -505,7 +505,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hInstance = InInstanceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateIOSSurfaceMVK( InInstanceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateIOSSurfaceMVK( InInstanceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 #endif
@@ -524,7 +524,7 @@ namespace apemodevk
 
             if ( InLogicalDeviceHandle != nullptr ) {
                 Deleter.hLogicalDevice = InLogicalDeviceHandle;
-                if ( VK_SUCCESS == CheckedCall( vkCreateSwapchainKHR( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) ) ) {
+                if ( VK_SUCCESS == CheckedResult( vkCreateSwapchainKHR( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) ) ) {
 
                     /* If we just re-created an existing swapchain, we should destroy the old swapchain at this point.
                      * @note Destroying the swapchain also cleans up all its associated presentable images
@@ -545,14 +545,14 @@ namespace apemodevk
         bool Recreate( VkDevice InLogicalDeviceHandle, VkCommandPoolCreateInfo const &CreateInfo ) {
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateCommandPool( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateCommandPool( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
 
         bool Reset( bool bRecycleResources ) {
             assert( IsNotNull( ) );
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
             const auto ResetFlags = bRecycleResources ? VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT : 0u;
-            return VK_SUCCESS == CheckedCall( vkResetCommandPool( Deleter.hLogicalDevice, Handle, ResetFlags ) );
+            return VK_SUCCESS == CheckedResult( vkResetCommandPool( Deleter.hLogicalDevice, Handle, ResetFlags ) );
         }
     };
 
@@ -566,7 +566,7 @@ namespace apemodevk
             Deleter( Handle );
             Deleter.CmdPool        = AllocInfo.commandPool;
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkAllocateCommandBuffers( InLogicalDeviceHandle, &AllocInfo, &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkAllocateCommandBuffers( InLogicalDeviceHandle, &AllocInfo, &Handle ) );
         }
     };
 
@@ -577,11 +577,11 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateFence( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateFence( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
 
         bool Wait( uint64_t Timeout = UINT64_MAX ) const {
-            return VK_SUCCESS == CheckedCall( vkWaitForFences( Deleter.hLogicalDevice, 1, &Handle, true, Timeout ) );
+            return VK_SUCCESS == CheckedResult( vkWaitForFences( Deleter.hLogicalDevice, 1, &Handle, true, Timeout ) );
         }
 
         inline VkResult GetStatus() const       { return vkGetFenceStatus( Deleter.hLogicalDevice, Handle ); }
@@ -597,15 +597,15 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateEvent( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateEvent( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
 
         bool Set( ) const {
-            return VK_SUCCESS == CheckedCall( vkSetEvent( Deleter.hLogicalDevice, Handle ) );
+            return VK_SUCCESS == CheckedResult( vkSetEvent( Deleter.hLogicalDevice, Handle ) );
         }
 
         bool Reset( ) const {
-            return VK_SUCCESS == CheckedCall( vkResetEvent( Deleter.hLogicalDevice, Handle ) );
+            return VK_SUCCESS == CheckedResult( vkResetEvent( Deleter.hLogicalDevice, Handle ) );
         }
 
         inline VkResult GetStatus( ) const  { return vkGetEventStatus( Deleter.hLogicalDevice, Handle ); }
@@ -661,7 +661,7 @@ namespace apemodevk
             Deleter( Handle );
             Deleter.hLogicalDevice       = InLogicalDeviceHandle;
             Deleter.PhysicalDeviceHandle = InPhysicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateImage( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateImage( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
 
         VkMemoryRequirements GetMemoryRequirements( ) {
@@ -686,7 +686,7 @@ namespace apemodevk
         }
 
         bool BindMemory( VkDeviceMemory hMemory, uint32_t Offset = 0 ) {
-            return VK_SUCCESS == CheckedCall( vkBindImageMemory( Deleter.hLogicalDevice, Handle, hMemory, Offset ) );
+            return VK_SUCCESS == CheckedResult( vkBindImageMemory( Deleter.hLogicalDevice, Handle, hMemory, Offset ) );
         }
     };
 
@@ -697,7 +697,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateImageView( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateImageView( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -709,14 +709,14 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkAllocateMemory( InLogicalDeviceHandle, &AllocInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkAllocateMemory( InLogicalDeviceHandle, &AllocInfo, GetAllocationCallbacks( ), &Handle ) );
         }
 
         uint8_t *Map( uint32_t mappedMemoryOffset, uint32_t mappedMemorySize, VkMemoryHeapFlags mapFlags ) {
             apemode_assert( Deleter.hLogicalDevice != VK_NULL_HANDLE, "Device is required." );
 
             uint8_t *mappedData = nullptr;
-            if ( VK_SUCCESS == CheckedCall( vkMapMemory( Deleter.hLogicalDevice,
+            if ( VK_SUCCESS == CheckedResult( vkMapMemory( Deleter.hLogicalDevice,
                                                          Handle,
                                                          mappedMemoryOffset,
                                                          mappedMemorySize,
@@ -742,7 +742,7 @@ namespace apemodevk
             Deleter( Handle );
             Deleter.hLogicalDevice       = InLogicalDeviceHandle;
             Deleter.PhysicalDeviceHandle = InPhysicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateBuffer( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateBuffer( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
 
         VkMemoryRequirements GetMemoryRequirements( ) {
@@ -766,7 +766,7 @@ namespace apemodevk
         }
 
         bool BindMemory( VkDeviceMemory hMemory, uint32_t Offset = 0 ) {
-            return VK_SUCCESS == CheckedCall( vkBindBufferMemory( Deleter.hLogicalDevice, Handle, hMemory, Offset ) );
+            return VK_SUCCESS == CheckedResult( vkBindBufferMemory( Deleter.hLogicalDevice, Handle, hMemory, Offset ) );
         }
     };
 
@@ -777,7 +777,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateBufferView( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateBufferView( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -788,7 +788,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateFramebuffer( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateFramebuffer( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -799,7 +799,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateRenderPass( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateRenderPass( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -810,7 +810,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreatePipelineCache( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreatePipelineCache( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -821,7 +821,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreatePipelineLayout( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreatePipelineLayout( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -850,7 +850,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateDescriptorSetLayout( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateDescriptorSetLayout( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -863,7 +863,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkAllocateDescriptorSets( InLogicalDeviceHandle, &AllocInfo, &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkAllocateDescriptorSets( InLogicalDeviceHandle, &AllocInfo, &Handle ) );
         }
     };
 
@@ -874,7 +874,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateDescriptorPool( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateDescriptorPool( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -887,7 +887,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateGraphicsPipelines( InLogicalDeviceHandle, pCache, 1, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateGraphicsPipelines( InLogicalDeviceHandle, pCache, 1, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
 
         bool Recreate( VkDevice InLogicalDeviceHandle, VkPipelineCache pCache, VkComputePipelineCreateInfo const &CreateInfo ) {
@@ -895,7 +895,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateComputePipelines( InLogicalDeviceHandle, pCache, 1, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateComputePipelines( InLogicalDeviceHandle, pCache, 1, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -906,7 +906,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateShaderModule( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateShaderModule( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -917,7 +917,7 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateSemaphore( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateSemaphore( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -926,7 +926,7 @@ namespace apemodevk
         bool Recreate( VkDevice InLogicalDeviceHandle, VkSamplerCreateInfo const &CreateInfo ) {
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedCall( vkCreateSampler( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateSampler( InLogicalDeviceHandle, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 
@@ -934,7 +934,7 @@ namespace apemodevk
     struct THandle< VmaAllocator > : public THandleBase< VmaAllocator > {
         bool Recreate( VmaAllocatorCreateInfo const &CreateInfo ) {
             Deleter( Handle );
-            return VK_SUCCESS == CheckedCall( vmaCreateAllocator( &CreateInfo, &Handle ) );
+            return VK_SUCCESS == CheckedResult( vmaCreateAllocator( &CreateInfo, &Handle ) );
         }
     };
 }

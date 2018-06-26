@@ -304,7 +304,7 @@ bool apemodevk::GraphicsDevice::IsValid( ) const {
 
 bool apemodevk::GraphicsDevice::Await( ) {
     apemode_assert( IsValid( ), "Must be valid." );
-    return VK_SUCCESS == CheckedCall( vkDeviceWaitIdle( hLogicalDevice ) );
+    return VK_SUCCESS == CheckedResult( vkDeviceWaitIdle( hLogicalDevice ) );
 }
 
 apemodevk::QueuePool* apemodevk::GraphicsDevice::GetQueuePool( ) {

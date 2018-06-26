@@ -40,7 +40,7 @@ namespace apemodevk {
     }
 
     /* Breaks on failures in debug and prints the error */
-    inline VkResult CheckedCall( VkResult eResult ) {
+    inline VkResult CheckedResult( VkResult eResult ) {
 #ifdef _DEBUG
         if ( VK_SUCCESS > eResult ) {
             platform::DebugTrace( platform::LogLevel::Err, __FUNCTION__ ": (ERROR) %u %s.", eResult, ToString( eResult ) );
@@ -51,5 +51,3 @@ namespace apemodevk {
         return eResult;
     }
 } // namespace apemodevk
-
-#include <CityHash.h>

@@ -223,7 +223,7 @@ void apemode::AppSurfaceSdlVk::OnFrameMove( ) {
 
     if ( width != LastWidth || height != LastHeight ) {
         apemode_memory_allocation_scope;
-        apemodevk::CheckedCall( vkDeviceWaitIdle( Node ) );
+        apemodevk::CheckedResult( vkDeviceWaitIdle( Node ) );
 
         LastWidth  = width;
         LastHeight = height;

@@ -55,11 +55,12 @@ namespace apemodevk {
     };
 
     struct AcquiredCommandBuffer {
-        VkCommandBuffer pCmdBuffer    = VK_NULL_HANDLE; /* Handle */
-        VkCommandPool   pCmdPool      = VK_NULL_HANDLE; /* Command pool handle (associated with the Handle) */
-        VkFence         pFence        = VK_NULL_HANDLE; /* Last queue fence */
-        uint32_t        QueueFamilyId = VK_QUEUE_FAMILY_IGNORED;
-        uint32_t        CmdBufferId   = VK_QUEUE_FAMILY_IGNORED;
+        VkCommandBuffer pCmdBuffer    = VK_NULL_HANDLE;          /* Handle */
+        VkCommandPool   pCmdPool      = VK_NULL_HANDLE;          /* Command pool handle (associated with the Handle) */
+        VkFence         pFence        = VK_NULL_HANDLE;          /* Last queue fence */
+        uint32_t        QueueFamilyId = VK_QUEUE_FAMILY_IGNORED; /* Queue family index */
+        uint32_t        CmdBufferId   = VK_QUEUE_FAMILY_IGNORED; /* Queue index in family pool */
+        VkResult        eResult       = VK_SUCCESS;              /* The error code that occurred during the queue acquisition */
     };
 
     class CommandBufferFamilyPool : public QueueFamilyBased {
@@ -139,10 +140,11 @@ namespace apemodevk {
     };
 
     struct AcquiredQueue {
-        VkQueue  pQueue        = VK_NULL_HANDLE; /* Free to use queue. */
-        VkFence  pFence        = VK_NULL_HANDLE; /* Acquire() can optionally ignore fence status, so the user can await. */
-        uint32_t QueueFamilyId = VK_QUEUE_FAMILY_IGNORED;              /* Queue family index */
-        uint32_t QueueId       = VK_QUEUE_FAMILY_IGNORED;              /* Queue index in family pool */
+        VkQueue  pQueue        = VK_NULL_HANDLE;          /* Free to use queue. */
+        VkFence  pFence        = VK_NULL_HANDLE;          /* Acquire() can optionally ignore fence status. */
+        uint32_t QueueFamilyId = VK_QUEUE_FAMILY_IGNORED; /* Queue family index */
+        uint32_t QueueId       = VK_QUEUE_FAMILY_IGNORED; /* Queue index in family pool */
+        VkResult eResult       = VK_SUCCESS;              /* The error code that occurred during the queue acquisition */
     };
 
     class QueueFamilyPool : public QueueFamilyBased {
@@ -158,8 +160,8 @@ namespace apemodevk {
 
         bool Inititalize( VkDevice                       pInDevice,
                           VkPhysicalDevice               pInPhysicalDevice,
-                          uint32_t                       InQueueFamilyIndex,
-                          VkQueueFamilyProperties const& InQueueFamilyProps );
+                          uint32_t                       queueFamilyIndex,
+                          VkQueueFamilyProperties const& queueFamilyProps );
 
         void Destroy( );
 
@@ -203,8 +205,8 @@ namespace apemodevk {
         void Destroy( );
 
         uint32_t               GetPoolCount( ) const;                      /* @note Returns the number of queue families */
-        QueueFamilyPool*       GetPool( uint32_t QueueFamilyIndex );       /* @see GetPool( VkQueueFlags , bool ) */
-        const QueueFamilyPool* GetPool( uint32_t QueueFamilyIndex ) const; /* @see GetPool( VkQueueFlags , bool ) */
+        QueueFamilyPool*       GetPool( uint32_t queueFamilyIndex );       /* @see GetPool( VkQueueFlags , bool ) */
+        const QueueFamilyPool* GetPool( uint32_t queueFamilyIndex ) const; /* @see GetPool( VkQueueFlags , bool ) */
         QueueFamilyPool*       GetPool( VkQueueFlags eRequiredQueueFlags, bool bExactMatchByFlags );
         const QueueFamilyPool* GetPool( VkQueueFlags eRequiredQueueFlags, bool bExactMatchByFlags ) const;
 
@@ -219,7 +221,7 @@ namespace apemodevk {
          * @see GetPool().
          */
         AcquiredQueue Acquire( bool bIgnoreFenceStatus, VkQueueFlags eRequiredQueueFlags, bool bExactMatchByFlags );
-        AcquiredQueue Acquire( bool bIgnoreFenceStatus, uint32_t QueueFamilyIndex );
+        AcquiredQueue Acquire( bool bIgnoreFenceStatus, uint32_t queueFamilyIndex );
 
         /**
          * Allows the queue to be reused.
@@ -233,5 +235,31 @@ namespace apemodevk {
      * Waits for fence with the provided timeout otherwise.
      **/
     VkResult WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t timeout = ~0ULL );
+
+    /**
+     * @brief Checks if the returned structure indicates that the operation succeeded.
+     * @param acquiredQueue  The returned result structure.
+     * @return True of succeeded, false otherwise.
+     */
+    inline bool IsOk( const AcquiredQueue& acquiredQueue ) {
+        return ( VK_SUCCESS == acquiredQueue.eResult ) &&
+               acquiredQueue.pQueue &&
+               acquiredQueue.pFence &&
+               ( VK_QUEUE_FAMILY_IGNORED != acquiredQueue.QueueId ) &&
+               ( VK_QUEUE_FAMILY_IGNORED != acquiredQueue.QueueFamilyId );
+    }
+
+    /**
+     * @brief Checks if the returned structure indicates that the operation succeeded.
+     * @param acquiredCmdBuffer  The returned result structure.
+     * @return True of succeeded, false otherwise.
+     */
+    inline bool IsOk( const AcquiredCommandBuffer& acquiredCmdBuffer ) {
+        return ( VK_SUCCESS == acquiredCmdBuffer.eResult ) &&
+               acquiredCmdBuffer.pCmdBuffer &&
+               acquiredCmdBuffer.pCmdPool &&
+               ( VK_QUEUE_FAMILY_IGNORED != acquiredCmdBuffer.CmdBufferId ) &&
+               ( VK_QUEUE_FAMILY_IGNORED != acquiredCmdBuffer.QueueFamilyId );
+    }
 
 } // namespace apemodevk

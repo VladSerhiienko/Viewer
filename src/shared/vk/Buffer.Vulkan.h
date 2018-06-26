@@ -49,12 +49,12 @@ namespace apemodevk {
             Deleter( Handle );
             Handle.pAllocator = pAllocator;
 
-            return VK_SUCCESS == CheckedCall( vmaCreateBuffer( pAllocator,
-                                                               &createInfo,
-                                                               &allocInfo,
-                                                               &Handle.pBuffer,
-                                                               &Handle.pAllocation,
-                                                               &Handle.allocInfo ) );
+            return VK_SUCCESS == CheckedResult( vmaCreateBuffer( pAllocator,
+                                                                 &createInfo,
+                                                                 &allocInfo,
+                                                                 &Handle.pBuffer,
+                                                                 &Handle.pAllocation,
+                                                                 &Handle.allocInfo ) );
         }
 
         inline THandle( ) = default;

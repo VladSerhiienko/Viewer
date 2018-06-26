@@ -1,4 +1,5 @@
 #include <DescriptorPool.Vulkan.h>
+#include <CityHash.Vulkan.h>
 
 apemodevk::DescriptorPool::DescriptorPool( ) : pNode( nullptr ) {
 }
@@ -105,7 +106,7 @@ bool apemodevk::DescriptorSetPool::Recreate( VkDevice              pInLogicalDev
 VkDescriptorSet apemodevk::DescriptorSetPool::GetDescSet( const DescriptorSetBase* pDescriptorSetBase ) {
     apemodevk_memory_allocation_scope;
 
-    apemode::CityHash64Wrapper cityHashBuilder;
+    apemodevk::CityHash64Wrapper cityHashBuilder;
     for ( uint32_t i = 0; i < pDescriptorSetBase->BindingCount; ++i ) {
         cityHashBuilder.CombineWith( pDescriptorSetBase->pBinding[ i ] );
     }

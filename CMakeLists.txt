@@ -537,6 +537,8 @@ endif()
 
 set(
     shared_vk_source_files
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/CityHash.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shared/vk/CityHash.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/shared/vk/Image.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/shared/vk/Buffer.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/shared/vk/NativeHandles.Vulkan.h
