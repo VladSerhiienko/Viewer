@@ -73,10 +73,9 @@ namespace apemodevk {
                                const char*        sourceFile,
                                const unsigned int sourceLine,
                                const char*        sourceFunc ) = 0;
-        };
 
-        /* Allocator interface, allows tracking. */
-        struct IMemoryAllocationScope {
+            /* Allocator interface, allows tracking. */
+
             virtual void GetPrevMemoryAllocationScope( const char*&  pszPrevSourceFile,
                                                        unsigned int& prevSourceLine,
                                                        const char*&  pszPrevSourceFunc ) const  = 0;
@@ -91,7 +90,6 @@ namespace apemodevk {
         /* Destruction order must be preserved */
 
         IAllocator*                     pAllocator;
-        IMemoryAllocationScope*         pMemoryAllocationScope;
         ILogger*                        pLogger;
         APIVersion                      Version;
         THandle< VkInstance >           hInstance;
@@ -120,7 +118,6 @@ namespace apemodevk {
         friend GraphicsManager* CreateGraphicsManager( uint32_t                eFlags,
                                                        IAllocator*             pInAlloc,
                                                        ILogger*                pInLogger,
-                                                       IMemoryAllocationScope* pMemoryAllocationScope,
                                                        const char*             pszAppName,
                                                        const char*             pszEngineName,
                                                        const char**            ppszLayers,
@@ -133,7 +130,6 @@ namespace apemodevk {
         bool Initialize( uint32_t                flags,
                          IAllocator*             pAlloc,
                          ILogger*                pLogger,
-                         IMemoryAllocationScope* pMemoryAllocationScope,
                          const char*             pszAppName,
                          const char*             pszEngineName,
                          const char**            ppszLayers,
@@ -142,10 +138,8 @@ namespace apemodevk {
                          size_t                  extensionCount );
         void Destroy( );
 
-        IAllocator*             GetAllocator( );
-        ILogger*                GetLogger( );
-        const IMemoryAllocationScope* GetMemoryAllocationScope( ) const;
-
+        IAllocator*                  GetAllocator( );
+        ILogger*                     GetLogger( );
         const VkAllocationCallbacks* GetAllocationCallbacks( ) const;
 
     private:
@@ -157,7 +151,6 @@ namespace apemodevk {
     GraphicsManager* CreateGraphicsManager( uint32_t                                 eFlags,
                                             GraphicsManager::IAllocator*             pInAlloc,
                                             GraphicsManager::ILogger*                pInLogger,
-                                            GraphicsManager::IMemoryAllocationScope* pMemoryAllocationScope,
                                             const char*                              pszAppName,
                                             const char*                              pszEngineName,
                                             const char**                             ppszLayers,

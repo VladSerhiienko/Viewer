@@ -162,8 +162,7 @@ namespace apemodevk
         }
     };
 
-    struct
-    DescriptorSetPool {
+    struct DescriptorSetPool {
         struct DescriptorSetItem {
             uint64_t        Hash           = uint64_t( -1 );
             VkDescriptorSet pDescriptorSet = VK_NULL_HANDLE;

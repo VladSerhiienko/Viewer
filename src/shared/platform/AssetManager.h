@@ -50,7 +50,7 @@ namespace apemodeos {
             AssetFile                       Asset;
         };
 
-        std::atomic< uint32_t >                UseCount;
+        std::atomic< bool >                    InUse;
         std::map< std::string, AssetFileItem > AssetFiles;
     };
 

@@ -892,18 +892,18 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
             flags |= pMaterialAsset->hOcclusionImgView ? 1 << 5 : 0;
 
             MaterialUBO materialData;
-            materialData.BaseColorFactor.x = pMaterial->BaseColorFactor.x;
-            materialData.BaseColorFactor.y = pMaterial->BaseColorFactor.y;
-            materialData.BaseColorFactor.z = pMaterial->BaseColorFactor.z;
-            materialData.BaseColorFactor.w = pMaterial->BaseColorFactor.w;
-            materialData.EmissiveFactor.x = pMaterial->EmissiveFactor.x;
-            materialData.EmissiveFactor.y = pMaterial->EmissiveFactor.y;
-            materialData.EmissiveFactor.z = pMaterial->EmissiveFactor.z;
+            materialData.BaseColorFactor.x         = pMaterial->BaseColorFactor.x;
+            materialData.BaseColorFactor.y         = pMaterial->BaseColorFactor.y;
+            materialData.BaseColorFactor.z         = pMaterial->BaseColorFactor.z;
+            materialData.BaseColorFactor.w         = pMaterial->BaseColorFactor.w;
+            materialData.EmissiveFactor.x          = pMaterial->EmissiveFactor.x;
+            materialData.EmissiveFactor.y          = pMaterial->EmissiveFactor.y;
+            materialData.EmissiveFactor.z          = pMaterial->EmissiveFactor.z;
             materialData.MetallicRoughnessFactor.x = pMaterial->MetallicFactor;
             materialData.MetallicRoughnessFactor.y = pMaterial->RoughnessFactor;
             materialData.MetallicRoughnessFactor.z = 1;
             materialData.MetallicRoughnessFactor.w = static_cast< float >( pParams->RadianceMap.MipLevels );
-            materialData.Flags.x = flags;
+            materialData.Flags.x                   = flags;
 
             auto objectDataUploadBufferRange = BufferPools[ frameIndex ].TSuballocate( objectData );
             assert( VK_NULL_HANDLE != objectDataUploadBufferRange.DescriptorBufferInfo.buffer );

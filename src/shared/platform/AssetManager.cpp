@@ -157,10 +157,8 @@ void apemodeos::AssetManager::UpdateAssets( const char*  pszFolderPath,
                                             size_t       filePatternCount ) {
     apemode_memory_allocation_scope;
 
-    /* Protect asset files, no need to lock the function. */
-
-    if ( std::atomic_fetch_add( &UseCount, uint32_t( 1 ) ) > 1 ) {
-        std::atomic_fetch_sub( &UseCount, uint32_t( 1 ) );
+    /* Lock. */
+    if ( std::atomic_exchange_explicit( &InUse, true, std::memory_order_acquire ) == true ) {
         return;
     }
 
@@ -273,8 +271,7 @@ void apemodeos::AssetManager::UpdateAssets( const char*  pszFolderPath,
     }
 
     /* Unlock. */
-
-    std::atomic_fetch_sub( &UseCount, uint32_t( 1 ) );
+    std::atomic_exchange( &InUse, false );
 }
 
 template < bool bTextMode >

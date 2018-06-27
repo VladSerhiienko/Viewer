@@ -253,7 +253,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback( VkDebugUtilsMessageSeveri
 bool apemodevk::GraphicsManager::Initialize( uint32_t                eFlags,
                                              IAllocator*             pInAlloc,
                                              ILogger*                pInLogger,
-                                             IMemoryAllocationScope* pInMemoryAllocationScope,
                                              const char*             pszAppName,
                                              const char*             pszEngineName,
                                              const char**            ppszLayers,
@@ -262,7 +261,6 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                eFlags,
                                              size_t                  extensionCount ) {
     pAllocator             = pInAlloc;
     pLogger                = pInLogger;
-    pMemoryAllocationScope = pInMemoryAllocationScope;
 
     AllocCallbacks = VkAllocationCallbacks{this, /* pUserData */
                                            &AllocationCallbacks::AllocationFunction,
@@ -552,7 +550,6 @@ apemodevk::GraphicsManager* apemodevk::CreateGraphicsManager(
     uint32_t                                             eFlags,
     apemodevk::GraphicsManager::IAllocator*              pInAlloc,
     apemodevk::GraphicsManager::ILogger*                 pInLogger,
-    apemodevk::GraphicsManager::IMemoryAllocationScope* pMemoryAllocationScope,
     const char*                                          pszAppName,
     const char*                                          pszEngineName,
     const char**                                         ppszLayers,
@@ -571,7 +568,6 @@ apemodevk::GraphicsManager* apemodevk::CreateGraphicsManager(
     if ( !sGraphicsManagerInstance->Initialize( eFlags,
                                                 pInAlloc,
                                                 pInLogger,
-                                                pMemoryAllocationScope,
                                                 pszAppName,
                                                 pszEngineName,
                                                 ppszLayers,
@@ -608,10 +604,6 @@ apemodevk::GraphicsManager::IAllocator* apemodevk::GraphicsManager::GetAllocator
 
 apemodevk::GraphicsManager::ILogger* apemodevk::GraphicsManager::GetLogger( ) {
     return pLogger;
-}
-
-const apemodevk::GraphicsManager::IMemoryAllocationScope* apemodevk::GraphicsManager::GetMemoryAllocationScope( ) const {
-    return pMemoryAllocationScope;
 }
 
 const VkAllocationCallbacks* apemodevk::GraphicsManager::GetAllocationCallbacks( ) const {
@@ -691,13 +683,13 @@ void apemodevk::platform::Log( apemodevk::platform::LogLevel eLevel, char const*
 }
 
 void apemodevk::GetPrevMemoryAllocationScope( const char*&  pszSourceFile, unsigned int& sourceLine, const char*&  pszSourceFunc ) {
-    return GetGraphicsManager( )->GetMemoryAllocationScope( )->GetPrevMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
+    return GetGraphicsManager( )->GetAllocator( )->GetPrevMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
 }
 void apemodevk::StartMemoryAllocationScope( const char* pszSourceFile, const unsigned int sourceLine, const char* pszSourceFunc ) {
-    return GetGraphicsManager( )->GetMemoryAllocationScope( )->StartMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
+    return GetGraphicsManager( )->GetAllocator( )->StartMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
 }
 void apemodevk::EndMemoryAllocationScope( const char* pszSourceFile, const unsigned int sourceLine, const char* pszSourceFunc ) {
-    return GetGraphicsManager( )->GetMemoryAllocationScope( )->EndMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
+    return GetGraphicsManager( )->GetAllocator( )->EndMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
 }
 
 void* operator new[]( std::size_t               size,

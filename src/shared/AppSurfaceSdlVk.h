@@ -32,9 +32,8 @@ namespace apemode {
         void*              GetGraphicsHandle( ) override;
         SceneRendererBase* CreateSceneRenderer( ) override;
 
-        apemode::unique_ptr< GraphicsAllocator >             Alloc;
-        apemode::unique_ptr< GraphicsLogger >                Logger;
-        apemode::unique_ptr< GraphicsMemoryAllocationScope > AllocScope;
+        apemode::unique_ptr< GraphicsAllocator > Alloc;
+        apemode::unique_ptr< GraphicsLogger >    Logger;
 
         apemodevk::Surface        Surface;
         apemodevk::Swapchain      Swapchain;

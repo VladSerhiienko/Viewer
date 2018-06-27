@@ -59,8 +59,8 @@ namespace apemode {
             XMFLOAT4X4                 InvProjMatrix;               /* Required */
             EnvMap                     RadianceMap;                 /* Required */
             EnvMap                     IrradianceMap;               /* Required */
-            XMFLOAT4 LightDirection; /* Required */
-            XMFLOAT4 LightColor; /* Required */
+            XMFLOAT4                   LightDirection;              /* Required */
+            XMFLOAT4                   LightColor;                  /* Required */
         };
 
         virtual bool Reset( const Scene* pScene, uint32_t FrameIndex ) override;
