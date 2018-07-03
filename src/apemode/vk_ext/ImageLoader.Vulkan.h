@@ -4,7 +4,6 @@
 #include <Image.Vulkan.h>
 
 namespace apemodevk {
-    class GraphicsDevice;
     struct HostBufferPool;
 
     struct LoadedImage {
@@ -31,10 +30,11 @@ namespace apemodevk {
         };
 
         struct LoadOptions {
-            EImageFileFormat eFileFormat      = eImageFileFormat_Undefined;
-            bool             bImgView         = false;
-            bool             bAwaitLoading    = true;
-            bool             bGenerateMipMaps = false;
+            EImageFileFormat eFileFormat        = eImageFileFormat_Undefined;
+            bool             bImgView           = false;
+            bool             bAwaitLoading      = true;
+            bool             bGenerateMipMaps   = false;
+            size_t           StagingMemoryLimit = 64 * 1024 * 1024;
         };
 
         GraphicsDevice* pNode           = nullptr;

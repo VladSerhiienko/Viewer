@@ -174,6 +174,21 @@ gli::texture LoadTexture( const uint8_t*                           pFileContent,
     return texture;
 }
 
+uint8_t* MapStagingBuffer( apemodevk::GraphicsDevice* pNode, apemodevk::THandle< apemodevk::BufferComposite >& hBuffer ) {
+    using namespace apemodevk;
+
+    if ( hBuffer.Handle.allocInfo.pMappedData ) {
+        return reinterpret_cast< uint8_t * >( hBuffer.Handle.allocInfo.pMappedData );
+    }
+
+    uint8_t * pMapped = nullptr;
+    if ( VK_SUCCESS == CheckedResult( vmaMapMemory( pNode->hAllocator, hBuffer.Handle.pAllocation, (void **) ( &pMapped ) ) ) ) {
+        return pMapped;
+    }
+
+    return nullptr;
+}
+
 apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
     apemodevk::GraphicsDevice*                 pNode,
     apemodevk::HostBufferPool*                 pHostBufferPool,
@@ -202,12 +217,8 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
         return nullptr;
     }
 
-    std::vector< VkBufferImageCopy > bufferImageCopies;
-    HostBufferPool::SuballocResult   imageBufferSuballocResult;
     InitializeStruct( loadedImage->ImageCreateInfo );
     InitializeStruct( loadedImage->ImgViewCreateInfo );
-
-    pHostBufferPool->Reset( );
 
     loadedImage->ImageCreateInfo.format        = ToImgFormat( texture.format( ) );
     loadedImage->ImageCreateInfo.imageType     = ToImgType( texture.target( ) );
@@ -244,45 +255,12 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
             break;
     }
 
-    imageBufferSuballocResult = pHostBufferPool->Suballocate( texture.data( ), static_cast< uint32_t >( texture.size( ) ) );
+    VmaAllocationCreateInfo imgAllocationCreateInfo;
+    InitializeStruct( imgAllocationCreateInfo );
+    imgAllocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    imgAllocationCreateInfo.flags = 0;
 
-    uint32_t bufferImageCopyIndex = 0;
-    bufferImageCopies.resize( ( uint32_t )( texture.levels( ) * texture.faces( ) ) );
-
-    for ( size_t mipLevel = 0; mipLevel < texture.levels( ); ++mipLevel ) {
-        for ( size_t face = 0; face < texture.faces( ); ++face ) {
-            apemodevk_memory_allocation_scope;
-
-            auto& bufferImageCopy = bufferImageCopies[ bufferImageCopyIndex++ ];
-            InitializeStruct( bufferImageCopy );
-
-            uintptr_t    imgAddress    = (uintptr_t) texture.data( );
-            uintptr_t    subImgAddress = (uintptr_t) texture.data( 0, face, mipLevel );
-            VkDeviceSize imageOffset   = subImgAddress - imgAddress;
-            VkDeviceSize bufferOffset  = imageBufferSuballocResult.DynamicOffset + imageOffset;
-
-            bufferImageCopy.imageSubresource.baseArrayLayer = 0;
-            bufferImageCopy.imageSubresource.mipLevel       = static_cast< uint32_t >( mipLevel );
-            bufferImageCopy.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
-            bufferImageCopy.imageSubresource.baseArrayLayer = static_cast< uint32_t >( face );
-            bufferImageCopy.imageSubresource.layerCount     = 1;
-            bufferImageCopy.imageExtent.width               = static_cast< uint32_t >( texture.extent( mipLevel ).x );
-            bufferImageCopy.imageExtent.height              = static_cast< uint32_t >( texture.extent( mipLevel ).y );
-            bufferImageCopy.imageExtent.depth               = static_cast< uint32_t >( texture.extent( mipLevel ).z );
-            bufferImageCopy.bufferOffset                    = bufferOffset;
-            bufferImageCopy.bufferImageHeight               = 0; /* Tightly packed according to the imageExtent */
-            bufferImageCopy.bufferRowLength                 = 0; /* Tightly packed according to the imageExtent */
-        }
-    }
-
-    texture = gli::texture( ); /* Free allocated CPU memory. */
-    pHostBufferPool->Flush( ); /* Unmap buffers and flush all staging memory ranges */
-
-    VmaAllocationCreateInfo allocationCreateInfo = {};
-    allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    allocationCreateInfo.flags = 0;
-
-    if ( false == loadedImage->hImg.Recreate( pNode->hAllocator, loadedImage->ImageCreateInfo, allocationCreateInfo ) ) {
+    if ( false == loadedImage->hImg.Recreate( pNode->hAllocator, loadedImage->ImageCreateInfo, imgAllocationCreateInfo ) ) {
         return nullptr;
     }
 
@@ -293,8 +271,33 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
         }
     }
 
-    const OneTimeCmdBufferSubmitResult imgLoadedResult =
-    apemodevk::TOneTimeCmdBufferSubmit( pNode, 0, loadOptions.bAwaitLoading, [&]( VkCommandBuffer pCmdBuffer ) {
+    size_t const stagingMemorySize = std::max( loadOptions.StagingMemoryLimit, texture.size( 0 ) );
+
+    THandle< BufferComposite > hStagingBuffer;
+
+    VkBufferCreateInfo bufferCreateInfo;
+    InitializeStruct( bufferCreateInfo );
+    bufferCreateInfo.size  = stagingMemorySize;
+    bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+
+    VmaAllocationCreateInfo stagingAllocationCreateInfo;
+    InitializeStruct( stagingAllocationCreateInfo );
+    stagingAllocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    stagingAllocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+    if ( false == hStagingBuffer.Recreate( pNode->hAllocator, bufferCreateInfo, stagingAllocationCreateInfo ) ) {
+        return nullptr;
+    }
+
+    uint8_t* pMappedStagingMemory = MapStagingBuffer( pNode, hStagingBuffer );
+    uint8_t* pMappedStagingMemoryEnd = pMappedStagingMemory + stagingMemorySize;
+
+    if ( nullptr == pMappedStagingMemory ) {
+        return nullptr;
+    }
+
+    const OneTimeCmdBufferSubmitResult imgWriteBarrierResult =
+    apemodevk::TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
         VkImageMemoryBarrier writeImageMemoryBarrier;
         InitializeStruct( writeImageMemoryBarrier );
 
@@ -318,13 +321,78 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
                               NULL,
                               1,
                               &writeImageMemoryBarrier );
+        return true;
+    } );
 
-        vkCmdCopyBufferToImage( pCmdBuffer,
-                                imageBufferSuballocResult.DescriptorBufferInfo.buffer,
-                                loadedImage->hImg.Handle.pImg,
-                                VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                                static_cast< uint32_t >( bufferImageCopies.size( ) ),
-                                bufferImageCopies.data( ) );
+    if ( VK_SUCCESS != imgWriteBarrierResult.eResult ) {
+        return nullptr;
+    }
+
+    size_t mipLevel = 0;
+    while ( ( mipLevel < texture.levels( ) ) ) {
+
+        std::vector< VkBufferImageCopy > bufferImageCopies;
+
+        uint8_t* pMappedStagingMemoryHead = pMappedStagingMemory;
+        size_t   stagingMemorySpaceLeft   = stagingMemorySize;
+
+        for ( ; mipLevel < texture.levels( ); ++mipLevel ) {
+
+            size_t const levelDataSize = texture.size( mipLevel );
+            if ( stagingMemorySpaceLeft < levelDataSize ) {
+                pMappedStagingMemoryHead = pMappedStagingMemoryEnd;
+                break;
+            }
+
+            for ( size_t face = 0; face < texture.faces( ); ++face ) {
+
+                const void* pFaceLevelData = texture.data( 0, face, mipLevel );
+                memcpy( pMappedStagingMemoryHead, pFaceLevelData, faceLevelDataSize );
+
+                VkDeviceSize bufferOffset = static_cast< VkDeviceSize >( pMappedStagingMemoryHead - pMappedStagingMemory );
+                pMappedStagingMemoryHead += faceLevelDataSize;
+                stagingMemorySpaceLeft -= faceLevelDataSize;
+
+                VkBufferImageCopy bufferImageCopy;
+                InitializeStruct( bufferImageCopy );
+
+                bufferImageCopy.imageSubresource.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+                bufferImageCopy.imageSubresource.layerCount     = 1;
+                bufferImageCopy.imageSubresource.baseArrayLayer = static_cast< uint32_t >( face );
+                bufferImageCopy.imageSubresource.mipLevel       = static_cast< uint32_t >( mipLevel );
+                bufferImageCopy.imageExtent.width               = static_cast< uint32_t >( texture.extent( mipLevel ).x );
+                bufferImageCopy.imageExtent.height              = static_cast< uint32_t >( texture.extent( mipLevel ).y );
+                bufferImageCopy.imageExtent.depth               = static_cast< uint32_t >( texture.extent( mipLevel ).z );
+                bufferImageCopy.bufferOffset                    = bufferOffset;
+                bufferImageCopy.bufferImageHeight               = 0; /* Tightly packed according to the imageExtent */
+                bufferImageCopy.bufferRowLength                 = 0; /* Tightly packed according to the imageExtent */
+
+                bufferImageCopies.emplace_back( bufferImageCopy );
+            }
+
+            if ( pMappedStagingMemoryHead == pMappedStagingMemoryEnd ) {
+                break;
+            }
+        }
+
+        const OneTimeCmdBufferSubmitResult imgCopyResult =
+        apemodevk::TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
+            vkCmdCopyBufferToImage( pCmdBuffer,
+                                    hStagingBuffer.Handle.pBuffer,
+                                    loadedImage->hImg.Handle.pImg,
+                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                    static_cast< uint32_t >( bufferImageCopies.size( ) ),
+                                    bufferImageCopies.data( ) );
+            return true;
+        } );
+
+        if ( VK_SUCCESS != imgCopyResult.eResult ) {
+            return nullptr;
+        }
+    }
+
+    const OneTimeCmdBufferSubmitResult imgReadBarrierResult =
+    apemodevk::TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
 
         VkImageMemoryBarrier readImgMemoryBarrier;
         InitializeStruct( readImgMemoryBarrier );
@@ -355,13 +423,12 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
         return true;
     } );
 
-    if ( VK_SUCCESS == imgLoadedResult.eResult ) {
-        loadedImage->QueueId       = imgLoadedResult.QueueId;
-        loadedImage->QueueFamilyId = 0;
-        return std::move( loadedImage );
+    if ( VK_SUCCESS != imgReadBarrierResult.eResult ) {
+        return nullptr;
     }
 
-    return nullptr;
+    texture = gli::texture( ); /* Free allocated CPU memory. */
+    return std::move( loadedImage );
 }
 
 apemodevk::ImageLoader::~ImageLoader( ) {
