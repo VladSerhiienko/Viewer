@@ -23,7 +23,7 @@ namespace apemodevk {
     struct QueueFamilyBased {
         /* Queue properties: */
 
-        uint32_t                QueueFamilyId    = VK_QUEUE_FAMILY_IGNORED;
+        uint32_t                QueueFamilyId    = kInvalidIndex;
         VkQueueFamilyProperties QueueFamilyProps = {};
 
         QueueFamilyBased( ) = default;
@@ -55,12 +55,12 @@ namespace apemodevk {
     };
 
     struct AcquiredCommandBuffer {
-        VkCommandBuffer pCmdBuffer    = VK_NULL_HANDLE;          /* Handle */
-        VkCommandPool   pCmdPool      = VK_NULL_HANDLE;          /* Command pool handle (associated with the Handle) */
-        VkFence         pFence        = VK_NULL_HANDLE;          /* Last queue fence */
-        uint32_t        QueueFamilyId = VK_QUEUE_FAMILY_IGNORED; /* Queue family index */
-        uint32_t        CmdBufferId   = VK_QUEUE_FAMILY_IGNORED; /* Queue index in family pool */
-        VkResult        eResult       = VK_SUCCESS;              /* The error code that occurred during the queue acquisition */
+        VkCommandBuffer pCmdBuffer    = VK_NULL_HANDLE; /* Handle */
+        VkCommandPool   pCmdPool      = VK_NULL_HANDLE; /* Command pool handle (associated with the Handle) */
+        VkFence         pFence        = VK_NULL_HANDLE; /* Last queue fence */
+        uint32_t        QueueFamilyId = kInvalidIndex;  /* Queue family index */
+        uint32_t        CmdBufferId   = kInvalidIndex;  /* Queue index in family pool */
+        VkResult        eResult       = VK_SUCCESS;     /* The error code that occurred during the queue acquisition */
     };
 
     class CommandBufferFamilyPool : public QueueFamilyBased {
@@ -142,8 +142,8 @@ namespace apemodevk {
     struct AcquiredQueue {
         VkQueue  pQueue        = VK_NULL_HANDLE;          /* Free to use queue. */
         VkFence  pFence        = VK_NULL_HANDLE;          /* Acquire() can optionally ignore fence status. */
-        uint32_t QueueFamilyId = VK_QUEUE_FAMILY_IGNORED; /* Queue family index */
-        uint32_t QueueId       = VK_QUEUE_FAMILY_IGNORED; /* Queue index in family pool */
+        uint32_t QueueFamilyId = kInvalidIndex;           /* Queue family index */
+        uint32_t QueueId       = kInvalidIndex;           /* Queue index in family pool */
         VkResult eResult       = VK_SUCCESS;              /* The error code that occurred during the queue acquisition */
     };
 
@@ -245,8 +245,8 @@ namespace apemodevk {
         return ( VK_SUCCESS == acquiredQueue.eResult ) &&
                acquiredQueue.pQueue &&
                acquiredQueue.pFence &&
-               ( VK_QUEUE_FAMILY_IGNORED != acquiredQueue.QueueId ) &&
-               ( VK_QUEUE_FAMILY_IGNORED != acquiredQueue.QueueFamilyId );
+               ( kInvalidIndex != acquiredQueue.QueueId ) &&
+               ( kInvalidIndex != acquiredQueue.QueueFamilyId );
     }
 
     /**
@@ -258,8 +258,8 @@ namespace apemodevk {
         return ( VK_SUCCESS == acquiredCmdBuffer.eResult ) &&
                acquiredCmdBuffer.pCmdBuffer &&
                acquiredCmdBuffer.pCmdPool &&
-               ( VK_QUEUE_FAMILY_IGNORED != acquiredCmdBuffer.CmdBufferId ) &&
-               ( VK_QUEUE_FAMILY_IGNORED != acquiredCmdBuffer.QueueFamilyId );
+               ( kInvalidIndex != acquiredCmdBuffer.CmdBufferId ) &&
+               ( kInvalidIndex != acquiredCmdBuffer.QueueFamilyId );
     }
 
 } // namespace apemodevk

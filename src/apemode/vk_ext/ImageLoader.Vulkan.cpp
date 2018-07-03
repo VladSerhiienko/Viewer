@@ -12,21 +12,6 @@
 #include <gli/generate_mipmaps.hpp>
 #pragma warning(default:4309)
 
-apemodevk::LoadedImage::~LoadedImage( ) {
-    Destroy( );
-}
-
-void apemodevk::LoadedImage::Destroy( ) {
-    apemodevk_memory_allocation_scope;
-
-    hImgView.Destroy( );
-    hImg.Destroy( );
-
-    eImgLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
-    QueueId       = kInvalidIndex;
-    QueueFamilyId = kInvalidIndex;
-}
-
 /**
  * Exactly the same, no need for explicit mapping.
  * But still decided to leave it as a function in case GLI stops maintain such compatibility.
@@ -37,33 +22,51 @@ VkFormat ToImgFormat( const gli::format eTextureFormat ) {
 
 VkImageType ToImgType( const gli::target eTextureTarget ) {
     switch ( eTextureTarget ) {
-        case gli::TARGET_1D:            return VK_IMAGE_TYPE_1D;
-        case gli::TARGET_1D_ARRAY:      return VK_IMAGE_TYPE_1D;
-        case gli::TARGET_2D:            return VK_IMAGE_TYPE_2D;
-        case gli::TARGET_2D_ARRAY:      return VK_IMAGE_TYPE_2D;
-        case gli::TARGET_3D:            return VK_IMAGE_TYPE_3D;
-        case gli::TARGET_RECT:          return VK_IMAGE_TYPE_2D;
-        case gli::TARGET_RECT_ARRAY:    return VK_IMAGE_TYPE_2D;
-        case gli::TARGET_CUBE:          return VK_IMAGE_TYPE_2D;
-        case gli::TARGET_CUBE_ARRAY:    return VK_IMAGE_TYPE_2D;
-        default:                        return VK_IMAGE_TYPE_MAX_ENUM;
+    case gli::TARGET_1D:            return VK_IMAGE_TYPE_1D;
+    case gli::TARGET_1D_ARRAY:      return VK_IMAGE_TYPE_1D;
+    case gli::TARGET_2D:            return VK_IMAGE_TYPE_2D;
+    case gli::TARGET_2D_ARRAY:      return VK_IMAGE_TYPE_2D;
+    case gli::TARGET_3D:            return VK_IMAGE_TYPE_3D;
+    case gli::TARGET_RECT:          return VK_IMAGE_TYPE_2D;
+    case gli::TARGET_RECT_ARRAY:    return VK_IMAGE_TYPE_2D;
+    case gli::TARGET_CUBE:          return VK_IMAGE_TYPE_2D;
+    case gli::TARGET_CUBE_ARRAY:    return VK_IMAGE_TYPE_2D;
+    default:                        return VK_IMAGE_TYPE_MAX_ENUM;
     }
 }
 
 VkImageViewType ToImgViewType( const gli::target eTextureTarget ) {
     switch ( eTextureTarget ) {
-        case gli::TARGET_1D:            return VK_IMAGE_VIEW_TYPE_1D;
-        case gli::TARGET_1D_ARRAY:      return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
-        case gli::TARGET_2D:            return VK_IMAGE_VIEW_TYPE_2D;
-        case gli::TARGET_2D_ARRAY:      return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-        case gli::TARGET_3D:            return VK_IMAGE_VIEW_TYPE_3D;
-        case gli::TARGET_RECT:          return VK_IMAGE_VIEW_TYPE_2D;
-        case gli::TARGET_RECT_ARRAY:    return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-        case gli::TARGET_CUBE:          return VK_IMAGE_VIEW_TYPE_CUBE;
-        case gli::TARGET_CUBE_ARRAY:    return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
-        default:                        return VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+    case gli::TARGET_1D:            return VK_IMAGE_VIEW_TYPE_1D;
+    case gli::TARGET_1D_ARRAY:      return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+    case gli::TARGET_2D:            return VK_IMAGE_VIEW_TYPE_2D;
+    case gli::TARGET_2D_ARRAY:      return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+    case gli::TARGET_3D:            return VK_IMAGE_VIEW_TYPE_3D;
+    case gli::TARGET_RECT:          return VK_IMAGE_VIEW_TYPE_2D;
+    case gli::TARGET_RECT_ARRAY:    return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+    case gli::TARGET_CUBE:          return VK_IMAGE_VIEW_TYPE_CUBE;
+    case gli::TARGET_CUBE_ARRAY:    return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+    default:                        return VK_IMAGE_VIEW_TYPE_MAX_ENUM;
     }
 }
+
+namespace apemodevk {
+    class SourceImage : public ISourceImage {
+    public:
+        SourceImage( gli::texture texture );
+        ~SourceImage( ) override = default;
+        VkImageViewType GetImageViewType( ) const override;
+        VkImageType     GetImageType( ) const override;
+        VkFormat        GetFormat( ) const override;
+        VkDeviceSize    GetSize( uint32_t level ) const override;
+        VkDeviceSize    GetSize( ) const override;
+        const void*     GetData( uint32_t face, uint32_t level ) const override;
+        VkExtent3D      GetExtent( uint32_t level ) const override;
+
+    private:
+        gli::texture Texture;
+    };
+} // namespace apemodevk
 
 gli::texture DuplicateWithMipMaps( const gli::texture& originalTexture ) {
     apemodevk_memory_allocation_scope;
@@ -136,9 +139,9 @@ gli::texture LoadTexture( const uint8_t* pImageBytes, uint32_t imageWidth, uint3
     return texture;
 }
 
-gli::texture LoadTexture( const uint8_t*                           pFileContent,
-                          size_t                                   fileContentSize,
-                          apemodevk::ImageLoader::EImageFileFormat eFileFormat ) {
+gli::texture LoadTexture( const uint8_t*                                           pFileContent,
+                          size_t                                                   fileContentSize,
+                          apemodevk::ImageDecoder::DecodeOptions::EImageFileFormat eFileFormat ) {
     apemodevk_memory_allocation_scope;
 
     assert( pFileContent && fileContentSize );
@@ -151,8 +154,8 @@ gli::texture LoadTexture( const uint8_t*                           pFileContent,
      *       will be filled in switch cases.
      **/
     switch ( eFileFormat ) {
-        case apemodevk::ImageLoader::eImageFileFormat_DDS:
-        case apemodevk::ImageLoader::eImageFileFormat_KTX: {
+    case apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_DDS:
+        case apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_KTX: {
             texture = gli::load( (const char*) pFileContent, fileContentSize );
         } break;
 
@@ -189,14 +192,18 @@ uint8_t* MapStagingBuffer( apemodevk::GraphicsDevice* pNode, apemodevk::THandle<
     return nullptr;
 }
 
-apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
-    apemodevk::GraphicsDevice*                 pNode,
-    apemodevk::HostBufferPool*                 pHostBufferPool,
-    gli::texture                               texture,
-    const apemodevk::ImageLoader::LoadOptions& loadOptions ) {
-    apemodevk_memory_allocation_scope;
+void UnmapStagingBuffer( apemodevk::GraphicsDevice*                        pNode,
+                         apemodevk::THandle< apemodevk::BufferComposite >& hBuffer ) {
+    if ( !hBuffer.Handle.allocInfo.pMappedData ) {
+        vmaUnmapMemory( pNode->hAllocator, hBuffer.Handle.pAllocation );
+    }
+}
 
+apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
+    apemodevk::GraphicsDevice* pNode, gli::texture texture, const apemodevk::ImageLoader::LoadOptions& loadOptions ) {
     using namespace apemodevk;
+
+    apemodevk_memory_allocation_scope;
 
     /* Check if the user needs mipmaps.
      * Note, that DDS and KTX files can contain mipmaps. */
@@ -271,7 +278,9 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
         }
     }
 
-    size_t const stagingMemorySize = std::max( loadOptions.StagingMemoryLimit, texture.size( 0 ) );
+    size_t const maxFaceSize       = texture.size( 0 );
+    size_t const entireTextureSize = texture.size( );
+    size_t const stagingMemorySize = std::max( maxFaceSize, std::min( loadOptions.StagingMemoryLimitHint, entireTextureSize ) );
 
     THandle< BufferComposite > hStagingBuffer;
 
@@ -290,8 +299,6 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
     }
 
     uint8_t* pMappedStagingMemory = MapStagingBuffer( pNode, hStagingBuffer );
-    uint8_t* pMappedStagingMemoryEnd = pMappedStagingMemory + stagingMemorySize;
-
     if ( nullptr == pMappedStagingMemory ) {
         return nullptr;
     }
@@ -328,23 +335,23 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
         return nullptr;
     }
 
+    size_t face     = 0;
     size_t mipLevel = 0;
-    while ( ( mipLevel < texture.levels( ) ) ) {
 
+    while ( mipLevel < texture.levels( ) ) {
         std::vector< VkBufferImageCopy > bufferImageCopies;
 
         uint8_t* pMappedStagingMemoryHead = pMappedStagingMemory;
         size_t   stagingMemorySpaceLeft   = stagingMemorySize;
 
         for ( ; mipLevel < texture.levels( ); ++mipLevel ) {
+            for ( ; face < texture.faces( ); ++face ) {
 
-            size_t const levelDataSize = texture.size( mipLevel );
-            if ( stagingMemorySpaceLeft < levelDataSize ) {
-                pMappedStagingMemoryHead = pMappedStagingMemoryEnd;
-                break;
-            }
-
-            for ( size_t face = 0; face < texture.faces( ); ++face ) {
+                size_t const faceLevelDataSize = texture.size( mipLevel );
+                if ( stagingMemorySpaceLeft < faceLevelDataSize ) {
+                    stagingMemorySpaceLeft = 0;
+                    break;
+                }
 
                 const void* pFaceLevelData = texture.data( 0, face, mipLevel );
                 memcpy( pMappedStagingMemoryHead, pFaceLevelData, faceLevelDataSize );
@@ -370,26 +377,33 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
                 bufferImageCopies.emplace_back( bufferImageCopy );
             }
 
-            if ( pMappedStagingMemoryHead == pMappedStagingMemoryEnd ) {
+            if ( !stagingMemorySpaceLeft ) {
                 break;
             }
+
+            face = 0;
         }
 
-        const OneTimeCmdBufferSubmitResult imgCopyResult =
-        apemodevk::TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
-            vkCmdCopyBufferToImage( pCmdBuffer,
-                                    hStagingBuffer.Handle.pBuffer,
-                                    loadedImage->hImg.Handle.pImg,
-                                    VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                                    static_cast< uint32_t >( bufferImageCopies.size( ) ),
-                                    bufferImageCopies.data( ) );
-            return true;
-        } );
+        if ( !bufferImageCopies.empty( ) ) {
 
-        if ( VK_SUCCESS != imgCopyResult.eResult ) {
-            return nullptr;
+            const OneTimeCmdBufferSubmitResult imgCopyResult =
+            apemodevk::TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
+                vkCmdCopyBufferToImage( pCmdBuffer,
+                                        hStagingBuffer.Handle.pBuffer,
+                                        loadedImage->hImg.Handle.pImg,
+                                        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+                                        static_cast< uint32_t >( bufferImageCopies.size( ) ),
+                                        bufferImageCopies.data( ) );
+                return true;
+            } );
+
+            if ( VK_SUCCESS != imgCopyResult.eResult ) {
+                return nullptr;
+            }
         }
     }
+
+    UnmapStagingBuffer( pNode, hStagingBuffer );
 
     const OneTimeCmdBufferSubmitResult imgReadBarrierResult =
     apemodevk::TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
@@ -436,18 +450,11 @@ apemodevk::ImageLoader::~ImageLoader( ) {
 }
 
 bool apemodevk::ImageLoader::Recreate( GraphicsDevice* pInNode ) {
-    apemodevk_memory_allocation_scope;
-
-    pNode           = pInNode;
-    pHostBufferPool = apemodevk_new HostBufferPool( );
-    pHostBufferPool->Recreate( pNode, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, false );
-
+    pNode = pInNode;
     return true;
 }
 
 void apemodevk::ImageLoader::Destroy( ) {
-    apemodevk_memory_allocation_scope;
-    apemodevk_delete( pHostBufferPool );
 }
 
 apemodevk::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromFileData(
@@ -459,25 +466,128 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImag
     }
 
     gli::texture texture = LoadTexture( pFileContent, fileContentSize, loadOptions.eFileFormat );
-    if ( texture.empty( ) ) {
-        return nullptr;
-    }
-
-    return LoadImageFromGLITexture( pNode, pHostBufferPool, texture, loadOptions );
+    return LoadImageFromGLITexture( pNode, std::move( texture ), loadOptions );
 }
 
 apemodevk::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromRawImgRGBA8(
     const uint8_t* pImageBytes, uint16_t imageWidth, uint16_t imageHeight, LoadOptions const& loadOptions ) {
-    apemodevk_memory_allocation_scope;
 
+    apemodevk_memory_allocation_scope;
     if ( !pImageBytes || !imageWidth || !imageHeight ) {
         return nullptr;
     }
 
     gli::texture texture = LoadTexture( pImageBytes, imageWidth, imageHeight );
+    return LoadImageFromGLITexture( pNode, std::move( texture ), loadOptions );
+}
+
+apemodevk::SourceImage::SourceImage( gli::texture texture ) : Texture( std::move( texture ) ) {
+}
+
+VkImageViewType apemodevk::SourceImage::GetImageViewType( ) const {
+    return ToImgViewType( Texture.target( ) );
+}
+
+VkImageType apemodevk::SourceImage::GetImageType( ) const {
+    return ToImgType( Texture.target( ) );
+}
+
+VkFormat apemodevk::SourceImage::GetFormat( ) const {
+    return ToImgFormat( Texture.format( ) );
+}
+
+VkDeviceSize apemodevk::SourceImage::GetSize( uint32_t level ) const {
+    return Texture.size( level );
+}
+
+VkDeviceSize apemodevk::SourceImage::GetSize( ) const {
+    return Texture.size( );
+}
+
+const void* apemodevk::SourceImage::GetData( uint32_t face, uint32_t level ) const {
+    return Texture.data( 0, face, level );
+}
+
+VkExtent3D apemodevk::SourceImage::GetExtent( uint32_t level ) const {
+    const auto extent = Texture.extent( level );
+
+    VkExtent3D extent3D;
+    extent3D.width  = static_cast< uint32_t >( extent.x );
+    extent3D.height = static_cast< uint32_t >( extent.y );
+    extent3D.depth  = static_cast< uint32_t >( extent.z );
+    return extent3D;
+}
+
+apemodevk::unique_ptr< apemodevk::ISourceImage > apemodevk::ImageDecoder::CreateSourceImage2D(
+    const uint8_t* pImageBytes, VkExtent2D imageExtent, VkFormat eImgFmt, const DecodeOptions& decodeOptions ) {
+    apemodevk_memory_allocation_scope;
+    if ( !pImageBytes || !imageExtent.width || !imageExtent.height ) {
+        return nullptr;
+    }
+
+    gli::texture texture =
+        gli::texture2d( gli::format( eImgFmt ),
+                        gli::extent2d( imageExtent.width, imageExtent.height ),
+                        1,
+                        gli::swizzles( gli::SWIZZLE_RED, gli::SWIZZLE_GREEN, gli::SWIZZLE_BLUE, gli::SWIZZLE_ALPHA ) );
+
+    /* Check if the user needs mipmaps.
+    * Note, that DDS and KTX files can contain mipmaps. */
+    if ( !texture.empty( ) && decodeOptions.bGenerateMipMaps && ( 1 == texture.levels( ) ) ) {
+        /* Cannot generate mipmaps the data is compressed. */
+        if ( !gli::is_compressed( texture.format( ) ) ) {
+            const gli::texture dumplicateWithMipMaps = DuplicateWithMipMaps( texture );
+            texture = GenerateMipMaps( dumplicateWithMipMaps );
+        }
+    }
+
     if ( texture.empty( ) ) {
         return nullptr;
     }
 
-    return LoadImageFromGLITexture( pNode, pHostBufferPool, texture, loadOptions );
+    auto sourceImage = make_unique< SourceImage >( std::move( texture ) );
+    return unique_ptr< ISourceImage >( sourceImage.release( ) );
+}
+
+apemodevk::unique_ptr< apemodevk::ISourceImage > apemodevk::ImageDecoder::DecodeSourceImageFromData(
+    const uint8_t* pFileContent, size_t fileContentSize, const DecodeOptions& decodeOptions ) {
+    apemodevk_memory_allocation_scope;
+
+    if ( !pFileContent || !fileContentSize ) {
+        return nullptr;
+    }
+
+    gli::texture texture = LoadTexture( pFileContent, fileContentSize, decodeOptions.eFileFormat );
+
+    /* Check if the user needs mipmaps.
+     * Note, that DDS and KTX files can contain mipmaps. */
+    if ( !texture.empty( ) && decodeOptions.bGenerateMipMaps && ( 1 == texture.levels( ) ) ) {
+        /* Cannot generate mipmaps the data is compressed. */
+        if ( !gli::is_compressed( texture.format( ) ) ) {
+            const gli::texture dumplicateWithMipMaps = DuplicateWithMipMaps( texture );
+            texture = GenerateMipMaps( dumplicateWithMipMaps );
+        }
+    }
+
+    if ( texture.empty( ) ) {
+        return nullptr;
+    }
+
+    auto sourceImage = make_unique< SourceImage >( std::move( texture ) );
+    return unique_ptr< ISourceImage >( sourceImage.release( ) );
+}
+
+apemodevk::LoadedImage::~LoadedImage( ) {
+    Destroy( );
+}
+
+void apemodevk::LoadedImage::Destroy( ) {
+    apemodevk_memory_allocation_scope;
+
+    hImgView.Destroy( );
+    hImg.Destroy( );
+
+    eImgLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
+    QueueId       = kInvalidIndex;
+    QueueFamilyId = kInvalidIndex;
 }
