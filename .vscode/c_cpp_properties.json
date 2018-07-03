@@ -63,7 +63,7 @@
                 "/usr/lib/clang/5.0.1/include",
                 "/usr/include/c++/6.4.0/include"
             ],
-            "defines": [],
+            "defines": [ "_DEBUG=1", "DEBUG=1", "_M_X64=1" ],
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
@@ -145,7 +145,7 @@
                 "/usr/include",
                 "/usr/local/include"
             ],
-            "defines": [],
+            "defines": [ "_DEBUG=1", "DEBUG=1", "_M_X64=1" ],
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [

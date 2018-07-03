@@ -537,82 +537,82 @@ endif()
 
 set(
     shared_vk_source_files
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/CityHash.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/CityHash.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/Image.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/Buffer.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/NativeHandles.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/ResultHandle.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/THandle.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/TInfoStruct.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/BufferPools.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/BufferPools.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/DescriptorPool.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/DescriptorPool.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/GraphicsDevice.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/GraphicsDevice.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/GraphicsManager.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/GraphicsManager.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/QueuePools.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/QueuePools.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/Swapchain.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/vk/Swapchain.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/CityHash.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/CityHash.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/Image.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/Buffer.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/NativeHandles.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/ResultHandle.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/THandle.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/TInfoStruct.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/BufferPools.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/BufferPools.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/DescriptorPool.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/DescriptorPool.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/GraphicsDevice.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/GraphicsDevice.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/GraphicsManager.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/GraphicsManager.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/QueuePools.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/QueuePools.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/Swapchain.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk/Swapchain.Vulkan.h
 )
 
 set(
     shared_vk_ext_source_files
-    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/ShaderCompiler.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/ShaderCompiler.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/ImageLoader.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/ImageLoader.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/SamplerManager.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext/SamplerManager.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ShaderCompiler.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ShaderCompiler.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageLoader.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageLoader.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/SamplerManager.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/SamplerManager.Vulkan.cpp
 )
 
 set(
     shared_sdl_source_files
-    ${CMAKE_SOURCE_DIR}/src/shared/sdl/AppMainSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/sdl/AppSurfaceSdlBase.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/sdl/AppSurfaceSdlBase.h
-    ${CMAKE_SOURCE_DIR}/src/shared/sdl/InputSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/sdl/Input.h
-    ${CMAKE_SOURCE_DIR}/src/shared/sdl/NuklearSdlBase.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/sdl/NuklearSdlBase.h
-    ${CMAKE_SOURCE_DIR}/src/shared/sdl/StopwatchSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/sdl/Stopwatch.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppMainSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceSdlBase.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceSdlBase.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/InputSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/Input.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/NuklearSdlBase.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/NuklearSdlBase.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/StopwatchSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/Stopwatch.h
 )
 
 if (APPLE)
     set ( shared_sdl_source_files
           ${shared_sdl_source_files} 
-          ${CMAKE_SOURCE_DIR}/src/shared/sdl/AppSurfaceSdlBaseCocoa.mm
+          ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceSdlBaseCocoa.mm
           )
 endif()
 
 set(
     shared_platform_source_files
-    ${CMAKE_SOURCE_DIR}/src/shared/platform/IAssetManager.h
-    ${CMAKE_SOURCE_DIR}/src/shared/platform/IAssetManager.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/platform/AssetManager.h
-    ${CMAKE_SOURCE_DIR}/src/shared/platform/AssetManager.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/platform/memory/MemoryManager.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/platform/memory/MemoryManager.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/IAssetManager.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/IAssetManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AssetManager.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AssetManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.h
 )
 
 set(
     shared_source_files
-    ${CMAKE_SOURCE_DIR}/src/shared/CityHash.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/CityHash.h
-    ${CMAKE_SOURCE_DIR}/src/shared/AppBase.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/AppBase.h
-    ${CMAKE_SOURCE_DIR}/src/shared/DebugRendererVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/DebugRendererVk.h
-    ${CMAKE_SOURCE_DIR}/src/shared/AppState.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/AppState.h
-    ${CMAKE_SOURCE_DIR}/src/shared/AppSurfaceSdlVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/AppSurfaceSdlVk.h
-    ${CMAKE_SOURCE_DIR}/src/shared/NuklearSdlVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/shared/NuklearSdlVk.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/CityHash.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/CityHash.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/AppBase.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/AppBase.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/DebugRendererVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/DebugRendererVk.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/AppState.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/AppState.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/AppSurfaceSdlVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/AppSurfaceSdlVk.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/NuklearSdlVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/NuklearSdlVk.h
 )
 
 set(
@@ -689,12 +689,12 @@ target_include_directories(
     PUBLIC
     ${CMAKE_SOURCE_DIR}/assets/
     ${CMAKE_SOURCE_DIR}/assets/fonts/
-    ${CMAKE_SOURCE_DIR}/src/shared
-    ${CMAKE_SOURCE_DIR}/src/shared/platform
-    ${CMAKE_SOURCE_DIR}/src/shared/sdl
-    ${CMAKE_SOURCE_DIR}/src/shared/vk
-    ${CMAKE_SOURCE_DIR}/src/shared/vk_ext
-    ${CMAKE_SOURCE_DIR}/src/shared/platform/memory
+    ${CMAKE_SOURCE_DIR}/src/apemode
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory
     ${CMAKE_SOURCE_DIR}/src/viewer
     ${CMAKE_SOURCE_DIR}/dependencies/Math
     ${CMAKE_SOURCE_DIR}/dependencies/gli
