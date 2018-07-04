@@ -182,11 +182,8 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        apemodevk::ImageLoader imgLoader;
-        if ( false == imgLoader.Recreate( &pAppSurface->Node ) ) {
-            apemode::platform::DebugBreak( );
-            return false;
-        }
+        apemodevk::ImageLoader  imgLoader;
+        apemodevk::ImageDecoder imgDecoder;
 
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/kyoto_lod.dds" ) ) {
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_skybox.dds" ) ) {
@@ -196,13 +193,15 @@ bool ViewerApp::Initialize(  ) {
                 const auto texAssetBin = pTexAsset->GetContentAsBinaryBuffer( );
                 mAssetManager.Release( pTexAsset );
 
-                apemodevk::ImageLoader::LoadOptions loadOptions;
-                loadOptions.eFileFormat    = apemodevk::ImageLoader::eImageFileFormat_DDS;
-                loadOptions.bAwaitLoading    = true;
-                loadOptions.bImgView         = true;
-                loadOptions.bGenerateMipMaps = true;
+                apemodevk::ImageDecoder::DecodeOptions decodeOptions;
+                decodeOptions.eFileFormat = apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_DDS;
+                decodeOptions.bGenerateMipMaps = true;
 
-                RadianceLoadedImg = imgLoader.LoadImageFromFileData( texAssetBin.pData, texAssetBin.dataSize, loadOptions ); /* Await */
+                apemodevk::ImageLoader::LoadOptions loadOptions;
+                loadOptions.bImgView = true;
+
+                auto srcImg = imgDecoder.DecodeSourceImageFromData( texAssetBin.pData, texAssetBin.dataSize, decodeOptions );
+                RadianceLoadedImg = imgLoader.LoadImageFromSrc( &pAppSurface->Node, *srcImg, loadOptions );
             }
 
             VkSamplerCreateInfo samplerCreateInfo;
@@ -237,13 +236,15 @@ bool ViewerApp::Initialize(  ) {
                 const auto texAssetBin = pTexAsset->GetContentAsBinaryBuffer( );
                 mAssetManager.Release( pTexAsset );
 
-                apemodevk::ImageLoader::LoadOptions loadOptions;
-                loadOptions.eFileFormat    = apemodevk::ImageLoader::eImageFileFormat_DDS;
-                loadOptions.bAwaitLoading    = true;
-                loadOptions.bImgView         = true;
-                loadOptions.bGenerateMipMaps = false;
+                apemodevk::ImageDecoder::DecodeOptions decodeOptions;
+                decodeOptions.eFileFormat      = apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_DDS;
+                decodeOptions.bGenerateMipMaps = false;
 
-                IrradianceLoadedImg = imgLoader.LoadImageFromFileData( texAssetBin.pData, texAssetBin.dataSize, loadOptions );
+                apemodevk::ImageLoader::LoadOptions loadOptions;
+                loadOptions.bImgView = true;
+
+                auto srcImg = imgDecoder.DecodeSourceImageFromData( texAssetBin.pData, texAssetBin.dataSize, decodeOptions );
+                IrradianceLoadedImg = imgLoader.LoadImageFromSrc( &pAppSurface->Node, *srcImg, loadOptions );
             }
 
             VkSamplerCreateInfo samplerCreateInfo;

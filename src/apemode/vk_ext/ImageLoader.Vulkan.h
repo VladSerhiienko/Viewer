@@ -16,8 +16,9 @@ namespace apemodevk {
         virtual VkExtent3D      GetExtent( uint32_t level ) const              = 0;
         virtual VkDeviceSize    GetSize( uint32_t level ) const                = 0;
         virtual VkDeviceSize    GetSize( ) const                               = 0;
+        virtual uint32_t        GetMipLevels( ) const                          = 0;
+        virtual uint32_t        GetFaces( ) const                              = 0;
     };
-
 
     class ImageDecoder {
     public:
@@ -50,8 +51,6 @@ namespace apemodevk {
         VkImageCreateInfo         ImageCreateInfo;
         VkImageViewCreateInfo     ImgViewCreateInfo;
         VkImageLayout             eImgLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
-        uint32_t                  QueueId       = kInvalidIndex;
-        uint32_t                  QueueFamilyId = kInvalidIndex;
 
         ~LoadedImage( );
         void Destroy( );
@@ -59,35 +58,30 @@ namespace apemodevk {
 
     class ImageLoader {
     public:
-
         struct LoadOptions {
-            static constexpr size_t kStagingMemoryLimitHint_OptimalMemoryUsage = 0;
-            static constexpr size_t kStagingMemoryLimitHint_16KB               = 16 * 1024;
-            static constexpr size_t kStagingMemoryLimitHint_64KB               = 64 * 1024;
-            static constexpr size_t kStagingMemoryLimitHint_2MB                = 2 * 1024 * 1024;
+            static constexpr size_t kStagingMemoryLimitHint_Optimal   = 0;
+            static constexpr size_t kStagingMemoryLimitHint_16KB      = 16 * 1024;
+            static constexpr size_t kStagingMemoryLimitHint_64KB      = 64 * 1024;
+            static constexpr size_t kStagingMemoryLimitHint_2MB       = 2 * 1024 * 1024;
+            static constexpr size_t kStagingMemoryLimitHint_Unlimited = ~0ULL;
 
-            EImageFileFormat eFileFormat            = eImageFileFormat_Undefined;
-            bool             bImgView               = false;
-            bool             bAwaitLoading          = true;
-            bool             bGenerateMipMaps       = false;
-            size_t           StagingMemoryLimitHint = kStagingMemoryLimitHint_OptimalMemoryUsage;
+            size_t                  StagingMemoryLimitHint = kStagingMemoryLimitHint_Optimal;
+            bool                    bImgView               = false;
+            uint32_t                QueueFamilyId          = 0;
+            VkImageLayout           eImgDstLayout          = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+            VkAccessFlagBits        eImgDstAccess          = VK_ACCESS_SHADER_READ_BIT;
+            VkSharingMode           eImgSharingMode        = VK_SHARING_MODE_EXCLUSIVE;
+            VkImageTiling           eImgTiling             = VK_IMAGE_TILING_OPTIMAL;
+            VkImageUsageFlags       eImgUsage              = VK_IMAGE_USAGE_SAMPLED_BIT;
+            VkImageAspectFlagBits   eImgAspect             = VK_IMAGE_ASPECT_COLOR_BIT;
+            VkPipelineStageFlagBits eDstPipelineStage      = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
         };
 
-        GraphicsDevice* pNode = nullptr;
-
         ImageLoader() = default;
-        ~ImageLoader();
+        ~ImageLoader() = default;
 
-        bool Recreate( GraphicsDevice* pNode );
-        void Destroy( );
-
-        unique_ptr< LoadedImage > LoadImageFromRawImgRGBA8( const uint8_t*     pImageBytes,
-                                                            uint16_t           imageWidth,
-                                                            uint16_t           imageHeight,
-                                                            LoadOptions const& loadOptions );
-
-        unique_ptr< LoadedImage > LoadImageFromFileData( const uint8_t*     pFileContent,
-                                                         size_t             fileContentSize,
-                                                         LoadOptions const& loadOptions );
+        unique_ptr< LoadedImage > LoadImageFromSrc( GraphicsDevice*     pInNode,
+                                                    const ISourceImage& srcImg,
+                                                    LoadOptions const&  loadOptions );
     };
 }

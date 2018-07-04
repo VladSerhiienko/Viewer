@@ -507,34 +507,31 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             assert( pSceneAsset );
         }
 
-        apemodevk::ImageLoader imageLoader;
-        if ( false == imageLoader.Recreate( pParams->pNode ) ) {
-            apemodevk::platform::DebugBreak( );
-            return false;
-        }
+        apemodevk::ImageLoader imgLoader;
+        apemodevk::ImageDecoder imgDecoder;
 
         {
             uint8_t imageBytes[ 4 ];
-            apemodevk::ImageLoader::LoadOptions loadOptions;
 
-            loadOptions.eFileFormat      = apemodevk::ImageLoader::eImageFileFormat_PNG;
-            loadOptions.bAwaitLoading    = true;
-            loadOptions.bImgView         = true;
-            loadOptions.bGenerateMipMaps = false;
+            apemodevk::ImageLoader::LoadOptions    loadOptions;
+            apemodevk::ImageDecoder::DecodeOptions decodeOptions;
+            decodeOptions.bGenerateMipMaps = false;
 
             imageBytes[ 0 ] = 0;
             imageBytes[ 1 ] = 0;
             imageBytes[ 2 ] = 0;
             imageBytes[ 3 ] = 255;
 
-            pSceneAsset->MissingTextureZeros = imageLoader.LoadImageFromRawImgRGBA8( imageBytes, 1, 1, loadOptions );
+            auto srcImgZeros = imgDecoder.CreateSourceImage2D( imageBytes, { 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, decodeOptions );
+            pSceneAsset->MissingTextureZeros = imgLoader.LoadImageFromSrc( pParams->pNode, *srcImgZeros, loadOptions );
 
             imageBytes[ 0 ] = 255;
             imageBytes[ 1 ] = 255;
             imageBytes[ 2 ] = 255;
             imageBytes[ 3 ] = 255;
 
-            pSceneAsset->MissingTextureOnes = imageLoader.LoadImageFromRawImgRGBA8( imageBytes, 1, 1, loadOptions );
+            auto srcImgOnes = imgDecoder.CreateSourceImage2D( imageBytes, {1, 1}, VK_FORMAT_R8G8B8A8_UNORM, decodeOptions );
+            pSceneAsset->MissingTextureOnes = imgLoader.LoadImageFromSrc( pParams->pNode, *srcImgOnes, loadOptions );
 
             const uint32_t missingSamplerIndex = pParams->pSamplerManager->GetSamplerIndex( apemodevk::GetDefaultSamplerCreateInfo( 0 ) );
             assert( apemodevk::SamplerManager::IsSamplerIndexValid( missingSamplerIndex ) );
@@ -593,15 +590,15 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
                         LogInfo( "Loading texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
 
-                        apemodevk::ImageLoader::LoadOptions loadOptions;
-                        loadOptions.eFileFormat    = apemodevk::ImageLoader::eImageFileFormat_PNG;
-                        loadOptions.bAwaitLoading    = true;
-                        loadOptions.bImgView         = false;
-                        loadOptions.bGenerateMipMaps = apemodevk::GenerateMipMapsForPropertyName( pszTexturePropName );
+                        apemodevk::ImageDecoder::DecodeOptions decodeOptions;
+                        decodeOptions.eFileFormat = apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_PNG;
+                        decodeOptions.bGenerateMipMaps = apemodevk::GenerateMipMapsForPropertyName( pszTexturePropName );
 
-                        auto loadedImg = imageLoader.LoadImageFromFileData( pFileFb->buffer( )->data( ),
-                                                                        pFileFb->buffer( )->size( ),
-                                                                        loadOptions );
+                        auto srcImg = imgDecoder.DecodeSourceImageFromData(
+                            pFileFb->buffer( )->data( ), pFileFb->buffer( )->size( ), decodeOptions );
+
+                        apemodevk::ImageLoader::LoadOptions loadOptions;
+                        auto loadedImg = imgLoader.LoadImageFromSrc( pParams->pNode, *srcImg, loadOptions );
 
                         if ( loadedImg ) {
 
