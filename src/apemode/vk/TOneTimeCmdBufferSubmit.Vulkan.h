@@ -40,7 +40,7 @@ namespace apemodevk {
      * @param signalSemaphoreCount The number of semaphores that will be signaled.
      * @param pWaitSemaphores The semaphores that the queue will wait on before executing the populated command buffer.
      * @param waitSemaphoreCount The number of semaphores that will be awaited.
-     * @return VK_SUCCESS if succeeded, VK_ERROR_OUT_OF_HOST_MEMORY, 
+     * @return VK_SUCCESS if succeeded, VK_ERROR_OUT_OF_HOST_MEMORY,
      * @see Please find 'bool Succeeded( const OneTimeCmdBufferSubmitResult& )' utility function for checking the error status
      * of the operation.
      */

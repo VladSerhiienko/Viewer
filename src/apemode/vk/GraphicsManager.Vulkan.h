@@ -89,12 +89,12 @@ namespace apemodevk {
 
         /* Destruction order must be preserved */
 
-        IAllocator*                     pAllocator;
-        ILogger*                        pLogger;
-        APIVersion                      Version;
-        THandle< VkInstance >           hInstance;
-        apemodevk::vector< VkPhysicalDevice > ppAdapters;
-        VkAllocationCallbacks           AllocCallbacks;
+        IAllocator*                pAllocator;
+        ILogger*                   pLogger;
+        APIVersion                 Version;
+        THandle< VkInstance >      hInstance;
+        vector< VkPhysicalDevice > ppAdapters;
+        VkAllocationCallbacks      AllocCallbacks;
 
         struct {
             PFN_vkGetDeviceProcAddr                       GetDeviceProcAddr                            = nullptr;
@@ -166,4 +166,15 @@ namespace apemodevk {
 
     uint64_t GetPerformanceCounter( );
     uint64_t GetNanoseconds( uint64_t counter );
-}
+
+    namespace platform {
+        template <>
+        struct TDelete< GraphicsManager > {
+            void operator( )( GraphicsManager* pObj ) {
+                if ( pObj )
+                    DestroyGraphicsManager( );
+            }
+        };
+    } // namespace platform
+
+} // namespace apemodevk

@@ -372,11 +372,6 @@ namespace apemodevk {
             memset(  static_cast< void * >( pObj ), 0, sizeof( T ) * Count );
         }
 
-        template < typename T, typename... TArgs >
-        inline T &PushBackAndGet( apemodevk::vector< T > &_collection, TArgs... args ) {
-            _collection.emplace_back( std::forward< TArgs >( args )... );
-            return _collection.back( );
-        }
     } // namespace utils
 } // namespace apemodevk
 

@@ -10,12 +10,13 @@ void apemode::AppBase::HandleWindowSizeChanged( ) {
 }
 
 apemode::AppBase::AppBase( ) {
-    apemode::LogInfo( "AppBase/Create" );
+    apemode::LogInfo( "AppBase: Created." );
 }
 
 apemode::AppBase::~AppBase( ) {
-    apemode::LogInfo( "AppBase/Destroy" );
     apemode_memory_allocation_scope;
+
+    apemode::LogInfo( "AppBase: Destroying" );
 
     if ( pSurface )
         pSurface->Finalize( );
@@ -27,7 +28,7 @@ const char* apemode::AppBase::GetAppName( ) {
 
 bool apemode::AppBase::Initialize( ) {
     apemode_memory_allocation_scope;
-    apemode::LogInfo( "AppBase/Initialize" );
+    apemode::LogInfo( "AppBase: Initializing." );
 
     pSurface = std::move( CreateAppSurface( ) );
     SDL_assert( pSurface && "Surface is required." );
@@ -38,7 +39,7 @@ bool apemode::AppBase::Initialize( ) {
         return true;
     }
 
-    apemode::LogError( "AppBase/Initialize: Failed" );
+    apemode::LogError( "AppBase: Initialization failed." );
     return false;
 }
 
@@ -71,7 +72,7 @@ void apemode::AppBase::Update( float /*deltaSecs*/, Input const& /*inputState*/ 
 }
 
 bool apemode::AppBase::IsRunning( ) {
-    return !InputState.bIsQuitRequested
-        && !InputState.IsFirstPressed (kDigitalInput_BackButton)
-        && !InputState.IsFirstPressed (kDigitalInput_KeyEscape);
+    return !InputState.bIsQuitRequested &&
+           !InputState.IsFirstPressed( kDigitalInput_BackButton ) &&
+           !InputState.IsFirstPressed( kDigitalInput_KeyEscape );
 }

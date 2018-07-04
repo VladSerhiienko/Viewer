@@ -16,14 +16,14 @@ void* GetNSViewFromNSWindow( void* pNSWindow );
 bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, const char* name ) {
     apemode_memory_allocation_scope;
 
-    LogInfo( "apemode/AppSurfaceSdlBase/Initialize" );
+    LogInfo( "AppSurfaceSdlBase: Initializing." );
 
     if ( nullptr == pSdlWindow && !SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS ) ) {
         const uint32_t sdlWindowProps = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN;
         pSdlWindow = SDL_CreateWindow( name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, sdlWindowProps );
 
         if ( pSdlWindow ) {
-            LogInfo( "apemode/AppSurfaceSdlBase/Initialize: Created a windows." );
+            LogInfo( "AppSurfaceSdlBase: Created a window." );
 
             SDL_SysWMinfo windowInfo{};
             windowInfo.version.major = SDL_MAJOR_VERSION;
@@ -51,7 +51,7 @@ bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, co
 
 void apemode::AppSurfaceSdlBase::Finalize( ) {
     if ( pSdlWindow ) {
-        LogInfo( "apemode/AppSurfaceSdlVk/Finalize: Deleting window." );
+        LogInfo( "AppSurfaceSdlBase: Deleting window." );
         SDL_DestroyWindow( pSdlWindow );
         pSdlWindow = nullptr;
     }

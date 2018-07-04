@@ -57,11 +57,11 @@ namespace apemodevk {
             uint32_t               DynamicOffset;
         };
 
-        GraphicsDevice *       pNode                = nullptr;
-        VkBufferUsageFlags     eBufferUsageFlags    = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
-        VkMemoryPropertyFlags  eMemoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
-        uint32_t               MinAlignment         = 256;
-        uint32_t               MaxPageRange         = 65536; /* 256 * 256 */
+        GraphicsDevice *             pNode                = nullptr;
+        VkBufferUsageFlags           eBufferUsageFlags    = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        VkMemoryPropertyFlags        eMemoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
+        uint32_t                     MinAlignment         = 256;
+        uint32_t                     MaxPageRange         = 65536; /* 256 * 256 */
         apemodevk::vector< PagePtr > Pages;
 
         /**

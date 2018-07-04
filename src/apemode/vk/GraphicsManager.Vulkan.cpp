@@ -49,15 +49,15 @@ void AddName( apemodevk::vector< const char* >& names, const char* pszName ) {
     names.push_back( pszName );
 }
 
-bool EnumerateLayersAndExtensions( uint32_t                    eFlags,
+bool EnumerateLayersAndExtensions( uint32_t                          eFlags,
                                    apemodevk::vector< const char* >& OutLayerNames,
                                    apemodevk::vector< const char* >& OutExtensionNames,
-                                   bool&                       bDebugReport,
-                                   bool&                       bDebugMessanger,
-                                   const char**                ppszLayers,
-                                   size_t                      layerCount,
-                                   const char**                ppszExtensions,
-                                   size_t                      extensionCount ) {
+                                   bool&                             bDebugReport,
+                                   bool&                             bDebugMessanger,
+                                   const char**                      ppszLayers,
+                                   size_t                            layerCount,
+                                   const char**                      ppszExtensions,
+                                   size_t                            extensionCount ) {
     VkResult err = VK_SUCCESS;
 
     OutLayerNames.clear( );
@@ -271,8 +271,8 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                eFlags,
 
     const bool bValidate = HasFlagEq( eFlags, kEnableValidation );
 
-    apemodevk::vector< const char* > instanceLayers;
-    apemodevk::vector< const char* > instanceExtensions;
+    vector< const char* > instanceLayers;
+    vector< const char* > instanceExtensions;
 
     if ( !EnumerateLayersAndExtensions( eFlags,
                                         instanceLayers,
@@ -535,12 +535,13 @@ void apemodevk::DestroyGraphicsManager( ) {
     if ( sGraphicsManagerInstance ) {
         auto pAlloc  = sGraphicsManagerInstance->GetAllocator( );
         auto pLogger = sGraphicsManagerInstance->GetLogger( );
+        pLogger->Log( apemodevk::platform::LogLevel::Err, "GraphicsManager: Destroying." );
 
         sGraphicsManagerInstance->Destroy( );
         sGraphicsManagerInstance->~GraphicsManager( );
 
         pAlloc->Free( sGraphicsManagerInstance, __FILE__, __LINE__, __FUNCTION__ );
-        pLogger->Log( apemodevk::platform::LogLevel::Err, "Destroyed GraphicsManager." );
+        pLogger->Log( apemodevk::platform::LogLevel::Err, "GraphicsManager: Destroyed." );
 
         sGraphicsManagerInstance = nullptr;
     }
@@ -560,7 +561,7 @@ apemodevk::GraphicsManager* apemodevk::CreateGraphicsManager(
 
     void* pGraphicsManagerMemory = pInAlloc->Malloc( sizeof( GraphicsManager ), apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
     if ( !pGraphicsManagerMemory ) {
-        pInLogger->Log( apemodevk::platform::LogLevel::Err, "Failed to allocate memory for GraphicsManager." );
+        pInLogger->Log( apemodevk::platform::LogLevel::Err, "GraphicsManager: Failed to allocate memor." );
         return nullptr;
     }
 
@@ -579,12 +580,12 @@ apemodevk::GraphicsManager* apemodevk::CreateGraphicsManager(
         sGraphicsManagerInstance = nullptr;
 
         pInAlloc->Free( pGraphicsManagerMemory, __FILE__, __LINE__, __FUNCTION__ );
-        pInLogger->Log( apemodevk::platform::LogLevel::Err, "Failed to initialize GraphicsManager" );
+        pInLogger->Log( apemodevk::platform::LogLevel::Err, "GraphicsManager: Failed to initialize." );
 
         return nullptr;
     }
 
-    pInLogger->Log( apemodevk::platform::LogLevel::Info, "Initialized GraphicsManager" );
+    pInLogger->Log( apemodevk::platform::LogLevel::Info, "GraphicsManager: Initialized." );
     return GetGraphicsManager( );
 }
 

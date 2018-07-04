@@ -17,15 +17,16 @@ namespace apemodevk {
     public:
         SourceImage( gli::texture texture );
         ~SourceImage( ) override = default;
-        VkImageViewType GetImageViewType( ) const override;
-        VkImageType     GetImageType( ) const override;
-        VkFormat        GetFormat( ) const override;
-        VkDeviceSize    GetSize( uint32_t level ) const override;
-        VkDeviceSize    GetSize( ) const override;
-        const void*     GetData( uint32_t face, uint32_t level ) const override;
-        VkExtent3D      GetExtent( uint32_t level ) const override;
-        uint32_t        GetMipLevels( ) const override;
-        uint32_t        GetFaces( ) const override;
+
+        VkImageViewType GetImageViewType( ) const                       override;
+        VkImageType     GetImageType( ) const                           override;
+        VkFormat        GetFormat( ) const                              override;
+        VkDeviceSize    GetSize( uint32_t level ) const                 override;
+        VkDeviceSize    GetSize( ) const                                override;
+        const void*     GetData( uint32_t face, uint32_t level ) const  override;
+        VkExtent3D      GetExtent( uint32_t level ) const               override;
+        uint32_t        GetMipLevels( ) const                           override;
+        uint32_t        GetFaces( ) const                               override;
 
     private:
         gli::texture Texture;
@@ -65,24 +66,15 @@ gli::texture GenerateMipMaps( const gli::texture& texture ) {
     }
 
     switch ( texture.target( ) ) {
-        case gli::TARGET_1D:
-            return gli::generate_mipmaps( static_cast< const gli::texture1d& >( texture ), gli::FILTER_LINEAR );
-        case gli::TARGET_1D_ARRAY:
-            return gli::generate_mipmaps( static_cast< const gli::texture1d_array& >( texture ), gli::FILTER_LINEAR );
-        case gli::TARGET_2D:
-            return gli::generate_mipmaps( static_cast< const gli::texture2d& >( texture ), gli::FILTER_LINEAR );
-        case gli::TARGET_2D_ARRAY:
-            return gli::generate_mipmaps( static_cast< const gli::texture2d_array& >( texture ), gli::FILTER_LINEAR );
-        case gli::TARGET_RECT:
-            return gli::generate_mipmaps( static_cast< const gli::texture2d& >( texture ), gli::FILTER_LINEAR );
-        case gli::TARGET_RECT_ARRAY:
-            return gli::generate_mipmaps( static_cast< const gli::texture2d_array& >( texture ), gli::FILTER_LINEAR );
-        case gli::TARGET_3D:
-            return gli::generate_mipmaps( static_cast< const gli::texture3d& >( texture ), gli::FILTER_LINEAR );
-        case gli::TARGET_CUBE:
-            return gli::generate_mipmaps( static_cast< const gli::texture_cube& >( texture ), gli::FILTER_LINEAR );
-        case gli::TARGET_CUBE_ARRAY:
-            return gli::generate_mipmaps( static_cast< const gli::texture_cube_array& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_1D:            return gli::generate_mipmaps( static_cast< const gli::texture1d& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_1D_ARRAY:      return gli::generate_mipmaps( static_cast< const gli::texture1d_array& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_2D:            return gli::generate_mipmaps( static_cast< const gli::texture2d& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_2D_ARRAY:      return gli::generate_mipmaps( static_cast< const gli::texture2d_array& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_RECT:          return gli::generate_mipmaps( static_cast< const gli::texture2d& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_RECT_ARRAY:    return gli::generate_mipmaps( static_cast< const gli::texture2d_array& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_3D:            return gli::generate_mipmaps( static_cast< const gli::texture3d& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_CUBE:          return gli::generate_mipmaps( static_cast< const gli::texture_cube& >( texture ), gli::FILTER_LINEAR );
+        case gli::TARGET_CUBE_ARRAY:    return gli::generate_mipmaps( static_cast< const gli::texture_cube_array& >( texture ), gli::FILTER_LINEAR );
     }
 
     assert( false );
@@ -150,11 +142,9 @@ void UnmapStagingBuffer( apemodevk::GraphicsDevice*                        pNode
     }
 }
 
-apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
-    apemodevk::GraphicsDevice*                 pNode,
-    const apemodevk::ISourceImage&             srcImg,
-    const apemodevk::ImageLoader::LoadOptions& loadOptions ) {
-    using namespace apemodevk;
+apemodevk::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromSrc( GraphicsDevice*     pNode,
+                                                                                          const ISourceImage& srcImg,
+                                                                                          const LoadOptions&  loadOptions ) {
 
     apemodevk_memory_allocation_scope;
 
@@ -253,7 +243,7 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
         writeImageMemoryBarrier.subresourceRange.levelCount = srcImg.GetMipLevels( );
         writeImageMemoryBarrier.subresourceRange.layerCount = srcImg.GetFaces( );
         writeImageMemoryBarrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
-        writeImageMemoryBarrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+        writeImageMemoryBarrier.dstQueueFamilyIndex         = loadOptions.QueueFamilyId;
 
         vkCmdPipelineBarrier( pCmdBuffer,
                               VK_PIPELINE_STAGE_HOST_BIT,
@@ -354,7 +344,7 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
         readImgMemoryBarrier.subresourceRange.aspectMask = loadOptions.eImgAspect;
         readImgMemoryBarrier.subresourceRange.levelCount = srcImg.GetMipLevels( );
         readImgMemoryBarrier.subresourceRange.layerCount = srcImg.GetFaces( );
-        readImgMemoryBarrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
+        readImgMemoryBarrier.srcQueueFamilyIndex         = loadOptions.QueueFamilyId;
         readImgMemoryBarrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
 
         loadedImage->eImgLayout = readImgMemoryBarrier.newLayout;
@@ -380,12 +370,6 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
     return eastl::move( loadedImage );
 }
 
-apemodevk::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromSrc( GraphicsDevice*     pNode,
-                                                                                          const ISourceImage& srcImg,
-                                                                                          const LoadOptions&  loadOptions ) {
-    return LoadImageFromGLITexture( pNode, srcImg, loadOptions );
-}
-
 VkFormat ToImgFormat( const gli::format eTextureFormat ) {
     return static_cast< VkFormat >( eTextureFormat );
 }
@@ -396,31 +380,31 @@ gli::format ToGLIFormat( VkFormat eImgFmt ) {
 
 VkImageType ToImgType( const gli::target eTextureTarget ) {
     switch ( eTextureTarget ) {
-    case gli::TARGET_1D:            return VK_IMAGE_TYPE_1D;
-    case gli::TARGET_1D_ARRAY:      return VK_IMAGE_TYPE_1D;
-    case gli::TARGET_2D:            return VK_IMAGE_TYPE_2D;
-    case gli::TARGET_2D_ARRAY:      return VK_IMAGE_TYPE_2D;
-    case gli::TARGET_3D:            return VK_IMAGE_TYPE_3D;
-    case gli::TARGET_RECT:          return VK_IMAGE_TYPE_2D;
-    case gli::TARGET_RECT_ARRAY:    return VK_IMAGE_TYPE_2D;
-    case gli::TARGET_CUBE:          return VK_IMAGE_TYPE_2D;
-    case gli::TARGET_CUBE_ARRAY:    return VK_IMAGE_TYPE_2D;
-    default:                        return VK_IMAGE_TYPE_MAX_ENUM;
+        case gli::TARGET_1D:            return VK_IMAGE_TYPE_1D;
+        case gli::TARGET_1D_ARRAY:      return VK_IMAGE_TYPE_1D;
+        case gli::TARGET_2D:            return VK_IMAGE_TYPE_2D;
+        case gli::TARGET_2D_ARRAY:      return VK_IMAGE_TYPE_2D;
+        case gli::TARGET_3D:            return VK_IMAGE_TYPE_3D;
+        case gli::TARGET_RECT:          return VK_IMAGE_TYPE_2D;
+        case gli::TARGET_RECT_ARRAY:    return VK_IMAGE_TYPE_2D;
+        case gli::TARGET_CUBE:          return VK_IMAGE_TYPE_2D;
+        case gli::TARGET_CUBE_ARRAY:    return VK_IMAGE_TYPE_2D;
+        default:                        return VK_IMAGE_TYPE_MAX_ENUM;
     }
 }
 
 VkImageViewType ToImgViewType( const gli::target eTextureTarget ) {
     switch ( eTextureTarget ) {
-    case gli::TARGET_1D:            return VK_IMAGE_VIEW_TYPE_1D;
-    case gli::TARGET_1D_ARRAY:      return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
-    case gli::TARGET_2D:            return VK_IMAGE_VIEW_TYPE_2D;
-    case gli::TARGET_2D_ARRAY:      return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-    case gli::TARGET_3D:            return VK_IMAGE_VIEW_TYPE_3D;
-    case gli::TARGET_RECT:          return VK_IMAGE_VIEW_TYPE_2D;
-    case gli::TARGET_RECT_ARRAY:    return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
-    case gli::TARGET_CUBE:          return VK_IMAGE_VIEW_TYPE_CUBE;
-    case gli::TARGET_CUBE_ARRAY:    return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
-    default:                        return VK_IMAGE_VIEW_TYPE_MAX_ENUM;
+        case gli::TARGET_1D:            return VK_IMAGE_VIEW_TYPE_1D;
+        case gli::TARGET_1D_ARRAY:      return VK_IMAGE_VIEW_TYPE_1D_ARRAY;
+        case gli::TARGET_2D:            return VK_IMAGE_VIEW_TYPE_2D;
+        case gli::TARGET_2D_ARRAY:      return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        case gli::TARGET_3D:            return VK_IMAGE_VIEW_TYPE_3D;
+        case gli::TARGET_RECT:          return VK_IMAGE_VIEW_TYPE_2D;
+        case gli::TARGET_RECT_ARRAY:    return VK_IMAGE_VIEW_TYPE_2D_ARRAY;
+        case gli::TARGET_CUBE:          return VK_IMAGE_VIEW_TYPE_CUBE;
+        case gli::TARGET_CUBE_ARRAY:    return VK_IMAGE_VIEW_TYPE_CUBE_ARRAY;
+        default:                        return VK_IMAGE_VIEW_TYPE_MAX_ENUM;
     }
 }
 

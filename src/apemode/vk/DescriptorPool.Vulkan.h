@@ -168,9 +168,9 @@ namespace apemodevk
             VkDescriptorSet pDescriptorSet = VK_NULL_HANDLE;
         };
 
-        VkDevice                            pLogicalDevice       = VK_NULL_HANDLE;
-        VkDescriptorPool                    pDescriptorPool      = VK_NULL_HANDLE;
-        VkDescriptorSetLayout               pDescriptorSetLayout = VK_NULL_HANDLE;
+        VkDevice                                  pLogicalDevice       = VK_NULL_HANDLE;
+        VkDescriptorPool                          pDescriptorPool      = VK_NULL_HANDLE;
+        VkDescriptorSetLayout                     pDescriptorSetLayout = VK_NULL_HANDLE;
         apemodevk::vector< DescriptorSetItem >    Sets;
         apemodevk::vector< VkWriteDescriptorSet > TempWrites;
 

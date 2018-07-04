@@ -60,16 +60,16 @@ bool apemodevk::GraphicsDevice::ScanFormatProperties( ) {
 }
 
 void AddName( apemodevk::vector< const char* >& names, const char* pszName );
-bool EnumerateLayersAndExtensions( apemodevk::GraphicsDevice*  pNode,
-                                   uint32_t                    eFlags,
+bool EnumerateLayersAndExtensions( apemodevk::GraphicsDevice*        pNode,
+                                   uint32_t                          eFlags,
                                    apemodevk::vector< const char* >& OutLayerNames,
                                    apemodevk::vector< const char* >& OutExtensionNames,
-                                   bool&                       bIncrementalPresentKHR,
-                                   bool&                       bDisplayTimingGOOGLE,
-                                   const char**                ppszLayers,
-                                   size_t                      layerCount,
-                                   const char**                ppszExtensions,
-                                   size_t                      extensionCount ) {
+                                   bool&                             bIncrementalPresentKHR,
+                                   bool&                             bDisplayTimingGOOGLE,
+                                   const char**                      ppszLayers,
+                                   size_t                            layerCount,
+                                   const char**                      ppszExtensions,
+                                   size_t                            extensionCount ) {
     apemodevk_memory_allocation_scope;
     VkResult err = VK_SUCCESS;
 
@@ -187,8 +187,8 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( uint32_t         flags,
     // Likewise, vulkan instance is required for physical device.
     if ( VK_NULL_HANDLE != pPhysicalDevice ) {
 
-        apemodevk::vector< const char* > deviceLayers;
-        apemodevk::vector< const char* > deviceExtensions;
+        vector< const char* > deviceLayers;
+        vector< const char* > deviceExtensions;
 
         if ( !EnumerateLayersAndExtensions( this,
                                             flags,
@@ -209,9 +209,9 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( uint32_t         flags,
         platform::DebugTrace( platform::LogLevel::Info, "Device Name: %s", AdapterProps.deviceName );
         platform::DebugTrace( platform::LogLevel::Info, "Device Type: %u", AdapterProps.deviceType );
 
-        apemodevk::vector< VkQueueFamilyProperties > QueueProps;
-        apemodevk::vector< VkDeviceQueueCreateInfo > QueueReqs;
-        apemodevk::vector< float >                   QueuePriorities;
+        vector< VkQueueFamilyProperties > QueueProps;
+        vector< VkDeviceQueueCreateInfo > QueueReqs;
+        vector< float >                   QueuePriorities;
 
         if ( ScanDeviceQueues( QueueProps, QueueReqs, QueuePriorities ) && ScanFormatProperties( ) ) {
             vkGetPhysicalDeviceFeatures( pPhysicalDevice, &Features );

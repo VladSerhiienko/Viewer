@@ -32,15 +32,17 @@ namespace apemode {
         void*              GetGraphicsHandle( ) override;
         SceneRendererBase* CreateSceneRenderer( ) override;
 
-        apemode::unique_ptr< GraphicsAllocator > Alloc;
-        apemode::unique_ptr< GraphicsLogger >    Logger;
-
-        apemodevk::Surface        Surface;
-        apemodevk::Swapchain      Swapchain;
-        apemodevk::GraphicsDevice Node;
-
         uint32_t                LastWidth;
         uint32_t                LastHeight;
         std::vector< uint32_t > PresentQueueFamilyIds;
+
+        apemode::unique_ptr< GraphicsAllocator > Alloc;
+        apemode::unique_ptr< GraphicsLogger >    Logger;
+
+        apemodevk::unique_ptr< apemodevk::GraphicsManager > Manager;
+        apemodevk::Surface                                  Surface;
+        apemodevk::Swapchain                                Swapchain;
+        apemodevk::GraphicsDevice                           Node;
+
     };
 }
