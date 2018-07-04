@@ -185,7 +185,7 @@ namespace apemodevk {
 
     class ShaderCompilerMacroDefinitionCollection : public ShaderCompiler::IMacroDefinitionCollection {
     public:
-        std::vector< std::string > Macros;
+        apemodevk::vector< std::string > Macros;
 
         void Init( const std::map< std::string, std::string >& definitions ) {
             Macros.clear( );

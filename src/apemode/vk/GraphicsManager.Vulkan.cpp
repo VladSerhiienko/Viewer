@@ -38,7 +38,7 @@ static VkBool32 CheckLayers( uint32_t check_count, const char** check_names, uin
     return 1;
 }
 
-void AddName( std::vector< const char* >& names, const char* pszName ) {
+void AddName( apemodevk::vector< const char* >& names, const char* pszName ) {
     apemodevk_memory_allocation_scope;
     for ( auto& n : names ) {
         if ( !strcmp( n, pszName ) ) {
@@ -50,8 +50,8 @@ void AddName( std::vector< const char* >& names, const char* pszName ) {
 }
 
 bool EnumerateLayersAndExtensions( uint32_t                    eFlags,
-                                   std::vector< const char* >& OutLayerNames,
-                                   std::vector< const char* >& OutExtensionNames,
+                                   apemodevk::vector< const char* >& OutLayerNames,
+                                   apemodevk::vector< const char* >& OutExtensionNames,
                                    bool&                       bDebugReport,
                                    bool&                       bDebugMessanger,
                                    const char**                ppszLayers,
@@ -84,7 +84,7 @@ bool EnumerateLayersAndExtensions( uint32_t                    eFlags,
 
         if ( instanceLayeCount > 0 ) {
 
-            std::vector< VkLayerProperties > allInstanceLayers;
+            apemodevk::vector< VkLayerProperties > allInstanceLayers;
             allInstanceLayers.resize( instanceLayeCount );
 
             err = vkEnumerateInstanceLayerProperties( &instanceLayeCount, allInstanceLayers.data( ) );
@@ -141,7 +141,7 @@ bool EnumerateLayersAndExtensions( uint32_t                    eFlags,
         return false;
 
     if ( instance_extension_count > 0 ) {
-        std::vector< VkExtensionProperties > allInstanceExtensions;
+        apemodevk::vector< VkExtensionProperties > allInstanceExtensions;
         allInstanceExtensions.resize( instance_extension_count );
 
         err = vkEnumerateInstanceExtensionProperties( NULL, &instance_extension_count, allInstanceExtensions.data( ) );
@@ -271,8 +271,8 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                eFlags,
 
     const bool bValidate = HasFlagEq( eFlags, kEnableValidation );
 
-    std::vector< const char* > instanceLayers;
-    std::vector< const char* > instanceExtensions;
+    apemodevk::vector< const char* > instanceLayers;
+    apemodevk::vector< const char* > instanceExtensions;
 
     if ( !EnumerateLayersAndExtensions( eFlags,
                                         instanceLayers,
@@ -740,6 +740,46 @@ void operator delete( void*                     pMemory,
                       const unsigned int        sourceLine,
                       const char*               pszSourceFunc ) throw( ) {
     return apemodevk::GetGraphicsManager( )->GetAllocator( )->Free( pMemory, __FILE__, __LINE__, __FUNCTION__ );
+}
+
+apemodevk::platform::StandardAllocator::StandardAllocator( const char* ) {
+}
+
+apemodevk::platform::StandardAllocator::StandardAllocator( const StandardAllocator& ) {
+}
+
+apemodevk::platform::StandardAllocator::StandardAllocator( const StandardAllocator&, const char* ) {
+}
+
+apemodevk::platform::StandardAllocator& apemodevk::platform::StandardAllocator::operator=( const StandardAllocator& ) {
+    return *this;
+}
+
+bool apemodevk::platform::StandardAllocator::operator==( const StandardAllocator& ) {
+    return true;
+}
+
+bool apemodevk::platform::StandardAllocator::operator!=( const StandardAllocator& ) {
+    return false;
+}
+
+void* apemodevk::platform::StandardAllocator::allocate( size_t size, int /*flags*/ ) {
+    return GetGraphicsManager( )->GetAllocator( )->Malloc( size, apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
+}
+
+void* apemodevk::platform::StandardAllocator::allocate( size_t size, size_t alignment, size_t /*alignmentOffset*/, int /*flags*/ ) {
+    return GetGraphicsManager( )->GetAllocator( )->Malloc( size, alignment, __FILE__, __LINE__, __FUNCTION__ );
+}
+
+void apemodevk::platform::StandardAllocator::deallocate( void* p, size_t /*n*/ ) {
+    return GetGraphicsManager( )->GetAllocator( )->Free( p, __FILE__, __LINE__, __FUNCTION__ );
+}
+
+const char* apemodevk::platform::StandardAllocator::get_name( ) const {
+    return "apemodevk::platform::StandardAllocator";
+}
+
+void apemodevk::platform::StandardAllocator::set_name( const char* ) {
 }
 
 #include <chrono>

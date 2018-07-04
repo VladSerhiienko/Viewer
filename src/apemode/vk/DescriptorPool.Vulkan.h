@@ -171,8 +171,8 @@ namespace apemodevk
         VkDevice                            pLogicalDevice       = VK_NULL_HANDLE;
         VkDescriptorPool                    pDescriptorPool      = VK_NULL_HANDLE;
         VkDescriptorSetLayout               pDescriptorSetLayout = VK_NULL_HANDLE;
-        std::vector< DescriptorSetItem >    Sets;
-        std::vector< VkWriteDescriptorSet > TempWrites;
+        apemodevk::vector< DescriptorSetItem >    Sets;
+        apemodevk::vector< VkWriteDescriptorSet > TempWrites;
 
         bool            Recreate( VkDevice pInLogicalDevice, VkDescriptorPool pInDescPool, VkDescriptorSetLayout pInLayout );
         VkDescriptorSet GetDescSet( const DescriptorSetBase * pDescriptorSetBase );

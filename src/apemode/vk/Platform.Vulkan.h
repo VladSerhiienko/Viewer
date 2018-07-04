@@ -139,28 +139,54 @@ namespace apemodevk {
 #define apemodevk_create( T, ... ) new ( operator new( apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ) ) T( __VA_ARGS__ )
 #define apemodevk_delete( pObj )   apemodevk::platform::CallDestructor( pObj ), operator delete( pObj, apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj = nullptr
 
+#include <EASTL/unique_ptr.h>
+#include <EASTL/vector.h>
+
 namespace apemodevk {
 
-    template < typename T >
-    struct TTrakingDeleter {
-        void operator( )( T *pObj ) {
-            apemodevk_delete( pObj );
-        }
-    };
+    namespace platform {
+        template < typename T >
+        struct TDelete {
+            void operator( )( T *pObj ) {
+                apemodevk_delete( pObj );
+            }
+        };
+
+        class StandardAllocator {
+        public:
+            StandardAllocator( const char * = NULL );
+            StandardAllocator( const StandardAllocator & );
+            StandardAllocator( const StandardAllocator &, const char * );
+            StandardAllocator &operator=( const StandardAllocator & );
+            bool               operator==( const StandardAllocator & );
+            bool               operator!=( const StandardAllocator & );
+            void *             allocate( size_t n, int /*flags*/ = 0 );
+            void *             allocate( size_t n, size_t alignment, size_t alignmentOffset, int /*flags*/ = 0 );
+            void               deallocate( void *p, size_t /*n*/ );
+            const char *       get_name( ) const;
+            void               set_name( const char * );
+        };
+    } // namespace platform
 
     template < typename T >
-    using unique_ptr = std::unique_ptr< T, TTrakingDeleter< T > >;
+    using unique_ptr = eastl::unique_ptr< T, platform::TDelete< T > >;
 
     template < typename T, typename... Args >
     unique_ptr< T > make_unique( Args &&... args ) {
-        return unique_ptr< T >( apemodevk_new T( std::forward< Args >( args )... ) );
+        return unique_ptr< T >( apemodevk_new T( eastl::forward< Args >( args )... ) );
     }
 
     template < typename T, typename... Args >
     std::unique_ptr< T > std_make_unique( Args &&... args ) {
-        return  std::unique_ptr< T >( new T( std::forward< Args >( args )... ) );
+        return  std::unique_ptr< T >( new T( eastl::forward< Args >( args )... ) );
     }
-} // namespace apemodevk
+
+    template < typename T >
+    using vector = eastl::vector< T, platform::StandardAllocator >;
+}
+
+#define apemodevk_max( a, b )( ( a ) > ( b ) ? ( a ) : ( b ) )
+#define apemodevk_min( a, b )( ( a ) < ( b ) ? ( a ) : ( b ) )
 
 namespace apemodevk {
     void GetPrevMemoryAllocationScope( const char *&pszSourceFile, unsigned int &sourceLine, const char *&pszSourceFunc );
@@ -347,7 +373,7 @@ namespace apemodevk {
         }
 
         template < typename T, typename... TArgs >
-        inline T &PushBackAndGet( std::vector< T > &_collection, TArgs... args ) {
+        inline T &PushBackAndGet( apemodevk::vector< T > &_collection, TArgs... args ) {
             _collection.emplace_back( std::forward< TArgs >( args )... );
             return _collection.back( );
         }

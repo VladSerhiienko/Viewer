@@ -612,7 +612,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             }     /* pTexturePropFb */
 
             if ( pMaterialAsset->pBaseColorLoadedImg ) {
-                const float maxLod = float( pMaterialAsset->pBaseColorLoadedImg->ImageCreateInfo.mipLevels );
+                const float maxLod = float( pMaterialAsset->pBaseColorLoadedImg->ImgCreateInfo.mipLevels );
 
                 VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
@@ -630,7 +630,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
             if ( pMaterialAsset->pNormalLoadedImg ) {
 
-                const float maxLod = float( pMaterialAsset->pNormalLoadedImg->ImageCreateInfo.mipLevels );
+                const float maxLod = float( pMaterialAsset->pNormalLoadedImg->ImgCreateInfo.mipLevels );
 
                 VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
@@ -648,7 +648,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
             if ( pMaterialAsset->pEmissiveLoadedImg ) {
 
-                const float maxLod = float( pMaterialAsset->pEmissiveLoadedImg->ImageCreateInfo.mipLevels );
+                const float maxLod = float( pMaterialAsset->pEmissiveLoadedImg->ImgCreateInfo.mipLevels );
 
                 VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
@@ -667,7 +667,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
             if ( pMaterialAsset->pMetallicRoughnessLoadedImg ) {
 
-                const float maxLod = float( pMaterialAsset->pMetallicRoughnessLoadedImg->ImageCreateInfo.mipLevels );
+                const float maxLod = float( pMaterialAsset->pMetallicRoughnessLoadedImg->ImgCreateInfo.mipLevels );
 
                 VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
@@ -701,7 +701,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
             if ( pMaterialAsset->pOcclusionLoadedImg ) {
 
-                const float maxLod = float( pMaterialAsset->pOcclusionLoadedImg->ImageCreateInfo.mipLevels );
+                const float maxLod = float( pMaterialAsset->pOcclusionLoadedImg->ImgCreateInfo.mipLevels );
 
                 VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );

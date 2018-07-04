@@ -1,4 +1,4 @@
-#include <CityHash.h>
+#include <CityHash.Vulkan.h>
 #include <SamplerManager.Vulkan.h>
 
 bool apemodevk::SamplerManager::Recreate( apemodevk::GraphicsDevice* pInNode ) {
@@ -22,20 +22,20 @@ constexpr uint32_t kInvalidSamplerIndex = 0xffffffff;
 uint32_t apemodevk::SamplerManager::GetSamplerIndex( const VkSamplerCreateInfo& samplerCreateInfo ) {
     apemodevk_memory_allocation_scope;
 
-    const auto samplerHash = apemode::CityHash64( samplerCreateInfo );
-    const auto samplerIt = std::find_if( StoredSamplers.begin( ),
-                                         StoredSamplers.end( ),
-                                         [samplerHash]( const StoredSampler& s ) { return samplerHash == s.Hash; } );
+    const auto samplerId = apemodevk::CityHash64( samplerCreateInfo );
+    const auto samplerIt = eastl::find_if( StoredSamplers.begin( ),
+                                           StoredSamplers.end( ),
+                                           [samplerId]( const StoredSampler& s ) { return samplerId == s.Hash; } );
 
     if ( samplerIt != StoredSamplers.end( ) )
-        return (uint32_t) std::distance( StoredSamplers.begin( ), samplerIt );
+        return static_cast< uint32_t >( eastl::distance( StoredSamplers.begin( ), samplerIt ) );
 
     THandle< VkSampler > hSampler;
     if ( hSampler.Recreate( *pNode, samplerCreateInfo ) ) {
         const size_t samplerIndex = StoredSamplers.size( );
 
         StoredSampler storedSampler;
-        storedSampler.Hash              = samplerHash;
+        storedSampler.Hash              = samplerId;
         storedSampler.pSampler          = hSampler.Release( );
         storedSampler.SamplerCreateInfo = samplerCreateInfo;
         StoredSamplers.push_back( storedSampler );

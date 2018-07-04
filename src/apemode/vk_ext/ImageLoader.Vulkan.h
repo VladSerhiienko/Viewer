@@ -4,7 +4,6 @@
 #include <Image.Vulkan.h>
 
 namespace apemodevk {
-    struct HostBufferPool;
 
     class ISourceImage {
     public:
@@ -24,7 +23,7 @@ namespace apemodevk {
     public:
         struct DecodeOptions {
             enum EImageFileFormat {
-                eImageFileFormat_Undefined,
+                eImageFileFormat_Undefined = 0,
                 eImageFileFormat_DDS,
                 eImageFileFormat_KTX,
                 eImageFileFormat_PNG,
@@ -35,8 +34,8 @@ namespace apemodevk {
             bool             bGenerateMipMaps = false;
         };
 
-        unique_ptr< ISourceImage > CreateSourceImage2D( const uint8_t*       pImageBytes,
-                                                        VkExtent2D           imageExtent,
+        unique_ptr< ISourceImage > CreateSourceImage2D( const uint8_t*       pImgBytes,
+                                                        VkExtent2D           imgExtent,
                                                         VkFormat             eImgFmt,
                                                         const DecodeOptions& decodeOptions );
 
@@ -48,7 +47,7 @@ namespace apemodevk {
     struct LoadedImage {
         THandle< ImageComposite > hImg;
         THandle< VkImageView >    hImgView;
-        VkImageCreateInfo         ImageCreateInfo;
+        VkImageCreateInfo         ImgCreateInfo;
         VkImageViewCreateInfo     ImgViewCreateInfo;
         VkImageLayout             eImgLayout    = VK_IMAGE_LAYOUT_UNDEFINED;
 
@@ -80,8 +79,8 @@ namespace apemodevk {
         ImageLoader() = default;
         ~ImageLoader() = default;
 
-        unique_ptr< LoadedImage > LoadImageFromSrc( GraphicsDevice*     pInNode,
+        unique_ptr< LoadedImage > LoadImageFromSrc( GraphicsDevice*     pNode,
                                                     const ISourceImage& srcImg,
-                                                    LoadOptions const&  loadOptions );
+                                                    const LoadOptions&  loadOptions );
     };
 }

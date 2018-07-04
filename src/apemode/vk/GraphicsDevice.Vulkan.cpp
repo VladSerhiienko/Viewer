@@ -6,9 +6,9 @@
 #include <NativeHandles.Vulkan.h>
 #include <TInfoStruct.Vulkan.h>
 
-bool apemodevk::GraphicsDevice::ScanDeviceQueues( std::vector< VkQueueFamilyProperties >& QueueProps,
-                                                  std::vector< VkDeviceQueueCreateInfo >& QueueReqs,
-                                                  std::vector< float >&                   QueuePriorities ) {
+bool apemodevk::GraphicsDevice::ScanDeviceQueues( apemodevk::vector< VkQueueFamilyProperties >& QueueProps,
+                                                  apemodevk::vector< VkDeviceQueueCreateInfo >& QueueReqs,
+                                                  apemodevk::vector< float >&                   QueuePriorities ) {
     apemodevk_memory_allocation_scope;
 
     uint32_t QueuesFound = 0;
@@ -59,11 +59,11 @@ bool apemodevk::GraphicsDevice::ScanFormatProperties( ) {
     return true;
 }
 
-void AddName( std::vector< const char* >& names, const char* pszName );
+void AddName( apemodevk::vector< const char* >& names, const char* pszName );
 bool EnumerateLayersAndExtensions( apemodevk::GraphicsDevice*  pNode,
                                    uint32_t                    eFlags,
-                                   std::vector< const char* >& OutLayerNames,
-                                   std::vector< const char* >& OutExtensionNames,
+                                   apemodevk::vector< const char* >& OutLayerNames,
+                                   apemodevk::vector< const char* >& OutExtensionNames,
                                    bool&                       bIncrementalPresentKHR,
                                    bool&                       bDisplayTimingGOOGLE,
                                    const char**                ppszLayers,
@@ -80,7 +80,7 @@ bool EnumerateLayersAndExtensions( apemodevk::GraphicsDevice*  pNode,
 
     if ( deviceLayerCount > 0 ) {
 
-        std::vector< VkLayerProperties > deviceLayers;
+        apemodevk::vector< VkLayerProperties > deviceLayers;
         deviceLayers.resize( deviceLayerCount );
 
         err = vkEnumerateDeviceLayerProperties( pNode->pPhysicalDevice, &deviceLayerCount, deviceLayers.data( ) );
@@ -109,7 +109,7 @@ bool EnumerateLayersAndExtensions( apemodevk::GraphicsDevice*  pNode,
 
     if ( deviceExtensionCount > 0 ) {
 
-        std::vector< VkExtensionProperties > deviceExtensions;
+        apemodevk::vector< VkExtensionProperties > deviceExtensions;
         deviceExtensions.resize( deviceExtensionCount );
 
         err = vkEnumerateDeviceExtensionProperties( pNode->pPhysicalDevice, NULL, &deviceExtensionCount, deviceExtensions.data( ) );
@@ -187,8 +187,8 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( uint32_t         flags,
     // Likewise, vulkan instance is required for physical device.
     if ( VK_NULL_HANDLE != pPhysicalDevice ) {
 
-        std::vector< const char* > deviceLayers;
-        std::vector< const char* > deviceExtensions;
+        apemodevk::vector< const char* > deviceLayers;
+        apemodevk::vector< const char* > deviceExtensions;
 
         if ( !EnumerateLayersAndExtensions( this,
                                             flags,
@@ -209,9 +209,9 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( uint32_t         flags,
         platform::DebugTrace( platform::LogLevel::Info, "Device Name: %s", AdapterProps.deviceName );
         platform::DebugTrace( platform::LogLevel::Info, "Device Type: %u", AdapterProps.deviceType );
 
-        std::vector< VkQueueFamilyProperties > QueueProps;
-        std::vector< VkDeviceQueueCreateInfo > QueueReqs;
-        std::vector< float >                   QueuePriorities;
+        apemodevk::vector< VkQueueFamilyProperties > QueueProps;
+        apemodevk::vector< VkDeviceQueueCreateInfo > QueueReqs;
+        apemodevk::vector< float >                   QueuePriorities;
 
         if ( ScanDeviceQueues( QueueProps, QueueReqs, QueuePriorities ) && ScanFormatProperties( ) ) {
             vkGetPhysicalDeviceFeatures( pPhysicalDevice, &Features );

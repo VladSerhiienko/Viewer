@@ -39,7 +39,7 @@ gli::texture DuplicateWithMipMaps( const gli::texture& originalTexture ) {
         return gli::texture( );
     }
 
-    const uint32_t maxExtent = std::max( std::max( originalTexture.extent( ).x, originalTexture.extent( ).y ), originalTexture.extent( ).z );
+    const uint32_t maxExtent = eastl::max( eastl::max( originalTexture.extent( ).x, originalTexture.extent( ).y ), originalTexture.extent( ).z );
     const uint32_t maxLod    = static_cast< uint32_t >( std::floor( std::log2( maxExtent ) ) ) + 1;
 
     gli::texture duplicate( originalTexture.target( ),
@@ -163,19 +163,19 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
         return nullptr;
     }
 
-    InitializeStruct( loadedImage->ImageCreateInfo );
+    InitializeStruct( loadedImage->ImgCreateInfo );
     InitializeStruct( loadedImage->ImgViewCreateInfo );
 
-    loadedImage->ImageCreateInfo.format        = srcImg.GetFormat( );
-    loadedImage->ImageCreateInfo.imageType     = srcImg.GetImageType( );
-    loadedImage->ImageCreateInfo.extent        = srcImg.GetExtent( 0 );
-    loadedImage->ImageCreateInfo.mipLevels     = srcImg.GetMipLevels( );
-    loadedImage->ImageCreateInfo.arrayLayers   = srcImg.GetFaces( );
-    loadedImage->ImageCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
-    loadedImage->ImageCreateInfo.tiling        = loadOptions.eImgTiling;
-    loadedImage->ImageCreateInfo.usage         = loadOptions.eImgUsage | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-    loadedImage->ImageCreateInfo.sharingMode   = loadOptions.eImgSharingMode;
-    loadedImage->ImageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
+    loadedImage->ImgCreateInfo.format        = srcImg.GetFormat( );
+    loadedImage->ImgCreateInfo.imageType     = srcImg.GetImageType( );
+    loadedImage->ImgCreateInfo.extent        = srcImg.GetExtent( 0 );
+    loadedImage->ImgCreateInfo.mipLevels     = srcImg.GetMipLevels( );
+    loadedImage->ImgCreateInfo.arrayLayers   = srcImg.GetFaces( );
+    loadedImage->ImgCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
+    loadedImage->ImgCreateInfo.tiling        = loadOptions.eImgTiling;
+    loadedImage->ImgCreateInfo.usage         = loadOptions.eImgUsage | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
+    loadedImage->ImgCreateInfo.sharingMode   = loadOptions.eImgSharingMode;
+    loadedImage->ImgCreateInfo.initialLayout = VK_IMAGE_LAYOUT_PREINITIALIZED;
 
     loadedImage->ImgViewCreateInfo.flags                           = 0;
     loadedImage->ImgViewCreateInfo.format                          = srcImg.GetFormat( );
@@ -189,10 +189,10 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
     switch ( loadedImage->ImgViewCreateInfo.viewType ) {
         case VK_IMAGE_VIEW_TYPE_CUBE:
         case VK_IMAGE_VIEW_TYPE_CUBE_ARRAY: {
-            loadedImage->ImageCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
+            loadedImage->ImgCreateInfo.flags |= VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
         } break;
         case VK_IMAGE_VIEW_TYPE_2D_ARRAY: {
-            loadedImage->ImageCreateInfo.flags |= VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT;
+            loadedImage->ImgCreateInfo.flags |= VK_IMAGE_CREATE_2D_ARRAY_COMPATIBLE_BIT;
         } break;
 
         default:
@@ -204,7 +204,7 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
     imgAllocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
     imgAllocationCreateInfo.flags = 0;
 
-    if ( false == loadedImage->hImg.Recreate( pNode->hAllocator, loadedImage->ImageCreateInfo, imgAllocationCreateInfo ) ) {
+    if ( false == loadedImage->hImg.Recreate( pNode->hAllocator, loadedImage->ImgCreateInfo, imgAllocationCreateInfo ) ) {
         return nullptr;
     }
 
@@ -217,7 +217,7 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
 
     size_t const maxFaceSize       = srcImg.GetSize( 0 );
     size_t const entireTextureSize = srcImg.GetSize( );
-    size_t const stagingMemorySize = std::max( maxFaceSize, std::min( loadOptions.StagingMemoryLimitHint, entireTextureSize ) );
+    size_t const stagingMemorySize = eastl::max( maxFaceSize, eastl::min( loadOptions.StagingMemoryLimitHint, entireTextureSize ) );
 
     THandle< BufferComposite > hStagingBuffer;
 
@@ -276,7 +276,7 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
     uint32_t mipLevel = 0;
 
     while ( mipLevel < srcImg.GetMipLevels( ) ) {
-        std::vector< VkBufferImageCopy > bufferImageCopies;
+        apemodevk::vector< VkBufferImageCopy > bufferImageCopies;
 
         uint8_t* pMappedStagingMemoryHead = pMappedStagingMemory;
         size_t   stagingMemorySpaceLeft   = stagingMemorySize;
@@ -377,12 +377,12 @@ apemodevk::unique_ptr< apemodevk::LoadedImage > LoadImageFromGLITexture(
         return nullptr;
     }
 
-    return std::move( loadedImage );
+    return eastl::move( loadedImage );
 }
 
 apemodevk::unique_ptr< apemodevk::LoadedImage > apemodevk::ImageLoader::LoadImageFromSrc( GraphicsDevice*     pNode,
                                                                                           const ISourceImage& srcImg,
-                                                                                          LoadOptions const&  loadOptions ) {
+                                                                                          const LoadOptions&  loadOptions ) {
     return LoadImageFromGLITexture( pNode, srcImg, loadOptions );
 }
 
@@ -424,7 +424,7 @@ VkImageViewType ToImgViewType( const gli::target eTextureTarget ) {
     }
 }
 
-apemodevk::SourceImage::SourceImage( gli::texture texture ) : Texture( std::move( texture ) ) {
+apemodevk::SourceImage::SourceImage( gli::texture texture ) : Texture( eastl::move( texture ) ) {
 }
 
 VkImageViewType apemodevk::SourceImage::GetImageViewType( ) const {
@@ -498,7 +498,7 @@ apemodevk::unique_ptr< apemodevk::ISourceImage > apemodevk::ImageDecoder::Create
         return nullptr;
     }
 
-    auto sourceImage = make_unique< SourceImage >( std::move( texture ) );
+    auto sourceImage = make_unique< SourceImage >( eastl::move( texture ) );
     return unique_ptr< ISourceImage >( sourceImage.release( ) );
 }
 
@@ -526,7 +526,7 @@ apemodevk::unique_ptr< apemodevk::ISourceImage > apemodevk::ImageDecoder::Decode
         return nullptr;
     }
 
-    auto sourceImage = make_unique< SourceImage >( std::move( texture ) );
+    auto sourceImage = make_unique< SourceImage >( eastl::move( texture ) );
     return unique_ptr< ISourceImage >( sourceImage.release( ) );
 }
 

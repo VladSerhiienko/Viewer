@@ -11,8 +11,8 @@ namespace apemodevk {
 
     class SamplerManager {
     public:
-        apemodevk::GraphicsDevice*   pNode;
-        std::vector< StoredSampler > StoredSamplers;
+        apemodevk::GraphicsDevice*         pNode;
+        apemodevk::vector< StoredSampler > StoredSamplers;
 
         bool     Recreate( apemodevk::GraphicsDevice* pNode );
         void     Release( apemodevk::GraphicsDevice* pNode );

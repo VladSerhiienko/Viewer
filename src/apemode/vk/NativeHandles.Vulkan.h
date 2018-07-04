@@ -827,8 +827,8 @@ namespace apemodevk
 
     template <>
     struct THandle< VkDescriptorSetLayout > : public THandleBase< VkDescriptorSetLayout > {
-        using Vector             = std::vector< THandle< VkDescriptorSetLayout > >;
-        using NativeHandleVector = std::vector< VkDescriptorSetLayout >;
+        using Vector             = apemodevk::vector< THandle< VkDescriptorSetLayout > >;
+        using NativeHandleVector = apemodevk::vector< VkDescriptorSetLayout >;
 
         THandle( ) {
             Handle                 = VK_NULL_HANDLE;

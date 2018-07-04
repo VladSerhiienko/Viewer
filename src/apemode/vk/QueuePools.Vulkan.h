@@ -69,7 +69,7 @@ namespace apemodevk {
 
         VkDevice                           pDevice         = VK_NULL_HANDLE;
         VkPhysicalDevice                   pPhysicalDevice = VK_NULL_HANDLE;
-        std::vector< CommandBufferInPool > CmdBuffers;
+        apemodevk::vector< CommandBufferInPool > CmdBuffers;
 
         CommandBufferFamilyPool( )                                 = default;
         CommandBufferFamilyPool( CommandBufferFamilyPool&& other ) = default;
@@ -91,7 +91,7 @@ namespace apemodevk {
         VkDevice                               pDevice         = VK_NULL_HANDLE;
         VkPhysicalDevice                       pPhysicalDevice = VK_NULL_HANDLE;
         uint32_t                               QueueFamilyId   = 0;
-        std::vector< CommandBufferFamilyPool > Pools;
+        apemodevk::vector< CommandBufferFamilyPool > Pools;
 
         CommandBufferPool( ) = default;
         ~CommandBufferPool( );
@@ -151,7 +151,7 @@ namespace apemodevk {
     public:
         VkDevice                   pDevice         = VK_NULL_HANDLE;
         VkPhysicalDevice           pPhysicalDevice = VK_NULL_HANDLE;
-        std::vector< QueueInPool > Queues;
+        apemodevk::vector< QueueInPool > Queues;
 
         QueueFamilyPool( )                              = default;
         QueueFamilyPool( QueueFamilyPool&& other )      = default;
@@ -190,7 +190,7 @@ namespace apemodevk {
     public:
         VkDevice                       pDevice         = VK_NULL_HANDLE;
         VkPhysicalDevice               pPhysicalDevice = VK_NULL_HANDLE;
-        std::vector< QueueFamilyPool > Pools;
+        apemodevk::vector< QueueFamilyPool > Pools;
 
         QueuePool( ) = default;
         ~QueuePool( );

@@ -48,6 +48,11 @@
                 "${workspaceRoot}/dependencies/VulkanMemoryAllocator",
                 "${workspaceRoot}/dependencies/sdl2/include",
                 "${workspaceRoot}/dependencies/eastl/include",
+                "${workspaceRoot}/dependencies/eastl/test/packages/EAAssert/include",
+                "${workspaceRoot}/dependencies/eastl/test/packages/EABase/include",
+                "${workspaceRoot}/dependencies/eastl/test/packages/EABase/include/Common",
+                "${workspaceRoot}/dependencies/eastl/test/packages/EAMain/include",
+                "${workspaceRoot}/dependencies/eastl/test/packages/EAStdC/include",
                 "${workspaceRoot}/dependencies/DirectXMath",
                 "${workspaceRoot}/dependencies/DirectXMath/Inc",
                 "${workspaceRoot}/dependencies/argh",
@@ -65,7 +70,11 @@
                 "/usr/lib/clang/5.0.1/include",
                 "/usr/include/c++/6.4.0/include"
             ],
-            "defines": [ "_DEBUG=1", "DEBUG=1", "_M_X64=1" ],
+            "defines": [
+                "_DEBUG=1",
+                "DEBUG=1",
+                "_M_X64=1"
+            ],
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
@@ -88,6 +97,11 @@
                     "${workspaceRoot}/dependencies/VulkanMemoryAllocator",
                     "${workspaceRoot}/dependencies/sdl2/include",
                     "${workspaceRoot}/dependencies/eastl/include",
+                    "${workspaceRoot}/dependencies/eastl/test/packages/EAAssert/include",
+                    "${workspaceRoot}/dependencies/eastl/test/packages/EABase/include",
+                    "${workspaceRoot}/dependencies/eastl/test/packages/EABase/include/Common",
+                    "${workspaceRoot}/dependencies/eastl/test/packages/EAMain/include",
+                    "${workspaceRoot}/dependencies/eastl/test/packages/EAStdC/include",
                     "${workspaceRoot}/dependencies/DirectXMath",
                     "${workspaceRoot}/dependencies/DirectXMath/Inc",
                     "${workspaceRoot}/dependencies/argh",
@@ -134,6 +148,11 @@
                 "${workspaceRoot}/dependencies/VulkanMemoryAllocator",
                 "${workspaceRoot}/dependencies/sdl2/include",
                 "${workspaceRoot}/dependencies/eastl/include",
+                "${workspaceRoot}/dependencies/eastl/test/packages/EAAssert/include",
+                "${workspaceRoot}/dependencies/eastl/test/packages/EABase/include",
+                "${workspaceRoot}/dependencies/eastl/test/packages/EABase/include/Common",
+                "${workspaceRoot}/dependencies/eastl/test/packages/EAMain/include",
+                "${workspaceRoot}/dependencies/eastl/test/packages/EAStdC/include",
                 "${workspaceRoot}/dependencies/DirectXMath",
                 "${workspaceRoot}/dependencies/DirectXMath/Inc",
                 "${workspaceRoot}/dependencies/argh",
@@ -151,7 +170,11 @@
                 "/usr/include",
                 "/usr/local/include"
             ],
-            "defines": [ "_DEBUG=1", "DEBUG=1", "_M_X64=1" ],
+            "defines": [
+                "_DEBUG=1",
+                "DEBUG=1",
+                "_M_X64=1"
+            ],
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
@@ -174,6 +197,11 @@
                     "${workspaceRoot}/dependencies/VulkanMemoryAllocator",
                     "${workspaceRoot}/dependencies/sdl2/include",
                     "${workspaceRoot}/dependencies/eastl/include",
+                    "${workspaceRoot}/dependencies/eastl/test/packages/EAAssert/include",
+                    "${workspaceRoot}/dependencies/eastl/test/packages/EABase/include",
+                    "${workspaceRoot}/dependencies/eastl/test/packages/EABase/include/Common",
+                    "${workspaceRoot}/dependencies/eastl/test/packages/EAMain/include",
+                    "${workspaceRoot}/dependencies/eastl/test/packages/EAStdC/include",
                     "${workspaceRoot}/dependencies/DirectXMath",
                     "${workspaceRoot}/dependencies/DirectXMath/Inc",
                     "${workspaceRoot}/dependencies/argh",

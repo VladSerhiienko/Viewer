@@ -142,7 +142,7 @@ bool apemodevk::Surface::SetSurfaceProperties( ) {
         uint32_t surfaceFormatCount = 0;
         if ( VK_SUCCESS == CheckedResult( vkGetPhysicalDeviceSurfaceFormatsKHR( pPhysicalDevice, hSurface, &surfaceFormatCount, nullptr ) ) ) {
 
-            std::vector< VkSurfaceFormatKHR > SurfaceFormats( surfaceFormatCount );
+            apemodevk::vector< VkSurfaceFormatKHR > SurfaceFormats( surfaceFormatCount );
             if ( VK_SUCCESS == CheckedResult( vkGetPhysicalDeviceSurfaceFormatsKHR( pPhysicalDevice, hSurface, &surfaceFormatCount, SurfaceFormats.data( ) ) ) ) {
                 const bool bCanChooseAny = surfaceFormatCount == 1 && SurfaceFormats[ 0 ].format == VK_FORMAT_UNDEFINED;
                 eColorFormat             = bCanChooseAny ? VK_FORMAT_B8G8R8A8_UNORM : SurfaceFormats[ 0 ].format;
@@ -156,7 +156,7 @@ bool apemodevk::Surface::SetSurfaceProperties( ) {
         uint32_t presentModeCount = 0;
         if ( VK_SUCCESS == CheckedResult( vkGetPhysicalDeviceSurfacePresentModesKHR( pPhysicalDevice, hSurface, &presentModeCount, nullptr ) ) ) {
 
-            std::vector< VkPresentModeKHR > presentModes;
+            apemodevk::vector< VkPresentModeKHR > presentModes;
             presentModes.resize( presentModeCount );
 
             if ( VK_SUCCESS == CheckedResult( vkGetPhysicalDeviceSurfacePresentModesKHR( pPhysicalDevice, hSurface, &presentModeCount, presentModes.data( ) ) ) ) {

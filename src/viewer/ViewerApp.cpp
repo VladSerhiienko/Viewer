@@ -217,7 +217,7 @@ bool ViewerApp::Initialize(  ) {
             samplerCreateInfo.magFilter               = VK_FILTER_LINEAR;
             samplerCreateInfo.minFilter               = VK_FILTER_LINEAR;
             samplerCreateInfo.minLod                  = 0;
-            samplerCreateInfo.maxLod                  = float( RadianceLoadedImg->ImageCreateInfo.mipLevels );
+            samplerCreateInfo.maxLod                  = float( RadianceLoadedImg->ImgCreateInfo.mipLevels );
             samplerCreateInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
             samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
             samplerCreateInfo.unnormalizedCoordinates = false;
@@ -260,7 +260,7 @@ bool ViewerApp::Initialize(  ) {
             samplerCreateInfo.magFilter               = VK_FILTER_LINEAR;
             samplerCreateInfo.minFilter               = VK_FILTER_LINEAR;
             samplerCreateInfo.minLod                  = 0;
-            samplerCreateInfo.maxLod                  = float( IrradianceLoadedImg->ImageCreateInfo.mipLevels );
+            samplerCreateInfo.maxLod                  = float( IrradianceLoadedImg->ImgCreateInfo.mipLevels );
             samplerCreateInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
             samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
             samplerCreateInfo.unnormalizedCoordinates = false;
@@ -383,7 +383,7 @@ bool ViewerApp::Initialize(  ) {
         pSkybox                = apemode::make_unique< apemodevk::Skybox >( );
         pSkybox->pSampler      = pRadianceCubeMapSampler;
         pSkybox->pImgView      = RadianceLoadedImg->hImgView;
-        pSkybox->Dimension     = RadianceLoadedImg->ImageCreateInfo.extent.width;
+        pSkybox->Dimension     = RadianceLoadedImg->ImgCreateInfo.extent.width;
         pSkybox->eImgLayout    = RadianceLoadedImg->eImgLayout;
         pSkybox->Exposure      = 3;
         pSkybox->LevelOfDetail = 0;
@@ -783,11 +783,11 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         sceneRenderParameters.RadianceMap.eImgLayout   = RadianceLoadedImg->eImgLayout;
         sceneRenderParameters.RadianceMap.pImgView     = RadianceLoadedImg->hImgView;
         sceneRenderParameters.RadianceMap.pSampler     = pRadianceCubeMapSampler;
-        sceneRenderParameters.RadianceMap.MipLevels    = RadianceLoadedImg->ImageCreateInfo.mipLevels;
+        sceneRenderParameters.RadianceMap.MipLevels    = RadianceLoadedImg->ImgCreateInfo.mipLevels;
         sceneRenderParameters.IrradianceMap.eImgLayout = IrradianceLoadedImg->eImgLayout;
         sceneRenderParameters.IrradianceMap.pImgView   = IrradianceLoadedImg->hImgView;
         sceneRenderParameters.IrradianceMap.pSampler   = pIrradianceCubeMapSampler;
-        sceneRenderParameters.IrradianceMap.MipLevels  = IrradianceLoadedImg->ImageCreateInfo.mipLevels;
+        sceneRenderParameters.IrradianceMap.MipLevels  = IrradianceLoadedImg->ImgCreateInfo.mipLevels;
         sceneRenderParameters.LightColor               = LightColor;
         sceneRenderParameters.LightDirection           = LightDirection;
         XMStoreFloat4x4( &sceneRenderParameters.ProjMatrix, projMatrix );

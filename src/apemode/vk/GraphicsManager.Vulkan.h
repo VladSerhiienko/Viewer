@@ -93,7 +93,7 @@ namespace apemodevk {
         ILogger*                        pLogger;
         APIVersion                      Version;
         THandle< VkInstance >           hInstance;
-        std::vector< VkPhysicalDevice > ppAdapters;
+        apemodevk::vector< VkPhysicalDevice > ppAdapters;
         VkAllocationCallbacks           AllocCallbacks;
 
         struct {

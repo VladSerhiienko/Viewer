@@ -24,7 +24,7 @@ namespace apemodevk {
             VkMemoryPropertyFlags      eMemoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
 
 #if _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges
-            std::vector< VkMappedMemoryRange > Ranges;
+            apemodevk::vector< VkMappedMemoryRange > Ranges;
 #else
             VkMappedMemoryRange Range;
 #endif
@@ -62,7 +62,7 @@ namespace apemodevk {
         VkMemoryPropertyFlags  eMemoryPropertyFlags = VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT;
         uint32_t               MinAlignment         = 256;
         uint32_t               MaxPageRange         = 65536; /* 256 * 256 */
-        std::vector< PagePtr > Pages;
+        apemodevk::vector< PagePtr > Pages;
 
         /**
          * @param pInLogicalDevice Logical device.
