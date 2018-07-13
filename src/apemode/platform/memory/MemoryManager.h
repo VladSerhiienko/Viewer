@@ -67,8 +67,9 @@ namespace apemode {
 
 } // namespace apemode
 
-#ifdef _WIN32
 // Lots of warnings on Windows, MSVC ignores throw specifications, except declspec(nothrow).
+// For C++17 don't use dynamic exception specifications.
+#if defined(_WIN32) || __cplusplus >= 201703L
 #ifndef APEMODE_THROW_BAD_ALLOC
 #define APEMODE_THROW_BAD_ALLOC
 #endif
