@@ -9,6 +9,10 @@ configuration: Release
 init:
   - git config --global core.autocrlf true
 install:
+  - ps: Get-ChildItem "dependencies" -Recurse | Remove-Item
+  - ps: Get-ChildItem "build_windows_amd64_msvc" -Recurse | Remove-Item
+  # - ps: Remove-Item "dependencies" -Recurse -ErrorAction Ignore
+  # - ps: Remove-Item "build_windows_amd64_msvc" -Recurse -ErrorAction Ignore
   - ps: (Get-Content CMakeLists.txt).replace("git@github.com:","https://github.com/") | Set-Content CMakeLists.txt
   - ps: md installs
   - ps: cd installs
@@ -19,8 +23,6 @@ install:
 environment:
   VK_SDK_PATH: "C:/VulkanSDK/1.1.73.0"
 before_build:
-  - ps: Remove-Item dependencies -Recurse -ErrorAction Ignore
-  - ps: Remove-Item build_windows_amd64_msvc -Recurse -ErrorAction Ignore
   - cmake -G "Visual Studio 15 2017 Win64" -Bbuild_windows_amd64_msvc -H.
 build:
   project: build_windows_amd64_msvc/viewer.sln
