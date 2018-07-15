@@ -1,6 +1,7 @@
 #pragma once
 
 #include <MemoryManager.h>
+#include <MTScheduler.h>
 
 #pragma warning( push )
 #pragma warning( disable: 4244 )
@@ -40,8 +41,9 @@ namespace apemode {
         static void      OnMain( int argc, const char** argv );
         static void      OnExit( );
 
-        spdlog::logger*  GetLogger( );
-        argh::parser*    GetArgs( );
+        spdlog::logger*    GetLogger( );
+        argh::parser*      GetArgs( );
+        MT::TaskScheduler* GetTaskScheduler( );
     };
 
     /**

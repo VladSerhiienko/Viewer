@@ -53,7 +53,6 @@ namespace apemodevk
 
     struct CityHash64Wrapper {
         typedef uint64_t ValueType;
-        typedef std::binary_function< ValueType, ValueType, bool > CmpOpBase;
 
         ValueType Value;
 
@@ -123,22 +122,22 @@ namespace apemodevk
             return Value;
         }
 
-        struct CmpOpLess : public CmpOpBase {
+        struct CmpOpLess {
             bool operator( )( ValueType HashA, ValueType HashB ) const {
                 return HashA < HashB;
             }
         };
-        struct CmpOpGreater : public CmpOpBase {
+        struct CmpOpGreater {
             bool operator( )( ValueType HashA, ValueType HashB ) const {
                 return HashA > HashB;
             }
         };
-        struct CmpOpGreaterEqual : public CmpOpBase {
+        struct CmpOpGreaterEqual {
             bool operator( )( ValueType HashA, ValueType HashB ) const {
                 return HashA >= HashB;
             }
         };
-        struct CmpOpEqual : public CmpOpBase {
+        struct CmpOpEqual {
             bool operator( )( ValueType HashA, ValueType HashB ) const {
                 return HashA == HashB;
             }

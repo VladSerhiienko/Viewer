@@ -19,8 +19,9 @@
 namespace apemode {
     class ImplementedAppState : public AppState {
     public:
-        std::shared_ptr< spdlog::logger > Logger; /* Prints to console and file */
-        argh::parser                      Cmdl;   /* User parameters */
+        std::shared_ptr< spdlog::logger > Logger;        /* Prints to console and file */
+        argh::parser                      Cmdl;          /* User parameters */
+        MT::TaskScheduler                 TaskScheduler; /* Task scheduler */
 
         ImplementedAppState( int args, const char** argv );
         virtual ~ImplementedAppState( );
@@ -39,6 +40,10 @@ spdlog::logger* apemode::AppState::GetLogger( ) {
 
 argh::parser* apemode::AppState::GetArgs( ) {
     return &gState->Cmdl;
+}
+
+MT::TaskScheduler* apemode::AppState::GetTaskScheduler( ) {
+    return &gState->TaskScheduler;
 }
 
 void apemode::AppState::OnMain( int args, const char** ppArgs ) {
@@ -117,7 +122,8 @@ std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, s
 
 apemode::ImplementedAppState::ImplementedAppState( int argc, const char** argv )
     : Logger( CreateLogger( spdlog::level::trace, ComposeLogFile( ) ) )
-    , Cmdl( argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION ) {
+    , Cmdl( argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION )
+    , TaskScheduler( ) {
 }
 
 apemode::ImplementedAppState::~ImplementedAppState( ) {

@@ -161,15 +161,37 @@ namespace apemodevk {
             bool               operator==( const StandardAllocator & );
             bool               operator!=( const StandardAllocator & );
             void *             allocate( size_t n, int /*flags*/ = 0 );
-            void *             allocate( size_t n, size_t alignment, size_t alignmentOffset, int /*flags*/ = 0 );
+            void *             allocate( size_t n, size_t alignment, size_t /*alignmentOffset*/, int /*flags*/ = 0 );
             void               deallocate( void *p, size_t /*n*/ );
             const char *       get_name( ) const;
             void               set_name( const char * );
+        };
+
+        void GetPrevMemoryAllocationScope( const char *&pszSourceFile, unsigned int &sourceLine, const char *&pszSourceFunc );
+        void StartMemoryAllocationScope( const char *pszSourceFile, const unsigned int sourceLine, const char *pszSourceFunc );
+        void EndMemoryAllocationScope( const char *pszSourceFile, const unsigned int sourceLine, const char *pszSourceFunc );
+
+        struct MemoryAllocationScope {
+            const char * pszSourceFile;
+            unsigned int SourceLine;
+            const char * pszSourceFunc;
+
+            MemoryAllocationScope( const char *pszInSourceFile, const unsigned int InSourceLine, const char *pszInSourceFunc ) {
+                GetPrevMemoryAllocationScope( pszSourceFile, SourceLine, pszSourceFunc );
+                StartMemoryAllocationScope( pszInSourceFile, InSourceLine, pszInSourceFunc );
+            }
+
+            ~MemoryAllocationScope( ) {
+                EndMemoryAllocationScope( pszSourceFile, SourceLine, pszSourceFunc );
+            }
         };
     } // namespace platform
 
     template < typename T >
     using unique_ptr = eastl::unique_ptr< T, platform::TDelete< T > >;
+
+    template < typename T >
+    using vector = eastl::vector< T, platform::StandardAllocator >;
 
     template < typename T, typename... Args >
     unique_ptr< T > make_unique( Args &&... args ) {
@@ -180,40 +202,11 @@ namespace apemodevk {
     std::unique_ptr< T > std_make_unique( Args &&... args ) {
         return  std::unique_ptr< T >( new T( eastl::forward< Args >( args )... ) );
     }
-
-    template < typename T >
-    using vector = eastl::vector< T, platform::StandardAllocator >;
 }
 
 #define apemodevk_max( a, b )( ( a ) > ( b ) ? ( a ) : ( b ) )
 #define apemodevk_min( a, b )( ( a ) < ( b ) ? ( a ) : ( b ) )
-
-namespace apemodevk {
-    void GetPrevMemoryAllocationScope( const char *&pszSourceFile, unsigned int &sourceLine, const char *&pszSourceFunc );
-    void StartMemoryAllocationScope( const char *pszSourceFile, const unsigned int sourceLine, const char *pszSourceFunc );
-    void EndMemoryAllocationScope( const char *pszSourceFile, const unsigned int sourceLine, const char *pszSourceFunc );
-
-    struct MemoryAllocationScope {
-        struct CodeLocation {
-            const char * pszSourceFile;
-            unsigned int SourceLine;
-            const char * pszSourceFunc;
-        };
-
-        CodeLocation PrevLocation;
-
-        MemoryAllocationScope( const char *pszSourceFile, const unsigned int sourceLine, const char *pszSourceFunc ) {
-            GetPrevMemoryAllocationScope( PrevLocation.pszSourceFile, PrevLocation.SourceLine, PrevLocation.pszSourceFunc );
-            StartMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
-        }
-
-        ~MemoryAllocationScope( ) {
-            EndMemoryAllocationScope( PrevLocation.pszSourceFile, PrevLocation.SourceLine, PrevLocation.pszSourceFunc );
-        }
-    };
-} // namespace apemodevk
-
-#define apemodevk_memory_allocation_scope apemodevk::MemoryAllocationScope memoryAllocationScope( __FILE__, __LINE__, __FUNCTION__ )
+#define apemodevk_memory_allocation_scope apemodevk::platform::MemoryAllocationScope memoryAllocationScope( __FILE__, __LINE__, __FUNCTION__ )
 
 namespace apemodevk {
 

@@ -683,13 +683,21 @@ void apemodevk::platform::Log( apemodevk::platform::LogLevel eLevel, char const*
     GetGraphicsManager( )->GetLogger( )->Log( eLevel, pszMsg );
 }
 
-void apemodevk::GetPrevMemoryAllocationScope( const char*&  pszSourceFile, unsigned int& sourceLine, const char*&  pszSourceFunc ) {
+void apemodevk::platform::GetPrevMemoryAllocationScope( const char*&  pszSourceFile,
+                                                        unsigned int& sourceLine,
+                                                        const char*&  pszSourceFunc ) {
     return GetGraphicsManager( )->GetAllocator( )->GetPrevMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
 }
-void apemodevk::StartMemoryAllocationScope( const char* pszSourceFile, const unsigned int sourceLine, const char* pszSourceFunc ) {
+
+void apemodevk::platform::StartMemoryAllocationScope( const char*        pszSourceFile,
+                                                      const unsigned int sourceLine,
+                                                      const char*        pszSourceFunc ) {
     return GetGraphicsManager( )->GetAllocator( )->StartMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
 }
-void apemodevk::EndMemoryAllocationScope( const char* pszSourceFile, const unsigned int sourceLine, const char* pszSourceFunc ) {
+
+void apemodevk::platform::EndMemoryAllocationScope( const char*        pszSourceFile,
+                                                    const unsigned int sourceLine,
+                                                    const char*        pszSourceFunc ) {
     return GetGraphicsManager( )->GetAllocator( )->EndMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
 }
 
@@ -699,7 +707,8 @@ void* operator new[]( std::size_t               size,
                       const char*               pszSourceFile,
                       const unsigned int        sourceLine,
                       const char*               pszSourceFunc ) noexcept {
-    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Malloc( size, apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
+    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Malloc(
+        size, apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
 }
 
 void* operator new[]( std::size_t               size,
@@ -707,7 +716,8 @@ void* operator new[]( std::size_t               size,
                       const char*               pszSourceFile,
                       const unsigned int        sourceLine,
                       const char*               pszSourceFunc ) throw( ) {
-    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Malloc( size, apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
+    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Malloc(
+        size, apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
 }
 
 void operator delete[]( void*                     pMemory,
@@ -715,7 +725,8 @@ void operator delete[]( void*                     pMemory,
                         const char*               pszSourceFile,
                         const unsigned int        sourceLine,
                         const char*               pszSourceFunc ) throw( ) {
-    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Free( pMemory, __FILE__, __LINE__, __FUNCTION__ );
+    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Free(
+        pMemory, __FILE__, __LINE__, __FUNCTION__ );
 }
 
 void* operator new( std::size_t               size,
@@ -724,7 +735,8 @@ void* operator new( std::size_t               size,
                     const char*               pszSourceFile,
                     const unsigned int        sourceLine,
                     const char*               pszSourceFunc ) noexcept {
-    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Malloc( size, apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
+    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Malloc(
+        size, apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
 }
 
 void* operator new( std::size_t               size,
@@ -732,7 +744,8 @@ void* operator new( std::size_t               size,
                     const char*               pszSourceFile,
                     const unsigned int        sourceLine,
                     const char*               pszSourceFunc ) throw( ) {
-    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Malloc( size, apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
+    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Malloc(
+        size, apemodevk::kAlignment, __FILE__, __LINE__, __FUNCTION__ );
 }
 
 void operator delete( void*                     pMemory,
@@ -740,7 +753,8 @@ void operator delete( void*                     pMemory,
                       const char*               pszSourceFile,
                       const unsigned int        sourceLine,
                       const char*               pszSourceFunc ) throw( ) {
-    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Free( pMemory, __FILE__, __LINE__, __FUNCTION__ );
+    return apemodevk::GetGraphicsManager( )->GetAllocator( )->Free(
+        pMemory, __FILE__, __LINE__, __FUNCTION__ );
 }
 
 apemodevk::platform::StandardAllocator::StandardAllocator( const char* ) {

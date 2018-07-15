@@ -323,6 +323,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             bufferFillIntent.eDstAccessFlags = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 
             bufferFillIntents.push_back( bufferFillIntent );
+            totalBytesRequired += pSrcMesh->vertices( )->size( );
 
             bufferFillIntent.pDstBuffer      = pMeshAsset->hIndexBuffer.Handle.pBuffer;
             bufferFillIntent.pSrcBufferData  = pSrcMesh->indices( )->data( );
@@ -330,8 +331,6 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             bufferFillIntent.eDstAccessFlags = VK_ACCESS_INDEX_READ_BIT;
 
             bufferFillIntents.push_back( bufferFillIntent );
-
-            totalBytesRequired += pSrcMesh->vertices( )->size( );
             totalBytesRequired += pSrcMesh->indices( )->size( );
         }
 

@@ -459,6 +459,8 @@ message(STATUS "VulkanMemoryAllocator_source_dir = ${VulkanMemoryAllocator_sourc
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG" )
 set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG" )
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_CRTDBG_MAP_ALLOC -DMT_INSTRUMENTED_BUILD")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DMT_INSTRUMENTED_BUILD")
 
 add_definitions("-DAPEMODE_NO_GLOBAL_NEW_DELETE_OP_OVERRIDES")
 
@@ -717,6 +719,7 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
+    ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
     ${shaderc_source_dir}/libshaderc/include
     $ENV{VK_SDK_PATH}/include
 )
