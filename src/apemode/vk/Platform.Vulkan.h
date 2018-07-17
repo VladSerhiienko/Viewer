@@ -141,6 +141,7 @@ namespace apemodevk {
 
 #include <EASTL/unique_ptr.h>
 #include <EASTL/vector.h>
+#include <EASTL/string.h>
 
 namespace apemodevk {
 
@@ -192,6 +193,11 @@ namespace apemodevk {
 
     template < typename T >
     using vector = eastl::vector< T, platform::StandardAllocator >;
+
+    template < typename T >
+    using basic_string = eastl::basic_string< T, platform::StandardAllocator >;
+
+    using string8 = basic_string< char8_t >;
 
     template < typename T, typename... Args >
     unique_ptr< T > make_unique( Args &&... args ) {

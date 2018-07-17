@@ -78,6 +78,16 @@ namespace apemodevk {
         XMFLOAT4 LightColor;
     };
 
+    struct LoadImageTask {
+        MT_DECLARE_TASK( LoadImageTask,                   //
+                         MT::StackRequirements::STANDARD, //
+                         MT::TaskPriority::NORMAL,        //
+                         MT::Color::Green );              //
+
+        void Do( MT::FiberContext& context ) {
+        }
+    };
+
     struct SceneMeshDeviceAssetVk : apemode::SceneDeviceAsset {
         THandle< BufferComposite > hVertexBuffer;
         THandle< BufferComposite > hIndexBuffer;
@@ -252,6 +262,8 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
     if ( nullptr == pScene ||  nullptr == pParamsBase ) {
         return false;
     }
+
+    MT::TaskGroup updateSceneTaskGroup = apemode::AppState::Get()->GetTaskScheduler()->CreateGroup();
 
     bool bDeviceChanged = false;
     auto pParams = (SceneUpdateParametersVk*) pParamsBase;

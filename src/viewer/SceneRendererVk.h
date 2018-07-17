@@ -6,6 +6,7 @@
 #include <DescriptorPool.Vulkan.h>
 #include <BufferPools.Vulkan.h>
 #include <SceneRendererBase.h>
+#include <SceneLoaderVk.h>
 #include <ImageLoader.Vulkan.h>
 #include <SamplerManager.Vulkan.h>
 

@@ -106,21 +106,23 @@ gli::texture LoadTexture( const uint8_t*                                        
             // "DDS "
             // https://github.com/Microsoft/DirectXTex/blob/master/DDSTextureLoader/DDSTextureLoader.cpp
             const uint32_t DDS_MAGIC = 0x20534444;
-            if ( DDS_MAGIC == *reinterpret_cast< const uint32_t* >( pFileContent ) )
-                eDriver = eImageDecodeDriver_GLI;
 
             // https://github.com/ARM-software/astc-encoder/blob/master/Source/astc_ktx_dds.cpp
             // Magic 12-byte sequence that must appear at the beginning of every KTX file.
             // '«', 'K', 'T', 'X', ' ', '1', '1', '»', '\r', '\n', '\x1A', '\n'
             const uint8_t KTX_MAGIC[ 12 ] = {0xAB, 0x4B, 0x54, 0x58, 0x20, 0x31, 0x31, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A};
-            if ( memcmp( KTX_MAGIC, pFileContent, sizeof( KTX_MAGIC ) ) == 0 )
-                eDriver = eImageDecodeDriver_GLI;
 
             // http://www.libpng.org/pub/png/spec/1.2/PNG-Rationale.html#R.PNG-file-signature
             // 89  50  4e  47  0d  0a  1a  0a
             const uint8_t PNG_MAGIC[ 8 ] = {0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A};
-            if ( memcmp( PNG_MAGIC, pFileContent, sizeof( PNG_MAGIC ) ) == 0 )
+
+            if ( DDS_MAGIC == *reinterpret_cast< const uint32_t* >( pFileContent ) ) {
+                eDriver = eImageDecodeDriver_GLI;
+            } else if ( memcmp( KTX_MAGIC, pFileContent, sizeof( KTX_MAGIC ) ) == 0 ) {
+                eDriver = eImageDecodeDriver_GLI;
+            } else if ( memcmp( PNG_MAGIC, pFileContent, sizeof( PNG_MAGIC ) ) == 0 ) {
                 eDriver = eImageDecodeDriver_STBI;
+            }
 
         } break;
 

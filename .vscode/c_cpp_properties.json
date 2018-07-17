@@ -65,6 +65,7 @@
                 "${workspaceRoot}/dependencies/spdlog/include",
                 "${workspaceRoot}/dependencies/shaderc/libshaderc/include",
                 "${workspaceRoot}/dependencies/FbxPipeline/FbxPipeline/generated",
+                "${workspaceRoot}/dependencies/TaskScheduler/Scheduler/Include",
                 "/home/user/vulkan/VulkanSDK/1.1.73.0/x86_64/include",
                 "/home/user/vulkan/VulkanSDK/1.1.73.0/source/shaderc/src/libshaderc/include",
                 "/usr/lib/clang/5.0.1/include",
@@ -114,6 +115,7 @@
                     "${workspaceRoot}/dependencies/spdlog/include",
                     "${workspaceRoot}/dependencies/shaderc/libshaderc/include",
                     "${workspaceRoot}/dependencies/FbxPipeline/FbxPipeline/generated",
+                    "${workspaceRoot}/dependencies/TaskScheduler/Scheduler/Include",
                     "/home/user/vulkan/VulkanSDK/1.1.73.0/x86_64/include",
                     "/home/user/vulkan/VulkanSDK/1.1.73.0/source/shaderc/src/libshaderc/include",
                     "/usr/lib/clang/5.0.1/include",
@@ -165,6 +167,7 @@
                 "${workspaceRoot}/dependencies/spdlog/include",
                 "${workspaceRoot}/dependencies/shaderc/libshaderc/include",
                 "${workspaceRoot}/dependencies/FbxPipeline/FbxPipeline/generated",
+                "${workspaceRoot}/dependencies/TaskScheduler/Scheduler/Include",
                 "/home/user/vulkan/VulkanSDK/1.1.73.0/x86_64/include",
                 "/home/user/vulkan/VulkanSDK/1.1.73.0/source/shaderc/src/libshaderc/include",
                 "/usr/include",
@@ -214,6 +217,7 @@
                     "${workspaceRoot}/dependencies/spdlog/include",
                     "${workspaceRoot}/dependencies/shaderc/libshaderc/include",
                     "${workspaceRoot}/dependencies/FbxPipeline/FbxPipeline/generated",
+                    "${workspaceRoot}/dependencies/TaskScheduler/Scheduler/Include",
                     "/home/user/vulkan/VulkanSDK/1.1.73.0/x86_64/include",
                     "/home/user/vulkan/VulkanSDK/1.1.73.0/source/shaderc/src/libshaderc/include",
                     "/usr/include",
@@ -251,7 +255,8 @@
                 "${workspaceRoot}/dependencies/flatbuffers/include",
                 "${workspaceRoot}/dependencies/spdlog/include",
                 "${workspaceRoot}/dependencies/shaderc/libshaderc/include",
-                "${workspaceRoot}/dependencies/FbxPipeline/FbxPipeline/generated"
+                "${workspaceRoot}/dependencies/FbxPipeline/FbxPipeline/generated",
+                "${workspaceRoot}/dependencies/TaskScheduler/Scheduler/Include"
             ],
             "defines": [
                 "_DEBUG",
@@ -283,7 +288,8 @@
                     "${workspaceRoot}/dependencies/flatbuffers/include",
                     "${workspaceRoot}/dependencies/spdlog/include",
                     "${workspaceRoot}/dependencies/shaderc/libshaderc/include",
-                    "${workspaceRoot}/dependencies/FbxPipeline/FbxPipeline/generated"
+                    "${workspaceRoot}/dependencies/FbxPipeline/FbxPipeline/generated",
+                    "${workspaceRoot}/dependencies/TaskScheduler/Scheduler/Include"
                 ],
                 "limitSymbolsToIncludedHeaders": true,
                 "databaseFilename": ""
