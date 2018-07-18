@@ -341,7 +341,8 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
 
     std::map< uint32_t, uint32_t > materialIdRemap;
 
-    if ( auto pMaterialsFb = pSrcScene->materials( ) ) {
+    auto pMaterialsFb = pSrcScene->materials( );
+    if ( FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMaterialsFb ) ) {
         pScene->Materials.reserve( materialIds.size( ) );
 
 #define APEMODE_SCENE_DUMP_MATERIAL_NAMES
