@@ -90,29 +90,28 @@ namespace apemode {
         XMFLOAT3 GeometricRotation    = XMFLOAT3{0, 0, 0};
         XMFLOAT3 GeometricScaling     = XMFLOAT3{0, 0, 0};
 
-        /**
-         * Checks for nans and zero scales.
+        /* Checks for nans and zero scales.
          * @return True if valid, false otherwise.
-         **/
+         */
         bool Validate( ) const;
 
-        /**
-         * Calculates local matrix.
+        /* Calculates local matrix.
          * @note Contributes node world matrix.
          * @return Node local matrix.
-         **/
+         */
         XMMATRIX CalculateLocalMatrix( ) const;
 
-        /**
-         * Calculate geometric transform.
+        /* Calculate geometric transform.
          * @note That is an object-offset 3ds Max concept,
          *       it does not influence scene hierarchy, though
          *       it contributes to node world transform.
          * @return Node geometric transform.
-         **/
+         */
         XMMATRIX CalculateGeometricMatrix( ) const;
     };
 
+    /* SceneAnimCurve class stores curve parameters and time-value keys.
+     */
     struct SceneAnimCurve {
         enum EProperty {
             eProperty_LclTranslation = 0,
