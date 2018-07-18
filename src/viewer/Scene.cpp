@@ -113,39 +113,40 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
     std::set< uint32_t >         meshIds;
     std::set< uint32_t >         materialIds;
 
-    if ( auto nodesFb = pSrcScene->nodes( ) ) {
-        pScene->Nodes.resize( nodesFb->size( ) );
-        pScene->Transforms.resize( nodesFb->size( ) );
+    auto pNodesFb = pSrcScene->nodes( );
+    if ( FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pNodesFb ) ) {
 
-        const float toRadsFactor = float( PI ) / 180.0f;
+        pScene->Nodes.resize( pNodesFb->size( ) );
+        pScene->Transforms.resize( pNodesFb->size( ) );
 
-        for ( auto nodeFb : *nodesFb ) {
-            assert( nodeFb );
+        for ( auto pNodeFb : *pNodesFb ) {
+            assert( pNodeFb );
 
-            auto &node = pScene->Nodes[ nodeFb->id( ) ];
+            auto &node = pScene->Nodes[ pNodeFb->id( ) ];
+            node.Id = pNodeFb->id( );
 
-            node.Id = nodeFb->id( );
-
-            if ( nodeFb->mesh_id( ) != uint32_t( -1 ) ) {
-                node.MeshId = nodeFb->mesh_id( );
-                meshIds.insert( nodeFb->mesh_id( ) );
+            if ( pNodeFb->mesh_id( ) != kInvalidId ) {
+                node.MeshId = pNodeFb->mesh_id( );
+                meshIds.insert( pNodeFb->mesh_id( ) );
             }
 
-            LogInfo( "Processing node: {}", GetStringProperty( pSrcScene, nodeFb->name_id( ) ).c_str( ) );
+            LogInfo( "Processing node: {}", GetStringProperty( pSrcScene, pNodeFb->name_id( ) ).c_str( ) );
 
-            if ( nodeFb->child_ids( ) && nodeFb->child_ids( )->size( ) )
-                node.ChildIds.reserve( nodeFb->child_ids( )->size( ) );
+            if ( pNodeFb->child_ids( ) && pNodeFb->child_ids( )->size( ) )
+                node.ChildIds.reserve( pNodeFb->child_ids( )->size( ) );
 
-            auto childIdsIt = nodeFb->child_ids( )->data( );
-            auto childIdsEndIt = childIdsIt + nodeFb->child_ids( )->size( );
+            auto childIdsIt = pNodeFb->child_ids( )->data( );
+            auto childIdsEndIt = childIdsIt + pNodeFb->child_ids( )->size( );
             std::transform( childIdsIt, childIdsEndIt, std::back_inserter( node.ChildIds ), [&]( uint32_t id ) {
                 auto &childNode = pScene->Nodes[ id ];
                 childNode.ParentId = node.Id;
                 return id;
             } );
 
-            auto &transform = pScene->Transforms[ nodeFb->id( ) ];
-            auto transformFb = ( *pSrcScene->transforms( ) )[ nodeFb->id( ) ];
+            auto & transform = pScene->Transforms[ pNodeFb->id( ) ];
+            auto transformFb = ( *pSrcScene->transforms( ) )[ pNodeFb->id( ) ];
+
+            constexpr float toRadsFactor = float( PI ) / 180.0f;
 
             transform.Translation.x          = ( transformFb->translation( ).x( ) );
             transform.Translation.y          = ( transformFb->translation( ).y( ) );
@@ -186,17 +187,62 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
 
             const bool bValidTransform = transform.Validate( );
             if ( !bValidTransform ) {
-                LogError( "Found invalid transform, node id {}", nodeFb->id( ) );
+                LogError( "Found invalid transform, node id {}", pNodeFb->id( ) );
+            }
+
+            auto pAnimCurveIdsFb = pNodeFb->anim_curve_ids( );
+            if ( FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pAnimCurveIdsFb ) ) {
+                node.AnimCurveIds.resize( pAnimCurveIdsFb->size( ) );
+                const size_t byteSize = pAnimCurveIdsFb->size( ) * sizeof( uint32_t );
+                memcpy( node.AnimCurveIds.data( ), pAnimCurveIdsFb->data( ), byteSize );
             }
         }
 
         pScene->UpdateMatrices( );
     }
 
-    if ( auto pMeshesFb = pSrcScene->meshes( ) ) {
-        {   /* All the subsets are stored in Scene instance, and can be referenced
-             * by the BaseSubset and SubsetCount values in SceneMeshSubset struct.
-             */
+    auto pAnimCurvesFb = pSrcScene->anim_curves( );
+    if ( FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pAnimCurvesFb ) ) {
+        pScene->AnimCurves.reserve( pAnimCurvesFb->size( ) );
+
+        for ( auto pAnimCurveFb : *pAnimCurvesFb ) {
+            assert( pAnimCurveFb );
+
+            LogInfo( "Processing curve: #{} -> {} {}",
+                     pAnimCurveFb->id( ),
+                     GetStringProperty( pSrcScene, pAnimCurveFb->name_id( ) ).c_str( ),
+                     pAnimCurveFb->keys( )->size( ) );
+
+            pScene->AnimCurves.emplace_back( );
+            auto &animCurve = pScene->AnimCurves.back( );
+
+            animCurve.AnimLayerId = pAnimCurveFb->anim_stack_id( );
+            animCurve.AnimStackId = pAnimCurveFb->anim_stack_id( );
+            animCurve.eChannel    = SceneAnimCurve::EChannel( pAnimCurveFb->channel( ) );
+            animCurve.eProp       = SceneAnimCurve::EProperty( pAnimCurveFb->property( ) );
+
+            assert( FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pAnimCurveFb->keys( ) ) );
+            animCurve.Keys.reserve( pAnimCurveFb->keys( )->size( ) );
+
+            std::transform( pAnimCurveFb->keys( )->begin( ),
+                            pAnimCurveFb->keys( )->end( ),
+                            std::back_inserter( animCurve.Keys ),
+                            [&]( const apemodefb::AnimCurveKeyFb *pKeyFb ) {
+                                assert( pKeyFb );
+
+                                apemodexm::XMFLOAT2 key;
+                                key.y = pKeyFb->time( );
+                                key.x = pKeyFb->value( );
+                                return key;
+                            } );
+        }
+    }
+
+    auto pMeshesFb = pSrcScene->meshes( );
+    if ( FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshesFb ) ) {
+        { /* All the subsets are stored in Scene instance, and can be referenced
+           * by the BaseSubset and SubsetCount values in SceneMeshSubset struct.
+           */
 
             size_t totalSubsetCount = 0;
             for ( auto meshId : meshIds ) {
@@ -212,10 +258,10 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
             auto pMeshFb = FlatbuffersTVectorGetAtIndex( pMeshesFb, meshId );
 
             assert( pMeshFb );
-            FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->vertices( ) );
-            FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->indices( ) );
-            FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->subsets( ) );
-            FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->submeshes( ) );
+            assert( FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->vertices( ) ) );
+            assert( FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->indices( ) ) );
+            assert( FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->subsets( ) ) );
+            assert( FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pMeshFb->submeshes( ) ) );
 
             pScene->Meshes.emplace_back( );
             auto &mesh = pScene->Meshes.back( );
@@ -242,7 +288,7 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
             std::for_each( pMeshFb->subsets( )->begin( ),
                            pMeshFb->subsets( )->end( ),
                            [&]( const apemodefb::SubsetFb *pSubsetFb ) {
-                               if ( pSubsetFb && ( uint32_t( -1 ) != pSubsetFb->material_id( ) ) ) {
+                               if ( pSubsetFb && ( kInvalidId != pSubsetFb->material_id( ) ) ) {
                                    materialIds.insert( pSubsetFb->material_id( ) );
                                }
                            } );
@@ -260,6 +306,33 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
 
                                 return subset;
                             } );
+
+            mesh.SkinId = pMeshFb->skin_id( );
+        }
+    }
+
+    auto pSkinsFb = pSrcScene->skins( );
+    if ( FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pSkinsFb ) ) {
+        pScene->Skins.resize( pSkinsFb->size() );
+
+        for ( auto &mesh : pScene->Meshes ) {
+            if ( mesh.SkinId != kInvalidId ) {
+                auto &skin = pScene->Skins[ mesh.SkinId ];
+
+                if ( auto pSkinFb = FlatbuffersTVectorGetAtIndex( pSkinsFb, mesh.SkinId ) ) {
+                    auto pLinkIdsFb = pSkinFb->links_ids( );
+                    if ( FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pLinkIdsFb ) ) {
+
+                        LogInfo( "Processing skin: {}: {}",
+                                 GetStringProperty( pSrcScene, pSkinFb->name_id( ) ).c_str( ),
+                                 pLinkIdsFb->size( ) );
+
+                        skin.LinkIds.resize( pLinkIdsFb->size( ) );
+                        const size_t byteSize = pLinkIdsFb->size() * sizeof( uint32_t );
+                        memcpy( skin.LinkIds.data( ), pLinkIdsFb->data( ), byteSize );
+                    }
+                }
+            }
         }
     }
 

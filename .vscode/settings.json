@@ -88,7 +88,8 @@
         "__config": "cpp",
         "__nullptr": "cpp",
         "cassert": "cpp",
-        "csetjmp": "cpp"
+        "csetjmp": "cpp",
+        "valarray": "cpp"
     },
 
     "licenser.license": "MIT",

@@ -9,7 +9,8 @@
             "cwd": "${workspaceRoot}/build_linux_x86_64_clang",
             "args": [
                 "--assets", "../assets/**",
-                "--scene", "/home/user/vserhiienko/models/rainier-ak-3d.fbxp",
+                "--scene", "/home/user/vserhiienko/models/bristleback.fbxp",
+                // "--scene", "/home/user/vserhiienko/models/rainier-ak-3d.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/warmonger_sword.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/dreamsong.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/zis-101a-sport-1938.fbxp",

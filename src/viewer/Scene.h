@@ -25,6 +25,8 @@ namespace apemode {
      */
     using SceneDeviceAssetPtr = apemode::unique_ptr< SceneDeviceAsset >;
 
+    static constexpr uint32_t kInvalidId = ~0U;
+
     /* Represents the material asset class.
      */
     struct SceneMaterialAsset {
@@ -37,7 +39,7 @@ namespace apemode {
     struct SceneMaterial {
         enum EAlphaMode { eAlphaMode_Solid, eAlphaMode_Blend };
 
-        uint32_t SrcId = uint32_t(-1);
+        uint32_t SrcId = kInvalidId;
         SceneDeviceAssetPtr pDeviceAsset;
 
         XMFLOAT4   BaseColorFactor = XMFLOAT4{0, 0, 0, 1};
@@ -53,16 +55,17 @@ namespace apemode {
      * Indicates a part of mesh and a material id for the pointed part of a mesh.
      */
     struct SceneMeshSubset {
-        uint32_t MaterialId = -1;
+        uint32_t MaterialId = kInvalidId;
         uint32_t BaseIndex  = 0;
         uint32_t IndexCount = 0;
     };
 
     struct SceneMesh {
-        uint32_t SrcId = uint32_t(-1);
         SceneDeviceAssetPtr pDeviceAsset;
 
-        uint32_t            BaseSubset     = -1;
+        uint32_t            SrcId          = kInvalidId;
+        uint32_t            SkinId         = kInvalidId;
+        uint32_t            BaseSubset     = kInvalidId;
         uint32_t            SubsetCount    = 0;
         XMFLOAT3            PositionOffset = XMFLOAT3{0, 0, 0};
         XMFLOAT3            PositionScale  = XMFLOAT3{1, 1, 1};
@@ -110,12 +113,50 @@ namespace apemode {
         XMMATRIX CalculateGeometricMatrix( ) const;
     };
 
+    struct SceneAnimCurve {
+        enum EProperty {
+            eProperty_LclTranslation = 0,
+            eProperty_RotationOffset,
+            eProperty_RotationPivot,
+            eProperty_PreRotation,
+            eProperty_PostRotation,
+            eProperty_LclRotation,
+            eProperty_ScalingOffset,
+            eProperty_ScalingPivot,
+            eProperty_LclScaling,
+            eProperty_GeometricTranslation,
+            eProperty_GeometricRotation,
+            eProperty_GeometricScaling,
+            ePropertyCount,
+        };
+
+        enum EChannel {
+            eChannel_X = 0,
+            eChannel_Y,
+            eChannel_Z,
+            eChannelCount,
+        };
+
+        SceneDeviceAssetPtr     pDeviceAsset;
+        uint32_t                Id          = kInvalidId;
+        uint32_t                AnimStackId = kInvalidId;
+        uint32_t                AnimLayerId = kInvalidId;
+        EProperty               eProp       = ePropertyCount;
+        EChannel                eChannel    = eChannelCount;
+        std::vector< XMFLOAT2 > Keys;
+    };
+
+    struct SceneSkin {
+        std::vector< uint32_t > LinkIds;
+    };
+
     struct SceneNode {
         SceneDeviceAssetPtr     pDeviceAsset;
-        uint32_t                Id       = -1;
-        uint32_t                ParentId = -1;
-        uint32_t                MeshId   = -1;
+        uint32_t                Id       = kInvalidId;
+        uint32_t                ParentId = kInvalidId;
+        uint32_t                MeshId   = kInvalidId;
         std::vector< uint32_t > ChildIds;
+        std::vector< uint32_t > AnimCurveIds;
     };
 
     struct Scene {
@@ -130,6 +171,8 @@ namespace apemode {
         std::vector< SceneMesh >          Meshes;
         std::vector< SceneMeshSubset >    Subsets;
         std::vector< SceneMaterial >      Materials;
+        std::vector< SceneAnimCurve >     AnimCurves;
+        std::vector< SceneSkin >          Skins;
 
         //
         // Transform matrices storage.
@@ -187,9 +230,9 @@ namespace apemode {
         return apemodefb::EValueTypeFb( valueType );
     }
 
-    template < typename T >
+    template < typename T /*, bool bAssert = false */ >
     inline bool FlatbuffersTVectorIsNotNullAndNotEmptyAssert( const flatbuffers::Vector< T > *pVector ) {
-        assert( pVector && pVector->size( ) );
+        /* assert( !bAssert || ( pVector && pVector->size( ) ) ); */
         return pVector && pVector->size( );
     }
 
