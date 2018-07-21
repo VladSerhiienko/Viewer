@@ -357,6 +357,49 @@ void operator delete( void *                  pMemory,
     return apememext::aligned_free( pMemory, __FILE__, __LINE__, __FUNCTION__, m_alloc_delete );
 }
 
+apemode::platform::StandardAllocator::StandardAllocator( const char * ) {
+}
+
+apemode::platform::StandardAllocator::StandardAllocator( const StandardAllocator & ) {
+}
+
+apemode::platform::StandardAllocator::StandardAllocator( const StandardAllocator &, const char * ) {
+}
+
+apemode::platform::StandardAllocator &apemode::platform::StandardAllocator::operator=( const StandardAllocator & ) {
+    return *this;
+}
+
+bool apemode::platform::StandardAllocator::operator==( const StandardAllocator & ) {
+    return true;
+}
+
+bool apemode::platform::StandardAllocator::operator!=( const StandardAllocator & ) {
+    return false;
+}
+
+void *apemode::platform::StandardAllocator::allocate( size_t size, int /*flags*/ ) {
+    return apemode_malloc( size, apemode::kAlignment );
+}
+
+void *apemode::platform::StandardAllocator::allocate( size_t size,
+                                                      size_t alignment,
+                                                      size_t /*alignmentOffset*/,
+                                                      int /*flags*/ ) {
+    return apemode_malloc( size, alignment );
+}
+
+void apemode::platform::StandardAllocator::deallocate( void *p, size_t /*n*/ ) {
+    return apemode_free( p );
+}
+
+const char *apemode::platform::StandardAllocator::get_name( ) const {
+    return "apemode::platform::StandardAllocator";
+}
+
+void apemode::platform::StandardAllocator::set_name( const char* ) {
+}
+
 #ifdef USE_MEMORY_TRACKING
 
 #undef apemode_malloc

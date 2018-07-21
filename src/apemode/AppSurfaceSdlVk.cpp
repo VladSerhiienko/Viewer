@@ -181,12 +181,10 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
         currentExtent = Surface.SurfaceCaps.currentExtent;
     }
 
-    if ( !Swapchain.Recreate( Node.hLogicalDevice,
-                              Node.pPhysicalDevice,
-                              Surface.hSurface,
+    if ( !Swapchain.Recreate( &Node,
+                              &Surface,
                               ImgCount,
-                              currentExtent.width,
-                              currentExtent.height,
+                              currentExtent,
                               Surface.eColorFormat,
                               Surface.eColorSpace,
                               Surface.eSurfaceTransform,
@@ -223,12 +221,12 @@ void apemode::AppSurfaceSdlVk::OnFrameMove( ) {
         LastWidth  = width;
         LastHeight = height;
 
-        const bool bResized = Swapchain.Recreate( Node.hLogicalDevice,
-                                                  Node.pPhysicalDevice,
-                                                  Surface.hSurface,
-                                                  Swapchain.ImgCount,
-                                                  width,
-                                                  height,
+        VkExtent2D extent2D{width, height};
+
+        const bool bResized = Swapchain.Recreate( &Node,
+                                                  &Surface,
+                                                  Swapchain.GetBufferCount( ),
+                                                  extent2D,
                                                   Surface.eColorFormat,
                                                   Surface.eColorSpace,
                                                   Surface.eSurfaceTransform,

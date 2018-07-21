@@ -16,12 +16,12 @@ namespace apemodeos {
 
         virtual ~AssetFile( ) = default;
 
-        const char*        GetName( ) const                                 override;
-        const char*        GetId( ) const                                   override;
-        AssetContentBuffer GetContentAsTextBuffer( ) const                  override;
-        AssetContentBuffer GetContentAsBinaryBuffer( ) const                override;
-        uint64_t           GetCurrentVersion( ) const                       override;
-        void               SetCurrentVersion( uint64_t lastTimeModified )   override;
+        const char*                GetName( ) const override;
+        const char*                GetId( ) const override;
+        apemode::vector< uint8_t > GetContentAsTextBuffer( ) const override;
+        apemode::vector< uint8_t > GetContentAsBinaryBuffer( ) const override;
+        uint64_t                   GetCurrentVersion( ) const override;
+        void                       SetCurrentVersion( uint64_t lastTimeModified ) override;
 
         void SetName( const char* pszAssetName );
         void SetId( const char* pszAssetPath );
@@ -67,7 +67,7 @@ namespace apemodeos {
      **/
     class FileReader {
     public:
-        apemodeos::AssetContentBuffer ReadBinFile( const char * pszFilePath ); /* Returns the content of the file. */
-        apemodeos::AssetContentBuffer ReadTxtFile( const char * pszFilePath ); /* Returns the content of the file. */
+        apemode::vector< uint8_t > ReadBinFile( const char* pszFilePath ); /* Returns the content of the file. */
+        apemode::vector< uint8_t > ReadTxtFile( const char* pszFilePath ); /* Returns the content of the file. */
     };
 }

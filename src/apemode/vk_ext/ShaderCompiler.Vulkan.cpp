@@ -148,7 +148,7 @@ static apemodevk::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
     }
 
     if ( nullptr != pShaderFeedbackWriter ) {
-        platform::DebugTrace( platform::LogLevel::Info, "ShaderCompiler: Preprocessed GLSL." );
+        platform::LogFmt( platform::LogLevel::Info, "ShaderCompiler: Preprocessed GLSL." );
 
         pShaderFeedbackWriter->WriteFeedback( ShaderCompiler::IShaderFeedbackWriter::eFeedback_PreprocessingSucceeded,
                                               shaderName,
@@ -162,7 +162,7 @@ static apemodevk::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
             preprocessedSourceCompilationResult.begin( ), (shaderc_shader_kind) eShaderKind, shaderName.c_str( ), options );
 
         if ( shaderc_compilation_status_success != assemblyCompilationResult.GetCompilationStatus( ) ) {
-            platform::DebugTrace( platform::LogLevel::Err,
+            platform::LogFmt( platform::LogLevel::Err,
                                   "ShaderCompiler: Failed to compile processed GLSL to SPV assembly: %s.",
                                   assemblyCompilationResult.GetErrorMessage( ).c_str( ) );
 
@@ -180,7 +180,7 @@ static apemodevk::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
         }
 
         if ( nullptr != pShaderFeedbackWriter ) {
-            platform::DebugTrace( platform::LogLevel::Info, "ShaderCompiler: Compiled GLSL to SPV assembly." );
+            platform::LogFmt( platform::LogLevel::Info, "ShaderCompiler: Compiled GLSL to SPV assembly." );
 
             pShaderFeedbackWriter->WriteFeedback( ShaderCompiler::IShaderFeedbackWriter::eFeedback_AssemblySucceeded,
                                                   shaderName,
@@ -195,7 +195,7 @@ static apemodevk::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
 
     if ( shaderc_compilation_status_success != spvCompilationResult.GetCompilationStatus( ) ) {
         if ( nullptr != pShaderFeedbackWriter ) {
-            platform::DebugTrace( platform::LogLevel::Err,
+            platform::LogFmt( platform::LogLevel::Err,
                                   "ShaderCompiler: Failed to compile processed GLSL to SPV: %s.",
                                   spvCompilationResult.GetErrorMessage( ).c_str( ) );
 
@@ -211,7 +211,7 @@ static apemodevk::unique_ptr< apemodevk::ICompiledShader > InternalCompile(
     }
 
     if ( nullptr != pShaderFeedbackWriter ) {
-        platform::DebugTrace( platform::LogLevel::Info, "ShaderCompiler: Compiled GLSL to SPV." );
+        platform::LogFmt( platform::LogLevel::Info, "ShaderCompiler: Compiled GLSL to SPV." );
 
         pShaderFeedbackWriter->WriteFeedback( ShaderCompiler::IShaderFeedbackWriter::eFeedback_SpvSucceeded,
                                               shaderName,
@@ -263,7 +263,7 @@ apemodevk::unique_ptr< apemodevk::ICompiledShader > apemodevk::ShaderCompiler::C
     apemodevk_memory_allocation_scope;
 
     if ( nullptr == pImpl->pShaderFileReader ) {
-        platform::DebugTrace( platform::LogLevel::Err, "ShaderCompiler: pShaderFileReader must be set." );
+        platform::LogFmt( platform::LogLevel::Err, "ShaderCompiler: pShaderFileReader must be set." );
         platform::DebugBreak( );
         return nullptr;
     }

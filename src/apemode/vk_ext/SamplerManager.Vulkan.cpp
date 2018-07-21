@@ -43,7 +43,7 @@ uint32_t apemodevk::SamplerManager::GetSamplerIndex( const VkSamplerCreateInfo& 
         return static_cast< uint32_t >( samplerIndex );
     }
 
-    platform::DebugTrace( platform::LogLevel::Err, "Failed to create sampler." );
+    platform::LogFmt( platform::LogLevel::Err, "Failed to create sampler." );
     platform::DebugBreak( );
     return kInvalidSamplerIndex;
 }

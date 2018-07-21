@@ -1,5 +1,6 @@
 #pragma once
 
+#include <GraphicsManager.Vulkan.h>
 #include <GraphicsDevice.Vulkan.h>
 
 namespace apemodevk {
@@ -100,6 +101,11 @@ namespace apemodevk {
         static uint64_t const kMaxTimeout;
         static uint32_t const kMaxImgs;
 
+        struct Buffer {
+            VkImage                hImg;
+            THandle< VkImageView > hImgView;
+        };
+
         Swapchain( );
         ~Swapchain( );
 
@@ -109,29 +115,23 @@ namespace apemodevk {
          * Initialized surface, render targets` and depth stencils` views.
          * @return True if initialization went ok, false otherwise.
          */
-        bool Recreate( VkDevice                   pInDevice,
-                       VkPhysicalDevice           pInPhysicalDevice,
-                       VkSurfaceKHR               pInSurface,
-                       uint32_t                   InImgCount,
-                       uint32_t                   InDesiredColorWidth,
-                       uint32_t                   InDesiredColorHeight,
+        bool Recreate( apemodevk::GraphicsDevice* pInNode,
+                       apemodevk::Surface*        pInSurface,
+                       uint32_t                   desiredImgCount,
+                       VkExtent2D                 desiredImgExtent,
                        VkFormat                   eColorFormat,
                        VkColorSpaceKHR            eColorSpace,
                        VkSurfaceTransformFlagsKHR eSurfaceTransform,
                        VkPresentModeKHR           ePresentMode );
 
-        bool ExtractSwapchainBuffers( VkImage* OutSwapchainBufferImgs );
-
+        bool ExtractSwapchainBuffers( VkImage* pOutBuffers );
         uint32_t GetBufferCount( ) const;
 
     public:
-        VkDevice                  pDevice;
-        VkPhysicalDevice          pPhysicalDevice;
-        VkSurfaceKHR              pSurface;
-        uint32_t                  ImgCount;
-        VkExtent2D                ImgExtent;
-        VkImage                   hImgs[ 3 ];
-        THandle< VkImageView >    hImgViews[ 3 ];
-        THandle< VkSwapchainKHR > hSwapchain;
+        apemodevk::GraphicsDevice*  pNode;
+        apemodevk::Surface*         pSurface;
+        apemodevk::vector< Buffer > Buffers;
+        VkExtent2D                  ImgExtent;
+        THandle< VkSwapchainKHR >   hSwapchain;
     };
 }

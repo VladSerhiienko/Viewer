@@ -51,11 +51,11 @@ bool apemode::NuklearRendererSdlBase::Init( InitParametersBase *pInitParamsBase 
     /* Overrided */
     DeviceCreate( pInitParamsBase );
 
-    const auto fontAssetBin = pInitParamsBase->pFontAsset->GetContentAsBinaryBuffer( );
+    auto fontAssetBin = pInitParamsBase->pFontAsset->GetContentAsBinaryBuffer( );
 
     nk_font_atlas *atlas = nullptr;
     FontStashBegin( &atlas );
-    pDefaultFont = nk_font_atlas_add_from_memory( atlas, fontAssetBin.pData, fontAssetBin.dataSize, 14, 0 );
+    pDefaultFont = nk_font_atlas_add_from_memory( atlas, fontAssetBin.data(), fontAssetBin.size(), 14, 0 );
 
     /* Calls overrided DeviceUploadAtlas(). */
     FontStashEnd( pInitParamsBase );

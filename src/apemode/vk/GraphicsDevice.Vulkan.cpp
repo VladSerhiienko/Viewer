@@ -19,11 +19,11 @@ bool apemodevk::GraphicsDevice::ScanDeviceQueues( apemodevk::vector< VkQueueFami
         QueueReqs.reserve( QueuesFound );
 
         vkGetPhysicalDeviceQueueFamilyProperties( pPhysicalDevice, &QueuesFound, QueueProps.data( ) );
-        platform::DebugTrace( platform::LogLevel::Info, "Queue Families: %u", QueuesFound );
+        platform::LogFmt( platform::LogLevel::Info, "Queue Families: %u", QueuesFound );
 
         uint32_t TotalQueuePrioritiesCount = 0;
         std::for_each( QueueProps.begin( ), QueueProps.end( ), [&]( VkQueueFamilyProperties& QueueProp ) {
-            platform::DebugTrace( platform::LogLevel::Info, "> Flags: %x, Count: %u", QueueProp.queueFlags, QueueProp.queueCount );
+            platform::LogFmt( platform::LogLevel::Info, "> Flags: %x, Count: %u", QueueProp.queueFlags, QueueProp.queueCount );
             TotalQueuePrioritiesCount += QueueProp.queueCount;
         } );
 
@@ -88,7 +88,7 @@ bool EnumerateLayersAndExtensions( apemodevk::GraphicsDevice*        pNode,
             return false;
 
         for ( auto& deviceLayer : deviceLayers ) {
-            apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Debug,
+            apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Debug,
                                              "> DeviceLayer: %s (%u): %s",
                                              deviceLayer.layerName,
                                              deviceLayer.specVersion,
@@ -119,7 +119,7 @@ bool EnumerateLayersAndExtensions( apemodevk::GraphicsDevice*        pNode,
         VkBool32 swapchainExtFound = 0;
         for ( uint32_t i = 0; i < deviceExtensionCount; i++ ) {
 
-            apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Debug,
+            apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Debug,
                                              "> DeviceExtension: %s (%u)",
                                              deviceExtensions[ i ].extensionName,
                                              deviceExtensions[ i ].specVersion );
@@ -206,8 +206,8 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( uint32_t         flags,
         vkGetPhysicalDeviceMemoryProperties( pPhysicalDevice, &MemoryProps );
         vkGetPhysicalDeviceFeatures( pPhysicalDevice, &Features );
 
-        platform::DebugTrace( platform::LogLevel::Info, "Device Name: %s", AdapterProps.deviceName );
-        platform::DebugTrace( platform::LogLevel::Info, "Device Type: %u", AdapterProps.deviceType );
+        platform::LogFmt( platform::LogLevel::Info, "Device Name: %s", AdapterProps.deviceName );
+        platform::LogFmt( platform::LogLevel::Info, "Device Type: %u", AdapterProps.deviceType );
 
         vector< VkQueueFamilyProperties > QueueProps;
         vector< VkDeviceQueueCreateInfo > QueueReqs;

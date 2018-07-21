@@ -26,24 +26,24 @@ apemodevk::Swapchain::~Swapchain( ) {
 }
 
 void apemodevk::Swapchain::Destroy( ) {
-    for ( auto& h : hImgViews )
-        h.Destroy( );
+    for ( auto& buffer : Buffers )
+        buffer.hImgView.Destroy( );
 
     hSwapchain.Destroy( );
 }
 
-bool apemodevk::Swapchain::ExtractSwapchainBuffers( VkImage* OutBufferImgs ) {
+bool apemodevk::Swapchain::ExtractSwapchainBuffers( VkImage* pOutBuffers ) {
     apemodevk_memory_allocation_scope;
     apemode_assert( hSwapchain.IsNotNull( ), "Not initialized." );
 
     uint32_t swapchainBufferCount = 0;
-    if ( apemode_likely( VK_SUCCESS == CheckedResult( vkGetSwapchainImagesKHR( pDevice, hSwapchain, &swapchainBufferCount, nullptr ) ) ) ) {
+    if ( apemode_likely( VK_SUCCESS == CheckedResult( vkGetSwapchainImagesKHR( pNode->hLogicalDevice, hSwapchain, &swapchainBufferCount, nullptr ) ) ) ) {
         if ( swapchainBufferCount > kMaxImgs ) {
             platform::DebugBreak( );
             return false;
         }
 
-        if ( apemode_likely( VK_SUCCESS == CheckedResult( vkGetSwapchainImagesKHR( pDevice, hSwapchain, &swapchainBufferCount, OutBufferImgs ) ) ) )
+        if ( apemode_likely( VK_SUCCESS == CheckedResult( vkGetSwapchainImagesKHR( pNode->hLogicalDevice, hSwapchain, &swapchainBufferCount, pOutBuffers ) ) ) )
             return true;
     }
 
@@ -52,40 +52,47 @@ bool apemodevk::Swapchain::ExtractSwapchainBuffers( VkImage* OutBufferImgs ) {
 
 }
 
-
-bool apemodevk::Swapchain::Recreate( VkDevice                   pInDevice,
-                                     VkPhysicalDevice           pInPhysicalDevice,
-                                     VkSurfaceKHR               pInSurface,
-                                     uint32_t                   InImgCount,
-                                     uint32_t                   DesiredColorWidth,
-                                     uint32_t                   DesiredColorHeight,
+bool apemodevk::Swapchain::Recreate( apemodevk::GraphicsDevice* pInNode,
+                                     apemodevk::Surface*        pInSurface,
+                                     uint32_t                   desiredImgCount,
+                                     VkExtent2D                 desiredImgExtent,
                                      VkFormat                   eColorFormat,
                                      VkColorSpaceKHR            eColorSpace,
                                      VkSurfaceTransformFlagsKHR eSurfaceTransform,
                                      VkPresentModeKHR           ePresentMode ) {
     apemodevk_memory_allocation_scope;
 
-    pSurface        = pInSurface;
-    pDevice         = pInDevice;
-    pPhysicalDevice = pInPhysicalDevice;
+    pNode    = pInNode;
+    pSurface = pInSurface;
 
-    for ( uint32_t i = 0; i < kMaxImgs; ++i ) {
-        hImgViews[ i ].Destroy( );
+    for ( auto& buffer : Buffers )
+        buffer.hImgView.Destroy( );
+
+    uint32_t bufferCount = desiredImgCount;
+    {
+        bufferCount = eastl::max( bufferCount, pSurface->SurfaceCaps.minImageCount );
+        bufferCount = eastl::min( bufferCount, pSurface->SurfaceCaps.maxImageCount );
+
+        if ( bufferCount != desiredImgCount ) {
+            platform::LogFmt( platform::LogLevel::Warn,
+                              "Desired swapchain image count does not comply with surface capabilities: "
+                              "desired=%u and actual=%.",
+                              desiredImgCount,
+                              bufferCount );
+        }
     }
 
     // Determine the number of VkImage's to use in the swap chain.
     // We desire to own only 1 image at a time, besides the
     // images being displayed and queued for display.
 
-    ImgCount         = InImgCount;
-    ImgExtent.width  = DesiredColorWidth;
-    ImgExtent.height = DesiredColorHeight;
+    ImgExtent = desiredImgExtent;
 
     VkSwapchainCreateInfoKHR swapchainCreateInfoKHR;
     InitializeStruct( swapchainCreateInfoKHR );
 
-    swapchainCreateInfoKHR.surface          = pInSurface;
-    swapchainCreateInfoKHR.minImageCount    = ImgCount;
+    swapchainCreateInfoKHR.surface          = pInSurface->hSurface;
+    swapchainCreateInfoKHR.minImageCount    = bufferCount;
     swapchainCreateInfoKHR.imageFormat      = eColorFormat;
     swapchainCreateInfoKHR.imageColorSpace  = eColorSpace;
     swapchainCreateInfoKHR.imageExtent      = ImgExtent;
@@ -98,13 +105,16 @@ bool apemodevk::Swapchain::Recreate( VkDevice                   pInDevice,
     swapchainCreateInfoKHR.oldSwapchain     = hSwapchain;
     swapchainCreateInfoKHR.clipped          = true;
 
-    if ( !hSwapchain.Recreate( pInDevice, swapchainCreateInfoKHR ) ) {
-        apemode_halt( "Failed to create swapchain." );
+    if ( !hSwapchain.Recreate( pNode->hLogicalDevice, swapchainCreateInfoKHR ) ) {
+        platform::LogFmt( platform::LogLevel::Err, "Failed to create swapchain." );
         return false;
     }
 
-    if ( !ExtractSwapchainBuffers( hImgs ) ) {
-        apemode_halt( "Failed to extract swapchain buffers." );
+    apemodevk::vector< VkImage > hhBuffers;
+    hhBuffers.resize( bufferCount );
+
+    if ( !ExtractSwapchainBuffers( hhBuffers.data( ) ) ) {
+        platform::LogFmt( platform::LogLevel::Err, "Failed to extract swapchain buffers." );
         return false;
     }
 
@@ -123,9 +133,17 @@ bool apemodevk::Swapchain::Recreate( VkDevice                   pInDevice,
     imageViewCreateInfo.subresourceRange.layerCount     = 1;
     imageViewCreateInfo.subresourceRange.levelCount     = 1;
 
-    for ( uint32_t i = 0; i < ImgCount; ++i ) {
-        imageViewCreateInfo.image = hImgs[ i ];
-        hImgViews[ i ].Recreate( pInDevice, imageViewCreateInfo );
+    Buffers.resize( bufferCount );
+
+    for ( uint32_t i = 0; i < bufferCount; ++i ) {
+        imageViewCreateInfo.image = hhBuffers[ i ];
+
+        if ( !Buffers[ i ].hImgView.Recreate( pNode->hLogicalDevice, imageViewCreateInfo ) ) {
+            platform::LogFmt( platform::LogLevel::Err, "Failed to create swapchain image view." );
+            return false;
+        }
+
+        Buffers[ i ].hImg = imageViewCreateInfo.image;
     }
 
     /* TODO: Warning after resizing, consider changing image layouts manually. */
@@ -133,8 +151,9 @@ bool apemodevk::Swapchain::Recreate( VkDevice                   pInDevice,
 }
 
 uint32_t apemodevk::Swapchain::GetBufferCount( ) const {
-    return ImgCount;
+    return static_cast< uint32_t >( Buffers.size( ) );
 }
+
 bool apemodevk::Surface::SetSurfaceProperties( ) {
     apemodevk_memory_allocation_scope;
 

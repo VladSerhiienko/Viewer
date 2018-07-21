@@ -92,7 +92,7 @@ bool EnumerateLayersAndExtensions( uint32_t                          eFlags,
                 return false;
 
             for ( auto& instanceLayerName : allInstanceLayers ) {
-                apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Debug,
+                apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Debug,
                                                  "> Layer: %s (%u): %s",
                                                  instanceLayerName.layerName,
                                                  instanceLayerName.specVersion,
@@ -150,7 +150,7 @@ bool EnumerateLayersAndExtensions( uint32_t                          eFlags,
 
         for ( uint32_t i = 0; i < instance_extension_count; i++ ) {
 
-            apemodevk::platform::DebugTrace( apemodevk::platform::LogLevel::Debug,
+            apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Debug,
                                              "> Extension: %s (%u)",
                                              allInstanceExtensions[ i ].extensionName,
                                              allInstanceExtensions[ i ].specVersion );
@@ -350,7 +350,7 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                eFlags,
     */
 
     if ( !hInstance.Recreate( instanceCreateInfo ) ) {
-        platform::DebugTrace( platform::LogLevel::Err, "Failed to create instance." );
+        platform::LogFmt( platform::LogLevel::Err, "Failed to create instance." );
         return false;
     }
 
@@ -500,7 +500,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugReportCallback( VkFlags                    m
         lvl = apemodevk::platform::LogLevel::Debug;
     }
 
-    apemodevk::platform::DebugTrace( lvl, "[vk-drprt] [%s] (%s) %s", pLayerPrefix, ToString( objType ), pMsg );
+    apemodevk::platform::LogFmt( lvl, "[vk-drprt] [%s] (%s) %s", pLayerPrefix, ToString( objType ), pMsg );
     return false;
 }
 
@@ -521,7 +521,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL DebugMessengerCallback( VkDebugUtilsMessageSeveri
         lvl = apemodevk::platform::LogLevel::Err;
     }
 
-    apemodevk::platform::DebugTrace( lvl, "[vk-dmsgr] [%s] %s", pCallbackData->pMessageIdName, pCallbackData->pMessage );
+    apemodevk::platform::LogFmt( lvl, "[vk-dmsgr] [%s] %s", pCallbackData->pMessageIdName, pCallbackData->pMessage );
     return false;
 }
 
@@ -661,7 +661,7 @@ void apemodevk::GraphicsManager::AllocationCallbacks::InternalAllocationNotifica
                                                                                       size_t                   size,
                                                                                       VkInternalAllocationType allocationType,
                                                                                       VkSystemAllocationScope  allocationScope ) {
-    platform::DebugTrace( platform::LogLevel::Debug,
+    platform::LogFmt( platform::LogLevel::Debug,
                           "[vk-intnt] allocated: %uz, type: %s, scope: %s",
                           size,
                           ToString( allocationType ),
@@ -672,7 +672,7 @@ void apemodevk::GraphicsManager::AllocationCallbacks::InternalFreeNotification( 
                                                                                 size_t                   size,
                                                                                 VkInternalAllocationType allocationType,
                                                                                 VkSystemAllocationScope  allocationScope ) {
-    platform::DebugTrace( platform::LogLevel::Debug,
+    platform::LogFmt( platform::LogLevel::Debug,
                           "[vk-intnt] freed: %uz, type: %s, scope: %s",
                           size,
                           ToString( allocationType ),

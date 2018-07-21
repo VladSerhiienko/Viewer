@@ -153,20 +153,65 @@ namespace apemode {
     } // namespace platform
 } // namespace apemode
 
-#define apemode_new             new ( apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
-#define apemode_delete( pObj )  apemode::platform::CallDestructor( (pObj) ), operator delete( (pObj), apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj= nullptr
+#define apemode_new            new ( apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
+#define apemode_delete( pObj ) apemode::platform::CallDestructor( ( pObj ) ), operator delete( ( pObj ), apemode::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj = nullptr
+
+#include <EASTL/unique_ptr.h>
+#include <EASTL/linked_ptr.h>
+#include <EASTL/string.h>
+#include <EASTL/vector.h>
+#include <EASTL/vector_map.h>
+#include <EASTL/vector_set.h>
+#include <EASTL/vector_multimap.h>
 
 namespace apemode {
 
-    template < typename T >
-    struct TTrakingDeleter {
-        void operator( )( T* pObj ) {
-            apemode_delete( pObj );
-        }
-    };
+    namespace platform {
+        template < typename T >
+        struct TDelete {
+            void operator( )( T* pObj ) {
+                apemode_delete( pObj );
+            }
+        };
+
+        class StandardAllocator {
+        public:
+            StandardAllocator( const char* = NULL );
+            StandardAllocator( const StandardAllocator& );
+            StandardAllocator( const StandardAllocator&, const char* );
+            StandardAllocator& operator=( const StandardAllocator& );
+            bool               operator==( const StandardAllocator& );
+            bool               operator!=( const StandardAllocator& );
+            void*              allocate( size_t n, int /*flags*/ = 0 );
+            void*              allocate( size_t n, size_t alignment, size_t /*alignmentOffset*/, int /*flags*/ = 0 );
+            void               deallocate( void* p, size_t /*n*/ );
+            const char*        get_name( ) const;
+            void               set_name( const char* );
+        };
+    } // namespace platform
 
     template < typename T >
-    using unique_ptr = std::unique_ptr< T, TTrakingDeleter< T > >;
+    using unique_ptr = eastl::unique_ptr< T, platform::TDelete< T > >;
+
+    template < typename T >
+    using shared_ptr = eastl::linked_ptr< T, platform::TDelete< T > >;
+
+    template < typename T >
+    using vector = eastl::vector< T, platform::StandardAllocator >;
+
+    template < typename K, typename T, typename Cmp = eastl::less< K > >
+    using vector_map = eastl::vector_map< K, T, Cmp, platform::StandardAllocator >;
+
+    template < typename K, typename Cmp = eastl::less< K > >
+    using vector_set = eastl::vector_set< K, Cmp, platform::StandardAllocator >;
+
+    template < typename K, typename T, typename Cmp = eastl::less< K > >
+    using vector_multimap = eastl::vector_multimap< K, T, Cmp, platform::StandardAllocator >;
+
+    template < typename T >
+    using basic_string = eastl::basic_string< T, platform::StandardAllocator >;
+
+    using string8 = basic_string< char8_t >;
 
     /**
      * @brief make_unique for all platforms

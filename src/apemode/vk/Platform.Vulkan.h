@@ -251,7 +251,7 @@ namespace apemodevk {
         void Log( LogLevel level, const char *pszMsg );
 
         template < bool bNewLine = false, unsigned uBufferSize = 1024u >
-        static void DebugTrace( LogLevel level, char const *pszFmt, ... ) {
+        static void LogFmt( LogLevel level, char const *pszFmt, ... ) {
 
             const int uLength = uBufferSize - 1 - bNewLine;
             char szBuffer[ uBufferSize ] = {0};
@@ -279,10 +279,9 @@ namespace apemodevk {
     } // namespace platform
 }
 
-#define apemode_dllapi
+#define apemode_likely EASTL_LIKELY
+#define apemode_unlikely EASTL_UNLIKELY
 #define apemode_assert( ... ) // assert(__VA_ARGS__)
-#define apemode_likely( ... ) __VA_ARGS__
-#define apemode_unlikely( ... ) __VA_ARGS__
 #define apemode_error( ... )
 #define apemode_halt( ... )
 

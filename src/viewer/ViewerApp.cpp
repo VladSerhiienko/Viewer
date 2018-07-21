@@ -46,7 +46,7 @@ bool ShaderFileReader::ReadShaderTxtFile( const std::string& InFilePath,
     apemode_memory_allocation_scope;
     if ( auto pAsset = mAssetManager->Acquire( InFilePath.c_str( ) ) ) {
         const auto assetText = pAsset->GetContentAsTextBuffer( );
-        OutFileContent = reinterpret_cast< const char* >( assetText.pData );
+        OutFileContent = reinterpret_cast< const char* >( assetText.data() );
         OutFileFullPath = pAsset->GetId( );
         mAssetManager->Release( pAsset );
         return true;
@@ -135,7 +135,7 @@ bool ViewerApp::Initialize(  ) {
 
         FrameId    = 0;
         FrameIndex = 0;
-        FrameCount = pAppSurface->Swapchain.ImgCount;
+        FrameCount = pAppSurface->Swapchain.GetBufferCount( );
 
         OnResized();
 
@@ -200,7 +200,7 @@ bool ViewerApp::Initialize(  ) {
                 apemodevk::ImageLoader::LoadOptions loadOptions;
                 loadOptions.bImgView = true;
 
-                auto srcImg = imgDecoder.DecodeSourceImageFromData( texAssetBin.pData, texAssetBin.dataSize, decodeOptions );
+                auto srcImg = imgDecoder.DecodeSourceImageFromData( texAssetBin.data(), texAssetBin.size(), decodeOptions );
                 RadianceLoadedImg = imgLoader.LoadImageFromSrc( &pAppSurface->Node, *srcImg, loadOptions );
             }
 
@@ -243,7 +243,7 @@ bool ViewerApp::Initialize(  ) {
                 apemodevk::ImageLoader::LoadOptions loadOptions;
                 loadOptions.bImgView = true;
 
-                auto srcImg = imgDecoder.DecodeSourceImageFromData( texAssetBin.pData, texAssetBin.dataSize, decodeOptions );
+                auto srcImg = imgDecoder.DecodeSourceImageFromData( texAssetBin.data(), texAssetBin.size(), decodeOptions );
                 IrradianceLoadedImg = imgLoader.LoadImageFromSrc( &pAppSurface->Node, *srcImg, loadOptions );
             }
 
@@ -326,25 +326,29 @@ bool ViewerApp::Initialize(  ) {
         updateParams.pShaderCompiler = pShaderCompiler.get( );
 
         /*
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/wasteland-hunters-vehicule.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/snow-road-raw-scan-freebie.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/skull_salazar.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/graograman.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/warcraft-draenei-fanart.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/1972-datsun-240k-gt.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/dreadroamer-free.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/knight-artorias.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/rainier-ak-3ds.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/leather-shoes.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/terrarium-bot.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/car-lego-technic-42010.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/9-mm.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/colt.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/cerberus.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/gunslinger.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/pickup-truck.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/rock-jacket-mid-poly.fbxp"
-        --assets "..\..\assets\**" --scene "C:/Sources/Models/mech-m-6k.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/bristleback-dota-fan-art.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/wild-west-motorcycle.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/wild-west-sniper-rifle.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/rank-3-police-unit.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/wasteland-hunters-vehicule.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/snow-road-raw-scan-freebie.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/skull_salazar.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/graograman.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/warcraft-draenei-fanart.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/1972-datsun-240k-gt.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/dreadroamer-free.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/knight-artorias.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/rainier-ak-3ds.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/leather-shoes.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/terrarium-bot.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/car-lego-technic-42010.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/9-mm.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/colt.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/cerberus.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/gunslinger.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/pickup-truck.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/rock-jacket-mid-poly.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/mech-m-6k.fbxp"
         */
 
         if ( false == pSceneRendererBase->Recreate( &recreateParams ) ) {
@@ -352,17 +356,11 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        auto sceneFile = TGetOption< std::string >( "scene", "" ); {
-            auto sceneFileContent = apemodeos::FileReader( ).ReadBinFile( sceneFile.c_str( ) );
-            auto loadedScene = LoadSceneFromBin( sceneFileContent.pData, sceneFileContent.dataSize );
+        auto sceneFile = TGetOption< std::string >( "scene", "" );
+        mLoadedScene = std::move( LoadSceneFromBin( apemodeos::FileReader( ).ReadBinFile( sceneFile.c_str( ) ) ) );
 
-            pScene         = std::move( loadedScene.first );
-            pSrcScene      = loadedScene.second;
-            SrcSceneBuffer = std::move( sceneFileContent );
-        }
-
-        updateParams.pSrcScene = pSrcScene;
-        if ( false == pSceneRendererBase->UpdateScene( pScene.get( ), &updateParams ) ) {
+        updateParams.pSrcScene = mLoadedScene.pSrcScene;
+        if ( false == pSceneRendererBase->UpdateScene( mLoadedScene.pScene.get( ), &updateParams ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
@@ -530,7 +528,7 @@ bool apemode::ViewerApp::OnResized( ) {
             framebufferCreateInfoDbg.layers          = 1;
 
             for ( uint32_t i = 0; i < FrameCount; ++i ) {
-                VkImageView attachments[ 1 ] = {appSurface->Swapchain.hImgViews[ i ]};
+                VkImageView attachments[ 1 ] = {appSurface->Swapchain.Buffers[ i ].hImgView};
                 framebufferCreateInfoNk.pAttachments = attachments;
 
                 if ( false == hNkFramebuffers[ i ].Recreate( appSurface->Node, framebufferCreateInfoNk ) ) {
@@ -540,7 +538,7 @@ bool apemode::ViewerApp::OnResized( ) {
             }
 
             for ( uint32_t i = 0; i < FrameCount; ++i ) {
-                VkImageView attachments[ 2 ] = {appSurface->Swapchain.hImgViews[ i ], hDepthImgViews[ i ]};
+                VkImageView attachments[ 2 ] = {appSurface->Swapchain.Buffers[ i ].hImgView, hDepthImgViews[ i ]};
                 framebufferCreateInfoDbg.pAttachments = attachments;
 
                 if ( false == hDbgFramebuffers[ i ].Recreate( appSurface->Node, framebufferCreateInfoDbg ) ) {
@@ -724,7 +722,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 
         pSkyboxRenderer->Reset( FrameIndex );
         pDebugRenderer->Reset( FrameIndex );
-        pSceneRendererBase->Reset( pScene.get( ), FrameIndex );
+        pSceneRendererBase->Reset( mLoadedScene.pScene.get( ), FrameIndex );
 
         apemodevk::SkyboxRenderer::RenderParameters skyboxRenderParams;
         XMStoreFloat4x4( &skyboxRenderParams.InvViewMatrix, invViewMatrix );
@@ -795,7 +793,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );
         XMStoreFloat4x4( &sceneRenderParameters.InvProjMatrix, invProjMatrix );
         XMStoreFloat4x4( &sceneRenderParameters.RootMatrix, rootMatrix );
-        pSceneRendererBase->RenderScene( pScene.get( ), &sceneRenderParameters );
+        pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
 
         NuklearRendererSdlVk::RenderParametersVk renderParamsNk;
         renderParamsNk.Dims[ 0 ]            = float( width );
@@ -814,7 +812,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         vkCmdEndRenderPass( pCmdBuffer );
 
         pDebugRenderer->Flush( FrameIndex );
-        pSceneRendererBase->Flush( pScene.get( ), FrameIndex );
+        pSceneRendererBase->Flush( mLoadedScene.pScene.get( ), FrameIndex );
         pSkyboxRenderer->Flush( FrameIndex );
 
         VkPipelineStageFlags waitPipelineStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;

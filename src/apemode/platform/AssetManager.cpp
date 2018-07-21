@@ -79,12 +79,12 @@ const char* apemodeos::AssetFile::GetId( ) const {
     return Path.c_str( );
 }
 
-apemodeos::AssetContentBuffer apemodeos::AssetFile::GetContentAsTextBuffer( ) const {
+apemode::vector< uint8_t > apemodeos::AssetFile::GetContentAsTextBuffer( ) const {
     apemode_memory_allocation_scope;
     return std::move( FileReader( ).ReadTxtFile( Path.c_str( ) ) );
 }
 
-apemodeos::AssetContentBuffer apemodeos::AssetFile::GetContentAsBinaryBuffer( ) const {
+apemode::vector< uint8_t > apemodeos::AssetFile::GetContentAsBinaryBuffer( ) const {
     apemode_memory_allocation_scope;
     return std::move( FileReader( ).ReadBinFile( Path.c_str( ) ) );
 }
@@ -275,8 +275,8 @@ void apemodeos::AssetManager::UpdateAssets( const char*  pszFolderPath,
 }
 
 template < bool bTextMode >
-apemodeos::AssetContentBuffer TReadFile( const char* pszFilePath ) {
-    apemodeos::AssetContentBuffer assetContentBuffer;
+apemode::vector< uint8_t > TReadFile( const char* pszFilePath ) {
+    apemode::vector< uint8_t > assetContentBuffer;
 
     FILE* pFile = fopen( pszFilePath, "rb" );
     if ( !pFile )
@@ -286,24 +286,24 @@ apemodeos::AssetContentBuffer TReadFile( const char* pszFilePath ) {
     const size_t size = static_cast< size_t >( ftell( pFile ) );
     fseek( pFile, 0, SEEK_SET );
 
-    assetContentBuffer.Alloc( size + bTextMode );
-    if ( !assetContentBuffer.pData )
+    assetContentBuffer.resize( size + bTextMode );
+    if ( assetContentBuffer.empty( ) )
         return {};
 
-    fread( assetContentBuffer.pData, size, 1, pFile );
+    fread( assetContentBuffer.data( ), size, 1, pFile );
     fclose( pFile );
 
     if ( bTextMode ) {
-        assetContentBuffer.pData[ size ] = 0;
+        assetContentBuffer[ size ] = 0;
     }
 
     return std::move( assetContentBuffer );
 }
 
-apemodeos::AssetContentBuffer apemodeos::FileReader::ReadBinFile( const char* pszFilePath ) {
+apemode::vector< uint8_t > apemodeos::FileReader::ReadBinFile( const char* pszFilePath ) {
     return std::move( TReadFile< false >( pszFilePath ) );
 }
 
-apemodeos::AssetContentBuffer apemodeos::FileReader::ReadTxtFile( const char* pszFilePath ) {
+apemode::vector< uint8_t > apemodeos::FileReader::ReadTxtFile( const char* pszFilePath ) {
     return std::move( TReadFile< true >( pszFilePath ) );
 }

@@ -100,9 +100,7 @@ namespace apemode {
         apemode::unique_ptr< DebugRendererVk >        pDebugRenderer;
         apemode::unique_ptr< SceneRendererBase >      pSceneRendererBase;
 
-        UniqueScenePtr                pScene;
-        const apemodefb::SceneFb*     pSrcScene;
-        apemodeos::AssetContentBuffer SrcSceneBuffer;
+        LoadedScene mLoadedScene;
 
     public:
         ViewerApp( );

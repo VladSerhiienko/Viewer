@@ -92,13 +92,12 @@ void apemode::Scene::UpdateMatrices( ) {
     UpdateChildWorldMatrices( 0 );
 }
 
-apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, size_t dataSize ) {
-
-    const apemodefb::SceneFb * pSrcScene = apemodefb::GetSceneFb( pData );
+apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fileContents ) {
+    const apemodefb::SceneFb *pSrcScene = !fileContents.empty( ) ? apemodefb::GetSceneFb( fileContents.data( ) ) : nullptr;
     if ( nullptr == pSrcScene ) {
         LogError( "Failed to reinterpret the buffer to scene." );
 
-        return UniqueScenePtrPair( nullptr, nullptr );
+        return apemode::LoadedScene{};
     }
 
     if ( apemodefb::EVersionFb_Value != pSrcScene->version( ) ) {
@@ -106,7 +105,7 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
                   apemodefb::EVersionFb_Value,
                   pSrcScene->version( ) );
 
-        return UniqueScenePtrPair( nullptr, nullptr );
+        return apemode::LoadedScene{};
     }
 
     apemode::unique_ptr< Scene > pScene( apemode_new Scene( ) );
@@ -208,7 +207,7 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
         for ( auto pAnimCurveFb : *pAnimCurvesFb ) {
             assert( pAnimCurveFb );
 
-            LogInfo( "Processing curve: #{} -> {} {}",
+            LogInfo( "Processing curve: #{} -> \"{}\", keys={}",
                      pAnimCurveFb->id( ),
                      GetStringProperty( pSrcScene, pAnimCurveFb->name_id( ) ).c_str( ),
                      pAnimCurveFb->keys( )->size( ) );
@@ -323,7 +322,7 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
                     auto pLinkIdsFb = pSkinFb->links_ids( );
                     if ( FlatbuffersTVectorIsNotNullAndNotEmptyAssert( pLinkIdsFb ) ) {
 
-                        LogInfo( "Processing skin: {}: {}",
+                        LogInfo( "Processing skin: \"{}\", links={}",
                                  GetStringProperty( pSrcScene, pSkinFb->name_id( ) ).c_str( ),
                                  pLinkIdsFb->size( ) );
 
@@ -427,5 +426,5 @@ apemode::UniqueScenePtrPair apemode::LoadSceneFromBin( const uint8_t *pData, siz
         subset.MaterialId = materialIdRemap[ subset.MaterialId ];
     }
 
-    return UniqueScenePtrPair( std::move( pScene ), pSrcScene );
+    return LoadedScene{std::move( fileContents ), pSrcScene, std::move( pScene )};
 }

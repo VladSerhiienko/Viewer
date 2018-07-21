@@ -136,26 +136,26 @@ namespace apemode {
             eChannelCount,
         };
 
-        SceneDeviceAssetPtr     pDeviceAsset;
-        uint32_t                Id          = kInvalidId;
-        uint32_t                AnimStackId = kInvalidId;
-        uint32_t                AnimLayerId = kInvalidId;
-        EProperty               eProp       = ePropertyCount;
-        EChannel                eChannel    = eChannelCount;
-        std::vector< XMFLOAT2 > Keys;
+        SceneDeviceAssetPtr         pDeviceAsset;
+        uint32_t                    Id          = kInvalidId;
+        uint32_t                    AnimStackId = kInvalidId;
+        uint32_t                    AnimLayerId = kInvalidId;
+        EProperty                   eProp       = ePropertyCount;
+        EChannel                    eChannel    = eChannelCount;
+        apemode::vector< XMFLOAT2 > Keys;
     };
 
     struct SceneSkin {
-        std::vector< uint32_t > LinkIds;
+        apemode::vector< uint32_t > LinkIds;
     };
 
     struct SceneNode {
-        SceneDeviceAssetPtr     pDeviceAsset;
-        uint32_t                Id       = kInvalidId;
-        uint32_t                ParentId = kInvalidId;
-        uint32_t                MeshId   = kInvalidId;
-        std::vector< uint32_t > ChildIds;
-        std::vector< uint32_t > AnimCurveIds;
+        SceneDeviceAssetPtr         pDeviceAsset;
+        uint32_t                    Id       = kInvalidId;
+        uint32_t                    ParentId = kInvalidId;
+        uint32_t                    MeshId   = kInvalidId;
+        apemode::vector< uint32_t > ChildIds;
+        apemode::vector< uint32_t > AnimCurveIds;
     };
 
     struct Scene {
@@ -165,22 +165,22 @@ namespace apemode {
         // Scene components
         //
 
-        std::vector< SceneNode >          Nodes;
-        std::vector< SceneNodeTransform > Transforms;
-        std::vector< SceneMesh >          Meshes;
-        std::vector< SceneMeshSubset >    Subsets;
-        std::vector< SceneMaterial >      Materials;
-        std::vector< SceneAnimCurve >     AnimCurves;
-        std::vector< SceneSkin >          Skins;
+        apemode::vector< SceneNode >          Nodes;
+        apemode::vector< SceneNodeTransform > Transforms;
+        apemode::vector< SceneMesh >          Meshes;
+        apemode::vector< SceneMeshSubset >    Subsets;
+        apemode::vector< SceneMaterial >      Materials;
+        apemode::vector< SceneAnimCurve >     AnimCurves;
+        apemode::vector< SceneSkin >          Skins;
 
         //
         // Transform matrices storage.
         //
 
-        std::vector< XMMATRIX > WorldMatrices;
-        std::vector< XMMATRIX > LocalMatrices;
-        std::vector< XMMATRIX > GeometricalMatrices;
-        std::vector< XMMATRIX > HierarchicalMatrices;
+        apemode::vector< XMMATRIX > WorldMatrices;
+        apemode::vector< XMMATRIX > LocalMatrices;
+        apemode::vector< XMMATRIX > GeometricalMatrices;
+        apemode::vector< XMMATRIX > HierarchicalMatrices;
 
         /* Internal usage only.
          * @see UpdateMatrices().
@@ -210,14 +210,17 @@ namespace apemode {
         }
     };
 
-    using UniqueScenePtr     = typename apemode::unique_ptr< Scene >;
-    using UniqueScenePtrPair = typename std::pair< UniqueScenePtr, const apemodefb::SceneFb * >;
+    struct LoadedScene {
+        apemode::vector< uint8_t >   FileContents; /**! The contents of the scene file. */
+        const apemodefb::SceneFb *   pSrcScene;    /**! Is valid as long as FileContents. Make sure FileContents outlives it. */
+        apemode::unique_ptr< Scene > pScene;       /**! The scene info. */
+    };
 
     /* Loads scene from loaded .FBXP file
      * @return A pair of pointers: (1) a unique pointer to scene, (2) a pointer to a source scene
      * @note A pointer to source scene reinterprets the data from .FBXP file and depends on it.
      */
-    UniqueScenePtrPair LoadSceneFromBin( const uint8_t *pData, size_t dataSize );
+    LoadedScene LoadSceneFromBin( apemode::vector< uint8_t > && fileContents );
 
     inline uint32_t MaterialPropertyGetIndex( uint32_t packed ) {
         const uint32_t valueIndex = ( packed >> 8 ) & 0x0fff;
