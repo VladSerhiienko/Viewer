@@ -179,7 +179,7 @@ namespace apemode {
 
     struct SceneSkinLink {
         uint32_t LinkId;
-        XMMATRIX InvBindPose;
+        XMMATRIX InvBindPoseMatrix;
     };
 
     struct SceneSkin {

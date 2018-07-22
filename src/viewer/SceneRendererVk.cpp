@@ -868,7 +868,7 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
         objectData.TexcoordOffsetScale.w = mesh.TexcoordScale.y;
 
         const XMMATRIX rootMatrix   = XMLoadFloat4x4( &pParams->RootMatrix );
-        const XMMATRIX worldMatrix  = pScene->InitialTransformFrame.Transforms[ node.Id ].WorldMatrix * rootMatrix;
+        const XMMATRIX worldMatrix  = pScene->BindPoseFrame.Transforms[ node.Id ].WorldMatrix * rootMatrix;
         const XMMATRIX normalMatrix = XMMatrixTranspose( XMMatrixInverse( nullptr, worldMatrix ) );
 
         XMStoreFloat4x4( &objectData.WorldMatrix, worldMatrix );
