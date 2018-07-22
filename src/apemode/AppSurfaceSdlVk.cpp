@@ -221,12 +221,10 @@ void apemode::AppSurfaceSdlVk::OnFrameMove( ) {
         LastWidth  = width;
         LastHeight = height;
 
-        VkExtent2D extent2D{width, height};
-
         const bool bResized = Swapchain.Recreate( &Node,
                                                   &Surface,
                                                   Swapchain.GetBufferCount( ),
-                                                  extent2D,
+                                                  VkExtent2D{width, height},
                                                   Surface.eColorFormat,
                                                   Surface.eColorSpace,
                                                   Surface.eSurfaceTransform,
@@ -242,5 +240,5 @@ void* apemode::AppSurfaceSdlVk::GetGraphicsHandle( ) {
 
 apemode::SceneRendererBase* apemode::AppSurfaceSdlVk::CreateSceneRenderer( ) {
     apemode_memory_allocation_scope;
-    return apemode_new apemode::SceneRendererVk( );
+    return apemode_new SceneRendererVk( );
 }

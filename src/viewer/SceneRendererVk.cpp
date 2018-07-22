@@ -282,7 +282,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         uint64_t totalBytesRequired = 0;
 
         for ( auto & mesh : pScene->Meshes ) {
-            auto pSrcMesh = FlatbuffersTVectorGetAtIndex( pParamsBase->pSrcScene->meshes( ), mesh.SrcId );
+            auto pSrcMesh = FlatbuffersTVectorGetAtIndex( pParamsBase->pSrcScene->meshes( ), mesh.Id );
             assert( pSrcMesh );
 
             /* Create mesh device asset if needed. */
@@ -558,7 +558,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                 material.pDeviceAsset.reset( pMaterialAsset );
             }
 
-            auto pMaterialFb          = FlatbuffersTVectorGetAtIndex( pMaterialsFb, material.SrcId );
+            auto pMaterialFb          = FlatbuffersTVectorGetAtIndex( pMaterialsFb, material.Id );
             auto pTexturePropertiesFb = pMaterialFb->texture_properties( );
 
             assert( pMaterialFb );
@@ -867,9 +867,9 @@ bool apemode::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRend
         objectData.TexcoordOffsetScale.z = mesh.TexcoordScale.x;
         objectData.TexcoordOffsetScale.w = mesh.TexcoordScale.y;
 
-        XMMATRIX rootMatrix   = XMLoadFloat4x4( &pParams->RootMatrix );
-        XMMATRIX worldMatrix  = pScene->WorldMatrices[ node.Id ] * rootMatrix;
-        XMMATRIX normalMatrix = XMMatrixTranspose( XMMatrixInverse( 0, worldMatrix ) );
+        const XMMATRIX rootMatrix   = XMLoadFloat4x4( &pParams->RootMatrix );
+        const XMMATRIX worldMatrix  = pScene->InitialTransformFrame.Transforms[ node.Id ].WorldMatrix * rootMatrix;
+        const XMMATRIX normalMatrix = XMMatrixTranspose( XMMatrixInverse( nullptr, worldMatrix ) );
 
         XMStoreFloat4x4( &objectData.WorldMatrix, worldMatrix );
         XMStoreFloat4x4( &objectData.NormalMatrix, normalMatrix );

@@ -718,6 +718,7 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
+    ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/include/utils
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
     ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
     ${shaderc_source_dir}/libshaderc/include
