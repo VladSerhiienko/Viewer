@@ -178,7 +178,7 @@ namespace apemode {
     };
 
     struct SceneSkinLink {
-        uint32_t LinkId;
+        uint32_t LinkId = kInvalidId;
         XMMATRIX InvBindPoseMatrix;
     };
 
@@ -282,9 +282,7 @@ namespace apemode {
         apemode::unique_ptr< Scene > pScene;       /**! The scene info. */
     };
 
-    /* Loads scene from loaded .FBXP file
-     * @return A pair of pointers: (1) a unique pointer to scene, (2) a pointer to a source scene
-     * @note A pointer to source scene reinterprets the data from .FBXP file and depends on it.
+    /* Loads scene from the contents of the FbxPipeline's exported scene file.
      */
     LoadedScene LoadSceneFromBin( apemode::vector< uint8_t > && fileContents );
 }

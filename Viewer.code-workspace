@@ -4,10 +4,10 @@
 			"path": "."
 		},
 		{
-			"path": "dependencies\\FbxPipeline"
+			"path": "dependencies/FbxPipeline"
 		},
 		{
-			"path": "dependencies\\TaskScheduler"
+			"path": "dependencies/TaskScheduler"
 		}
 	],
 	"settings": {
@@ -101,7 +101,8 @@
 			"__nullptr": "cpp",
 			"cassert": "cpp",
 			"csetjmp": "cpp",
-			"valarray": "cpp"
+			"valarray": "cpp",
+			"forward_list": "cpp"
 		}
 	}
 }
