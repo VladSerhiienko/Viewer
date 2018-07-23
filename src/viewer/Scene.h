@@ -276,6 +276,8 @@ namespace apemode {
                                  apemode::vector< XMMATRIX > &  skinMatrices );
     };
 
+    /* Represents the loaded scene.
+     */
     struct LoadedScene {
         apemode::vector< uint8_t >   FileContents; /**! The contents of the scene file. */
         const apemodefb::SceneFb *   pSrcScene;    /**! Is valid as long as FileContents. Make sure FileContents outlives it. */
