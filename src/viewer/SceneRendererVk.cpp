@@ -84,7 +84,7 @@ namespace apemodevk {
                          MT::TaskPriority::NORMAL,        //
                          MT::Color::Green );              //
 
-        void Do( MT::FiberContext& context ) {
+        void Do( MT::FiberContext& fiberContext ) {
         }
     };
 

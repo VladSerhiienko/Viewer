@@ -9,6 +9,28 @@
 
 using namespace apemode;
 
+struct SceneAnimLayerId {
+    union {
+        struct {
+            uint16_t AnimStackId;
+            uint16_t AnimLayerId;
+        };
+
+        uint32_t AnimLayerCompositeId;
+    };
+};
+
+struct SceneAnimNodeId {
+    union {
+        struct {
+            uint32_t         NodeId;
+            SceneAnimLayerId AnimLayerId;
+        };
+
+        uint64_t AnimNodeCompositeId;
+    };
+};
+
 inline XMFLOAT4 ToVec4( apemodefb::Vec4Fb const v ) {
     return XMFLOAT4{v.x( ), v.y( ), v.z( ), v.w( )};
 }

@@ -7,7 +7,9 @@ Standard: Cpp11
 UseTab: Never
 IndentWidth: 4
 AccessModifierOffset: -4
-NamespaceIndentation: All
+# NamespaceIndentation: All
+NamespaceIndentation: None
+
 
 AlwaysBreakTemplateDeclarations: true
 BreakConstructorInitializersBeforeComma: true
