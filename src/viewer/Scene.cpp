@@ -141,9 +141,9 @@ SceneNodeTransformFrame &apemode::Scene::UpdateTransformProperties( const float 
             const uint32_t animCurveIdY = animCurveIds.AnimCurveIds[ propertyIndex + SceneAnimCurve::eChannel_Y ];
             const uint32_t animCurveIdZ = animCurveIds.AnimCurveIds[ propertyIndex + SceneAnimCurve::eChannel_Z ];
 
-            const SceneAnimCurve *pAnimCurveX = ( animCurveIdX != kInvalidId ) ? ( &AnimCurves[ animCurveIdX ] ) : nullptr;
-            const SceneAnimCurve *pAnimCurveY = ( animCurveIdY != kInvalidId ) ? ( &AnimCurves[ animCurveIdY ] ) : nullptr;
-            const SceneAnimCurve *pAnimCurveZ = ( animCurveIdZ != kInvalidId ) ? ( &AnimCurves[ animCurveIdZ ] ) : nullptr;
+            const SceneAnimCurve *pAnimCurveX = ( animCurveIdX != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdX ] ) : nullptr;
+            const SceneAnimCurve *pAnimCurveY = ( animCurveIdY != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdY ] ) : nullptr;
+            const SceneAnimCurve *pAnimCurveZ = ( animCurveIdZ != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdZ ] ) : nullptr;
 
             pProperty->x = pAnimCurveX ? pAnimCurveX->Calculate( time, bLoop ) : pProperty->x;
             pProperty->y = pAnimCurveY ? pAnimCurveY->Calculate( time, bLoop ) : pProperty->y;
@@ -280,7 +280,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             auto &node = pScene->Nodes[ pNodeFb->id( ) ];
             node.Id = pNodeFb->id( );
 
-            if ( pNodeFb->mesh_id( ) != kInvalidId ) {
+            if ( pNodeFb->mesh_id( ) != detail::kInvalidId ) {
                 node.MeshId = pNodeFb->mesh_id( );
             }
 
@@ -499,7 +499,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
         pScene->Skins.resize( pSkinsFb->size() );
 
         for ( auto &mesh : pScene->Meshes ) {
-            if ( mesh.SkinId != kInvalidId ) {
+            if ( mesh.SkinId != detail::kInvalidId ) {
 
                 auto &skin = pScene->Skins[ mesh.SkinId ];
                 auto  pSkinFb = pSkinsFb->Get( mesh.SkinId );

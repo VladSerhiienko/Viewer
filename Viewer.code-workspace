@@ -102,7 +102,9 @@
 			"cassert": "cpp",
 			"csetjmp": "cpp",
 			"valarray": "cpp",
-			"forward_list": "cpp"
+			"forward_list": "cpp",
+			"variant": "cpp",
+			"optional": "cpp"
 		}
 	}
 }

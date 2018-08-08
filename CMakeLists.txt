@@ -628,6 +628,8 @@ set(
     ${CMAKE_SOURCE_DIR}/src/viewer/Scene.h
     ${CMAKE_SOURCE_DIR}/src/viewer/ViewerApp.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/ViewerApp.h
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneLoaderVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneLoaderVk.h
     ${CMAKE_SOURCE_DIR}/src/viewer/SceneRendererVk.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/SceneRendererVk.h
     ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.cpp
@@ -698,6 +700,7 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext
     ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory
     ${CMAKE_SOURCE_DIR}/src/viewer
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk
     ${CMAKE_SOURCE_DIR}/dependencies/Math
     ${CMAKE_SOURCE_DIR}/dependencies/gli
     ${CMAKE_SOURCE_DIR}/dependencies/gli/external

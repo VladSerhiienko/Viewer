@@ -217,10 +217,10 @@ struct SceneAnimCurve {
  */
 struct SceneNodeAnimCurveIds {
     uint32_t AnimCurveIds[ SceneAnimCurve::ePropertyCount ] = {
-        kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId,
-        kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId,
-        kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId,
-        kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId, kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
     };
 };
 
@@ -236,7 +236,7 @@ struct SceneSkin {
 };
 
 struct SceneNode {
-    SceneDeviceAssetPtr pDeviceAsset;
+    detail::SceneDeviceAssetPtr pDeviceAsset;
 
     uint32_t Id       = detail::kInvalidId;
     uint32_t ParentId = detail::kInvalidId;
