@@ -565,8 +565,8 @@ set(
     shared_vk_ext_source_files
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ShaderCompiler.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ShaderCompiler.Vulkan.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageLoader.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageLoader.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageUploader.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageUploader.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/SamplerManager.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/SamplerManager.Vulkan.cpp
 )
@@ -630,10 +630,10 @@ set(
     ${CMAKE_SOURCE_DIR}/src/viewer/ViewerApp.h
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneUploaderVk.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneUploaderVk.h
-    ${CMAKE_SOURCE_DIR}/src/viewer/SceneRendererVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/SceneRendererVk.h
-    ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.h
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneRendererVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneRendererVk.h
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/SkyboxRendererVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/SkyboxRendererVk.h
 )
 
 

@@ -11,6 +11,7 @@
 #include <NuklearSdlVk.h>
 #include <DebugRendererVk.h>
 #include <SceneRendererVk.h>
+#include <SceneUploaderVk.h>
 #include <SkyboxRendererVk.h>
 
 #include <Input.h>

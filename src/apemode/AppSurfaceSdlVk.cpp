@@ -240,5 +240,5 @@ void* apemode::AppSurfaceSdlVk::GetGraphicsHandle( ) {
 
 apemode::SceneRendererBase* apemode::AppSurfaceSdlVk::CreateSceneRenderer( ) {
     apemode_memory_allocation_scope;
-    return apemode_new SceneRendererVk( );
+    return apemode_new vk::SceneRendererVk( );
 }

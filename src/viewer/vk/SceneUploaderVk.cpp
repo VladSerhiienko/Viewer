@@ -70,32 +70,6 @@ VkSamplerCreateInfo GetDefaultSamplerCreateInfo( const float maxLod ) {
     return samplerCreateInfo;
 }
 
-bool FillCombinedImgSamplerBinding( apemodevk::DescriptorSetBase::Binding* pBinding,
-                                    VkImageView                            pImgView,
-                                    VkSampler                              pSampler,
-                                    VkImageLayout                          eImgLayout,
-                                    VkImageView                            pMissingImgView,
-                                    VkSampler                              pMissingSampler ) {
-    if ( pBinding ) {
-        if ( pImgView && pSampler ) {
-            pBinding->eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            pBinding->ImageInfo.imageLayout = eImgLayout;
-            pBinding->ImageInfo.imageView   = pImgView;
-            pBinding->ImageInfo.sampler     = pSampler;
-            return true;
-        }
-
-        if ( pMissingImgView && pMissingSampler ) {
-            pBinding->eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            pBinding->ImageInfo.imageLayout = eImgLayout;
-            pBinding->ImageInfo.imageView   = pMissingImgView;
-            pBinding->ImageInfo.sampler     = pMissingSampler;
-            return true;
-        }
-    }
-
-    return false;
-}
 
 const apemodevk::UploadedImage** GetLoadedImageSlotForPropertyName( apemode::vk::SceneUploader::MaterialDeviceAsset* pMaterialAsset,
                                                                   const char* pszTexturePropName ) {
@@ -170,7 +144,7 @@ bool InitializeMesh( apemode::SceneMesh&                                 mesh,
 
     /* Get source mesh object. */
 
-    assert( pMeshesFb && pMeshesFb->size( ) < mesh.Id );
+    assert( pMeshesFb && pMeshesFb->size( ) > mesh.Id );
     auto pSrcMesh = pMeshesFb->Get( mesh.Id );
     assert( pSrcMesh );
 
@@ -359,13 +333,9 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
     /* Tracks the amount of allocated host memory (approx). */
     uint64_t totalBytesAllocated = 0;
 
-    apemode::vector< VkBufferCopy > bufferCopies;
-    bufferCopies.reserve( stagingMemorySize / ( ( pFillInfoEnd - 1 )->SrcBufferSize ) / 2 );
-
     /* While there are elements that need to be uploaded. */
     auto pCurrFillInfo = pFillInfo;
     while ( pCurrFillInfo != pFillInfoEnd ) {
-        bufferCopies.clear( );
 
         uint8_t* pMappedStagingMemoryHead = pMappedStagingMemory;
         uint64_t stagingMemorySpaceLeft   = stagingMemorySize;
@@ -392,30 +362,28 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
             bufferCopy.dstOffset = 0;
             bufferCopy.srcOffset = bufferOffset;
             bufferCopy.size      = pCurrFillInfo->SrcBufferSize;
-            bufferCopies.push_back( bufferCopy );
 
-            /* Move to the next item. */
-            ++pCurrFillInfo;
-        } /* while */
-
-        if ( !bufferCopies.empty( ) ) {
             /* Get the queue pool and acquire a queue.
              * Allocate a command buffer and give it to the lambda that pushes copy commands into it.
              */
             TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
+
                 /* Add the copy command. */
-                vkCmdCopyBuffer( pCmdBuffer,                       /* Cmd */
-                                 hStagingBuffer,                   /* Src */
-                                 pCurrFillInfo->pDstBuffer,        /* Dst */
-                                 uint32_t( bufferCopies.size( ) ), /* RegionCount*/
-                                 bufferCopies.data( ) );           /* Regions */
+                vkCmdCopyBuffer( pCmdBuffer,                /* Cmd */
+                                 hStagingBuffer,            /* Src */
+                                 pCurrFillInfo->pDstBuffer, /* Dst */
+                                 1,                         /* RegionCount*/
+                                 &bufferCopy );             /* Regions */
 
                 /* End command buffer.
                  * Submit and sync.
                  */
                 return true;
             } ); /* TSubmitCmdBuffer */
-        }
+
+            /* Move to the next item. */
+            ++pCurrFillInfo;
+        } /* while */
     }
 
     return true;
@@ -439,8 +407,8 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::
             assert( pSceneAsset );
         }
 
-        apemodevk::ImageUploader  imgLoader;
-        apemodevk::ImageDecoder imgDecoder;
+        apemodevk::ImageUploader imgUploader;
+        apemodevk::ImageDecoder  imgDecoder;
 
         {
             uint8_t imageBytes[ 4 ];
@@ -455,7 +423,7 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::
             imageBytes[ 3 ] = 255;
 
             auto srcImgZeros = imgDecoder.CreateSourceImage2D( imageBytes, { 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, decodeOptions );
-            pSceneAsset->MissingTextureZeros = imgLoader.UploadImage( pParams->pNode, *srcImgZeros, loadOptions );
+            pSceneAsset->MissingTextureZeros = imgUploader.UploadImage( pParams->pNode, *srcImgZeros, loadOptions );
 
             imageBytes[ 0 ] = 255;
             imageBytes[ 1 ] = 255;
@@ -463,7 +431,7 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::
             imageBytes[ 3 ] = 255;
 
             auto srcImgOnes = imgDecoder.CreateSourceImage2D( imageBytes, {1, 1}, VK_FORMAT_R8G8B8A8_UNORM, decodeOptions );
-            pSceneAsset->MissingTextureOnes = imgLoader.UploadImage( pParams->pNode, *srcImgOnes, loadOptions );
+            pSceneAsset->MissingTextureOnes = imgUploader.UploadImage( pParams->pNode, *srcImgOnes, loadOptions );
 
             const uint32_t missingSamplerIndex = pParams->pSamplerManager->GetSamplerIndex( GetDefaultSamplerCreateInfo( 0 ) );
             assert( apemodevk::SamplerManager::IsSamplerIndexValid( missingSamplerIndex ) );
@@ -530,7 +498,7 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::
                             pFileFb->buffer( )->data( ), pFileFb->buffer( )->size( ), decodeOptions );
 
                         apemodevk::ImageUploader::LoadOptions loadOptions;
-                        auto loadedImg = imgLoader.UploadImage( pParams->pNode, *srcImg, loadOptions );
+                        auto loadedImg = imgUploader.UploadImage( pParams->pNode, *srcImg, loadOptions );
 
                         if ( loadedImg ) {
 

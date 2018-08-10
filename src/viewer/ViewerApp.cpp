@@ -309,21 +309,21 @@ bool ViewerApp::Initialize(  ) {
 
         pSceneRendererBase = apemode::unique_ptr< apemode::SceneRendererBase >( pAppSurface->CreateSceneRenderer( ) );
 
-        SceneRendererVk::RecreateParametersVk recreateParams;
+        vk::SceneRendererVk::RecreateParametersVk recreateParams;
         recreateParams.pNode           = &pAppSurface->Node;
         recreateParams.pShaderCompiler = pShaderCompiler.get( );
         recreateParams.pRenderPass     = hDbgRenderPass;
         recreateParams.pDescPool       = DescriptorPool;
         recreateParams.FrameCount      = FrameCount;
 
-        SceneRendererVk::SceneUpdateParametersVk updateParams;
+        /*SceneRendererVk::SceneUpdateParametersVk updateParams;
         updateParams.pNode           = &pAppSurface->Node;
         updateParams.pRenderPass     = hDbgRenderPass;
         updateParams.pDescPool       = DescriptorPool;
         updateParams.FrameCount      = FrameCount;
         updateParams.pImgUploader      = &imgUploader;
         updateParams.pSamplerManager = pSamplerManager.get( );
-        updateParams.pShaderCompiler = pShaderCompiler.get( );
+        updateParams.pShaderCompiler = pShaderCompiler.get( );*/
 
         /*
         --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/bristleback-dota-fan-art.fbxp"
@@ -359,8 +359,14 @@ bool ViewerApp::Initialize(  ) {
         auto sceneFile = TGetOption< std::string >( "scene", "" );
         mLoadedScene = std::move( LoadSceneFromBin( apemodeos::FileReader( ).ReadBinFile( sceneFile.c_str( ) ) ) );
 
-        updateParams.pSrcScene = mLoadedScene.pSrcScene;
-        if ( false == pSceneRendererBase->UpdateScene( mLoadedScene.pScene.get( ), &updateParams ) ) {
+        apemode::vk::SceneUploader::UploadParameters uploadParams;
+        uploadParams.pNode           = &pAppSurface->Node;
+        uploadParams.pImgUploader    = &imgUploader;
+        uploadParams.pSamplerManager = pSamplerManager.get( );
+        uploadParams.pSrcScene       = mLoadedScene.pSrcScene;
+
+        apemode::vk::SceneUploader sceneUploader;
+        if ( false == sceneUploader.UploadScene( mLoadedScene.pScene.get( ), &uploadParams ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
@@ -770,7 +776,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 
         XMMATRIX rootMatrix = XMMatrixRotationY( WorldRotationY );
 
-        apemode::SceneRendererVk::SceneRenderParametersVk sceneRenderParameters;
+        vk::SceneRendererVk::SceneRenderParametersVk sceneRenderParameters;
         sceneRenderParameters.Dims.x                   = float( width );
         sceneRenderParameters.Dims.y                   = float( height );
         sceneRenderParameters.Scale.x                  = 1;

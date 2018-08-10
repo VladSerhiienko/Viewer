@@ -461,10 +461,10 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             auto pMeshFb = pMeshesFb->Get( meshId );
 
             assert( pMeshFb );
-            assert( apemodefb::IsNotNullAndNotEmpty( pMeshFb->vertices( ) ) );
-            assert( apemodefb::IsNotNullAndNotEmpty( pMeshFb->indices( ) ) );
-            assert( apemodefb::IsNotNullAndNotEmpty( pMeshFb->subsets( ) ) );
-            assert( apemodefb::IsNotNullAndNotEmpty( pMeshFb->submeshes( ) ) );
+            assert( IsNotNullAndNotEmpty( pMeshFb->vertices( ) ) );
+            assert( IsNotNullAndNotEmpty( pMeshFb->indices( ) ) );
+            assert( IsNotNullAndNotEmpty( pMeshFb->subsets( ) ) );
+            assert( IsNotNullAndNotEmpty( pMeshFb->submeshes( ) ) );
 
             pScene->Meshes.emplace_back( );
             auto &mesh = pScene->Meshes.back( );
