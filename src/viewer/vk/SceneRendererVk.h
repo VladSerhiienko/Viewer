@@ -15,12 +15,12 @@ struct Scene;
 
 namespace vk {
 
-class SceneRendererVk : public SceneRendererBase {
+class SceneRenderer : public SceneRendererBase {
 public:
-    SceneRendererVk( )          = default;
-    virtual ~SceneRendererVk( ) = default;
+    SceneRenderer( )          = default;
+    virtual ~SceneRenderer( ) = default;
 
-    struct RecreateParametersVk : RecreateParametersBase {
+    struct RecreateParameters : RecreateParametersBase {
         apemodevk::GraphicsDevice* pNode           = nullptr;        /* Required */
         apemodevk::ShaderCompiler* pShaderCompiler = nullptr;        /* Required */
         VkDescriptorPool           pDescPool       = VK_NULL_HANDLE; /* Required */
@@ -30,7 +30,7 @@ public:
 
     bool Recreate( const RecreateParametersBase* pParams ) override;
 
-    struct SceneRenderParametersVk : SceneRenderParametersBase {
+    struct RenderParameters : SceneRenderParametersBase {
         class EnvMap {
         public:
             VkSampler     pSampler;

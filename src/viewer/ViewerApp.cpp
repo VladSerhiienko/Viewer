@@ -309,7 +309,7 @@ bool ViewerApp::Initialize(  ) {
 
         pSceneRendererBase = apemode::unique_ptr< apemode::SceneRendererBase >( pAppSurface->CreateSceneRenderer( ) );
 
-        vk::SceneRendererVk::RecreateParametersVk recreateParams;
+        vk::SceneRenderer::RecreateParameters recreateParams;
         recreateParams.pNode           = &pAppSurface->Node;
         recreateParams.pShaderCompiler = pShaderCompiler.get( );
         recreateParams.pRenderPass     = hDbgRenderPass;
@@ -371,20 +371,20 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        apemodevk::SkyboxRenderer::RecreateParameters skyboxRendererRecreateParams;
+        vk::SkyboxRenderer::RecreateParameters skyboxRendererRecreateParams;
         skyboxRendererRecreateParams.pNode           = &pAppSurface->Node;
         skyboxRendererRecreateParams.pShaderCompiler = pShaderCompiler.get();
         skyboxRendererRecreateParams.pRenderPass     = hDbgRenderPass;
         skyboxRendererRecreateParams.pDescPool       = DescriptorPool;
         skyboxRendererRecreateParams.FrameCount      = FrameCount;
 
-        pSkyboxRenderer = apemode::make_unique< apemodevk::SkyboxRenderer >( );
+        pSkyboxRenderer = apemode::make_unique< vk::SkyboxRenderer >( );
         if ( false == pSkyboxRenderer->Recreate( &skyboxRendererRecreateParams ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
 
-        pSkybox                = apemode::make_unique< apemodevk::Skybox >( );
+        pSkybox                = apemode::make_unique< vk::Skybox >( );
         pSkybox->pSampler      = pRadianceCubeMapSampler;
         pSkybox->pImgView      = RadianceImg->hImgView;
         pSkybox->Dimension     = RadianceImg->ImgCreateInfo.extent.width;
@@ -730,7 +730,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         pDebugRenderer->Reset( FrameIndex );
         pSceneRendererBase->Reset( mLoadedScene.pScene.get( ), FrameIndex );
 
-        apemodevk::SkyboxRenderer::RenderParameters skyboxRenderParams;
+        vk::SkyboxRenderer::RenderParameters skyboxRenderParams;
         XMStoreFloat4x4( &skyboxRenderParams.InvViewMatrix, invViewMatrix );
         XMStoreFloat4x4( &skyboxRenderParams.InvProjMatrix, invProjMatrix );
         XMStoreFloat4x4( &skyboxRenderParams.ProjBiasMatrix, projBiasMatrix );
@@ -776,7 +776,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 
         XMMATRIX rootMatrix = XMMatrixRotationY( WorldRotationY );
 
-        vk::SceneRendererVk::SceneRenderParametersVk sceneRenderParameters;
+        vk::SceneRenderer::RenderParameters sceneRenderParameters;
         sceneRenderParameters.Dims.x                   = float( width );
         sceneRenderParameters.Dims.y                   = float( height );
         sceneRenderParameters.Scale.x                  = 1;

@@ -48,11 +48,11 @@ namespace apemodevk {
     };
 
     bool FillCombinedImgSamplerBinding( apemodevk::DescriptorSetBase::Binding* pBinding,
-        VkImageView                            pImgView,
-        VkSampler                              pSampler,
-        VkImageLayout                          eImgLayout,
-        VkImageView                            pMissingImgView,
-        VkSampler                              pMissingSampler ) {
+                                        VkImageView                            pImgView,
+                                        VkSampler                              pSampler,
+                                        VkImageLayout                          eImgLayout,
+                                        VkImageView                            pMissingImgView,
+                                        VkSampler                              pMissingSampler ) {
         if ( pBinding ) {
             if ( pImgView && pSampler ) {
                 pBinding->eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
@@ -75,7 +75,7 @@ namespace apemodevk {
     }
 }
 
-bool apemode::vk::SceneRendererVk::RenderScene( const Scene* pScene, const SceneRenderParametersBase* pParamsBase ) {
+bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRenderParametersBase* pParamsBase ) {
     using namespace apemodevk;
 
     /* Scene was not provided.
@@ -85,7 +85,7 @@ bool apemode::vk::SceneRendererVk::RenderScene( const Scene* pScene, const Scene
     }
 
     auto pSceneAsset = static_cast< const vk::SceneUploader::DeviceAsset* >( pScene->pDeviceAsset.get( ) );
-    auto pParams     = static_cast< const SceneRenderParametersVk* >( pParamsBase );
+    auto pParams     = static_cast< const RenderParameters* >( pParamsBase );
 
     /* Device change was not handled, cannot render the scene. */
     if ( pNode != pParams->pNode ) {
@@ -336,14 +336,14 @@ bool apemode::vk::SceneRendererVk::RenderScene( const Scene* pScene, const Scene
     return true;
 }
 
-bool apemode::vk::SceneRendererVk::Recreate( const RecreateParametersBase* pParamsBase ) {
+bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParamsBase ) {
     using namespace apemodevk;
 
     if ( nullptr == pParamsBase ) {
         return false;
     }
 
-    auto pParams = (RecreateParametersVk*) pParamsBase;
+    auto pParams = (RecreateParameters*) pParamsBase;
     if ( nullptr == pParams->pNode )
         return false;
 
@@ -674,7 +674,7 @@ bool apemode::vk::SceneRendererVk::Recreate( const RecreateParametersBase* pPara
     return true;
 }
 
-bool apemode::vk::SceneRendererVk::Reset( const Scene* pScene, uint32_t FrameIndex ) {
+bool apemode::vk::SceneRenderer::Reset( const Scene* pScene, uint32_t FrameIndex ) {
     if ( nullptr != pScene ) {
         BufferPools[ FrameIndex ].Reset( );
     }
@@ -682,7 +682,7 @@ bool apemode::vk::SceneRendererVk::Reset( const Scene* pScene, uint32_t FrameInd
     return true;
 }
 
-bool apemode::vk::SceneRendererVk::Flush( const Scene* pScene, uint32_t FrameIndex ) {
+bool apemode::vk::SceneRenderer::Flush( const Scene* pScene, uint32_t FrameIndex ) {
     if ( nullptr != pScene ) {
         BufferPools[ FrameIndex ].Flush( );
     }
