@@ -1,6 +1,9 @@
 #pragma once
 
-#include <FbxPipelineSceneUtils.h>
+#include <flatbuffers/flatbuffers.h>
+#include <flatbuffers/util.h>
+#include <scene_generated.h>
+
 #include <MathInc.h>
 #include <MemoryManager.h>
 
