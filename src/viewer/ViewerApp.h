@@ -1,7 +1,7 @@
 
 #include <Swapchain.Vulkan.h>
 #include <ShaderCompiler.Vulkan.h>
-#include <ImageLoader.Vulkan.h>
+#include <ImageUploader.Vulkan.h>
 #include <SamplerManager.Vulkan.h>
 
 #include <AppBase.h>
@@ -91,8 +91,8 @@ namespace apemode {
         apemode::unique_ptr< apemodevk::Skybox >               pSkybox;
         apemode::unique_ptr< apemodevk::SkyboxRenderer >       pSkyboxRenderer;
         apemode::unique_ptr< apemodevk::SamplerManager >       pSamplerManager;
-        apemodevk::unique_ptr< apemodevk::LoadedImage >        RadianceLoadedImg;
-        apemodevk::unique_ptr< apemodevk::LoadedImage >        IrradianceLoadedImg;
+        apemodevk::unique_ptr< apemodevk::UploadedImage >      RadianceImg;
+        apemodevk::unique_ptr< apemodevk::UploadedImage >      IrradianceImg;
         VkSampler                                              pRadianceCubeMapSampler   = VK_NULL_HANDLE;
         VkSampler                                              pIrradianceCubeMapSampler = VK_NULL_HANDLE;
 

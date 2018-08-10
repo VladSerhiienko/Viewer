@@ -1,11 +1,11 @@
-#include <SceneLoaderVk.h>
+#include <SceneUploaderVk.h>
 
 #include <QueuePools.Vulkan.h>
 #include <BufferPools.Vulkan.h>
 #include <ShaderCompiler.Vulkan.h>
-#include <ImageLoader.Vulkan.h>
+#include <ImageUploader.Vulkan.h>
 #include <Buffer.Vulkan.h>
-#include <ImageLoader.Vulkan.h>
+#include <ImageUploader.Vulkan.h>
 #include <TOneTimeCmdBufferSubmit.Vulkan.h>
 
 #include <AppState.h>
@@ -33,7 +33,7 @@ struct MeshBufferFillInfoCmpGreaterBySize {
             return ( +1 );
         return 0;
     }
-}
+};
 
 // Something to consider adding: An eastl sort which uses qsort underneath.
 // The primary purpose of this is to have an eastl interface for sorting which
@@ -46,15 +46,124 @@ int QSortCmpOp( const void* a, const void* b ) {
 }
 
 template < typename TValue, typename TCmpOp >
-void QSort( const TValue* pFirst, const TValue* pLast ) {
+void QSort( TValue* pFirst, TValue* pLast ) {
     qsort( pFirst, (size_t) eastl::distance( pFirst, pLast ), sizeof( TValue ), QSortCmpOp< TValue, TCmpOp > );
+}
+
+VkSamplerCreateInfo GetDefaultSamplerCreateInfo( const float maxLod ) {
+    VkSamplerCreateInfo samplerCreateInfo;
+    apemodevk::InitializeStruct( samplerCreateInfo );
+    samplerCreateInfo.addressModeU            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerCreateInfo.addressModeV            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerCreateInfo.addressModeW            = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerCreateInfo.anisotropyEnable        = true;
+    samplerCreateInfo.maxAnisotropy           = 16;
+    samplerCreateInfo.compareEnable           = false;
+    samplerCreateInfo.compareOp               = VK_COMPARE_OP_NEVER;
+    samplerCreateInfo.magFilter               = VK_FILTER_LINEAR;
+    samplerCreateInfo.minFilter               = VK_FILTER_LINEAR;
+    samplerCreateInfo.minLod                  = 0;
+    samplerCreateInfo.maxLod                  = maxLod;
+    samplerCreateInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
+    samplerCreateInfo.unnormalizedCoordinates = false;
+    return samplerCreateInfo;
+}
+
+bool FillCombinedImgSamplerBinding( apemodevk::DescriptorSetBase::Binding* pBinding,
+                                    VkImageView                            pImgView,
+                                    VkSampler                              pSampler,
+                                    VkImageLayout                          eImgLayout,
+                                    VkImageView                            pMissingImgView,
+                                    VkSampler                              pMissingSampler ) {
+    if ( pBinding ) {
+        if ( pImgView && pSampler ) {
+            pBinding->eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            pBinding->ImageInfo.imageLayout = eImgLayout;
+            pBinding->ImageInfo.imageView   = pImgView;
+            pBinding->ImageInfo.sampler     = pSampler;
+            return true;
+        }
+
+        if ( pMissingImgView && pMissingSampler ) {
+            pBinding->eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            pBinding->ImageInfo.imageLayout = eImgLayout;
+            pBinding->ImageInfo.imageView   = pMissingImgView;
+            pBinding->ImageInfo.sampler     = pMissingSampler;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+const apemodevk::UploadedImage** GetLoadedImageSlotForPropertyName( apemode::vk::SceneUploader::MaterialDeviceAsset* pMaterialAsset,
+                                                                  const char* pszTexturePropName ) {
+    if ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) {
+        return &pMaterialAsset->pBaseColorImg;
+    } else if ( strcmp( "diffuseTexture", pszTexturePropName ) == 0 ) {
+        return &pMaterialAsset->pBaseColorImg;
+    } else if ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) {
+        return &pMaterialAsset->pNormalImg;
+    } else if ( strcmp( "occlusionTexture", pszTexturePropName ) == 0 ) {
+        return &pMaterialAsset->pOcclusionImg;
+    } else if ( strcmp( "specularGlossinessTexture", pszTexturePropName ) == 0 ) {
+        return &pMaterialAsset->pMetallicRoughnessImg;
+    } else if ( strcmp( "metallicRoughnessTexture", pszTexturePropName ) == 0 ) {
+        return &pMaterialAsset->pMetallicRoughnessImg;
+    } else if ( strcmp( "emissiveTexture", pszTexturePropName ) == 0 ) {
+        return &pMaterialAsset->pEmissiveImg;
+    }
+
+    return nullptr;
+}
+
+bool GenerateMipMapsForPropertyName(  const char* pszTexturePropName ) {
+
+    if ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) {
+        return true;
+    } else if ( strcmp( "diffuseTexture", pszTexturePropName ) == 0 ) {
+        return true;
+    } else if ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) {
+        return true;
+    } else if ( strcmp( "occlusionTexture", pszTexturePropName ) == 0 ) {
+        return false;
+    } else if ( strcmp( "specularGlossinessTexture", pszTexturePropName ) == 0 ) {
+        return false;
+    } else if ( strcmp( "metallicRoughnessTexture", pszTexturePropName ) == 0 ) {
+        return false;
+    } else if ( strcmp( "emissiveTexture", pszTexturePropName ) == 0 ) {
+        return true;
+    }
+
+    return false;
+}
+
+void AddLoadedImage( apemode::vk::SceneUploader::DeviceAsset*        pAsset,
+                     uint32_t                                        fileId,
+                     apemodevk::unique_ptr< apemodevk::UploadedImage > loadedImg ) {
+    pAsset->LoadedImgs.push_back( eastl::make_pair( fileId, std::move( loadedImg ) ) );
+}
+
+const apemodevk::UploadedImage* FindLoadedImage( apemode::vk::SceneUploader::DeviceAsset* pAsset, uint32_t fileId ) {
+    auto loadedImageIt = eastl::find_if( pAsset->LoadedImgs.begin( ),
+                                         pAsset->LoadedImgs.end( ),
+                                         [&]( apemode::vk::SceneUploader::DeviceAsset::LoadedImagePtrPair& loadedImgPair ) {
+                                             return loadedImgPair.first == fileId;
+                                         } );
+
+    if ( loadedImageIt != pAsset->LoadedImgs.end( ) ) {
+        return loadedImageIt->second.get();
+    }
+
+    return nullptr;
 }
 
 } // namespace
 
-bool InitializeMesh( apemode::SceneMesh&                             mesh,
-                     const apemode::Scene*                           pScene,
-                     const apemode::vk::SceneLoader::LoadParameters* pParams ) {
+bool InitializeMesh( apemode::SceneMesh&                                 mesh,
+                     const apemode::Scene*                               pScene,
+                     const apemode::vk::SceneUploader::UploadParameters* pParams ) {
 
     assert( pParams && pParams->pSrcScene );
     auto pMeshesFb = pParams->pSrcScene->meshes( );
@@ -67,9 +176,9 @@ bool InitializeMesh( apemode::SceneMesh&                             mesh,
 
     /* Get or create mesh device asset. */
 
-    auto pMeshAsset = static_cast< MeshDeviceAsset* >( mesh.pDeviceAsset.get( ) );
+    auto pMeshAsset = static_cast< apemode::vk::SceneUploader::MeshDeviceAsset* >( mesh.pDeviceAsset.get( ) );
     if ( nullptr == pMeshAsset ) {
-        pMeshAsset = apemode_new MeshDeviceAsset( );
+        pMeshAsset = apemode_new apemode::vk::SceneUploader::MeshDeviceAsset( );
         mesh.pDeviceAsset.reset( pMeshAsset );
     }
 
@@ -117,7 +226,10 @@ bool InitializeMesh( apemode::SceneMesh&                             mesh,
     return true;
 }
 
-bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneLoader::LoadParameters* pParams ) {
+bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::UploadParameters* pParams ) {
+    using namespace apemodevk;
+    using namespace eastl;
+
     assert( pScene && pParams && pParams->pSrcScene && pParams->pNode );
 
     auto pNode = pParams->pNode;
@@ -142,7 +254,7 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneLoader::LoadP
 
         /* Get or create mesh device asset. */
 
-        auto pMeshAsset = static_cast< MeshDeviceAsset* >( mesh.pDeviceAsset.get( ) );
+        auto pMeshAsset = static_cast< apemode::vk::SceneUploader::MeshDeviceAsset* >( mesh.pDeviceAsset.get( ) );
         assert( pMeshAsset );
 
         MeshBufferFillInfo bufferFillInfo;
@@ -166,8 +278,8 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneLoader::LoadP
 
     { /* Sort by size in descending order. */
 
-        const MeshBufferFillInfo* pFillInfo     = bufferFillInfos.data( );
-        const MeshBufferFillInfo* pFillInfoLast = pFillInfo + ( bufferFillInfos.size( ) - 1 );
+        MeshBufferFillInfo* pFillInfo     = bufferFillInfos.data( );
+        MeshBufferFillInfo* pFillInfoLast = pFillInfo + ( bufferFillInfos.size( ) - 1 );
         QSort< MeshBufferFillInfo, MeshBufferFillInfoCmpGreaterBySize >( pFillInfo, pFillInfoLast );
     }
 
@@ -181,20 +293,21 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneLoader::LoadP
         bufferBarriers.reserve( bufferFillInfos.size( ) );
 
         /* Initialize buffer barriers. */
-        eastl::transform( bufferFillInfos.begin( ),
-                          bufferFillInfos.end( ),
-                          eastl::back_inserter( bufferBarriers ),
-                          []( const MeshBufferFillInfo* const pCurrFillInfo ) {
-                              VkBufferMemoryBarrier bufferMemoryBarrier;
-                              apemodevk::InitializeStruct( bufferMemoryBarrier );
+        transform( bufferFillInfos.begin( ),
+                   bufferFillInfos.end( ),
+                   back_inserter( bufferBarriers ),
+                   []( const MeshBufferFillInfo & currFillInfo ) {
+                       VkBufferMemoryBarrier bufferMemoryBarrier;
+                       apemodevk::InitializeStruct( bufferMemoryBarrier );
 
-                              bufferMemoryBarrier.size                = VK_WHOLE_SIZE;
-                              bufferMemoryBarrier.buffer              = pCurrFillInfo->pDstBuffer;
-                              bufferMemoryBarrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
-                              bufferMemoryBarrier.dstAccessMask       = pCurrFillInfo->eDstAccessFlags;
-                              bufferMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-                              bufferMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-                          } );
+                       bufferMemoryBarrier.size                = VK_WHOLE_SIZE;
+                       bufferMemoryBarrier.buffer              = currFillInfo.pDstBuffer;
+                       bufferMemoryBarrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
+                       bufferMemoryBarrier.dstAccessMask       = currFillInfo.eDstAccessFlags;
+                       bufferMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                       bufferMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+                       return bufferMemoryBarrier;
+                   } );
 
         /* Stage buffers. */
         vkCmdPipelineBarrier( pCmdBuffer,                         /* Cmd */
@@ -211,9 +324,9 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneLoader::LoadP
         return true;
     } );
 
-    size_t const contiguousBufferSize    = eastl::max( pParams->StagingMemoryLimitHint, pFillInfo->SrcBufferSize );
-    size_t const stagingMemorySizeNeeded = eastl::max( pNode->AdapterProps.limits.maxUniformBufferRange, contiguousBufferSize );
-    size_t const stagingMemorySize       = eastl::min( totalBytesRequired, stagingMemorySizeNeeded );
+    size_t const contiguousBufferSize = max< size_t >( pParams->StagingMemoryLimitHint, pFillInfo->SrcBufferSize );
+    size_t const stagingMemorySizeNeeded = max< size_t >( pNode->AdapterProps.limits.maxUniformBufferRange, contiguousBufferSize );
+    size_t const stagingMemorySize = min< size_t >( totalBytesRequired, stagingMemorySizeNeeded );
 
     /* The purpose is to get some control over the memory allocation from CPU heap
      * and make it efficient, manageable and easy to understand.
@@ -247,7 +360,7 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneLoader::LoadP
     uint64_t totalBytesAllocated = 0;
 
     apemode::vector< VkBufferCopy > bufferCopies;
-    bufferCopies.reserve( stagingMemorySize / ( ( --pFillInfoEnd )->SrcBufferSize ) / 2 );
+    bufferCopies.reserve( stagingMemorySize / ( ( pFillInfoEnd - 1 )->SrcBufferSize ) / 2 );
 
     /* While there are elements that need to be uploaded. */
     auto pCurrFillInfo = pFillInfo;
@@ -289,13 +402,13 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneLoader::LoadP
             /* Get the queue pool and acquire a queue.
              * Allocate a command buffer and give it to the lambda that pushes copy commands into it.
              */
-            apemodevk::TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
+            TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
                 /* Add the copy command. */
-                vkCmdCopyBuffer( pCmdBuffer,                               /* Cmd */
-                                 uploadBuffer.DescriptorBufferInfo.buffer, /* Src */
-                                 pCurrFillInfo->pDstBuffer,                /* Dst */
-                                 uint32_t( bufferCopies.size( ) ),         /* Region count*/
-                                 bufferCopies );                           /* Regions */
+                vkCmdCopyBuffer( pCmdBuffer,                       /* Cmd */
+                                 hStagingBuffer,                   /* Src */
+                                 pCurrFillInfo->pDstBuffer,        /* Dst */
+                                 uint32_t( bufferCopies.size( ) ), /* RegionCount*/
+                                 bufferCopies.data( ) );           /* Regions */
 
                 /* End command buffer.
                  * Submit and sync.
@@ -304,32 +417,35 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneLoader::LoadP
             } ); /* TSubmitCmdBuffer */
         }
     }
+
+    return true;
 }
 
-bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneLoader::LoadParameters* pParams ) {
+bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::UploadParameters* pParams ) {
 
     MT::TaskScheduler* pTaskScheduler = apemode::AppState::Get( )->GetTaskScheduler( );
 
-    auto pMaterialsFb = pParamsBase->pSrcScene->materials( );
-    auto pTexturesFb  = pParamsBase->pSrcScene->textures( );
-    auto pFilesFb     = pParamsBase->pSrcScene->files( );
+    auto pMaterialsFb = pParams->pSrcScene->materials( );
+    auto pTexturesFb  = pParams->pSrcScene->textures( );
+    auto pFilesFb     = pParams->pSrcScene->files( );
 
     if ( pMaterialsFb && pTexturesFb && pFilesFb ) {
+
         /* Create material device asset if needed. */
-        auto pSceneAsset = static_cast< DeviceAsset* >( pScene->pDeviceAsset.get( ) );
+        auto pSceneAsset = static_cast< apemode::vk::SceneUploader::DeviceAsset* >( pScene->pDeviceAsset.get( ) );
         if ( nullptr == pSceneAsset ) {
-            pSceneAsset = apemode_new DeviceAsset( );
+            pSceneAsset = apemode_new apemode::vk::SceneUploader::DeviceAsset( );
             pScene->pDeviceAsset.reset( pSceneAsset );
             assert( pSceneAsset );
         }
 
-        apemodevk::ImageLoader imgLoader;
+        apemodevk::ImageUploader  imgLoader;
         apemodevk::ImageDecoder imgDecoder;
 
         {
             uint8_t imageBytes[ 4 ];
 
-            apemodevk::ImageLoader::LoadOptions    loadOptions;
+            apemodevk::ImageUploader::LoadOptions    loadOptions;
             apemodevk::ImageDecoder::DecodeOptions decodeOptions;
             decodeOptions.bGenerateMipMaps = false;
 
@@ -339,7 +455,7 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneLoader::Lo
             imageBytes[ 3 ] = 255;
 
             auto srcImgZeros = imgDecoder.CreateSourceImage2D( imageBytes, { 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, decodeOptions );
-            pSceneAsset->MissingTextureZeros = imgLoader.LoadImageFromSrc( pParams->pNode, *srcImgZeros, loadOptions );
+            pSceneAsset->MissingTextureZeros = imgLoader.UploadImage( pParams->pNode, *srcImgZeros, loadOptions );
 
             imageBytes[ 0 ] = 255;
             imageBytes[ 1 ] = 255;
@@ -347,9 +463,9 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneLoader::Lo
             imageBytes[ 3 ] = 255;
 
             auto srcImgOnes = imgDecoder.CreateSourceImage2D( imageBytes, {1, 1}, VK_FORMAT_R8G8B8A8_UNORM, decodeOptions );
-            pSceneAsset->MissingTextureOnes = imgLoader.LoadImageFromSrc( pParams->pNode, *srcImgOnes, loadOptions );
+            pSceneAsset->MissingTextureOnes = imgLoader.UploadImage( pParams->pNode, *srcImgOnes, loadOptions );
 
-            const uint32_t missingSamplerIndex = pParams->pSamplerManager->GetSamplerIndex( apemodevk::GetDefaultSamplerCreateInfo( 0 ) );
+            const uint32_t missingSamplerIndex = pParams->pSamplerManager->GetSamplerIndex( GetDefaultSamplerCreateInfo( 0 ) );
             assert( apemodevk::SamplerManager::IsSamplerIndexValid( missingSamplerIndex ) );
             pSceneAsset->pMissingSampler = pParams->pSamplerManager->StoredSamplers[ missingSamplerIndex ].pSampler;
         }
@@ -357,86 +473,85 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneLoader::Lo
         for ( auto& material : pScene->Materials ) {
 
             /* Create material device asset if needed. */
-            auto pMaterialAsset = static_cast< apemodevk::SceneMaterialDeviceAssetVk* >( material.pDeviceAsset.get( ) );
+            auto pMaterialAsset = static_cast< apemode::vk::SceneUploader::MaterialDeviceAsset* >( material.pDeviceAsset.get( ) );
             if ( nullptr == pMaterialAsset ) {
-                pMaterialAsset = apemode_new apemodevk::SceneMaterialDeviceAssetVk( );
+                pMaterialAsset = apemode_new apemode::vk::SceneUploader::MaterialDeviceAsset( );
                 material.pDeviceAsset.reset( pMaterialAsset );
             }
 
-            auto pMaterialFb          = FlatbuffersTVectorGetAtIndex( pMaterialsFb, material.Id );
+            auto pMaterialFb          = pMaterialsFb->Get( material.Id );
             auto pTexturePropertiesFb = pMaterialFb->texture_properties( );
 
             assert( pMaterialFb );
             assert( pTexturePropertiesFb );
 
-            auto pszMaterialName = GetCStringProperty( pParamsBase->pSrcScene, pMaterialFb->name_id( ) );
+            auto pszMaterialName = apemode::utils::GetCStringProperty( pParams->pSrcScene, pMaterialFb->name_id( ) );
             pMaterialAsset->pszName = pszMaterialName;
 
-            LogError( "Loading textures for material \"{}\"", pszMaterialName );
+            apemode::LogError( "Loading textures for material \"{}\"", pszMaterialName );
 
             for ( auto pTexturePropFb : *pTexturePropertiesFb ) {
 
-                auto pszTexturePropName      = GetCStringProperty( pParamsBase->pSrcScene, pTexturePropFb->name_id( ) );
+                auto pszTexturePropName      = apemode::utils::GetCStringProperty( pParams->pSrcScene, pTexturePropFb->name_id( ) );
                 auto ppLoadedImgMaterialSlot = GetLoadedImageSlotForPropertyName( pMaterialAsset, pszTexturePropName );
 
                 if ( nullptr == ppLoadedImgMaterialSlot ) {
 
-                    LogError( "Cannot map texture property: \"{}\"", pszTexturePropName );
+                    apemode::LogError( "Cannot map texture property: \"{}\"", pszTexturePropName );
 
                 } else {
 
-                    auto pTextureFb = FlatbuffersTVectorGetAtIndex( pTexturesFb, pTexturePropFb->value_id( ) );
+                    auto pTextureFb = pTexturesFb->Get( pTexturePropFb->value_id( ) );
                     assert( pTextureFb );
 
-                    auto pFileFb = FlatbuffersTVectorGetAtIndex( pFilesFb, pTextureFb->file_id( ) );
+                    auto pFileFb = pFilesFb->Get( pTextureFb->file_id( ) );
                     assert( pFileFb );
 
-                    auto pszFileName    = GetCStringProperty( pParamsBase->pSrcScene, pFileFb->name_id( ) );
-                    auto pszTextureName = GetCStringProperty( pParamsBase->pSrcScene, pTextureFb->name_id( ) );
+                    auto pszFileName    = apemode::utils::GetCStringProperty( pParams->pSrcScene, pFileFb->name_id( ) );
+                    auto pszTextureName = apemode::utils::GetCStringProperty( pParams->pSrcScene, pTextureFb->name_id( ) );
 
                     assert( pszFileName );
                     assert( pszTextureName );
 
-                    if ( auto pLoadedImg = pSceneAsset->FindLoadedImage( pFileFb->id( ) ) ) {
+                    if ( auto pLoadedImg = FindLoadedImage( pSceneAsset, pFileFb->id( ) ) ) {
 
-                        LogInfo( "Assigning loaded texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
+                        apemode::LogInfo( "Assigning loaded texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
                         ( *ppLoadedImgMaterialSlot ) = pLoadedImg;
 
                     } else {
 
-                        LogInfo( "Loading texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
+                        apemode::LogInfo( "Loading texture: \"{}\" <- {}", pszTexturePropName, pszTextureName );
 
                         apemodevk::ImageDecoder::DecodeOptions decodeOptions;
                         decodeOptions.eFileFormat = apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_PNG;
-                        decodeOptions.bGenerateMipMaps = apemodevk::GenerateMipMapsForPropertyName( pszTexturePropName );
+                        decodeOptions.bGenerateMipMaps = GenerateMipMapsForPropertyName( pszTexturePropName );
 
                         auto srcImg = imgDecoder.DecodeSourceImageFromData(
                             pFileFb->buffer( )->data( ), pFileFb->buffer( )->size( ), decodeOptions );
 
-                        apemodevk::ImageLoader::LoadOptions loadOptions;
-                        auto loadedImg = imgLoader.LoadImageFromSrc( pParams->pNode, *srcImg, loadOptions );
+                        apemodevk::ImageUploader::LoadOptions loadOptions;
+                        auto loadedImg = imgLoader.UploadImage( pParams->pNode, *srcImg, loadOptions );
 
                         if ( loadedImg ) {
 
                             ( *ppLoadedImgMaterialSlot ) = loadedImg.get( );
-                            pSceneAsset->AddLoadedImage( pFileFb->id( ), std::move( loadedImg ) );
-
+                            AddLoadedImage( pSceneAsset, pFileFb->id( ), std::move( loadedImg ) );
                         }
                     }
 
                 } /* ppLoadedImgMaterialSlot */
             }     /* pTexturePropFb */
 
-            if ( pMaterialAsset->pBaseColorLoadedImg ) {
-                const float maxLod = float( pMaterialAsset->pBaseColorLoadedImg->ImgCreateInfo.mipLevels );
+            if ( pMaterialAsset->pBaseColorImg ) {
+                const float maxLod = float( pMaterialAsset->pBaseColorImg->ImgCreateInfo.mipLevels );
 
-                VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
+                VkSamplerCreateInfo samplerCreateInfo = GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
                 assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
                 pMaterialAsset->pBaseColorSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
-                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pBaseColorLoadedImg->ImgViewCreateInfo;
-                imgViewCreateInfo.image = pMaterialAsset->pBaseColorLoadedImg->hImg;
+                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pBaseColorImg->ImgViewCreateInfo;
+                imgViewCreateInfo.image = pMaterialAsset->pBaseColorImg->hImg;
 
                 if ( !pMaterialAsset->hBaseColorImgView.Recreate( pParams->pNode->hLogicalDevice, imgViewCreateInfo ) ) {
                     return false;
@@ -444,17 +559,17 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneLoader::Lo
 
             } /* pBaseColorLoadedImg */
 
-            if ( pMaterialAsset->pNormalLoadedImg ) {
+            if ( pMaterialAsset->pNormalImg ) {
 
-                const float maxLod = float( pMaterialAsset->pNormalLoadedImg->ImgCreateInfo.mipLevels );
+                const float maxLod = float( pMaterialAsset->pNormalImg->ImgCreateInfo.mipLevels );
 
-                VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
+                VkSamplerCreateInfo samplerCreateInfo = GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
                 assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
                 pMaterialAsset->pNormalSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
-                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pNormalLoadedImg->ImgViewCreateInfo;
-                imgViewCreateInfo.image = pMaterialAsset->pNormalLoadedImg->hImg;
+                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pNormalImg->ImgViewCreateInfo;
+                imgViewCreateInfo.image = pMaterialAsset->pNormalImg->hImg;
 
                 if ( !pMaterialAsset->hNormalImgView.Recreate( pParams->pNode->hLogicalDevice, imgViewCreateInfo ) ) {
                     return false;
@@ -462,17 +577,17 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneLoader::Lo
 
             } /* pNormalLoadedImg */
 
-            if ( pMaterialAsset->pEmissiveLoadedImg ) {
+            if ( pMaterialAsset->pEmissiveImg ) {
 
-                const float maxLod = float( pMaterialAsset->pEmissiveLoadedImg->ImgCreateInfo.mipLevels );
+                const float maxLod = float( pMaterialAsset->pEmissiveImg->ImgCreateInfo.mipLevels );
 
-                VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
+                VkSamplerCreateInfo samplerCreateInfo = GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
                 assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
                 pMaterialAsset->pEmissiveSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
-                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pEmissiveLoadedImg->ImgViewCreateInfo;
-                imgViewCreateInfo.image = pMaterialAsset->pEmissiveLoadedImg->hImg;
+                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pEmissiveImg->ImgViewCreateInfo;
+                imgViewCreateInfo.image = pMaterialAsset->pEmissiveImg->hImg;
                 imgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ONE;
 
                 if ( !pMaterialAsset->hEmissiveImgView.Recreate( pParams->pNode->hLogicalDevice, imgViewCreateInfo ) ) {
@@ -481,25 +596,25 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneLoader::Lo
 
             } /* pEmissiveLoadedImg */
 
-            if ( pMaterialAsset->pMetallicRoughnessLoadedImg ) {
+            if ( pMaterialAsset->pMetallicRoughnessImg ) {
 
-                const float maxLod = float( pMaterialAsset->pMetallicRoughnessLoadedImg->ImgCreateInfo.mipLevels );
+                const float maxLod = float( pMaterialAsset->pMetallicRoughnessImg->ImgCreateInfo.mipLevels );
 
-                VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
+                VkSamplerCreateInfo samplerCreateInfo = GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
                 assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
                 pMaterialAsset->pMetallicSampler  = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
                 pMaterialAsset->pRoughnessSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
-                VkImageViewCreateInfo metallicImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessLoadedImg->ImgViewCreateInfo;
-                metallicImgViewCreateInfo.image        = pMaterialAsset->pMetallicRoughnessLoadedImg->hImg;
+                VkImageViewCreateInfo metallicImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessImg->ImgViewCreateInfo;
+                metallicImgViewCreateInfo.image        = pMaterialAsset->pMetallicRoughnessImg->hImg;
                 metallicImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_R;
                 metallicImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ONE;
                 metallicImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ONE;
                 metallicImgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ONE;
 
-                VkImageViewCreateInfo roughnessImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessLoadedImg->ImgViewCreateInfo;
-                roughnessImgViewCreateInfo.image        = pMaterialAsset->pMetallicRoughnessLoadedImg->hImg;
+                VkImageViewCreateInfo roughnessImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessImg->ImgViewCreateInfo;
+                roughnessImgViewCreateInfo.image        = pMaterialAsset->pMetallicRoughnessImg->hImg;
                 roughnessImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_G;
                 roughnessImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ONE;
                 roughnessImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ONE;
@@ -515,18 +630,18 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneLoader::Lo
 
             } /* pMetallicRoughnessLoadedImg */
 
-            if ( pMaterialAsset->pOcclusionLoadedImg ) {
+            if ( pMaterialAsset->pOcclusionImg ) {
 
-                const float maxLod = float( pMaterialAsset->pOcclusionLoadedImg->ImgCreateInfo.mipLevels );
+                const float maxLod = float( pMaterialAsset->pOcclusionImg->ImgCreateInfo.mipLevels );
 
-                VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
+                VkSamplerCreateInfo samplerCreateInfo = GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
                 assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
                 pMaterialAsset->pOcclusionSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
-                VkImageViewCreateInfo occlusionImgViewCreateInfo = pMaterialAsset->pOcclusionLoadedImg->ImgViewCreateInfo;
+                VkImageViewCreateInfo occlusionImgViewCreateInfo = pMaterialAsset->pOcclusionImg->ImgViewCreateInfo;
 
-                occlusionImgViewCreateInfo.image = pMaterialAsset->pOcclusionLoadedImg->hImg;
+                occlusionImgViewCreateInfo.image = pMaterialAsset->pOcclusionImg->hImg;
 
                 occlusionImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_B;
                 occlusionImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ZERO;
@@ -566,7 +681,7 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneLoader::Lo
     return true;
 }
 
-bool apemode::vk::SceneLoader::LoadScene( apemode::Scene* pScene, const apemode::vk::SceneLoader::LoadParameters* pParams ) {
+bool apemode::vk::SceneUploader::UploadScene( apemode::Scene* pScene, const apemode::vk::SceneUploader::UploadParameters* pParams ) {
     if ( !pParams || !pScene )
         return false;
 
@@ -577,10 +692,12 @@ bool apemode::vk::SceneLoader::LoadScene( apemode::Scene* pScene, const apemode:
         }
     }
 
-    auto pMaterialsFb = pParamsBase->pSrcScene->materials( );
+    auto pMaterialsFb = pParams->pSrcScene->materials( );
     if ( pMaterialsFb && pMaterialsFb->size( ) ) {
         if ( !UploadMaterials( pScene, pParams ) ) {
             return false;
         }
     }
+
+    return true;
 }

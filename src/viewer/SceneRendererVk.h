@@ -6,8 +6,8 @@
 #include <DescriptorPool.Vulkan.h>
 #include <BufferPools.Vulkan.h>
 #include <SceneRendererBase.h>
-#include <SceneLoaderVk.h>
-#include <ImageLoader.Vulkan.h>
+#include <SceneUploaderVk.h>
+#include <ImageUploader.Vulkan.h>
 #include <SamplerManager.Vulkan.h>
 
 namespace apemode {
@@ -29,7 +29,7 @@ namespace apemode {
             VkDescriptorPool           pDescPool       = VK_NULL_HANDLE; /* Required */
             VkRenderPass               pRenderPass     = VK_NULL_HANDLE; /* Required */
             uint32_t                   FrameCount      = 0;              /* Required */
-            apemodevk::ImageLoader*    pImgLoader      = nullptr;        /* Required */
+            apemodevk::ImageUploader*    pImgUploader      = nullptr;        /* Required */
             apemodevk::SamplerManager* pSamplerManager = nullptr;        /* Required */
         };
 

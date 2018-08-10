@@ -182,8 +182,8 @@ bool ViewerApp::Initialize(  ) {
             return false;
         }
 
-        apemodevk::ImageLoader  imgLoader;
-        apemodevk::ImageDecoder imgDecoder;
+        apemodevk::ImageUploader imgUploader;
+        apemodevk::ImageDecoder  imgDecoder;
 
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/kyoto_lod.dds" ) ) {
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_skybox.dds" ) ) {
@@ -197,11 +197,11 @@ bool ViewerApp::Initialize(  ) {
                 decodeOptions.eFileFormat = apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_DDS;
                 decodeOptions.bGenerateMipMaps = true;
 
-                apemodevk::ImageLoader::LoadOptions loadOptions;
+                apemodevk::ImageUploader::LoadOptions loadOptions;
                 loadOptions.bImgView = true;
 
                 auto srcImg = imgDecoder.DecodeSourceImageFromData( texAssetBin.data(), texAssetBin.size(), decodeOptions );
-                RadianceLoadedImg = imgLoader.LoadImageFromSrc( &pAppSurface->Node, *srcImg, loadOptions );
+                RadianceImg = imgUploader.UploadImage( &pAppSurface->Node, *srcImg, loadOptions );
             }
 
             VkSamplerCreateInfo samplerCreateInfo;
@@ -217,7 +217,7 @@ bool ViewerApp::Initialize(  ) {
             samplerCreateInfo.magFilter               = VK_FILTER_LINEAR;
             samplerCreateInfo.minFilter               = VK_FILTER_LINEAR;
             samplerCreateInfo.minLod                  = 0;
-            samplerCreateInfo.maxLod                  = float( RadianceLoadedImg->ImgCreateInfo.mipLevels );
+            samplerCreateInfo.maxLod                  = float( RadianceImg->ImgCreateInfo.mipLevels );
             samplerCreateInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
             samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
             samplerCreateInfo.unnormalizedCoordinates = false;
@@ -240,11 +240,11 @@ bool ViewerApp::Initialize(  ) {
                 decodeOptions.eFileFormat      = apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_DDS;
                 decodeOptions.bGenerateMipMaps = false;
 
-                apemodevk::ImageLoader::LoadOptions loadOptions;
+                apemodevk::ImageUploader::LoadOptions loadOptions;
                 loadOptions.bImgView = true;
 
                 auto srcImg = imgDecoder.DecodeSourceImageFromData( texAssetBin.data(), texAssetBin.size(), decodeOptions );
-                IrradianceLoadedImg = imgLoader.LoadImageFromSrc( &pAppSurface->Node, *srcImg, loadOptions );
+                IrradianceImg = imgUploader.UploadImage( &pAppSurface->Node, *srcImg, loadOptions );
             }
 
             VkSamplerCreateInfo samplerCreateInfo;
@@ -260,7 +260,7 @@ bool ViewerApp::Initialize(  ) {
             samplerCreateInfo.magFilter               = VK_FILTER_LINEAR;
             samplerCreateInfo.minFilter               = VK_FILTER_LINEAR;
             samplerCreateInfo.minLod                  = 0;
-            samplerCreateInfo.maxLod                  = float( IrradianceLoadedImg->ImgCreateInfo.mipLevels );
+            samplerCreateInfo.maxLod                  = float( IrradianceImg->ImgCreateInfo.mipLevels );
             samplerCreateInfo.mipmapMode              = VK_SAMPLER_MIPMAP_MODE_LINEAR;
             samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
             samplerCreateInfo.unnormalizedCoordinates = false;
@@ -321,7 +321,7 @@ bool ViewerApp::Initialize(  ) {
         updateParams.pRenderPass     = hDbgRenderPass;
         updateParams.pDescPool       = DescriptorPool;
         updateParams.FrameCount      = FrameCount;
-        updateParams.pImgLoader      = &imgLoader;
+        updateParams.pImgUploader      = &imgUploader;
         updateParams.pSamplerManager = pSamplerManager.get( );
         updateParams.pShaderCompiler = pShaderCompiler.get( );
 
@@ -380,9 +380,9 @@ bool ViewerApp::Initialize(  ) {
 
         pSkybox                = apemode::make_unique< apemodevk::Skybox >( );
         pSkybox->pSampler      = pRadianceCubeMapSampler;
-        pSkybox->pImgView      = RadianceLoadedImg->hImgView;
-        pSkybox->Dimension     = RadianceLoadedImg->ImgCreateInfo.extent.width;
-        pSkybox->eImgLayout    = RadianceLoadedImg->eImgLayout;
+        pSkybox->pImgView      = RadianceImg->hImgView;
+        pSkybox->Dimension     = RadianceImg->ImgCreateInfo.extent.width;
+        pSkybox->eImgLayout    = RadianceImg->eImgLayout;
         pSkybox->Exposure      = 3;
         pSkybox->LevelOfDetail = 0;
 
@@ -778,14 +778,14 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         sceneRenderParameters.FrameIndex               = FrameIndex;
         sceneRenderParameters.pCmdBuffer               = pCmdBuffer;
         sceneRenderParameters.pNode                    = &pAppSurface->Node;
-        sceneRenderParameters.RadianceMap.eImgLayout   = RadianceLoadedImg->eImgLayout;
-        sceneRenderParameters.RadianceMap.pImgView     = RadianceLoadedImg->hImgView;
+        sceneRenderParameters.RadianceMap.eImgLayout   = RadianceImg->eImgLayout;
+        sceneRenderParameters.RadianceMap.pImgView     = RadianceImg->hImgView;
         sceneRenderParameters.RadianceMap.pSampler     = pRadianceCubeMapSampler;
-        sceneRenderParameters.RadianceMap.MipLevels    = RadianceLoadedImg->ImgCreateInfo.mipLevels;
-        sceneRenderParameters.IrradianceMap.eImgLayout = IrradianceLoadedImg->eImgLayout;
-        sceneRenderParameters.IrradianceMap.pImgView   = IrradianceLoadedImg->hImgView;
+        sceneRenderParameters.RadianceMap.MipLevels    = RadianceImg->ImgCreateInfo.mipLevels;
+        sceneRenderParameters.IrradianceMap.eImgLayout = IrradianceImg->eImgLayout;
+        sceneRenderParameters.IrradianceMap.pImgView   = IrradianceImg->hImgView;
         sceneRenderParameters.IrradianceMap.pSampler   = pIrradianceCubeMapSampler;
-        sceneRenderParameters.IrradianceMap.MipLevels  = IrradianceLoadedImg->ImgCreateInfo.mipLevels;
+        sceneRenderParameters.IrradianceMap.MipLevels  = IrradianceImg->ImgCreateInfo.mipLevels;
         sceneRenderParameters.LightColor               = LightColor;
         sceneRenderParameters.LightDirection           = LightDirection;
         XMStoreFloat4x4( &sceneRenderParameters.ProjMatrix, projMatrix );

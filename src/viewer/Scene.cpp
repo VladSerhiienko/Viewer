@@ -7,6 +7,13 @@
 #define PI 3.14159265358979323846264338327950288
 #endif
 
+namespace {
+template < typename T >
+inline bool IsNotNullAndNotEmpty( const flatbuffers::Vector< T > *pVector ) {
+    return pVector && pVector->size( );
+}
+} // namespace
+
 using namespace apemode;
 
 struct SceneAnimLayerId {
@@ -228,6 +235,8 @@ void apemode::Scene::UpdateTransformMatrices( SceneNodeTransformFrame &t ) const
 }
 
 apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fileContents ) {
+    using namespace utils;
+
 
     const apemodefb::SceneFb *pSrcScene = !fileContents.empty( )
                                         ? apemodefb::GetSceneFb( fileContents.data( ) )
@@ -254,21 +263,21 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
     auto pSkinsFb      = pSrcScene->skins( );
 
     apemode::unique_ptr< Scene > pScene( apemode_new Scene( ) );
-    if ( FlatbuffersTVectorIsNotNullAndNotEmpty( pNodesFb ) ) {
+    if ( IsNotNullAndNotEmpty( pNodesFb ) ) {
 
         size_t nodeIdCount      = 0;
         size_t animCurveIdCount = 0;
 
         for ( auto pNodeFb : *pNodesFb ) {
-            nodeIdCount += apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pNodeFb->child_ids( ) ) ? pNodeFb->child_ids( )->size( ) : 0;
-            animCurveIdCount += apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pNodeFb->anim_curve_ids( ) ) ? pNodeFb->anim_curve_ids( )->size( ) : 0;
+            nodeIdCount += IsNotNullAndNotEmpty( pNodeFb->child_ids( ) ) ? pNodeFb->child_ids( )->size( ) : 0;
+            animCurveIdCount += IsNotNullAndNotEmpty( pNodeFb->anim_curve_ids( ) ) ? pNodeFb->anim_curve_ids( )->size( ) : 0;
         }
 
         pScene->NodeToChildIds.reserve( nodeIdCount );
         pScene->NodeIdToAnimCurveIds.reserve( animCurveIdCount );
     }
 
-    if ( apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pNodesFb ) ) {
+    if ( IsNotNullAndNotEmpty( pNodesFb ) ) {
         pScene->Nodes.resize( pNodesFb->size( ) );
 
         SceneNodeTransformFrame &bindPoseFrame = pScene->BindPoseFrame;
@@ -284,10 +293,10 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                 node.MeshId = pNodeFb->mesh_id( );
             }
 
-            LogInfo( "Processing node: {}", GetStringProperty( pSrcScene, pNodeFb->name_id( ) ).c_str( ) );
+            LogInfo( "Processing node: {}", GetCStringProperty( pSrcScene, pNodeFb->name_id( ) ) );
 
             auto pChildIdsFb = pNodeFb->child_ids( );
-            if ( apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pChildIdsFb ) ) {
+            if ( IsNotNullAndNotEmpty( pChildIdsFb ) ) {
                 for ( const uint32_t childNodeId : *pChildIdsFb ) {
                     pScene->NodeToChildIds.insert( eastl::make_pair( node.Id, childNodeId ) );
                     pScene->Nodes[ childNodeId ].ParentId = node.Id;
@@ -341,7 +350,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             }
 
             auto pAnimCurveIdsFb = pNodeFb->anim_curve_ids( );
-            if ( apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pAnimCurveIdsFb ) ) {
+            if ( IsNotNullAndNotEmpty( pAnimCurveIdsFb ) ) {
                 for ( const uint32_t animCurveId : *pAnimCurveIdsFb ) {
                     assert( animCurveId < pAnimCurvesFb->size( ) );
                     pScene->NodeIdToAnimCurveIds.insert( eastl::make_pair( node.Id, animCurveId ) );
@@ -352,10 +361,10 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
         pScene->UpdateTransformMatrices( bindPoseFrame );
     }
 
-    if ( apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pAnimCurvesFb ) ) {
+    if ( IsNotNullAndNotEmpty( pAnimCurvesFb ) ) {
 
-        assert( apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pAnimLayersFb ) );
-        assert( apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pAnimStacksFb ) );
+        assert( IsNotNullAndNotEmpty( pAnimLayersFb ) );
+        assert( IsNotNullAndNotEmpty( pAnimStacksFb ) );
         pScene->AnimCurves.reserve( pAnimCurvesFb->size( ) );
 
         for ( auto pAnimCurveFb : *pAnimCurvesFb ) {
@@ -363,7 +372,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
 
             LogInfo( "Processing curve: #{} -> \"{}\", keys={}",
                      pAnimCurveFb->id( ),
-                     GetStringProperty( pSrcScene, pAnimCurveFb->name_id( ) ).c_str( ),
+                     GetCStringProperty( pSrcScene, pAnimCurveFb->name_id( ) ),
                      pAnimCurveFb->keys( )->size( ) );
 
             pScene->AnimCurves.emplace_back( );
@@ -379,7 +388,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             animCurve.eChannel    = SceneAnimCurve::EChannel( pAnimCurveFb->channel( ) );
             animCurve.eProperty   = SceneAnimCurve::EProperty( pAnimCurveFb->property( ) * SceneAnimCurve::eChannelCount );
 
-            assert( FlatbuffersTVectorIsNotNullAndNotEmpty( pAnimCurveFb->keys( ) ) );
+            assert( IsNotNullAndNotEmpty( pAnimCurveFb->keys( ) ) );
             animCurve.Keys.reserve( pAnimCurveFb->keys( )->size( ) );
 
             std::transform( pAnimCurveFb->keys( )->begin( ),
@@ -420,9 +429,9 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
 
             LogInfo( "Processing anim set: layer=#{} \"{}\", stack=#{} \"{}\"",
                      pAnimLayerFb->id( ),
-                     GetStringProperty( pSrcScene, pAnimLayerFb->name_id( ) ).c_str( ),
+                     GetCStringProperty( pSrcScene, pAnimLayerFb->name_id( ) ),
                      pAnimStackFb->id( ),
-                     GetStringProperty( pSrcScene, pAnimStackFb->name_id( ) ).c_str( ) );
+                     GetCStringProperty( pSrcScene, pAnimStackFb->name_id( ) ) );
 
             SceneAnimLayerId animLayerId;
             animLayerId.AnimLayerId = pAnimLayerFb->id( );
@@ -433,7 +442,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
         }
     }
 
-    if ( apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pMeshesFb ) ) {
+    if ( IsNotNullAndNotEmpty( pMeshesFb ) ) {
         { /* All the subsets are stored in Scene instance, and can be referenced
            * by the BaseSubset and SubsetCount values in SceneMeshSubset struct.
            */
@@ -452,10 +461,10 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             auto pMeshFb = pMeshesFb->Get( meshId );
 
             assert( pMeshFb );
-            assert( apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pMeshFb->vertices( ) ) );
-            assert( apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pMeshFb->indices( ) ) );
-            assert( apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pMeshFb->subsets( ) ) );
-            assert( apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pMeshFb->submeshes( ) ) );
+            assert( apemodefb::IsNotNullAndNotEmpty( pMeshFb->vertices( ) ) );
+            assert( apemodefb::IsNotNullAndNotEmpty( pMeshFb->indices( ) ) );
+            assert( apemodefb::IsNotNullAndNotEmpty( pMeshFb->subsets( ) ) );
+            assert( apemodefb::IsNotNullAndNotEmpty( pMeshFb->submeshes( ) ) );
 
             pScene->Meshes.emplace_back( );
             auto &mesh = pScene->Meshes.back( );
@@ -495,7 +504,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
         }
     }
 
-    if ( apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pSkinsFb ) ) {
+    if ( IsNotNullAndNotEmpty( pSkinsFb ) ) {
         pScene->Skins.resize( pSkinsFb->size() );
 
         for ( auto &mesh : pScene->Meshes ) {
@@ -507,10 +516,10 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                 if ( skin.Links.empty( ) ) {
 
                     auto pLinkIdsFb = pSkinFb->links_ids( );
-                    if ( apemodefb::FlatbuffersTVectorIsNotNullAndNotEmpty( pLinkIdsFb ) ) {
+                    if ( IsNotNullAndNotEmpty( pLinkIdsFb ) ) {
 
                         LogInfo( "Processing skin: \"{}\", links={}",
-                                 GetStringProperty( pSrcScene, pSkinFb->name_id( ) ).c_str( ),
+                                 GetCStringProperty( pSrcScene, pSkinFb->name_id( ) ),
                                  pLinkIdsFb->size( ) );
 
                         skin.Links.reserve( pLinkIdsFb->size( ) );
@@ -536,7 +545,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
     auto pTexturesFb = pSrcScene->textures( );
     auto pFilesFb    = pSrcScene->files( );
 
-    if ( FlatbuffersTVectorIsNotNullAndNotEmpty( pMaterialsFb ) ) {
+    if ( IsNotNullAndNotEmpty( pMaterialsFb ) ) {
         pScene->Materials.reserve( pMaterialsFb->size( ) );
 
         for ( uint32_t materialId = 0; materialId < pMaterialsFb->size( ); ++materialId ) {
@@ -638,4 +647,74 @@ float apemode::SceneAnimCurve::Calculate( float time, bool bLoop ) const {
 
     const float l = ( b.x - a.x ) / ( time - a.x );
     return ( b.y - a.y ) * l + a.y;
+}
+
+uint32_t apemode::utils::MaterialPropertyGetIndex( const uint32_t packed ) {
+    const uint32_t valueIndex = ( packed >> 8 ) & 0x0fff;
+    return valueIndex;
+}
+
+apemodefb::EValueTypeFb apemode::utils::MaterialPropertyGetType( const uint32_t packed ) {
+    const uint32_t valueType = packed & 0x000f;
+    return apemodefb::EValueTypeFb( valueType );
+}
+
+const char *apemode::utils::GetCStringProperty( const apemodefb::SceneFb *pScene, const uint32_t valueId ) {
+    assert( pScene && apemodefb::EValueTypeFb_String == MaterialPropertyGetType( valueId ) );
+    const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
+    return pScene->string_values( )->Get( valueIndex )->c_str( );
+}
+
+bool apemode::utils::GetBoolProperty( const apemodefb::SceneFb *pScene, const uint32_t valueId ) {
+    assert( pScene );
+    assert( apemodefb::EValueTypeFb_Bool == MaterialPropertyGetType( valueId ) );
+
+    const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
+    return pScene->bool_values( )->Get( valueIndex );
+}
+
+float apemode::utils::GetScalarProperty( const apemodefb::SceneFb *pScene, const uint32_t valueId ) {
+    assert( pScene );
+    assert( apemodefb::EValueTypeFb_Float == MaterialPropertyGetType( valueId ) );
+
+    const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
+    return pScene->float_values( )->Get( valueIndex );
+}
+
+apemodefb::Vec2Fb apemode::utils::GetVec2Property( const apemodefb::SceneFb *pScene, const uint32_t valueId ) {
+    assert( pScene );
+
+    const auto valueType = MaterialPropertyGetType( valueId );
+    assert( apemodefb::EValueTypeFb_Float2 == valueType );
+
+    const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
+    return apemodefb::Vec2Fb( pScene->float_values( )->Get( valueIndex ), pScene->float_values( )->Get( valueIndex + 1 ) );
+}
+
+apemodefb::Vec3Fb apemode::utils::GetVec3Property( const apemodefb::SceneFb *pScene, const uint32_t valueId ) {
+    assert( pScene );
+
+    const auto valueType = MaterialPropertyGetType( valueId );
+    assert( apemodefb::EValueTypeFb_Float3 == valueType );
+
+    const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
+    return apemodefb::Vec3Fb( pScene->float_values( )->Get( valueIndex ),
+                              pScene->float_values( )->Get( valueIndex + 1 ),
+                              pScene->float_values( )->Get( valueIndex + 2 ) );
+}
+
+apemodefb::Vec4Fb apemode::utils::GetVec4Property( const apemodefb::SceneFb *pScene,
+                                                   const uint32_t            valueId,
+                                                   const float               defaultW ) {
+    assert( pScene );
+
+    const auto valueType = MaterialPropertyGetType( valueId );
+    assert( apemodefb::EValueTypeFb_Float3 == valueType || apemodefb::EValueTypeFb_Float4 == valueType );
+
+    const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
+    return apemodefb::Vec4Fb(
+        pScene->float_values( )->Get( valueIndex ),
+        pScene->float_values( )->Get( valueIndex + 1 ),
+        pScene->float_values( )->Get( valueIndex + 2 ),
+        apemodefb::EValueTypeFb_Float4 == valueType ? pScene->float_values( )->Get( valueIndex + 3 ) : defaultW );
 }

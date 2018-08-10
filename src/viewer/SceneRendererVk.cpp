@@ -4,9 +4,9 @@
 #include <QueuePools.Vulkan.h>
 #include <BufferPools.Vulkan.h>
 #include <ShaderCompiler.Vulkan.h>
-#include <ImageLoader.Vulkan.h>
+#include <ImageUploader.Vulkan.h>
 #include <Buffer.Vulkan.h>
-#include <ImageLoader.Vulkan.h>
+#include <ImageUploader.Vulkan.h>
 #include <TOneTimeCmdBufferSubmit.Vulkan.h>
 
 #include <SceneRendererVk.h>
@@ -87,7 +87,7 @@ namespace apemodevk {
         }
     };
 
-    struct SceneMeshDeviceAssetVk : apemode::SceneDeviceAsset {
+    struct SceneMeshDeviceAssetVk : apemode::detail::SceneDeviceAsset {
         THandle< BufferComposite > hVertexBuffer;
         THandle< BufferComposite > hIndexBuffer;
         uint32_t                   VertexCount = 0;
@@ -95,14 +95,14 @@ namespace apemodevk {
         VkIndexType                IndexType   = VK_INDEX_TYPE_UINT16;
     };
 
-    struct SceneMaterialDeviceAssetVk : apemode::SceneDeviceAsset {
+    struct SceneMaterialDeviceAssetVk : apemode::detail::SceneDeviceAsset {
         const char * pszName = nullptr;
 
-        const LoadedImage* pBaseColorLoadedImg         = nullptr;
-        const LoadedImage* pNormalLoadedImg            = nullptr;
-        const LoadedImage* pOcclusionLoadedImg         = nullptr;
-        const LoadedImage* pEmissiveLoadedImg          = nullptr;
-        const LoadedImage* pMetallicRoughnessLoadedImg = nullptr;
+        const UploadedImage* pBaseColorImg         = nullptr;
+        const UploadedImage* pNormalImg            = nullptr;
+        const UploadedImage* pOcclusionImg         = nullptr;
+        const UploadedImage* pEmissiveImg          = nullptr;
+        const UploadedImage* pMetallicRoughnessImg = nullptr;
 
         VkSampler pBaseColorSampler = VK_NULL_HANDLE;
         VkSampler pNormalSampler    = VK_NULL_HANDLE;
@@ -119,23 +119,23 @@ namespace apemodevk {
         THandle< VkImageView > hRoughnessImgView;
     };
 
-    const LoadedImage** GetLoadedImageSlotForPropertyName( SceneMaterialDeviceAssetVk* pMaterialAsset,
+    const UploadedImage** GetLoadedImageSlotForPropertyName( SceneMaterialDeviceAssetVk* pMaterialAsset,
                                                            const char*                 pszTexturePropName ) {
 
         if ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) {
-            return &pMaterialAsset->pBaseColorLoadedImg;
+            return &pMaterialAsset->pBaseColorImg;
         } else if ( strcmp( "diffuseTexture", pszTexturePropName ) == 0 ) {
-            return &pMaterialAsset->pBaseColorLoadedImg;
+            return &pMaterialAsset->pBaseColorImg;
         } else if ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) {
-            return &pMaterialAsset->pNormalLoadedImg;
+            return &pMaterialAsset->pNormalImg;
         } else if ( strcmp( "occlusionTexture", pszTexturePropName ) == 0 ) {
-            return &pMaterialAsset->pOcclusionLoadedImg;
+            return &pMaterialAsset->pOcclusionImg;
         } else if ( strcmp( "specularGlossinessTexture", pszTexturePropName ) == 0 ) {
-            return &pMaterialAsset->pMetallicRoughnessLoadedImg;
+            return &pMaterialAsset->pMetallicRoughnessImg;
         } else if ( strcmp( "metallicRoughnessTexture", pszTexturePropName ) == 0 ) {
-            return &pMaterialAsset->pMetallicRoughnessLoadedImg;
+            return &pMaterialAsset->pMetallicRoughnessImg;
         } else if ( strcmp( "emissiveTexture", pszTexturePropName ) == 0 ) {
-            return &pMaterialAsset->pEmissiveLoadedImg;
+            return &pMaterialAsset->pEmissiveImg;
         }
 
         return nullptr;
@@ -162,12 +162,12 @@ namespace apemodevk {
         return false;
     }
 
-    struct SceneDeviceAssetVk : apemode::SceneDeviceAsset {
-        using LoadedImagePtrPair = std::pair< uint32_t, apemodevk::unique_ptr< LoadedImage > >;
+    struct SceneDeviceAssetVk : apemode::detail::SceneDeviceAsset {
+        using LoadedImagePtrPair = std::pair< uint32_t, apemodevk::unique_ptr< UploadedImage > >;
 
         std::vector< LoadedImagePtrPair >     LoadedImgs;
-        apemodevk::unique_ptr< LoadedImage >  MissingTextureZeros;
-        apemodevk::unique_ptr< LoadedImage >  MissingTextureOnes;
+        apemodevk::unique_ptr< UploadedImage >  MissingTextureZeros;
+        apemodevk::unique_ptr< UploadedImage >  MissingTextureOnes;
         VkSampler                             pMissingSampler = VK_NULL_HANDLE;
         apemode::SceneMaterial                MissingMaterial;
         apemodevk::SceneMaterialDeviceAssetVk MissingMaterialAsset;
@@ -179,11 +179,11 @@ namespace apemodevk {
             MissingMaterial.EmissiveFactor  = XMFLOAT3( 1, 0, 1 );    // Magenta
         }
 
-        void AddLoadedImage( uint32_t fileId, apemodevk::unique_ptr< LoadedImage > loadedImg ) {
+        void AddLoadedImage( uint32_t fileId, apemodevk::unique_ptr< UploadedImage > loadedImg ) {
             LoadedImgs.push_back( std::make_pair( fileId, std::move( loadedImg ) ) );
         }
 
-        const LoadedImage* FindLoadedImage( uint32_t fileId ) {
+        const UploadedImage* FindLoadedImage( uint32_t fileId ) {
             auto loadedImageIt =
                 std::find_if( LoadedImgs.begin( ),
                               LoadedImgs.end( ),
@@ -281,7 +281,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
         uint64_t totalBytesRequired = 0;
 
         for ( auto & mesh : pScene->Meshes ) {
-            auto pSrcMesh = FlatbuffersTVectorGetAtIndex( pParamsBase->pSrcScene->meshes( ), mesh.Id );
+            auto pSrcMesh = pParamsBase->pSrcScene->meshes( )->Get( mesh.Id );
             assert( pSrcMesh );
 
             /* Create mesh device asset if needed. */
@@ -517,13 +517,13 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             assert( pSceneAsset );
         }
 
-        apemodevk::ImageLoader imgLoader;
+        apemodevk::ImageUploader imgLoader;
         apemodevk::ImageDecoder imgDecoder;
 
         {
             uint8_t imageBytes[ 4 ];
 
-            apemodevk::ImageLoader::LoadOptions    loadOptions;
+            apemodevk::ImageUploader::LoadOptions    loadOptions;
             apemodevk::ImageDecoder::DecodeOptions decodeOptions;
             decodeOptions.bGenerateMipMaps = false;
 
@@ -533,7 +533,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             imageBytes[ 3 ] = 255;
 
             auto srcImgZeros = imgDecoder.CreateSourceImage2D( imageBytes, { 1, 1 }, VK_FORMAT_R8G8B8A8_UNORM, decodeOptions );
-            pSceneAsset->MissingTextureZeros = imgLoader.LoadImageFromSrc( pParams->pNode, *srcImgZeros, loadOptions );
+            pSceneAsset->MissingTextureZeros = imgLoader.UploadImage( pParams->pNode, *srcImgZeros, loadOptions );
 
             imageBytes[ 0 ] = 255;
             imageBytes[ 1 ] = 255;
@@ -541,7 +541,7 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
             imageBytes[ 3 ] = 255;
 
             auto srcImgOnes = imgDecoder.CreateSourceImage2D( imageBytes, {1, 1}, VK_FORMAT_R8G8B8A8_UNORM, decodeOptions );
-            pSceneAsset->MissingTextureOnes = imgLoader.LoadImageFromSrc( pParams->pNode, *srcImgOnes, loadOptions );
+            pSceneAsset->MissingTextureOnes = imgLoader.UploadImage( pParams->pNode, *srcImgOnes, loadOptions );
 
             const uint32_t missingSamplerIndex = pParams->pSamplerManager->GetSamplerIndex( apemodevk::GetDefaultSamplerCreateInfo( 0 ) );
             assert( apemodevk::SamplerManager::IsSamplerIndexValid( missingSamplerIndex ) );
@@ -557,20 +557,20 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                 material.pDeviceAsset.reset( pMaterialAsset );
             }
 
-            auto pMaterialFb          = FlatbuffersTVectorGetAtIndex( pMaterialsFb, material.Id );
+            auto pMaterialFb          = pMaterialsFb->Get( material.Id );
             auto pTexturePropertiesFb = pMaterialFb->texture_properties( );
 
             assert( pMaterialFb );
             assert( pTexturePropertiesFb );
 
-            auto pszMaterialName = GetCStringProperty( pParamsBase->pSrcScene, pMaterialFb->name_id( ) );
+            auto pszMaterialName = apemode::utils::GetCStringProperty( pParamsBase->pSrcScene, pMaterialFb->name_id( ) );
             pMaterialAsset->pszName = pszMaterialName;
 
             LogError( "Loading textures for material \"{}\"", pszMaterialName );
 
             for ( auto pTexturePropFb : *pTexturePropertiesFb ) {
 
-                auto pszTexturePropName      = GetCStringProperty( pParamsBase->pSrcScene, pTexturePropFb->name_id( ) );
+                auto pszTexturePropName      = apemode::utils::GetCStringProperty( pParamsBase->pSrcScene, pTexturePropFb->name_id( ) );
                 auto ppLoadedImgMaterialSlot = GetLoadedImageSlotForPropertyName( pMaterialAsset, pszTexturePropName );
 
                 if ( nullptr == ppLoadedImgMaterialSlot ) {
@@ -579,14 +579,14 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
                 } else {
 
-                    auto pTextureFb = FlatbuffersTVectorGetAtIndex( pTexturesFb, pTexturePropFb->value_id( ) );
+                    auto pTextureFb = pTexturesFb->Get( pTexturePropFb->value_id( ) );
                     assert( pTextureFb );
 
-                    auto pFileFb = FlatbuffersTVectorGetAtIndex( pFilesFb, pTextureFb->file_id( ) );
+                    auto pFileFb = pFilesFb->Get( pTextureFb->file_id( ) );
                     assert( pFileFb );
 
-                    auto pszFileName    = GetCStringProperty( pParamsBase->pSrcScene, pFileFb->name_id( ) );
-                    auto pszTextureName = GetCStringProperty( pParamsBase->pSrcScene, pTextureFb->name_id( ) );
+                    auto pszFileName    = apemode::utils::GetCStringProperty( pParamsBase->pSrcScene, pFileFb->name_id( ) );
+                    auto pszTextureName = apemode::utils::GetCStringProperty( pParamsBase->pSrcScene, pTextureFb->name_id( ) );
 
                     assert( pszFileName );
                     assert( pszTextureName );
@@ -607,8 +607,8 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                         auto srcImg = imgDecoder.DecodeSourceImageFromData(
                             pFileFb->buffer( )->data( ), pFileFb->buffer( )->size( ), decodeOptions );
 
-                        apemodevk::ImageLoader::LoadOptions loadOptions;
-                        auto loadedImg = imgLoader.LoadImageFromSrc( pParams->pNode, *srcImg, loadOptions );
+                        apemodevk::ImageUploader::LoadOptions loadOptions;
+                        auto loadedImg = imgLoader.UploadImage( pParams->pNode, *srcImg, loadOptions );
 
                         if ( loadedImg ) {
 
@@ -621,16 +621,16 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                 } /* ppLoadedImgMaterialSlot */
             }     /* pTexturePropFb */
 
-            if ( pMaterialAsset->pBaseColorLoadedImg ) {
-                const float maxLod = float( pMaterialAsset->pBaseColorLoadedImg->ImgCreateInfo.mipLevels );
+            if ( pMaterialAsset->pBaseColorImg ) {
+                const float maxLod = float( pMaterialAsset->pBaseColorImg->ImgCreateInfo.mipLevels );
 
                 VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
                 assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
                 pMaterialAsset->pBaseColorSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
-                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pBaseColorLoadedImg->ImgViewCreateInfo;
-                imgViewCreateInfo.image = pMaterialAsset->pBaseColorLoadedImg->hImg;
+                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pBaseColorImg->ImgViewCreateInfo;
+                imgViewCreateInfo.image = pMaterialAsset->pBaseColorImg->hImg;
 
                 if ( !pMaterialAsset->hBaseColorImgView.Recreate( pParams->pNode->hLogicalDevice, imgViewCreateInfo ) ) {
                     return false;
@@ -638,17 +638,17 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
             } /* pBaseColorLoadedImg */
 
-            if ( pMaterialAsset->pNormalLoadedImg ) {
+            if ( pMaterialAsset->pNormalImg ) {
 
-                const float maxLod = float( pMaterialAsset->pNormalLoadedImg->ImgCreateInfo.mipLevels );
+                const float maxLod = float( pMaterialAsset->pNormalImg->ImgCreateInfo.mipLevels );
 
                 VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
                 assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
                 pMaterialAsset->pNormalSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
-                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pNormalLoadedImg->ImgViewCreateInfo;
-                imgViewCreateInfo.image = pMaterialAsset->pNormalLoadedImg->hImg;
+                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pNormalImg->ImgViewCreateInfo;
+                imgViewCreateInfo.image = pMaterialAsset->pNormalImg->hImg;
 
                 if ( !pMaterialAsset->hNormalImgView.Recreate( pParams->pNode->hLogicalDevice, imgViewCreateInfo ) ) {
                     return false;
@@ -656,17 +656,17 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
             } /* pNormalLoadedImg */
 
-            if ( pMaterialAsset->pEmissiveLoadedImg ) {
+            if ( pMaterialAsset->pEmissiveImg ) {
 
-                const float maxLod = float( pMaterialAsset->pEmissiveLoadedImg->ImgCreateInfo.mipLevels );
+                const float maxLod = float( pMaterialAsset->pEmissiveImg->ImgCreateInfo.mipLevels );
 
                 VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
                 assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
                 pMaterialAsset->pEmissiveSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
-                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pEmissiveLoadedImg->ImgViewCreateInfo;
-                imgViewCreateInfo.image = pMaterialAsset->pEmissiveLoadedImg->hImg;
+                VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pEmissiveImg->ImgViewCreateInfo;
+                imgViewCreateInfo.image = pMaterialAsset->pEmissiveImg->hImg;
                 imgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ONE;
 
                 if ( !pMaterialAsset->hEmissiveImgView.Recreate( pParams->pNode->hLogicalDevice, imgViewCreateInfo ) ) {
@@ -675,9 +675,9 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
             } /* pEmissiveLoadedImg */
 
-            if ( pMaterialAsset->pMetallicRoughnessLoadedImg ) {
+            if ( pMaterialAsset->pMetallicRoughnessImg ) {
 
-                const float maxLod = float( pMaterialAsset->pMetallicRoughnessLoadedImg->ImgCreateInfo.mipLevels );
+                const float maxLod = float( pMaterialAsset->pMetallicRoughnessImg->ImgCreateInfo.mipLevels );
 
                 VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
@@ -685,15 +685,15 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
                 pMaterialAsset->pMetallicSampler  = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
                 pMaterialAsset->pRoughnessSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
-                VkImageViewCreateInfo metallicImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessLoadedImg->ImgViewCreateInfo;
-                metallicImgViewCreateInfo.image        = pMaterialAsset->pMetallicRoughnessLoadedImg->hImg;
+                VkImageViewCreateInfo metallicImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessImg->ImgViewCreateInfo;
+                metallicImgViewCreateInfo.image        = pMaterialAsset->pMetallicRoughnessImg->hImg;
                 metallicImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_R;
                 metallicImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ONE;
                 metallicImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ONE;
                 metallicImgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ONE;
 
-                VkImageViewCreateInfo roughnessImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessLoadedImg->ImgViewCreateInfo;
-                roughnessImgViewCreateInfo.image        = pMaterialAsset->pMetallicRoughnessLoadedImg->hImg;
+                VkImageViewCreateInfo roughnessImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessImg->ImgViewCreateInfo;
+                roughnessImgViewCreateInfo.image        = pMaterialAsset->pMetallicRoughnessImg->hImg;
                 roughnessImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_G;
                 roughnessImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ONE;
                 roughnessImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ONE;
@@ -709,18 +709,18 @@ bool apemode::SceneRendererVk::UpdateScene( Scene* pScene, const SceneUpdatePara
 
             } /* pMetallicRoughnessLoadedImg */
 
-            if ( pMaterialAsset->pOcclusionLoadedImg ) {
+            if ( pMaterialAsset->pOcclusionImg ) {
 
-                const float maxLod = float( pMaterialAsset->pOcclusionLoadedImg->ImgCreateInfo.mipLevels );
+                const float maxLod = float( pMaterialAsset->pOcclusionImg->ImgCreateInfo.mipLevels );
 
                 VkSamplerCreateInfo samplerCreateInfo = apemodevk::GetDefaultSamplerCreateInfo( maxLod );
                 const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
                 assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
                 pMaterialAsset->pOcclusionSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
-                VkImageViewCreateInfo occlusionImgViewCreateInfo = pMaterialAsset->pOcclusionLoadedImg->ImgViewCreateInfo;
+                VkImageViewCreateInfo occlusionImgViewCreateInfo = pMaterialAsset->pOcclusionImg->ImgViewCreateInfo;
 
-                occlusionImgViewCreateInfo.image = pMaterialAsset->pOcclusionLoadedImg->hImg;
+                occlusionImgViewCreateInfo.image = pMaterialAsset->pOcclusionImg->hImg;
 
                 occlusionImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_B;
                 occlusionImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ZERO;

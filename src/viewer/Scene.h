@@ -339,4 +339,18 @@ struct LoadedScene {
 /* Loads scene from the contents of the FbxPipeline's exported scene file.
  */
 LoadedScene LoadSceneFromBin( apemode::vector< uint8_t > &&fileContents );
+
+namespace utils {
+
+uint32_t                MaterialPropertyGetIndex( const uint32_t packed );
+apemodefb::EValueTypeFb MaterialPropertyGetType( const uint32_t packed );
+const char *            GetCStringProperty( const apemodefb::SceneFb *pScene, const uint32_t valueId );
+bool                    GetBoolProperty( const apemodefb::SceneFb *pScene, const uint32_t valueId );
+float                   GetScalarProperty( const apemodefb::SceneFb *pScene, const uint32_t valueId );
+apemodefb::Vec2Fb       GetVec2Property( const apemodefb::SceneFb *pScene, const uint32_t valueId );
+apemodefb::Vec3Fb       GetVec3Property( const apemodefb::SceneFb *pScene, const uint32_t valueId );
+apemodefb::Vec4Fb       GetVec4Property( const apemodefb::SceneFb *pScene, const uint32_t valueId, const float defaultW = 1.0f );
+
+} // namespace utils
+
 } // namespace apemode

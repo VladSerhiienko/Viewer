@@ -628,8 +628,8 @@ set(
     ${CMAKE_SOURCE_DIR}/src/viewer/Scene.h
     ${CMAKE_SOURCE_DIR}/src/viewer/ViewerApp.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/ViewerApp.h
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneLoaderVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneLoaderVk.h
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneUploaderVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneUploaderVk.h
     ${CMAKE_SOURCE_DIR}/src/viewer/SceneRendererVk.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/SceneRendererVk.h
     ${CMAKE_SOURCE_DIR}/src/viewer/SkyboxRendererVk.cpp
