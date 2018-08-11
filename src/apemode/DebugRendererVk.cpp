@@ -354,7 +354,7 @@ bool apemode::DebugRendererVk::Render( RenderParametersVk* renderParams ) {
 
     auto suballocResult = BufferPools[ frameIndex ].TSuballocate( *renderParams->pFrameData );
     assert( VK_NULL_HANDLE != suballocResult.DescriptorBufferInfo.buffer );
-    suballocResult.DescriptorBufferInfo.range = sizeof(FrameUniformBuffer);
+    suballocResult.DescriptorBufferInfo.range = sizeof(SkyboxUBO);
 
     VkDescriptorSet descriptorSet[ 1 ]  = {nullptr};
 

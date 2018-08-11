@@ -132,8 +132,15 @@ gli::texture LoadTexture( const uint8_t*                                        
             break;
     }
 
+    apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Trace,
+                                 "LoadTexture: Driver %u, ImgFile @%p %llu",
+                                 eDriver,
+                                 pFileContent,
+                                 fileContentSize );
+
     gli::texture texture;
     switch ( eDriver ) {
+
         case eImageDecodeDriver_GLI: {
             assert( pFileContent && fileContentSize );
             texture = gli::load( (const char*) pFileContent, fileContentSize );
@@ -162,15 +169,16 @@ gli::texture LoadTexture( const uint8_t*                                        
         } break;
 
         default:
+            apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Err, "LoadTexture: Unsupported image format." );
             break;
     }
 
     return texture;
 }
 
-apemodevk::unique_ptr< apemodevk::UploadedImage > apemodevk::ImageUploader::UploadImage( GraphicsDevice*     pNode,
-                                                                                         const ISourceImage& srcImg,
-                                                                                         const LoadOptions&  loadOptions ) {
+apemodevk::unique_ptr< apemodevk::UploadedImage > apemodevk::ImageUploader::UploadImage( GraphicsDevice*      pNode,
+                                                                                         const ISourceImage&  srcImg,
+                                                                                         const UploadOptions& loadOptions ) {
     apemodevk_memory_allocation_scope;
 
     auto loadedImage = apemodevk::make_unique< UploadedImage >( );

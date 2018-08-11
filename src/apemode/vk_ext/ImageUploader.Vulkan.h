@@ -79,7 +79,7 @@ namespace apemodevk {
     class ImageUploader {
     public:
         /** @brief LoadOptions contains properties to customize the usage and loading of GPU images. */
-        struct LoadOptions {
+        struct UploadOptions {
             /** @brief Staging buffer is sufficient to store the entire source image. */
             static constexpr size_t kStagingMemoryLimitHint_Unlimited = ~0ULL;
             /** @brief Tries to use the staging buffer of the least size. */
@@ -105,6 +105,6 @@ namespace apemodevk {
 
         unique_ptr< UploadedImage > UploadImage( GraphicsDevice*     pNode,
                                                  const ISourceImage& srcImg,
-                                                 const LoadOptions&  loadOptions );
+                                                 const UploadOptions&  loadOptions );
     };
 }

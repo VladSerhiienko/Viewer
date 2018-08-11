@@ -49,9 +49,9 @@ public:
     };
 
     struct DeviceAsset : apemode::detail::SceneDeviceAsset {
-        using LoadedImagePtrPair = eastl::pair< uint32_t, apemodevk::unique_ptr< apemodevk::UploadedImage > >;
+        using LoadedImagePtr = apemodevk::unique_ptr< apemodevk::UploadedImage >;
 
-        apemode::vector< LoadedImagePtrPair >             LoadedImgs;
+        apemode::vector< LoadedImagePtr >                 LoadedImgs;
         apemodevk::unique_ptr< apemodevk::UploadedImage > MissingTextureZeros;
         apemodevk::unique_ptr< apemodevk::UploadedImage > MissingTextureOnes;
         apemode::SceneMaterial                            MissingMaterial;

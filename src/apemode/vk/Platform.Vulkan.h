@@ -141,6 +141,7 @@ namespace apemodevk {
 
 #include <EASTL/unique_ptr.h>
 #include <EASTL/vector.h>
+#include <EASTL/slist.h>
 #include <EASTL/string.h>
 
 namespace apemodevk {
@@ -190,6 +191,9 @@ namespace apemodevk {
 
     template < typename T >
     using unique_ptr = eastl::unique_ptr< T, platform::TDelete< T > >;
+
+    template < typename T >
+    using slist = eastl::slist< T, platform::StandardAllocator >;
 
     template < typename T >
     using vector = eastl::vector< T, platform::StandardAllocator >;

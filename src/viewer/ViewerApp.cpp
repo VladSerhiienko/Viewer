@@ -197,7 +197,7 @@ bool ViewerApp::Initialize(  ) {
                 decodeOptions.eFileFormat = apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_DDS;
                 decodeOptions.bGenerateMipMaps = true;
 
-                apemodevk::ImageUploader::LoadOptions loadOptions;
+                apemodevk::ImageUploader::UploadOptions loadOptions;
                 loadOptions.bImgView = true;
 
                 auto srcImg = imgDecoder.DecodeSourceImageFromData( texAssetBin.data(), texAssetBin.size(), decodeOptions );
@@ -240,7 +240,7 @@ bool ViewerApp::Initialize(  ) {
                 decodeOptions.eFileFormat      = apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_DDS;
                 decodeOptions.bGenerateMipMaps = false;
 
-                apemodevk::ImageUploader::LoadOptions loadOptions;
+                apemodevk::ImageUploader::UploadOptions loadOptions;
                 loadOptions.bImgView = true;
 
                 auto srcImg = imgDecoder.DecodeSourceImageFromData( texAssetBin.data(), texAssetBin.size(), decodeOptions );
@@ -576,15 +576,6 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
     apemode_memory_allocation_scope;
     TotalSecs += deltaSecs;
 
-    bool hovered = false;
-    bool reset   = false;
-
-    const nk_flags windowFlags
-        = NK_WINDOW_BORDER
-        | NK_WINDOW_MOVABLE
-        | NK_WINDOW_SCALABLE
-        | NK_WINDOW_MINIMIZABLE;
-
     auto ctx = &pNkRenderer->Context;
     float clearColor[ 4 ] = {0.5f, 0.5f, 1.0f, 1.0f};
 
@@ -721,7 +712,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         auto projBiasMatrix = CamProjController.ProjBiasMatrix( );
         auto invProjMatrix  = XMMatrixInverse( nullptr, projMatrix );
 
-        DebugRendererVk::FrameUniformBuffer frameData;
+        DebugRendererVk::SkyboxUBO frameData;
         XMStoreFloat4x4( &frameData.ProjMatrix, projMatrix );
         XMStoreFloat4x4( &frameData.ViewMatrix, viewMatrix );
         frameData.Color = {1, 0, 0, 1};

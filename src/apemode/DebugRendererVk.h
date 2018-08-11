@@ -14,7 +14,7 @@ namespace apemode {
             float Position[ 3 ];
         };
 
-        struct FrameUniformBuffer {
+        struct SkyboxUBO {
             XMFLOAT4X4 WorldMatrix;
             XMFLOAT4X4 ViewMatrix;
             XMFLOAT4X4 ProjMatrix;
@@ -34,7 +34,7 @@ namespace apemode {
             float               Scale[ 2 ] = {};             /* Required */
             VkCommandBuffer     pCmdBuffer = VK_NULL_HANDLE; /* Required */
             uint32_t            FrameIndex = 0;              /* Required */
-            FrameUniformBuffer *pFrameData = nullptr;        /* Required */
+            SkyboxUBO *pFrameData = nullptr;        /* Required */
         };
 
         static uint32_t const kMaxFrameCount = 3;

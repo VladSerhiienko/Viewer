@@ -13,12 +13,12 @@
 using namespace apemode;
 using namespace DirectX;
 
-struct FrameUniformBuffer {
+struct SkyboxUBO {
     XMFLOAT4X4 ProjBias;
     XMFLOAT4X4 InvView;
     XMFLOAT4X4 InvProj;
-    XMFLOAT4 params0;
-    XMFLOAT4 params1;
+    XMFLOAT4   Params0;
+    XMFLOAT4   Params1;
 };
 
 struct SkyboxVertex {
@@ -259,18 +259,18 @@ bool apemode::vk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPa
 
     auto FrameIndex = (pParams->FrameIndex) % kMaxFrameCount;
 
-    FrameUniformBuffer frameData;
-    frameData.InvView   = pParams->InvViewMatrix;
-    frameData.InvProj   = pParams->InvProjMatrix;
-    frameData.ProjBias  = pParams->ProjBiasMatrix;
-    frameData.params0.x = 0;                               /* u_lerpFactor */
-    frameData.params0.y = pSkybox->Exposure;               /* u_exposure0 */
-    frameData.params0.z = float( pSkybox->Dimension );     /* u_textureCubeDim0 */
-    frameData.params0.w = float( pSkybox->LevelOfDetail ); /* u_textureCubeLod0 */
+    SkyboxUBO skyboxUBO;
+    skyboxUBO.InvView   = pParams->InvViewMatrix;
+    skyboxUBO.InvProj   = pParams->InvProjMatrix;
+    skyboxUBO.ProjBias  = pParams->ProjBiasMatrix;
+    skyboxUBO.Params0.x = 0;                               /* u_lerpFactor */
+    skyboxUBO.Params0.y = pSkybox->Exposure;               /* u_exposure0 */
+    skyboxUBO.Params0.z = float( pSkybox->Dimension );     /* u_textureCubeDim0 */
+    skyboxUBO.Params0.w = float( pSkybox->LevelOfDetail ); /* u_textureCubeLod0 */
 
-    auto suballocResult = BufferPools[ FrameIndex ].TSuballocate( frameData );
+    auto suballocResult = BufferPools[ FrameIndex ].TSuballocate( skyboxUBO );
     assert( VK_NULL_HANDLE != suballocResult.DescriptorBufferInfo.buffer );
-    suballocResult.DescriptorBufferInfo.range = sizeof( FrameUniformBuffer );
+    suballocResult.DescriptorBufferInfo.range = sizeof( SkyboxUBO );
 
     VkDescriptorImageInfo skyboxImageInfo;
     InitializeStruct( skyboxImageInfo );

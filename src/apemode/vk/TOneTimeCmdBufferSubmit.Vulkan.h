@@ -30,7 +30,7 @@ namespace apemodevk {
     constexpr uint64_t kDefaultQueueTimeoutNanos = 16 * 1000000; /* 16 ms */
 
     /**
-     * @brief The utlitly functon is used for populating and submitting the command buffer.
+     * @brief The utlitly functon is used for populating and submitting command buffers.
      * @tparam TPopulateCmdBufferFn The type of the functor, that has the signature 'bool( VkCommandBuffer )'.
      * @param pNode The graphics node.
      * @param queueFamilyId The queue family id. The command buffer and the queue will be allocated from the related pools.
@@ -68,6 +68,11 @@ namespace apemodevk {
             result.eResult = VK_NOT_READY;
             return result;
         }
+
+        apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Trace,
+                                     "TOneTimeCmdBufferSubmit: Acq C %u, Q %u",
+                                     acquiredCmdBuffer.CmdBufferId,
+                                     acquiredCmdBuffer.QueueFamilyId );
 
         /* Reset command pool */
 
@@ -114,6 +119,10 @@ namespace apemodevk {
             AcquiredQueue acquiredQueue = pQueueFamilyPool->Acquire( false );
             const uint64_t queueTimeStart = GetPerformanceCounter( );
 
+            apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Trace,
+                                         "TOneTimeCmdBufferSubmit: Acq Q @%p",
+                                         acquiredQueue.pQueue );
+
             while ( acquiredQueue.pQueue == nullptr ) {
 
                 const uint64_t queueTimeDelta = GetPerformanceCounter( ) - queueTimeStart;
@@ -125,6 +134,9 @@ namespace apemodevk {
                 switch ( acquiredQueue.eResult ) {
                     case VK_NOT_READY:
                         acquiredQueue = pQueueFamilyPool->Acquire( true );
+                        apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Trace,
+                                                     "TOneTimeCmdBufferSubmit: Awt Q @%p",
+                                                     acquiredQueue.pQueue );
                         break;
 
                     default:
@@ -160,6 +172,11 @@ namespace apemodevk {
             submitInfo.waitSemaphoreCount   = waitSemaphoreCount;
             submitInfo.pCommandBuffers      = &acquiredCmdBuffer.pCmdBuffer;
             submitInfo.commandBufferCount   = 1;
+
+            apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Trace,
+                                         "TOneTimeCmdBufferSubmit: Sbm Q %u %u",
+                                         acquiredQueue.QueueId,
+                                         acquiredQueue.QueueFamilyId );
 
             result.eResult = vkQueueSubmit( acquiredQueue.pQueue, 1, &submitInfo, acquiredQueue.pFence );
             if ( VK_SUCCESS != CheckedResult( result.eResult ) ) {

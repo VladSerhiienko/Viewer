@@ -116,7 +116,7 @@ std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, s
     spdlog::set_pattern( "%c" );
     logger->info( "" );
 
-    spdlog::set_pattern( "[%T.%f] [%L] %v" );
+    spdlog::set_pattern( "[%T.%f] [%t] [%L] %v" );
     return logger;
 }
 

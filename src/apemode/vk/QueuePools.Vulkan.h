@@ -69,10 +69,9 @@ namespace apemodevk {
     public:
         VkDevice                      pDevice         = VK_NULL_HANDLE;
         VkPhysicalDevice              pPhysicalDevice = VK_NULL_HANDLE;
-        vector< CommandBufferInPool > CmdBuffers;
+        CommandBufferInPool           CmdBuffers[ 32 ];
 
-        CommandBufferFamilyPool( )                                 = default;
-        CommandBufferFamilyPool( CommandBufferFamilyPool&& other ) = default;
+        CommandBufferFamilyPool( ) = default;
         ~CommandBufferFamilyPool( );
 
         bool Inititalize( VkDevice                       pInDevice,
