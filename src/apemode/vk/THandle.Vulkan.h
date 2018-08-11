@@ -28,7 +28,7 @@ namespace apemodevk {
         TDeleter Deleter;
 
         inline THandleBase( ) : Handle( VK_NULL_HANDLE ) { }
-        inline THandleBase( SelfType &&Other ) : Handle( Other.Release( ) ) { }
+        inline THandleBase( SelfType &&Other ) : Handle( Other.Release( ) ), Deleter( Other.Deleter ) { }
         inline ~THandleBase( ) { Destroy( ); }
 
         inline bool IsNull( ) const { return Handle == nullptr; }

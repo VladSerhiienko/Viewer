@@ -316,15 +316,6 @@ bool ViewerApp::Initialize(  ) {
         recreateParams.pDescPool       = DescriptorPool;
         recreateParams.FrameCount      = FrameCount;
 
-        /*SceneRendererVk::SceneUpdateParametersVk updateParams;
-        updateParams.pNode           = &pAppSurface->Node;
-        updateParams.pRenderPass     = hDbgRenderPass;
-        updateParams.pDescPool       = DescriptorPool;
-        updateParams.FrameCount      = FrameCount;
-        updateParams.pImgUploader      = &imgUploader;
-        updateParams.pSamplerManager = pSamplerManager.get( );
-        updateParams.pShaderCompiler = pShaderCompiler.get( );*/
-
         /*
         --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/bristleback-dota-fan-art.fbxp"
         --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/wild-west-motorcycle.fbxp"
@@ -359,13 +350,13 @@ bool ViewerApp::Initialize(  ) {
         auto sceneFile = TGetOption< std::string >( "scene", "" );
         mLoadedScene = std::move( LoadSceneFromBin( apemodeos::FileReader( ).ReadBinFile( sceneFile.c_str( ) ) ) );
 
-        apemode::vk::SceneUploader::UploadParameters uploadParams;
-        uploadParams.pNode           = &pAppSurface->Node;
-        uploadParams.pImgUploader    = &imgUploader;
+        vk::SceneUploader::UploadParameters uploadParams;
         uploadParams.pSamplerManager = pSamplerManager.get( );
         uploadParams.pSrcScene       = mLoadedScene.pSrcScene;
+        uploadParams.pImgUploader    = &imgUploader;
+        uploadParams.pNode           = &pAppSurface->Node;
 
-        apemode::vk::SceneUploader sceneUploader;
+        vk::SceneUploader sceneUploader;
         if ( false == sceneUploader.UploadScene( mLoadedScene.pScene.get( ), &uploadParams ) ) {
             apemode::platform::DebugBreak( );
             return false;

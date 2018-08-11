@@ -39,21 +39,6 @@ namespace apemodevk {
         /* NOTE: Surface support can be checked with QueueFamilyPool. */
     };
 
-    /**
-     * Currently command buffer "in pool" can be submitted to only one queue at a time (no concurrent executions).
-     * Each command pool has only one associated buffer (so external no synchoronization needed).
-     * Ensure to release the allocated buffer for reusing.
-     **/
-    struct CommandBufferInPool {
-        VkCommandBuffer  pCmdBuffer = VK_NULL_HANDLE; /* Handle */
-        VkCommandPool    pCmdPool   = VK_NULL_HANDLE; /* Command pool handle (associated with the Handle) */
-        VkFence          pFence     = VK_NULL_HANDLE; /* Last queue fence */
-        std::atomic_bool bInUse;                      /* Indicates it is used by other thread */
-
-        CommandBufferInPool( );
-        CommandBufferInPool( const CommandBufferInPool& other );
-    };
-
     struct AcquiredCommandBuffer {
         VkCommandBuffer pCmdBuffer    = VK_NULL_HANDLE; /* Handle */
         VkCommandPool   pCmdPool      = VK_NULL_HANDLE; /* Command pool handle (associated with the Handle) */
@@ -63,15 +48,33 @@ namespace apemodevk {
         VkResult        eResult       = VK_SUCCESS;     /* The error code that occurred during the queue acquisition */
     };
 
+    /**
+     * Currently command buffer "in pool" can be submitted to only one queue at a time (no concurrent executions).
+     * Each command pool has only one associated buffer (so external no synchoronization needed).
+     * Ensure to release the allocated buffer for reusing.
+     **/
+    struct CommandBufferInPool {
+        THandle< VkCommandBuffer > hCmdBuff; /* Handle */
+        THandle< VkCommandPool >   hCmdPool; /* Command pool handle (associated with the Handle) */
+        VkFence                    pFence;   /* Last queue fence */
+        std::atomic_bool           bInUse;   /* Indicates it is used by other thread */
+
+        CommandBufferInPool( );
+        CommandBufferInPool( CommandBufferInPool&& o );
+        CommandBufferInPool& operator=( CommandBufferInPool&& o );
+    };
+
     class CommandBufferFamilyPool : public QueueFamilyBased {
         friend class CommandBufferPool;
 
     public:
-        VkDevice                      pDevice         = VK_NULL_HANDLE;
-        VkPhysicalDevice              pPhysicalDevice = VK_NULL_HANDLE;
-        CommandBufferInPool           CmdBuffers[ 32 ];
+        VkDevice            pDevice         = VK_NULL_HANDLE;
+        VkPhysicalDevice    pPhysicalDevice = VK_NULL_HANDLE;
+        CommandBufferInPool CmdBuffers[ 32 ];
 
-        CommandBufferFamilyPool( ) = default;
+        CommandBufferFamilyPool( );
+        CommandBufferFamilyPool( CommandBufferFamilyPool&& o );
+        CommandBufferFamilyPool& operator=( CommandBufferFamilyPool&& o );
         ~CommandBufferFamilyPool( );
 
         bool Inititalize( VkDevice                       pInDevice,

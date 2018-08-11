@@ -207,7 +207,7 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
     apemodevk_memory_allocation_scope;
 
     /* Loop through queues */
-    for ( size_t i = 0; i < Queues.size( ); ++i ) {
+    for ( uint32_t i = 0; i < Queues.size( ); ++i ) {
         auto& queue = Queues[ i ];
 
         /* If the queue is not used by the other thread and it is not executing cmd lists, it will be returned */
@@ -326,20 +326,29 @@ bool apemodevk::CommandBufferPool::Inititalize( VkDevice                       p
 
     Pools.reserve( std::distance( pQueuePropsIt, pQueuePropsEnd ) );
 
-    uint32_t familyIndex = 0;
-    eastl::transform( pQueuePropsIt, pQueuePropsEnd, eastl::back_inserter( Pools ), [&]( const VkQueueFamilyProperties& InProps ) {
-        CommandBufferFamilyPool pool;
-        pool.Inititalize( pInDevice, pInPhysicalDevice, familyIndex++, InProps );
-        return pool;
+    eastl::for_each( pQueuePropsIt, pQueuePropsEnd, [&]( const VkQueueFamilyProperties& InProps ) {
+        CommandBufferFamilyPool& pool = Pools.emplace_back( );
+        pool.Inititalize( pInDevice, pInPhysicalDevice, uint32_t( eastl::distance( pQueuePropsIt, &InProps ) ), InProps );
     } );
 
     return true;
 }
 
 void apemodevk::CommandBufferPool::Destroy( ) {
+    if ( pDevice ) {
+        pDevice         = nullptr;
+        pPhysicalDevice = nullptr;
+
+        for ( auto& pool : Pools ) {
+            pool.Destroy( );
+        }
+
+        Pools.clear( );
+    }
 }
 
 apemodevk::CommandBufferPool::~CommandBufferPool( ) {
+    Destroy( );
 }
 
 apemodevk::CommandBufferFamilyPool* apemodevk::CommandBufferPool::GetPool( uint32_t queueFamilyIndex ) {
@@ -410,35 +419,65 @@ bool apemodevk::CommandBufferFamilyPool::Inititalize( VkDevice                  
 }
 
 void apemodevk::CommandBufferFamilyPool::Destroy( ) {
+
+    if ( pDevice ) {
+        vkDeviceWaitIdle( pDevice );
+        pDevice         = nullptr;
+        pPhysicalDevice = nullptr;
+
+        for ( auto& cmdBuffer : CmdBuffers ) {
+            cmdBuffer.hCmdBuff.Destroy( );
+            cmdBuffer.hCmdPool.Destroy( );
+        }
+    }
+}
+
+apemodevk::CommandBufferFamilyPool::CommandBufferFamilyPool() {
+}
+
+apemodevk::CommandBufferFamilyPool::CommandBufferFamilyPool( CommandBufferFamilyPool&& o )
+    : pDevice( o.pDevice ), pPhysicalDevice( o.pPhysicalDevice ) {
+    for ( size_t i = 0; i < utils::GetArraySize( CmdBuffers ); ++i ) {
+        CmdBuffers[ i ] = eastl::move( o.CmdBuffers[ i ] );
+    }
+}
+
+apemodevk::CommandBufferFamilyPool& apemodevk::CommandBufferFamilyPool::operator=( CommandBufferFamilyPool&& o ) {
+    pDevice = o.pDevice;
+    pPhysicalDevice = o.pPhysicalDevice;
+    for ( size_t i = 0; i < utils::GetArraySize( CmdBuffers ); ++i )
+        CmdBuffers[ i ] = eastl::move( o.CmdBuffers[ i ] );
+    return *this;
 }
 
 apemodevk::CommandBufferFamilyPool::~CommandBufferFamilyPool( ) {
+    Destroy( );
 }
 
-VkResult InitializeCommandBufferInPool( VkDevice pDevice, uint32_t queueFamilyId, apemodevk::CommandBufferInPool& cmdBuffer ) {
+bool InitializeCommandBufferInPool( VkDevice pDevice, uint32_t queueFamilyId, apemodevk::CommandBufferInPool& cmdBuffer ) {
     using namespace apemodevk;
     apemodevk_memory_allocation_scope;
-
-    VkResult eResult;
 
     VkCommandPoolCreateInfo commandPoolCreateInfo;
     InitializeStruct( commandPoolCreateInfo );
     commandPoolCreateInfo.queueFamilyIndex = queueFamilyId;
     commandPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    eResult = vkCreateCommandPool( pDevice, &commandPoolCreateInfo, GetAllocationCallbacks( ), &cmdBuffer.pCmdPool );
-    if ( VK_SUCCESS != CheckedResult( eResult ) ) {
-        return eResult;
+    if ( !cmdBuffer.hCmdPool.Recreate( pDevice, commandPoolCreateInfo ) ) {
+        return false;
     }
 
     VkCommandBufferAllocateInfo commandBufferAllocateInfo;
     InitializeStruct( commandBufferAllocateInfo );
     commandBufferAllocateInfo.commandBufferCount = 1;
-    commandBufferAllocateInfo.commandPool        = cmdBuffer.pCmdPool;
+    commandBufferAllocateInfo.commandPool        = cmdBuffer.hCmdPool;
     commandBufferAllocateInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 
-    const VkResult allocationResult = vkAllocateCommandBuffers( pDevice, &commandBufferAllocateInfo, &cmdBuffer.pCmdBuffer );
-    return CheckedResult( allocationResult );
+    if ( !cmdBuffer.hCmdBuff.Recreate( pDevice, commandBufferAllocateInfo ) ) {
+        return false;
+    }
+
+    return true;
 }
 
 apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bool bIgnoreFence ) {
@@ -446,17 +485,15 @@ apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bo
 
     /* Loop through command buffers */
 
-    for ( size_t i = 0; i < utils::GetArraySize( CmdBuffers ); i++ ) {
+    for ( uint32_t i = 0; i < utils::GetArraySizeU( CmdBuffers ); i++ ) {
         auto& cmdBuffer = CmdBuffers[ i ];
 
         /* If the command buffer is not used by other thread and it is not being executed, it will be returned */
         if ( false == cmdBuffer.bInUse.exchange( true, std::memory_order_acquire ) ) {
-
-            if ( VK_NULL_HANDLE == cmdBuffer.pCmdBuffer ) {
-                auto eResult = InitializeCommandBufferInPool( pDevice, QueueFamilyId, cmdBuffer );
-                if ( VK_SUCCESS != CheckedResult( eResult ) ) {
+            if ( cmdBuffer.hCmdBuff.IsNull() ) {
+                if ( !InitializeCommandBufferInPool( pDevice, QueueFamilyId, cmdBuffer ) || !cmdBuffer.hCmdBuff ) {
                     AcquiredCommandBuffer errorCmdBuffer;
-                    errorCmdBuffer.eResult = eResult;
+                    errorCmdBuffer.eResult = VK_ERROR_DEVICE_LOST;
                     return errorCmdBuffer;
                 }
             }
@@ -464,13 +501,13 @@ apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bo
             /* Fence is not passed when releasing (synchronized).
              * Fence won't be checked.
              * Check if the fence is signaled. */
-            if ( cmdBuffer.pCmdBuffer && VK_NULL_HANDLE == cmdBuffer.pFence || bIgnoreFence ||
+            if ( cmdBuffer.hCmdBuff && !cmdBuffer.pFence || bIgnoreFence ||
                  VK_SUCCESS == CheckedResult( vkGetFenceStatus( pDevice, cmdBuffer.pFence ) ) ) {
 
                 AcquiredCommandBuffer acquiredCommandBuffer;
                 acquiredCommandBuffer.QueueFamilyId = QueueFamilyId;
-                acquiredCommandBuffer.pCmdBuffer    = cmdBuffer.pCmdBuffer;
-                acquiredCommandBuffer.pCmdPool      = cmdBuffer.pCmdPool;
+                acquiredCommandBuffer.pCmdBuffer    = cmdBuffer.hCmdBuff;
+                acquiredCommandBuffer.pCmdPool      = cmdBuffer.hCmdPool;
                 acquiredCommandBuffer.CmdBufferId   = i;
 
                 return acquiredCommandBuffer;
@@ -508,16 +545,12 @@ bool apemodevk::CommandBufferFamilyPool::Release( const AcquiredCommandBuffer& a
     return false;
 }
 
-apemodevk::CommandBufferInPool::CommandBufferInPool( )
-    : bInUse( false ) {
-}
-
-apemodevk::CommandBufferInPool::CommandBufferInPool( const CommandBufferInPool& other )
-    : pCmdBuffer( other.pCmdBuffer )
-    , pCmdPool( other.pCmdPool )
-    , pFence( other.pFence )
-    , bInUse( other.bInUse.load( std::memory_order_relaxed ) ) {
-}
+//apemodevk::CommandBufferInPool::CommandBufferInPool( CommandBufferInPool&& other )
+//    : hCmdBuff( eastl::move( other.hCmdBuff ) )
+//    , hCmdPool( eastl::move( other.hCmdPool ) )
+//    , pFence( other.pFence )
+//    , bInUse( other.bInUse.load( std::memory_order_relaxed ) ) {
+//}
 
 VkResult apemodevk::WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t timeout ) {
     apemodevk_memory_allocation_scope;
@@ -534,4 +567,22 @@ VkResult apemodevk::WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t tim
     }
 
     return err;
+}
+
+apemodevk::CommandBufferInPool::CommandBufferInPool( ) : pFence( VK_NULL_HANDLE ), bInUse( false ) {
+}
+
+apemodevk::CommandBufferInPool::CommandBufferInPool( CommandBufferInPool&& o )
+    : hCmdBuff( eastl::move( o.hCmdBuff ) )
+    , hCmdPool( eastl::move( o.hCmdPool ) )
+    , pFence( o.pFence )
+    , bInUse( o.bInUse.load( ) ) {
+}
+
+apemodevk::CommandBufferInPool& apemodevk::CommandBufferInPool::operator=( CommandBufferInPool&& o ) {
+    hCmdBuff = eastl::move( o.hCmdBuff );
+    hCmdPool = eastl::move( o.hCmdPool );
+    pFence   = o.pFence;
+    bInUse   = o.bInUse.load( );
+    return *this;
 }
