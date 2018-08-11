@@ -340,12 +340,12 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
     stagingAllocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
     if ( false == hStagingBuffer.Recreate( pNode->hAllocator, bufferCreateInfo, stagingAllocationCreateInfo ) ) {
-        return nullptr;
+        return false;
     }
 
     uint8_t* pMappedStagingMemory = MapStagingBuffer( pNode, hStagingBuffer );
     if ( nullptr == pMappedStagingMemory ) {
-        return nullptr;
+        return false;
     }
 
     /* A limit that the code does not reach. */
