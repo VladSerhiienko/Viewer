@@ -1,14 +1,12 @@
 #pragma once
 
+#include <Scene.h>
+
 #include <BufferPools.Vulkan.h>
 #include <DescriptorPool.Vulkan.h>
 #include <GraphicsDevice.Vulkan.h>
 #include <ImageUploader.Vulkan.h>
 #include <SamplerManager.Vulkan.h>
-#include <SceneRendererBase.h>
-
-#include <MathInc.h>
-#include <Scene.h>
 
 namespace apemode {
 namespace vk {
@@ -51,12 +49,12 @@ public:
     struct DeviceAsset : apemode::detail::SceneDeviceAsset {
         using LoadedImagePtr = apemodevk::unique_ptr< apemodevk::UploadedImage >;
 
-        apemode::vector< LoadedImagePtr >                 LoadedImgs;
         apemodevk::unique_ptr< apemodevk::UploadedImage > MissingTextureZeros;
         apemodevk::unique_ptr< apemodevk::UploadedImage > MissingTextureOnes;
         apemode::SceneMaterial                            MissingMaterial;
         MaterialDeviceAsset                               MissingMaterialAsset;
         VkSampler                                         pMissingSampler = VK_NULL_HANDLE;
+        apemode::vector< LoadedImagePtr >                 LoadedImgs;
     };
 
     /* Updates device resources. */
@@ -69,11 +67,13 @@ public:
         static constexpr size_t kStagingMemoryLimitHint_64KB    = 64 * 1024;
         static constexpr size_t kStagingMemoryLimitHint_2MB     = 2 * 1024 * 1024;
 
-        apemodevk::GraphicsDevice* pNode                  = nullptr; /* Required */
-        apemodevk::ImageUploader*  pImgUploader           = nullptr; /* Required */
-        apemodevk::SamplerManager* pSamplerManager        = nullptr; /* Required */
-        const apemodefb::SceneFb*  pSrcScene              = nullptr; /* Required */
-        size_t                     StagingMemoryLimitHint = kStagingMemoryLimitHint_Optimal;
+        apemodevk::GraphicsDevice* pNode                   = nullptr;                         /* Required */
+        apemodevk::ImageUploader*  pImgUploader            = nullptr;                         /* Required */
+        apemodevk::SamplerManager* pSamplerManager         = nullptr;                         /* Required */
+        const apemodefb::SceneFb*  pSrcScene               = nullptr;                         /* Required */
+        uint32_t                   MatUploadQueueFamilyId  = 0;                               /* Required */
+        uint32_t                   MeshUploadQueueFamilyId = 0;                               /* Required */
+        size_t                     StagingMemoryLimitHint  = kStagingMemoryLimitHint_Optimal; /* Required */
     };
 
     /* Updates device resources. */

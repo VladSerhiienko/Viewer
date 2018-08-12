@@ -6,42 +6,52 @@
 #include <NativeHandles.Vulkan.h>
 #include <TInfoStruct.Vulkan.h>
 
-bool apemodevk::GraphicsDevice::ScanDeviceQueues( apemodevk::vector< VkQueueFamilyProperties >& QueueProps,
-                                                  apemodevk::vector< VkDeviceQueueCreateInfo >& QueueReqs,
-                                                  apemodevk::vector< float >&                   QueuePriorities ) {
+bool apemodevk::GraphicsDevice::ScanDeviceQueues( apemodevk::vector< VkQueueFamilyProperties >& queueProps,
+                                                  apemodevk::vector< VkDeviceQueueCreateInfo >& queueReqs,
+                                                  apemodevk::vector< float >&                   queuePriorities ) {
     apemodevk_memory_allocation_scope;
 
-    uint32_t QueuesFound = 0;
-    vkGetPhysicalDeviceQueueFamilyProperties( pPhysicalDevice, &QueuesFound, NULL );
+    uint32_t queuesFound = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties( pPhysicalDevice, &queuesFound, NULL );
 
-    if ( QueuesFound != 0 ) {
-        QueueProps.resize( QueuesFound );
-        QueueReqs.reserve( QueuesFound );
+    if ( queuesFound != 0 ) {
+        queueProps.resize( queuesFound );
+        queueReqs.reserve( queuesFound );
 
-        vkGetPhysicalDeviceQueueFamilyProperties( pPhysicalDevice, &QueuesFound, QueueProps.data( ) );
-        platform::LogFmt( platform::LogLevel::Info, "Queue Families: %u", QueuesFound );
+        vkGetPhysicalDeviceQueueFamilyProperties( pPhysicalDevice, &queuesFound, queueProps.data( ) );
+        platform::LogFmt( platform::LogLevel::Info, "Queue Families: %u", queuesFound );
 
         uint32_t TotalQueuePrioritiesCount = 0;
-        std::for_each( QueueProps.begin( ), QueueProps.end( ), [&]( VkQueueFamilyProperties& QueueProp ) {
-            platform::LogFmt( platform::LogLevel::Info, "> Flags: %x, Count: %u", QueueProp.queueFlags, QueueProp.queueCount );
-            TotalQueuePrioritiesCount += QueueProp.queueCount;
+        eastl::for_each( queueProps.begin( ), queueProps.end( ), [&]( VkQueueFamilyProperties& queueProp ) {
+
+            platform::LogFmt(
+                platform::LogLevel::Info,
+                "> Count %u, Flags 0x%X: GRAPHICS (%s), COMPUTE (%s), TRANSFER (%s), SPARSE_BINDING (%s), PROTECTED (%s) ",
+                queueProp.queueCount,
+                queueProp.queueFlags,
+                ( HasFlagAny( queueProp.queueFlags, VK_QUEUE_GRAPHICS_BIT ) ? "T" : "F" ),
+                ( HasFlagAny( queueProp.queueFlags, VK_QUEUE_COMPUTE_BIT ) ? "T" : "F" ),
+                ( HasFlagAny( queueProp.queueFlags, VK_QUEUE_TRANSFER_BIT | VK_QUEUE_GRAPHICS_BIT | VK_QUEUE_COMPUTE_BIT ) ? "T" : "F" ),
+                ( HasFlagAny( queueProp.queueFlags, VK_QUEUE_SPARSE_BINDING_BIT ) ? "T" : "F" ),
+                ( HasFlagAny( queueProp.queueFlags, VK_QUEUE_PROTECTED_BIT ) ? "T" : "F" ) );
+
+            TotalQueuePrioritiesCount += queueProp.queueCount;
         } );
 
         uint32_t QueuePrioritiesAssigned = 0;
-        QueuePriorities.resize( TotalQueuePrioritiesCount );
-        std::for_each( QueueProps.begin( ), QueueProps.end( ), [&]( VkQueueFamilyProperties& QueueProp ) {
+        queuePriorities.resize( TotalQueuePrioritiesCount );
+        eastl::for_each( queueProps.begin( ), queueProps.end( ), [&]( VkQueueFamilyProperties& queueProp ) {
 
             VkDeviceQueueCreateInfo queueCreateInfo;
             InitializeStruct( queueCreateInfo );
 
             queueCreateInfo.pNext            = NULL;
-            queueCreateInfo.queueFamilyIndex = static_cast< uint32_t >( std::distance( QueueProps.data( ), &QueueProp ) );
-            queueCreateInfo.queueCount       = QueueProp.queueCount;
-            queueCreateInfo.pQueuePriorities = QueuePriorities.data( ) + QueuePrioritiesAssigned;
+            queueCreateInfo.queueFamilyIndex = static_cast< uint32_t >( eastl::distance( queueProps.data( ), &queueProp ) );
+            queueCreateInfo.queueCount       = queueProp.queueCount;
+            queueCreateInfo.pQueuePriorities = queuePriorities.data( ) + QueuePrioritiesAssigned;
 
-            QueuePrioritiesAssigned += QueueProp.queueCount;
-
-            QueueReqs.push_back(queueCreateInfo);
+            QueuePrioritiesAssigned += queueProp.queueCount;
+            queueReqs.push_back( queueCreateInfo );
         } );
     }
 
@@ -89,7 +99,7 @@ bool EnumerateLayersAndExtensions( apemodevk::GraphicsDevice*        pNode,
 
         for ( auto& deviceLayer : deviceLayers ) {
             apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Debug,
-                                             "> DeviceLayer: %s (%u): %s",
+                                             "> DeviceLayer: %s (v.%u): %s",
                                              deviceLayer.layerName,
                                              deviceLayer.specVersion,
                                              deviceLayer.description );
@@ -120,7 +130,7 @@ bool EnumerateLayersAndExtensions( apemodevk::GraphicsDevice*        pNode,
         for ( uint32_t i = 0; i < deviceExtensionCount; i++ ) {
 
             apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Debug,
-                                             "> DeviceExtension: %s (%u)",
+                                             "> DeviceExtension: %s (v.%u)",
                                              deviceExtensions[ i ].extensionName,
                                              deviceExtensions[ i ].specVersion );
 
@@ -248,8 +258,7 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( uint32_t         flags,
                 if ( !hAllocator.Recreate( allocatorCreateInfo ) )
                     return false;
 
-                if ( !Queues.Inititalize( hLogicalDevice,
-                                          pPhysicalDevice,
+                if ( !Queues.Inititalize( this,
                                           QueueProps.data( ),
                                           QueueProps.data( ) + QueueProps.size( ),
                                           QueuePriorities.data( ),
@@ -257,8 +266,7 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( uint32_t         flags,
                     return false;
 
                 // clang-format off
-                if ( !CmdBuffers.Inititalize( hLogicalDevice,
-                                              pPhysicalDevice,
+                if ( !CmdBuffers.Inititalize( this,
                                               QueueProps.data( ),
                                               QueueProps.data( ) + QueueProps.size( ) ) )
                     return false;

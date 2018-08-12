@@ -1,4 +1,6 @@
 #include <SceneUploaderVk.h>
+#include <Scene.h>
+#include <AppState.h>
 
 #include <QueuePools.Vulkan.h>
 #include <BufferPools.Vulkan.h>
@@ -8,9 +10,6 @@
 #include <ImageUploader.Vulkan.h>
 #include <TOneTimeCmdBufferSubmit.Vulkan.h>
 
-#include <AppState.h>
-
-#include <Scene.h>
 #include <MathInc.h>
 #include <ArrayUtils.h>
 #include <cstdlib>
@@ -18,15 +17,15 @@
 namespace {
 
 /* Uploads resources from CPU to GPU with respect to staging memory limit. */
-struct MeshBufferFillInfo {
+struct BufferUploadInfo {
     VkBuffer       pDstBuffer      = VK_NULL_HANDLE;
     const uint8_t* pSrcBufferData  = nullptr;
     uint32_t       SrcBufferSize   = 0;
     VkAccessFlags  eDstAccessFlags = 0;
 };
 
-struct MeshBufferFillInfoCmpGreaterBySize {
-    int operator( )( const MeshBufferFillInfo& a, const MeshBufferFillInfo& b ) const {
+struct BufferUploadCmpOpGreaterBySize {
+    int operator( )( const BufferUploadInfo& a, const BufferUploadInfo& b ) const {
         if ( a.SrcBufferSize > b.SrcBufferSize )
             return ( -1 );
         if ( a.SrcBufferSize < b.SrcBufferSize )
@@ -83,6 +82,14 @@ struct ImageUploadTask {
                       (const char*) pUploadInfo->pszFileName );
 
         UploadImage( pUploadInfo );
+
+        apemode::Log( apemode::LogLevel::Trace,
+                      "Done task execution @{}: Fb#{} <- Th#{}, "
+                      "file: \"{}\"",
+                      (void*) this,
+                      fiberIndex,
+                      threadWorkedIndex,
+                      (const char*) pUploadInfo->pszFileName );
     }
 };
 
@@ -92,13 +99,13 @@ struct ImageUploadTask {
 // C qsort function.
 
 template < typename TValue, typename TCmpOp >
-int QSortCmpOp( const void* a, const void* b ) {
+int TQSortCmpOp( const void* a, const void* b ) {
     return TCmpOp( )( *(const TValue*) a, *(const TValue*) b );
 }
 
 template < typename TValue, typename TCmpOp >
-void QSort( TValue* pFirst, TValue* pLast ) {
-    qsort( pFirst, (size_t) eastl::distance( pFirst, pLast ), sizeof( TValue ), QSortCmpOp< TValue, TCmpOp > );
+void TQSort( TValue* pFirst, TValue* pLast ) {
+    qsort( pFirst, (size_t) eastl::distance( pFirst, pLast ), sizeof( TValue ), TQSortCmpOp< TValue, TCmpOp > );
 }
 
 VkSamplerCreateInfo GetDefaultSamplerCreateInfo( const float maxLod ) {
@@ -121,8 +128,9 @@ VkSamplerCreateInfo GetDefaultSamplerCreateInfo( const float maxLod ) {
     return samplerCreateInfo;
 }
 
-const apemodevk::UploadedImage** GetLoadedImageSlotForPropertyName( apemode::vk::SceneUploader::MaterialDeviceAsset* pMaterialAsset,
-                                                                  const char* pszTexturePropName ) {
+const apemodevk::UploadedImage** GetLoadedImageSlotForPropertyName(
+    apemode::vk::SceneUploader::MaterialDeviceAsset* pMaterialAsset, const char* pszTexturePropName ) {
+
     if ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) {
         return &pMaterialAsset->pBaseColorImg;
     } else if ( strcmp( "diffuseTexture", pszTexturePropName ) == 0 ) {
@@ -142,7 +150,7 @@ const apemodevk::UploadedImage** GetLoadedImageSlotForPropertyName( apemode::vk:
     return nullptr;
 }
 
-bool GenerateMipMapsForPropertyName(  const char* pszTexturePropName ) {
+bool ShouldGenerateMipMapsForPropertyName(  const char* pszTexturePropName ) {
     if ( ( strcmp( "baseColorTexture", pszTexturePropName ) == 0 ) ||
          ( strcmp( "diffuseTexture", pszTexturePropName ) == 0 ) ||
          ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) ||
@@ -234,8 +242,8 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
 
     uint64_t totalBytesRequired = 0;
 
-    apemode::vector< MeshBufferFillInfo > bufferFillInfos;
-    bufferFillInfos.reserve( pMeshesFb->size( ) << 1 );
+    apemode::vector< BufferUploadInfo > bufferUploads;
+    bufferUploads.reserve( pMeshesFb->size( ) << 1 );
 
     for ( auto & mesh : pScene->Meshes ) {
         if ( !InitializeMesh( mesh, pScene, pParams ) ) {
@@ -252,53 +260,53 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
         auto pMeshAsset = static_cast< apemode::vk::SceneUploader::MeshDeviceAsset* >( mesh.pDeviceAsset.get( ) );
         assert( pMeshAsset );
 
-        MeshBufferFillInfo bufferFillInfo;
+        BufferUploadInfo bufferUpload;
 
-        bufferFillInfo.pDstBuffer      = pMeshAsset->hVertexBuffer.Handle.pBuffer;
-        bufferFillInfo.pSrcBufferData  = pSrcMesh->vertices( )->data( );
-        bufferFillInfo.SrcBufferSize   = pSrcMesh->vertices( )->size( );
-        bufferFillInfo.eDstAccessFlags = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+        bufferUpload.pDstBuffer      = pMeshAsset->hVertexBuffer.Handle.pBuffer;
+        bufferUpload.pSrcBufferData  = pSrcMesh->vertices( )->data( );
+        bufferUpload.SrcBufferSize   = pSrcMesh->vertices( )->size( );
+        bufferUpload.eDstAccessFlags = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
 
-        bufferFillInfos.push_back( bufferFillInfo );
+        bufferUploads.push_back( bufferUpload );
         totalBytesRequired += pSrcMesh->vertices( )->size( );
 
-        bufferFillInfo.pDstBuffer      = pMeshAsset->hIndexBuffer.Handle.pBuffer;
-        bufferFillInfo.pSrcBufferData  = pSrcMesh->indices( )->data( );
-        bufferFillInfo.SrcBufferSize   = pSrcMesh->indices( )->size( );
-        bufferFillInfo.eDstAccessFlags = VK_ACCESS_INDEX_READ_BIT;
+        bufferUpload.pDstBuffer      = pMeshAsset->hIndexBuffer.Handle.pBuffer;
+        bufferUpload.pSrcBufferData  = pSrcMesh->indices( )->data( );
+        bufferUpload.SrcBufferSize   = pSrcMesh->indices( )->size( );
+        bufferUpload.eDstAccessFlags = VK_ACCESS_INDEX_READ_BIT;
 
-        bufferFillInfos.push_back( bufferFillInfo );
+        bufferUploads.push_back( bufferUpload );
         totalBytesRequired += pSrcMesh->indices( )->size( );
     }
 
     { /* Sort by size in descending order. */
 
-        MeshBufferFillInfo* pFillInfo     = bufferFillInfos.data( );
-        MeshBufferFillInfo* pFillInfoLast = pFillInfo + ( bufferFillInfos.size( ) - 1 );
-        QSort< MeshBufferFillInfo, MeshBufferFillInfoCmpGreaterBySize >( pFillInfo, pFillInfoLast );
+        BufferUploadInfo* pMeshUploadIt     = bufferUploads.data( );
+        BufferUploadInfo* pMeshUploadItLast = pMeshUploadIt + ( bufferUploads.size( ) - 1 );
+        TQSort< BufferUploadInfo, BufferUploadCmpOpGreaterBySize >( pMeshUploadIt, pMeshUploadItLast );
     }
 
-    const MeshBufferFillInfo* const pFillInfo    = bufferFillInfos.data( );
-    const MeshBufferFillInfo* const pFillInfoEnd = pFillInfo + bufferFillInfos.size( );
+    const BufferUploadInfo* const pMeshUploadIt    = bufferUploads.data( );
+    const BufferUploadInfo* const pMeshUploadItEnd = pMeshUploadIt + bufferUploads.size( );
 
     /* Pipeline Barrier: TRANSFER -> VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT or VK_ACCESS_INDEX_READ_BIT. */
     apemodevk::TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
 
         apemode::vector< VkBufferMemoryBarrier > bufferBarriers;
-        bufferBarriers.reserve( bufferFillInfos.size( ) );
+        bufferBarriers.reserve( bufferUploads.size( ) );
 
         /* Initialize buffer barriers. */
-        transform( bufferFillInfos.begin( ),
-                   bufferFillInfos.end( ),
+        transform( bufferUploads.begin( ),
+                   bufferUploads.end( ),
                    back_inserter( bufferBarriers ),
-                   []( const MeshBufferFillInfo & currFillInfo ) {
+                   []( const BufferUploadInfo & currMeshUpload ) {
                        VkBufferMemoryBarrier bufferMemoryBarrier;
                        apemodevk::InitializeStruct( bufferMemoryBarrier );
 
                        bufferMemoryBarrier.size                = VK_WHOLE_SIZE;
-                       bufferMemoryBarrier.buffer              = currFillInfo.pDstBuffer;
+                       bufferMemoryBarrier.buffer              = currMeshUpload.pDstBuffer;
                        bufferMemoryBarrier.srcAccessMask       = VK_ACCESS_TRANSFER_WRITE_BIT;
-                       bufferMemoryBarrier.dstAccessMask       = currFillInfo.eDstAccessFlags;
+                       bufferMemoryBarrier.dstAccessMask       = currMeshUpload.eDstAccessFlags;
                        bufferMemoryBarrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
                        bufferMemoryBarrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
                        return bufferMemoryBarrier;
@@ -319,7 +327,7 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
         return true;
     } );
 
-    size_t const contiguousBufferSize = max< size_t >( pParams->StagingMemoryLimitHint, pFillInfo->SrcBufferSize );
+    size_t const contiguousBufferSize = max< size_t >( pParams->StagingMemoryLimitHint, pMeshUploadIt->SrcBufferSize );
     size_t const stagingMemorySizeNeeded = max< size_t >( pNode->AdapterProps.limits.maxUniformBufferRange, contiguousBufferSize );
     size_t const stagingMemorySize = min< size_t >( totalBytesRequired, stagingMemorySizeNeeded );
 
@@ -355,14 +363,14 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
     uint64_t totalBytesAllocated = 0;
 
     /* While there are elements that need to be uploaded. */
-    auto pCurrFillInfo = pFillInfo;
-    while ( pCurrFillInfo != pFillInfoEnd ) {
+    auto pCurrFillInfo = pMeshUploadIt;
+    while ( pCurrFillInfo != pMeshUploadItEnd ) {
 
         uint8_t* pMappedStagingMemoryHead = pMappedStagingMemory;
         uint64_t stagingMemorySpaceLeft   = stagingMemorySize;
 
         /* While there are elements that need to be uploaded. */
-        while ( pCurrFillInfo != pFillInfoEnd ) {
+        while ( pCurrFillInfo != pMeshUploadItEnd ) {
             /* Check the limit. */
             if ( stagingMemorySpaceLeft < pCurrFillInfo->SrcBufferSize ) {
                 /* Flush and submit. */
@@ -462,39 +470,40 @@ bool InitializeMaterials( apemode::Scene* pScene, const apemode::vk::SceneUpload
 
 bool FinalizeMaterial( apemode::vk::SceneUploader::MaterialDeviceAsset*    pMaterialAsset,
                        const apemode::vk::SceneUploader::UploadParameters* pParams ) {
+
     if ( pMaterialAsset->pBaseColorImg ) {
         const float maxLod = float( pMaterialAsset->pBaseColorImg->ImgCreateInfo.mipLevels );
 
         VkSamplerCreateInfo samplerCreateInfo = GetDefaultSamplerCreateInfo( maxLod );
-        const uint32_t      samplerIndex      = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
+        const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
         assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
         pMaterialAsset->pBaseColorSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
         VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pBaseColorImg->ImgViewCreateInfo;
-        imgViewCreateInfo.image                 = pMaterialAsset->pBaseColorImg->hImg;
+        imgViewCreateInfo.image = pMaterialAsset->pBaseColorImg->hImg;
 
         if ( !pMaterialAsset->hBaseColorImgView.Recreate( pParams->pNode->hLogicalDevice, imgViewCreateInfo ) ) {
             return false;
         }
 
-    } /* pBaseColorLoadedImg */
+    } /* pBaseColorImg */
 
     if ( pMaterialAsset->pNormalImg ) {
         const float maxLod = float( pMaterialAsset->pNormalImg->ImgCreateInfo.mipLevels );
 
         VkSamplerCreateInfo samplerCreateInfo = GetDefaultSamplerCreateInfo( maxLod );
-        const uint32_t      samplerIndex      = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
+        const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
         assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
         pMaterialAsset->pNormalSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
         VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pNormalImg->ImgViewCreateInfo;
-        imgViewCreateInfo.image                 = pMaterialAsset->pNormalImg->hImg;
+        imgViewCreateInfo.image = pMaterialAsset->pNormalImg->hImg;
 
         if ( !pMaterialAsset->hNormalImgView.Recreate( pParams->pNode->hLogicalDevice, imgViewCreateInfo ) ) {
             return false;
         }
 
-    } /* pNormalLoadedImg */
+    } /* pNormalImg */
 
     if ( pMaterialAsset->pEmissiveImg ) {
         const float maxLod = float( pMaterialAsset->pEmissiveImg->ImgCreateInfo.mipLevels );
@@ -512,15 +521,15 @@ bool FinalizeMaterial( apemode::vk::SceneUploader::MaterialDeviceAsset*    pMate
             return false;
         }
 
-    } /* pEmissiveLoadedImg */
+    } /* pEmissiveImg */
 
     if ( pMaterialAsset->pMetallicRoughnessImg ) {
         const float maxLod = float( pMaterialAsset->pMetallicRoughnessImg->ImgCreateInfo.mipLevels );
 
         VkSamplerCreateInfo samplerCreateInfo = GetDefaultSamplerCreateInfo( maxLod );
-        const uint32_t      samplerIndex      = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
+        const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
         assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
-        pMaterialAsset->pMetallicSampler  = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+        pMaterialAsset->pMetallicSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
         pMaterialAsset->pRoughnessSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
 
         VkImageViewCreateInfo metallicImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessImg->ImgViewCreateInfo;
@@ -545,7 +554,7 @@ bool FinalizeMaterial( apemode::vk::SceneUploader::MaterialDeviceAsset*    pMate
             return false;
         }
 
-    } /* pMetallicRoughnessLoadedImg */
+    } /* pMetallicRoughnessImg */
 
     if ( pMaterialAsset->pOcclusionImg ) {
         const float maxLod = float( pMaterialAsset->pOcclusionImg->ImgCreateInfo.mipLevels );
@@ -558,38 +567,17 @@ bool FinalizeMaterial( apemode::vk::SceneUploader::MaterialDeviceAsset*    pMate
         VkImageViewCreateInfo occlusionImgViewCreateInfo = pMaterialAsset->pOcclusionImg->ImgViewCreateInfo;
 
         occlusionImgViewCreateInfo.image = pMaterialAsset->pOcclusionImg->hImg;
+        assert( pMaterialAsset->pOcclusionImg == pMaterialAsset->pMetallicRoughnessImg );
 
         occlusionImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_B;
         occlusionImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ZERO;
         occlusionImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ZERO;
         occlusionImgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ZERO;
 
-#if 0
-        if ( pMaterialAsset->pOcclusionLoadedImg == pMaterialAsset->pMetallicRoughnessLoadedImg ) {
-            /* MetallicRoughness texture has 2 components, the third channel can used as occlusion. */
-            occlusionImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_B;
-            occlusionImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ZERO;
-            occlusionImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ZERO;
-            occlusionImgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ZERO;
-        } else if ( pMaterialAsset->pOcclusionLoadedImg == pMaterialAsset->pEmissiveLoadedImg ) {
-            /* Emissive texture has 3 components, the last channel can used as occlusion. */
-            occlusionImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_A;
-            occlusionImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ZERO;
-            occlusionImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ZERO;
-            occlusionImgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ZERO;
-        } else {
-            /* Emissive texture is a separate (dedicated) one. */
-            occlusionImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_R;
-            occlusionImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ZERO;
-            occlusionImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ZERO;
-            occlusionImgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ZERO;
-        }
-#endif
-
         if ( !pMaterialAsset->hOcclusionImgView.Recreate( pParams->pNode->hLogicalDevice, occlusionImgViewCreateInfo ) ) {
             return false;
         }
-    }
+    } /* pOcclusionImg */
 
     return true;
 }
@@ -649,10 +637,10 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::
                 continue;
             }
 
-            const bool bGenerateMipMaps = GenerateMipMapsForPropertyName( pszTexturePropName );
+            const bool bGenerateMipMaps = ShouldGenerateMipMapsForPropertyName( pszTexturePropName );
 
             auto pTextureFb = pTexturesFb->Get( pTexturePropFb->value_id( ) );
-            auto pFileFb    = pFilesFb->Get( pTextureFb->file_id( ) );
+            auto pFileFb = pFilesFb->Get( pTextureFb->file_id( ) );
 
             auto imgUploadIt = imgUploads.find( pFileFb->id( ) );
             if ( imgUploadIt != imgUploads.end( ) ) {
@@ -743,7 +731,8 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::
     for ( auto& imgUpload : imgUploads ) {
         pSceneAsset->LoadedImgs.emplace_back( std::move( imgUpload.second.UploadedImg ) );
     }
-    imgUploads.clear( );
+
+    { ( decltype( imgUploads )( ) ).swap( imgUploads ); }
 
     for ( auto& material : pScene->Materials ) {
 

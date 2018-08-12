@@ -2,78 +2,76 @@
 #include <SceneRendererVk.h>
 #include <SceneUploaderVk.h>
 
-#include <QueuePools.Vulkan.h>
-#include <BufferPools.Vulkan.h>
-#include <ShaderCompiler.Vulkan.h>
-#include <ImageUploader.Vulkan.h>
 #include <Buffer.Vulkan.h>
+#include <BufferPools.Vulkan.h>
 #include <ImageUploader.Vulkan.h>
+#include <QueuePools.Vulkan.h>
+#include <ShaderCompiler.Vulkan.h>
 #include <TOneTimeCmdBufferSubmit.Vulkan.h>
 
-#include <Scene.h>
 #include <AppState.h>
 #include <ArrayUtils.h>
 #include <MathInc.h>
+#include <Scene.h>
 
 namespace apemodevk {
 
-    using namespace apemodexm;
+using namespace apemodexm;
 
-    struct ObjectUBO {
-        XMFLOAT4X4 WorldMatrix;
-        XMFLOAT4X4 NormalMatrix;
-        XMFLOAT4   PositionOffset;
-        XMFLOAT4   PositionScale;
-        XMFLOAT4   TexcoordOffsetScale;
-    };
+struct ObjectUBO {
+    XMFLOAT4X4 WorldMatrix;
+    XMFLOAT4X4 NormalMatrix;
+    XMFLOAT4   PositionOffset;
+    XMFLOAT4   PositionScale;
+    XMFLOAT4   TexcoordOffsetScale;
+};
 
-    struct CameraUBO {
-        XMFLOAT4X4 ViewMatrix;
-        XMFLOAT4X4 ProjMatrix;
-        XMFLOAT4X4 InvViewMatrix;
-        XMFLOAT4X4 InvProjMatrix;
-    };
+struct CameraUBO {
+    XMFLOAT4X4 ViewMatrix;
+    XMFLOAT4X4 ProjMatrix;
+    XMFLOAT4X4 InvViewMatrix;
+    XMFLOAT4X4 InvProjMatrix;
+};
 
-    struct MaterialUBO {
-        XMFLOAT4 BaseColorFactor;
-        XMFLOAT4 EmissiveFactor;
-        XMFLOAT4 MetallicRoughnessFactor;
-        XMUINT4 Flags;
+struct MaterialUBO {
+    XMFLOAT4 BaseColorFactor;
+    XMFLOAT4 EmissiveFactor;
+    XMFLOAT4 MetallicRoughnessFactor;
+    XMUINT4  Flags;
+};
 
-    };
+struct LightUBO {
+    XMFLOAT4 LightDirection;
+    XMFLOAT4 LightColor;
+};
 
-    struct LightUBO {
-        XMFLOAT4 LightDirection;
-        XMFLOAT4 LightColor;
-    };
-
-    bool FillCombinedImgSamplerBinding( apemodevk::DescriptorSetBase::Binding* pBinding,
-                                        VkImageView                            pImgView,
-                                        VkSampler                              pSampler,
-                                        VkImageLayout                          eImgLayout,
-                                        VkImageView                            pMissingImgView,
-                                        VkSampler                              pMissingSampler ) {
-        if ( pBinding ) {
-            if ( pImgView && pSampler ) {
-                pBinding->eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                pBinding->ImageInfo.imageLayout = eImgLayout;
-                pBinding->ImageInfo.imageView   = pImgView;
-                pBinding->ImageInfo.sampler     = pSampler;
-                return true;
-            }
-
-            if ( pMissingImgView && pMissingSampler ) {
-                pBinding->eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-                pBinding->ImageInfo.imageLayout = eImgLayout;
-                pBinding->ImageInfo.imageView   = pMissingImgView;
-                pBinding->ImageInfo.sampler     = pMissingSampler;
-                return true;
-            }
+bool FillCombinedImgSamplerBinding( apemodevk::DescriptorSetBase::Binding* pBinding,
+                                    VkImageView                            pImgView,
+                                    VkSampler                              pSampler,
+                                    VkImageLayout                          eImgLayout,
+                                    VkImageView                            pMissingImgView,
+                                    VkSampler                              pMissingSampler ) {
+    if ( pBinding ) {
+        if ( pImgView && pSampler ) {
+            pBinding->eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            pBinding->ImageInfo.imageLayout = eImgLayout;
+            pBinding->ImageInfo.imageView   = pImgView;
+            pBinding->ImageInfo.sampler     = pSampler;
+            return true;
         }
 
-        return false;
+        if ( pMissingImgView && pMissingSampler ) {
+            pBinding->eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            pBinding->ImageInfo.imageLayout = eImgLayout;
+            pBinding->ImageInfo.imageView   = pMissingImgView;
+            pBinding->ImageInfo.sampler     = pMissingSampler;
+            return true;
+        }
     }
+
+    return false;
 }
+} // namespace apemodevk
 
 bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRenderParametersBase* pParamsBase ) {
     using namespace apemodevk;
@@ -117,13 +115,13 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
     const uint32_t frameIndex = pParams->FrameIndex % kMaxFrameCount;
 
     VkDescriptorSet ppDescriptorSets[ 2 ] = {nullptr};
-    uint32_t pDynamicOffsets[ 4 ] = {0};
+    uint32_t        pDynamicOffsets[ 4 ]  = {0};
 
     CameraUBO cameraData;
-    cameraData.ViewMatrix            = pParams->ViewMatrix;
-    cameraData.ProjMatrix            = pParams->ProjMatrix;
-    cameraData.InvViewMatrix         = pParams->InvViewMatrix;
-    cameraData.InvProjMatrix         = pParams->InvProjMatrix;
+    cameraData.ViewMatrix    = pParams->ViewMatrix;
+    cameraData.ProjMatrix    = pParams->ProjMatrix;
+    cameraData.InvViewMatrix = pParams->InvViewMatrix;
+    cameraData.InvProjMatrix = pParams->InvProjMatrix;
 
     LightUBO lightData;
     lightData.LightDirection = pParams->LightDirection;
@@ -139,11 +137,11 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
 
     TDescriptorSet< 4 > descriptorSetForPass;
 
-    descriptorSetForPass.pBinding[ 0 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 0 */
-    descriptorSetForPass.pBinding[ 0 ].BufferInfo            = cameraDataUploadBufferRange.DescriptorBufferInfo;
+    descriptorSetForPass.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 0 */
+    descriptorSetForPass.pBinding[ 0 ].BufferInfo      = cameraDataUploadBufferRange.DescriptorBufferInfo;
 
-    descriptorSetForPass.pBinding[ 1 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 1 */
-    descriptorSetForPass.pBinding[ 1 ].BufferInfo            = lightDataUploadBufferRange.DescriptorBufferInfo;
+    descriptorSetForPass.pBinding[ 1 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 1 */
+    descriptorSetForPass.pBinding[ 1 ].BufferInfo      = lightDataUploadBufferRange.DescriptorBufferInfo;
 
     descriptorSetForPass.pBinding[ 2 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER; /* 2 */
     descriptorSetForPass.pBinding[ 2 ].ImageInfo.imageLayout = pParams->RadianceMap.eImgLayout;
@@ -155,7 +153,8 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
     descriptorSetForPass.pBinding[ 3 ].ImageInfo.imageView   = pParams->IrradianceMap.pImgView;
     descriptorSetForPass.pBinding[ 3 ].ImageInfo.sampler     = pParams->IrradianceMap.pSampler;
 
-    ppDescriptorSets[ kDescriptorSetForPass ] = DescriptorSetPools[ frameIndex ][ kDescriptorSetForPass ].GetDescSet( &descriptorSetForPass );
+    ppDescriptorSets[ kDescriptorSetForPass ] =
+        DescriptorSetPools[ frameIndex ][ kDescriptorSetForPass ].GetDescSet( &descriptorSetForPass );
 
     pDynamicOffsets[ 0 ] = cameraDataUploadBufferRange.DynamicOffset;
     pDynamicOffsets[ 1 ] = lightDataUploadBufferRange.DynamicOffset;
@@ -166,7 +165,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
 
         auto& mesh = pScene->Meshes[ node.MeshId ];
 
-        auto pMeshAsset = (const  vk::SceneUploader::MeshDeviceAsset*) mesh.pDeviceAsset.get( );
+        auto pMeshAsset = (const vk::SceneUploader::MeshDeviceAsset*) mesh.pDeviceAsset.get( );
         assert( pMeshAsset );
 
         ObjectUBO objectData;
@@ -198,10 +197,10 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
             if ( pSubsetIt->MaterialId != uint32_t( -1 ) ) {
                 assert( pSubsetIt->MaterialId < pScene->Materials.size( ) );
                 pMaterial      = &pScene->Materials[ pSubsetIt->MaterialId ];
-                pMaterialAsset = static_cast<  vk::SceneUploader::MaterialDeviceAsset const* >( pMaterial->pDeviceAsset.get( ) );
+                pMaterialAsset = static_cast< vk::SceneUploader::MaterialDeviceAsset const* >( pMaterial->pDeviceAsset.get( ) );
             } else {
-                pMaterial        = &pSceneAsset->MissingMaterial;
-                pMaterialAsset   = &pSceneAsset->MissingMaterialAsset;
+                pMaterial      = &pSceneAsset->MissingMaterial;
+                pMaterialAsset = &pSceneAsset->MissingMaterialAsset;
             }
 
             uint32_t flags = 0;
@@ -296,7 +295,8 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
 
             descriptorSetForObject.BindingCount = objectSetBindingCount;
 
-            ppDescriptorSets[ kDescriptorSetForObj ] = DescriptorSetPools[ frameIndex ][ kDescriptorSetForObj ].GetDescSet( &descriptorSetForObject );
+            ppDescriptorSets[ kDescriptorSetForObj ] =
+                DescriptorSetPools[ frameIndex ][ kDescriptorSetForObj ].GetDescSet( &descriptorSetForObject );
 
             pDynamicOffsets[ 2 ] = objectDataUploadBufferRange.DynamicOffset;
             pDynamicOffsets[ 3 ] = materialDataUploadBufferRange.DynamicOffset;
@@ -499,7 +499,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
     VkPipelineViewportStateCreateInfo      viewportStateCreateInfo;
     VkPipelineMultisampleStateCreateInfo   multisampleStateCreateInfo;
     VkDynamicState                         dynamicStateEnables[ 2 ];
-    VkPipelineDynamicStateCreateInfo       dynamicStateCreateInfo ;
+    VkPipelineDynamicStateCreateInfo       dynamicStateCreateInfo;
     VkPipelineShaderStageCreateInfo        shaderStageCreateInfo[ 2 ];
 
     InitializeStruct( graphicsPipelineCreateInfo );

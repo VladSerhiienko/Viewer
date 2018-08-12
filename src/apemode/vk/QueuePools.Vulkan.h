@@ -1,7 +1,3 @@
-// Copyright (c) 2018 Vladyslav Serhiienko <vlad.serhiienko@gmail.com>
-// This software is released under the MIT License.
-// https://opensource.org/licenses/MIT
-
 #pragma once
 
 #include <GraphicsManager.Vulkan.h>
@@ -68,8 +64,7 @@ namespace apemodevk {
         friend class CommandBufferPool;
 
     public:
-        VkDevice            pDevice         = VK_NULL_HANDLE;
-        VkPhysicalDevice    pPhysicalDevice = VK_NULL_HANDLE;
+        GraphicsDevice*     pNode = nullptr;
         CommandBufferInPool CmdBuffers[ 32 ];
 
         CommandBufferFamilyPool( );
@@ -77,8 +72,7 @@ namespace apemodevk {
         CommandBufferFamilyPool& operator=( CommandBufferFamilyPool&& o );
         ~CommandBufferFamilyPool( );
 
-        bool Inititalize( VkDevice                       pInDevice,
-                          VkPhysicalDevice               pInPhysicalDevice,
+        bool Inititalize( GraphicsDevice*                pNode,
                           uint32_t                       InQueueFamilyIndex,
                           VkQueueFamilyProperties const& InQueueFamilyProps );
 
@@ -90,16 +84,14 @@ namespace apemodevk {
 
     class CommandBufferPool {
     public:
-        VkDevice                          pDevice         = VK_NULL_HANDLE;
-        VkPhysicalDevice                  pPhysicalDevice = VK_NULL_HANDLE;
-        uint32_t                          QueueFamilyId   = 0;
+        GraphicsDevice*                   pNode         = nullptr;
+        uint32_t                          QueueFamilyId = 0;
         vector< CommandBufferFamilyPool > Pools;
 
         CommandBufferPool( ) = default;
         ~CommandBufferPool( );
 
-        bool Inititalize( VkDevice                       pDevice,
-                          VkPhysicalDevice               pPhysicalDevice,
+        bool Inititalize( GraphicsDevice*                pNode,
                           const VkQueueFamilyProperties* pQueuePropsIt,
                           const VkQueueFamilyProperties* pQueuePropsEnd );
 
@@ -151,8 +143,7 @@ namespace apemodevk {
 
     class QueueFamilyPool : public QueueFamilyBased {
     public:
-        VkDevice              pDevice         = VK_NULL_HANDLE;
-        VkPhysicalDevice      pPhysicalDevice = VK_NULL_HANDLE;
+        GraphicsDevice*       pNode = nullptr;
         vector< QueueInPool > Queues;
 
         QueueFamilyPool( )                              = default;
@@ -160,10 +151,7 @@ namespace apemodevk {
         QueueFamilyPool( const QueueFamilyPool& other ) = default;
         ~QueueFamilyPool( );
 
-        bool Inititalize( VkDevice                       pInDevice,
-                          VkPhysicalDevice               pInPhysicalDevice,
-                          uint32_t                       queueFamilyIndex,
-                          VkQueueFamilyProperties const& queueFamilyProps );
+        bool Inititalize( GraphicsDevice* pNode, uint32_t queueFamilyIndex, VkQueueFamilyProperties const& queueFamilyProps );
 
         void Destroy( );
 
@@ -190,15 +178,14 @@ namespace apemodevk {
      */
     class QueuePool {
     public:
-        VkDevice                  pDevice         = VK_NULL_HANDLE;
-        VkPhysicalDevice          pPhysicalDevice = VK_NULL_HANDLE;
-        vector< QueueFamilyPool > Pools;
+        GraphicsDevice*                              pNode = nullptr;
+        vector< QueueFamilyPool >                    Pools;
+        vector_multimap< VkQueueFlagBits, uint32_t > QueueFamilyIds;
 
         QueuePool( ) = default;
         ~QueuePool( );
 
-        bool Inititalize( VkDevice                       pInDevice,
-                          VkPhysicalDevice               pInPhysicalDevice,
+        bool Inititalize( GraphicsDevice*                pNode,
                           const VkQueueFamilyProperties* pQueuePropsIt,
                           const VkQueueFamilyProperties* pQueuePropsEnd,
                           const float*                   pQueuePrioritiesIt,
@@ -229,6 +216,10 @@ namespace apemodevk {
          * Allows the queue to be reused.
          **/
         void Release( const AcquiredQueue& acquiredQueue );
+
+        /* Returns transfer queue.
+         */
+        uint32_t GetTransferQueueFamilyId( ) const;
     };
 
     /**

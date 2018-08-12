@@ -1,7 +1,3 @@
-// Copyright (c) 2018 Vladyslav Serhiienko <vlad.serhiienko@gmail.com>
-// This software is released under the MIT License.
-// https://opensource.org/licenses/MIT
-
 #include <QueuePools.Vulkan.h>
 #include <GraphicsDevice.Vulkan.h>
 
@@ -29,27 +25,42 @@ TQueueFamilyBasedElement* TGetPool( TQueueFamilyBasedCollection& Pools, VkQueueF
     return nullptr;
 }
 
-bool apemodevk::QueuePool::Inititalize( VkDevice                       pInDevice,
-                                        VkPhysicalDevice               pInPhysicalDevice,
+bool apemodevk::QueuePool::Inititalize( GraphicsDevice*                pInNode,
                                         const VkQueueFamilyProperties* pQueuePropsIt,
                                         const VkQueueFamilyProperties* pQueuePropsEnd,
                                         const float*                   pQueuePrioritiesIt,
                                         const float*                   pQueuePrioritiesItEnd ) {
     apemodevk_memory_allocation_scope;
 
-    pDevice = pInDevice;
-    pPhysicalDevice = pInPhysicalDevice;
-
     (void) pQueuePrioritiesIt;
     (void) pQueuePrioritiesItEnd;
 
-    Pools.reserve( std::distance( pQueuePropsIt, pQueuePropsEnd ) );
+    const size_t queueFamilyCount = size_t( std::distance( pQueuePropsIt, pQueuePropsEnd ) );
+    if ( !queueFamilyCount )
+        return false;
+
+    pNode = pInNode;
+    Pools.reserve( queueFamilyCount );
+    QueueFamilyIds.reserve( queueFamilyCount );
 
     uint32_t familyIndex = 0;
-    std::transform( pQueuePropsIt, pQueuePropsEnd, std::back_inserter( Pools ), [&]( const VkQueueFamilyProperties& InProps ) {
-        QueueFamilyPool pool;
-        pool.Inititalize( pInDevice, pInPhysicalDevice, familyIndex++, InProps );
-        return pool;
+    std::for_each( pQueuePropsIt, pQueuePropsEnd, [&]( const VkQueueFamilyProperties& InProps ) {
+        QueueFamilyPool& queueFamilyPool = Pools.emplace_back( );
+        queueFamilyPool.Inititalize( pNode, familyIndex++, InProps );
+
+        if ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_GRAPHICS_BIT ) == VK_QUEUE_GRAPHICS_BIT ) {
+            QueueFamilyIds.insert( eastl::make_pair( VK_QUEUE_GRAPHICS_BIT, Pools.size( ) - 1 ) );
+        }
+
+        if ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_COMPUTE_BIT ) == VK_QUEUE_COMPUTE_BIT ) {
+            QueueFamilyIds.insert( eastl::make_pair( VK_QUEUE_COMPUTE_BIT, Pools.size( ) - 1 ) );
+        }
+
+        if ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_TRANSFER_BIT ) == VK_QUEUE_TRANSFER_BIT &&
+             ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_GRAPHICS_BIT ) == 0 &&
+             ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_COMPUTE_BIT ) == 0 ) {
+            QueueFamilyIds.insert( eastl::make_pair( VK_QUEUE_TRANSFER_BIT, Pools.size() - 1 ) );
+        }
     } );
 
     return true;
@@ -117,14 +128,27 @@ void apemodevk::QueuePool::Release( const apemodevk::AcquiredQueue& acquiredQueu
     Pools[ acquiredQueue.QueueFamilyId ].Release( acquiredQueue );
 }
 
-bool apemodevk::QueueFamilyPool::Inititalize( VkDevice                       pInDevice,
-                                              VkPhysicalDevice               pInPhysicalDevice,
+uint32_t apemodevk::QueuePool::GetTransferQueueFamilyId( ) const {
+
+    for ( uint32_t i = 0; i < Pools.size( ); ++i ) {
+        const auto& queueFamilyPool = Pools[ i ];
+
+        if ( ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_TRANSFER_BIT ) == VK_QUEUE_TRANSFER_BIT ) &&
+             ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_GRAPHICS_BIT ) == 0 ) &&
+             ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_COMPUTE_BIT ) == 0 ) ) {
+            return i;
+        }
+    }
+
+    return -1;
+}
+
+bool apemodevk::QueueFamilyPool::Inititalize( GraphicsDevice*                pInNode,
                                               uint32_t                       InQueueFamilyIndex,
                                               VkQueueFamilyProperties const& InQueueFamilyProps ) {
     apemodevk_memory_allocation_scope;
 
-    pDevice          = pInDevice;
-    pPhysicalDevice  = pInPhysicalDevice;
+    pNode = pInNode;
     QueueFamilyId    = InQueueFamilyIndex;
     QueueFamilyProps = InQueueFamilyProps;
 
@@ -139,8 +163,8 @@ void apemodevk::QueueFamilyPool::Destroy( ) {
         uint32_t queueIndex = QueueFamilyProps.queueCount;
         while ( queueIndex-- ) {
             if ( VK_NULL_HANDLE != Queues[ queueIndex ].hFence ) {
-                vkWaitForFences( pDevice, 1, &Queues[ queueIndex ].hFence, true, UINT64_MAX );
-                vkDestroyFence( pDevice, Queues[ queueIndex ].hFence, GetAllocationCallbacks( ) );
+                vkWaitForFences( *pNode, 1, &Queues[ queueIndex ].hFence, true, UINT64_MAX );
+                vkDestroyFence( *pNode, Queues[ queueIndex ].hFence, GetAllocationCallbacks( ) );
             }
         }
     }
@@ -156,7 +180,7 @@ const VkQueueFamilyProperties& apemodevk::QueueFamilyPool::GetQueueFamilyProps( 
 bool apemodevk::QueueFamilyPool::SupportsPresenting( VkSurfaceKHR pSurface ) const {
     VkBool32 supported = false;
 
-    switch ( vkGetPhysicalDeviceSurfaceSupportKHR( pPhysicalDevice, QueueFamilyId, pSurface, &supported ) ) {
+    switch ( vkGetPhysicalDeviceSurfaceSupportKHR( *pNode, QueueFamilyId, pSurface, &supported ) ) {
         case VK_SUCCESS:
             /* Function succeeded, see the assigned pSucceeded value. */
             return VK_TRUE == supported;
@@ -216,7 +240,7 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
 
             /* Get device queue, return DEVICE_LOST if failed. */
             if ( VK_NULL_HANDLE == queue.hQueue ) {
-                vkGetDeviceQueue( pDevice, QueueFamilyId, i, &queue.hQueue );
+                vkGetDeviceQueue( *pNode, QueueFamilyId, i, &queue.hQueue );
                 assert( queue.hQueue );
 
                 if ( !queue.hQueue ) {
@@ -238,7 +262,7 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
                 /* @note Must be reset before usage. */
                 fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-                const VkResult eCreateFenceResult = vkCreateFence( pDevice, &fenceCreateInfo, GetAllocationCallbacks( ), &queue.hFence );
+                const VkResult eCreateFenceResult = vkCreateFence( *pNode, &fenceCreateInfo, GetAllocationCallbacks( ), &queue.hFence );
                 if ( ( VK_SUCCESS != CheckedResult( eCreateFenceResult ) ) || !queue.hFence ) {
                     /* Move back to unused state */
                     queue.bInUse.exchange( false, std::memory_order_release );
@@ -255,7 +279,7 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
             /* vkGetFenceStatus -> VK_NOT_READY: The fence is unsignaled. */
             /* vkGetFenceStatus -> VK_ERROR_DEVICE_LOST: The device is lost. */
 
-            const VkResult eFenceStatus = vkGetFenceStatus( pDevice, queue.hFence );
+            const VkResult eFenceStatus = vkGetFenceStatus( *pNode, queue.hFence );
 
             if ( VK_SUCCESS > CheckedResult( eFenceStatus ) ) {
                 /* Move back to unused state */
@@ -315,29 +339,25 @@ apemodevk::QueueInPool::QueueInPool( const QueueInPool& other )
     , bInUse( other.bInUse.load( std::memory_order_relaxed ) ) {
 }
 
-bool apemodevk::CommandBufferPool::Inititalize( VkDevice                       pInDevice,
-                                                VkPhysicalDevice               pInPhysicalDevice,
+bool apemodevk::CommandBufferPool::Inititalize( GraphicsDevice*                pInNode,
                                                 const VkQueueFamilyProperties* pQueuePropsIt,
                                                 const VkQueueFamilyProperties* pQueuePropsEnd ) {
     apemodevk_memory_allocation_scope;
 
-    pDevice         = pInDevice;
-    pPhysicalDevice = pInPhysicalDevice;
-
+    pNode = pInNode;
     Pools.reserve( std::distance( pQueuePropsIt, pQueuePropsEnd ) );
 
     eastl::for_each( pQueuePropsIt, pQueuePropsEnd, [&]( const VkQueueFamilyProperties& InProps ) {
         CommandBufferFamilyPool& pool = Pools.emplace_back( );
-        pool.Inititalize( pInDevice, pInPhysicalDevice, uint32_t( eastl::distance( pQueuePropsIt, &InProps ) ), InProps );
+        pool.Inititalize( pNode, uint32_t( eastl::distance( pQueuePropsIt, &InProps ) ), InProps );
     } );
 
     return true;
 }
 
 void apemodevk::CommandBufferPool::Destroy( ) {
-    if ( pDevice ) {
-        pDevice         = nullptr;
-        pPhysicalDevice = nullptr;
+    if ( pNode ) {
+        pNode = nullptr;
 
         for ( auto& pool : Pools ) {
             pool.Destroy( );
@@ -407,12 +427,10 @@ void apemodevk::CommandBufferPool::Release( const AcquiredCommandBuffer& acquire
     Pools[ acquireCmdBuffer.QueueFamilyId ].Release( acquireCmdBuffer );
 }
 
-bool apemodevk::CommandBufferFamilyPool::Inititalize( VkDevice                       pInDevice,
-                                                      VkPhysicalDevice               pInPhysicalDevice,
+bool apemodevk::CommandBufferFamilyPool::Inititalize( GraphicsDevice*                pInNode,
                                                       uint32_t                       InQueueFamilyIndex,
                                                       VkQueueFamilyProperties const& InQueueFamilyProps ) {
-    pDevice          = pInDevice;
-    pPhysicalDevice  = pInPhysicalDevice;
+    pNode            = pInNode;
     QueueFamilyId    = InQueueFamilyIndex;
     QueueFamilyProps = InQueueFamilyProps;
     return true;
@@ -420,11 +438,8 @@ bool apemodevk::CommandBufferFamilyPool::Inititalize( VkDevice                  
 
 void apemodevk::CommandBufferFamilyPool::Destroy( ) {
 
-    if ( pDevice ) {
-        vkDeviceWaitIdle( pDevice );
-        pDevice         = nullptr;
-        pPhysicalDevice = nullptr;
-
+    if ( pNode ) {
+        pNode->Await( );
         for ( auto& cmdBuffer : CmdBuffers ) {
             cmdBuffer.hCmdBuff.Destroy( );
             cmdBuffer.hCmdPool.Destroy( );
@@ -435,18 +450,19 @@ void apemodevk::CommandBufferFamilyPool::Destroy( ) {
 apemodevk::CommandBufferFamilyPool::CommandBufferFamilyPool() {
 }
 
-apemodevk::CommandBufferFamilyPool::CommandBufferFamilyPool( CommandBufferFamilyPool&& o )
-    : pDevice( o.pDevice ), pPhysicalDevice( o.pPhysicalDevice ) {
+apemodevk::CommandBufferFamilyPool::CommandBufferFamilyPool( CommandBufferFamilyPool&& o ) : pNode( o.pNode ) {
+
     for ( size_t i = 0; i < utils::GetArraySize( CmdBuffers ); ++i ) {
         CmdBuffers[ i ] = eastl::move( o.CmdBuffers[ i ] );
     }
 }
 
 apemodevk::CommandBufferFamilyPool& apemodevk::CommandBufferFamilyPool::operator=( CommandBufferFamilyPool&& o ) {
-    pDevice = o.pDevice;
-    pPhysicalDevice = o.pPhysicalDevice;
+
+    pNode = o.pNode;
     for ( size_t i = 0; i < utils::GetArraySize( CmdBuffers ); ++i )
         CmdBuffers[ i ] = eastl::move( o.CmdBuffers[ i ] );
+
     return *this;
 }
 
@@ -491,7 +507,7 @@ apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bo
         /* If the command buffer is not used by other thread and it is not being executed, it will be returned */
         if ( false == cmdBuffer.bInUse.exchange( true, std::memory_order_acquire ) ) {
             if ( cmdBuffer.hCmdBuff.IsNull() ) {
-                if ( !InitializeCommandBufferInPool( pDevice, QueueFamilyId, cmdBuffer ) || !cmdBuffer.hCmdBuff ) {
+                if ( !InitializeCommandBufferInPool( *pNode, QueueFamilyId, cmdBuffer ) || !cmdBuffer.hCmdBuff ) {
                     AcquiredCommandBuffer errorCmdBuffer;
                     errorCmdBuffer.eResult = VK_ERROR_DEVICE_LOST;
                     return errorCmdBuffer;
@@ -502,7 +518,7 @@ apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bo
              * Fence won't be checked.
              * Check if the fence is signaled. */
             if ( cmdBuffer.hCmdBuff && !cmdBuffer.pFence || bIgnoreFence ||
-                 VK_SUCCESS == CheckedResult( vkGetFenceStatus( pDevice, cmdBuffer.pFence ) ) ) {
+                 VK_SUCCESS == CheckedResult( vkGetFenceStatus( *pNode, cmdBuffer.pFence ) ) ) {
 
                 AcquiredCommandBuffer acquiredCommandBuffer;
                 acquiredCommandBuffer.QueueFamilyId = QueueFamilyId;
@@ -538,10 +554,10 @@ bool apemodevk::CommandBufferFamilyPool::Release( const AcquiredCommandBuffer& a
         const bool previouslyUsed = cmdBufferInPool.bInUse.exchange( false, std::memory_order_release );
         /* Try to track incorrect usage. */
         assert( previouslyUsed );
-        return true;
+        return previouslyUsed;
     }
 
-    apemodevk::platform::DebugBreak( );
+    assert( false );
     return false;
 }
 
