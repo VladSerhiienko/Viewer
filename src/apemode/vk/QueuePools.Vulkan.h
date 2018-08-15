@@ -199,11 +199,6 @@ namespace apemodevk {
         QueueFamilyPool*       GetPool( VkQueueFlags eRequiredQueueFlags, bool bExactMatchByFlags );
         const QueueFamilyPool* GetPool( VkQueueFlags eRequiredQueueFlags, bool bExactMatchByFlags ) const;
 
-        struct QueueFamilyRange {
-            const uint32_t* pQueueFamilyIds    = nullptr;
-            uint32_t        queueFamilyIdCount = 0;
-        };
-
         /**
          * @param bIgnoreFenceStatus If any command buffer submitted to this queue is in the executable state,
          *                           it is moved to the pending state. Note, that VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
