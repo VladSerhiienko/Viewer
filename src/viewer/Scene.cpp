@@ -237,7 +237,6 @@ void apemode::Scene::UpdateTransformMatrices( SceneNodeTransformFrame &t ) const
 apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fileContents ) {
     using namespace utils;
 
-
     const apemodefb::SceneFb *pSrcScene = !fileContents.empty( )
                                         ? apemodefb::GetSceneFb( fileContents.data( ) )
                                         : nullptr;

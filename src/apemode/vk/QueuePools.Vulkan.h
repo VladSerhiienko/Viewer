@@ -178,9 +178,9 @@ namespace apemodevk {
      */
     class QueuePool {
     public:
-        GraphicsDevice*                              pNode = nullptr;
-        vector< QueueFamilyPool >                    Pools;
-        vector_multimap< VkQueueFlagBits, uint32_t > QueueFamilyIds;
+        GraphicsDevice*                           pNode = nullptr;
+        vector< QueueFamilyPool >                 Pools;
+        vector_multimap< VkQueueFlags, uint32_t > QueueFamilyIds;
 
         QueuePool( ) = default;
         ~QueuePool( );
@@ -199,6 +199,11 @@ namespace apemodevk {
         QueueFamilyPool*       GetPool( VkQueueFlags eRequiredQueueFlags, bool bExactMatchByFlags );
         const QueueFamilyPool* GetPool( VkQueueFlags eRequiredQueueFlags, bool bExactMatchByFlags ) const;
 
+        struct QueueFamilyRange {
+            const uint32_t* pQueueFamilyIds    = nullptr;
+            uint32_t        queueFamilyIdCount = 0;
+        };
+
         /**
          * @param bIgnoreFenceStatus If any command buffer submitted to this queue is in the executable state,
          *                           it is moved to the pending state. Note, that VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
@@ -216,10 +221,6 @@ namespace apemodevk {
          * Allows the queue to be reused.
          **/
         void Release( const AcquiredQueue& acquiredQueue );
-
-        /* Returns transfer queue.
-         */
-        uint32_t GetTransferQueueFamilyId( ) const;
     };
 
     /**

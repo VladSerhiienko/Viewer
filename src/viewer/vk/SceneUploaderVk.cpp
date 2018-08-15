@@ -567,8 +567,6 @@ bool FinalizeMaterial( apemode::vk::SceneUploader::MaterialDeviceAsset*    pMate
         VkImageViewCreateInfo occlusionImgViewCreateInfo = pMaterialAsset->pOcclusionImg->ImgViewCreateInfo;
 
         occlusionImgViewCreateInfo.image = pMaterialAsset->pOcclusionImg->hImg;
-        assert( pMaterialAsset->pOcclusionImg == pMaterialAsset->pMetallicRoughnessImg );
-
         occlusionImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_B;
         occlusionImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ZERO;
         occlusionImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ZERO;
@@ -664,7 +662,7 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::
             imgUpload.pNode            = pParams->pNode;
 
             imgUploads[ pFileFb->id( ) ] = std::move( imgUpload );
-            apemode::LogInfo( "Scheduled texture upload: #{} \"{}\", mips: {}", pFileFb->id( ), imgUpload.pszFileName, bGenerateMipMaps );
+            apemode::LogInfo( "Scheduled texture upload: #{} \"{}\"", pFileFb->id( ), imgUpload.pszFileName );
         } /* pTexturePropFb */
     }     /* pMaterialFb */
 

@@ -43,23 +43,34 @@ bool apemodevk::QueuePool::Inititalize( GraphicsDevice*                pInNode,
     Pools.reserve( queueFamilyCount );
     QueueFamilyIds.reserve( queueFamilyCount );
 
-    uint32_t familyIndex = 0;
-    std::for_each( pQueuePropsIt, pQueuePropsEnd, [&]( const VkQueueFamilyProperties& InProps ) {
+    std::for_each( pQueuePropsIt, pQueuePropsEnd, [&]( const VkQueueFamilyProperties& queueFamilyProperties ) {
+        const uint32_t queueFamilyIndex = uint32_t( eastl::distance( pQueuePropsIt, &queueFamilyProperties ) );
+
         QueueFamilyPool& queueFamilyPool = Pools.emplace_back( );
-        queueFamilyPool.Inititalize( pNode, familyIndex++, InProps );
+        queueFamilyPool.Inititalize( pNode, queueFamilyIndex, queueFamilyProperties );
 
         if ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_GRAPHICS_BIT ) == VK_QUEUE_GRAPHICS_BIT ) {
-            QueueFamilyIds.insert( eastl::make_pair( VK_QUEUE_GRAPHICS_BIT, Pools.size( ) - 1 ) );
+            QueueFamilyIds.insert( eastl::make_pair( VK_QUEUE_GRAPHICS_BIT, queueFamilyIndex ) );
+            platform::LogFmt( platform::LogLevel::Info, "QueueFamily #%u: GRAPHICS", queueFamilyIndex );
         }
 
-        if ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_COMPUTE_BIT ) == VK_QUEUE_COMPUTE_BIT ) {
-            QueueFamilyIds.insert( eastl::make_pair( VK_QUEUE_COMPUTE_BIT, Pools.size( ) - 1 ) );
+        if ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_COMPUTE_BIT ) == VK_QUEUE_COMPUTE_BIT &&
+             ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_GRAPHICS_BIT ) == VK_QUEUE_GRAPHICS_BIT ) {
+            QueueFamilyIds.insert( eastl::make_pair( VK_QUEUE_COMPUTE_BIT | VK_QUEUE_GRAPHICS_BIT, queueFamilyIndex ) );
+            platform::LogFmt( platform::LogLevel::Info, "QueueFamily #%u: GRAPHICS+COMPUTE", queueFamilyIndex );
+        }
+
+        if ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_COMPUTE_BIT ) == VK_QUEUE_COMPUTE_BIT &&
+             ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_GRAPHICS_BIT ) == 0 ) {
+            QueueFamilyIds.insert( eastl::make_pair( VK_QUEUE_COMPUTE_BIT, queueFamilyIndex ) );
+            platform::LogFmt( platform::LogLevel::Info, "QueueFamily #%u: COMPUTE", queueFamilyIndex );
         }
 
         if ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_TRANSFER_BIT ) == VK_QUEUE_TRANSFER_BIT &&
              ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_GRAPHICS_BIT ) == 0 &&
              ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_COMPUTE_BIT ) == 0 ) {
-            QueueFamilyIds.insert( eastl::make_pair( VK_QUEUE_TRANSFER_BIT, Pools.size() - 1 ) );
+            QueueFamilyIds.insert( eastl::make_pair( VK_QUEUE_TRANSFER_BIT, queueFamilyIndex ) );
+            platform::LogFmt( platform::LogLevel::Info, "QueueFamily #%u: TRANSFER", queueFamilyIndex );
         }
     } );
 
@@ -126,21 +137,6 @@ apemodevk::AcquiredQueue apemodevk::QueuePool::Acquire( bool bIgnoreFenceStatus,
 
 void apemodevk::QueuePool::Release( const apemodevk::AcquiredQueue& acquiredQueue ) {
     Pools[ acquiredQueue.QueueFamilyId ].Release( acquiredQueue );
-}
-
-uint32_t apemodevk::QueuePool::GetTransferQueueFamilyId( ) const {
-
-    for ( uint32_t i = 0; i < Pools.size( ); ++i ) {
-        const auto& queueFamilyPool = Pools[ i ];
-
-        if ( ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_TRANSFER_BIT ) == VK_QUEUE_TRANSFER_BIT ) &&
-             ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_GRAPHICS_BIT ) == 0 ) &&
-             ( ( queueFamilyPool.QueueFamilyProps.queueFlags & VK_QUEUE_COMPUTE_BIT ) == 0 ) ) {
-            return i;
-        }
-    }
-
-    return -1;
 }
 
 bool apemodevk::QueueFamilyPool::Inititalize( GraphicsDevice*                pInNode,
@@ -517,9 +513,8 @@ apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bo
             /* Fence is not passed when releasing (synchronized).
              * Fence won't be checked.
              * Check if the fence is signaled. */
-            if ( cmdBuffer.hCmdBuff && !cmdBuffer.pFence || bIgnoreFence ||
+            if ( !cmdBuffer.pFence || bIgnoreFence ||
                  VK_SUCCESS == CheckedResult( vkGetFenceStatus( *pNode, cmdBuffer.pFence ) ) ) {
-
                 AcquiredCommandBuffer acquiredCommandBuffer;
                 acquiredCommandBuffer.QueueFamilyId = QueueFamilyId;
                 acquiredCommandBuffer.pCmdBuffer    = cmdBuffer.hCmdBuff;
