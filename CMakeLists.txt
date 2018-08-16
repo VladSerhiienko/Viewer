@@ -279,7 +279,7 @@ message(STATUS "spirv_headers_binary_dir = ${spirv_headers_binary_dir}")
 ExternalProject_Add(
     glslang
     GIT_REPOSITORY "git@github.com:KhronosGroup/glslang.git"
-    GIT_TAG "master"
+    GIT_TAG "7.8.2853"
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/glslang"
