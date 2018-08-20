@@ -46,7 +46,7 @@ namespace apemodevk
             descriptorSetAllocateInfo.descriptorSetCount = TCount;
 
             //TODO: Only for debugging.
-            if ( false == std::is_sorted( &hLayouts[ 0 ], &hLayouts[ TCount ] ) ) {
+            if ( false == eastl::is_sorted( &hLayouts[ 0 ], &hLayouts[ TCount ] ) ) {
                 platform::DebugBreak( );
                 return false;
             }

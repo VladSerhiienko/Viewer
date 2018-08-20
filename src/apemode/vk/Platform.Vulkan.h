@@ -56,13 +56,14 @@
 #include <stdarg.h>
 #include <limits>
 #include <iostream>
+#include <memory>
 
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 
 #undef min
 #undef max
-#include <spirv_glsl.hpp>
+// #include <spirv_glsl.hpp>
 
 #ifndef _In_
 #define _In_

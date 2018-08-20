@@ -172,7 +172,7 @@ apemodevk::HostBufferPool::Page *apemodevk::HostBufferPool::FindPage( uint32_t d
     const uint32_t coveredOffsetCount = dataStructureSize / MinAlignment + ( uint32_t )( 0 != dataStructureSize % MinAlignment );
 
     /* Try to find an existing free page. */
-    auto pageIt = std::find_if( Pages.begin( ), Pages.end( ), [&]( PagePtr & pPage ) {
+    auto pageIt = eastl::find_if( Pages.begin( ), Pages.end( ), [&]( PagePtr & pPage ) {
         assert( nullptr != pPage );
         const uint32_t availableOffsets = pPage->TotalOffsetCount - pPage->CurrentOffsetIndex;
         return availableOffsets >= coveredOffsetCount;
@@ -198,14 +198,14 @@ apemodevk::HostBufferPool::Page *apemodevk::HostBufferPool::FindPage( uint32_t d
 }
 
 void apemodevk::HostBufferPool::Flush( ) {
-    std::for_each( Pages.begin( ), Pages.end( ), [&]( PagePtr & pPage ) {
+    eastl::for_each( Pages.begin( ), Pages.end( ), [&]( PagePtr & pPage ) {
         assert( nullptr != pPage );
         pPage->Flush( );
     } );
 }
 
 void apemodevk::HostBufferPool::Reset( ) {
-    std::for_each( Pages.begin( ), Pages.end( ), [&]( PagePtr & pPage ) {
+    eastl::for_each( Pages.begin( ), Pages.end( ), [&]( PagePtr & pPage ) {
         assert( nullptr != pPage );
         pPage->Reset( );
     } );

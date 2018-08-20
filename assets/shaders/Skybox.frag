@@ -1,7 +1,7 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-#include <shaders/shaderlib.inc>
+// #include <shaders/shaderlib.inc>
 
 layout( set = 0, binding = 1 ) uniform samplerCube u_samplerCube0;
 layout( set = 0, binding = 2 ) uniform samplerCube u_samplerCube1;

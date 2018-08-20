@@ -43,7 +43,7 @@ bool apemodevk::QueuePool::Inititalize( GraphicsDevice*                pInNode,
     Pools.reserve( queueFamilyCount );
     QueueFamilyIds.reserve( queueFamilyCount );
 
-    std::for_each( pQueuePropsIt, pQueuePropsEnd, [&]( const VkQueueFamilyProperties& queueFamilyProperties ) {
+    eastl::for_each( pQueuePropsIt, pQueuePropsEnd, [&]( const VkQueueFamilyProperties& queueFamilyProperties ) {
         const uint32_t queueFamilyIndex = uint32_t( eastl::distance( pQueuePropsIt, &queueFamilyProperties ) );
 
         QueueFamilyPool& queueFamilyPool = Pools.emplace_back( );

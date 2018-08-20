@@ -8,7 +8,6 @@
 
 #include <AppState.h>
 #include <ArrayUtils.h>
-#include <shaderc/shaderc.hpp>
 
 using namespace apemode;
 using namespace DirectX;

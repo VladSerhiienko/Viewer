@@ -42,3 +42,4 @@
 .vscode/*.bat
 assets/images/*
 .DS_Store
+assets/shaders/.spv/*

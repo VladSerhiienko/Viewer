@@ -10,7 +10,7 @@ namespace apemodevk {
 
         virtual const uint8_t*                   GetBytePtr( ) const   = 0;
         virtual size_t                           GetByteCount( ) const = 0;
-        virtual const spirv_cross::CompilerGLSL& GetGlsl( ) const      = 0;
+        // virtual const spirv_cross::CompilerGLSL& GetGlsl( ) const      = 0;
 
         inline const uint32_t* GetDwordPtr( ) const {
             return reinterpret_cast< const uint32_t* >( GetBytePtr( ) );

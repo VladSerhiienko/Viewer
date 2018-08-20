@@ -563,8 +563,8 @@ set(
 
 set(
     shared_vk_ext_source_files
-    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ShaderCompiler.Vulkan.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ShaderCompiler.Vulkan.cpp
+    # ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ShaderCompiler.Vulkan.h
+    # ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ShaderCompiler.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageUploader.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageUploader.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/SamplerManager.Vulkan.h
@@ -586,7 +586,7 @@ set(
 
 if (APPLE)
     set ( shared_sdl_source_files
-          ${shared_sdl_source_files} 
+          ${shared_sdl_source_files}
           ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceSdlBaseCocoa.mm
           )
 endif()
@@ -675,8 +675,8 @@ add_dependencies(
     zlib
     flatbuffers
     nuklear
-    spirv_cross
-    shaderc
+    # spirv_cross
+    # shaderc
     DirectXMath
     FbxPipeline
     eastl
@@ -713,8 +713,9 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
     ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
     ${CMAKE_SOURCE_DIR}/dependencies/sdl2/include
-    ${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Cross
-    ${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Cross/include
+    # ${shaderc_source_dir}/libshaderc/include
+    # ${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Cross
+    # ${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Cross/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
@@ -724,7 +725,6 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/include/utils
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
     ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
-    ${shaderc_source_dir}/libshaderc/include
     $ENV{VK_SDK_PATH}/include
 )
 
@@ -733,11 +733,11 @@ if (APPLE)
         third_party_libs
         $ENV{VK_SDK_PATH}/lib/libMoltenVK.dylib
         $ENV{VK_SDK_PATH}/lib/libvulkan.dylib
-        ${shaderc_binary_dir}/libshaderc/libshaderc_combined.a
-        ${spirv_cross_binary_dir}/libspirv-cross-core.a
-        ${spirv_cross_binary_dir}/libspirv-cross-cpp.a
-        ${spirv_cross_binary_dir}/libspirv-cross-glsl.a
-        ${spirv_cross_binary_dir}/libspirv-cross-util.a
+        # ${shaderc_binary_dir}/libshaderc/libshaderc_combined.a
+        # ${spirv_cross_binary_dir}/libspirv-cross-core.a
+        # ${spirv_cross_binary_dir}/libspirv-cross-cpp.a
+        # ${spirv_cross_binary_dir}/libspirv-cross-glsl.a
+        # ${spirv_cross_binary_dir}/libspirv-cross-util.a
         ${flatbuffers_binary_dir}/libflatbuffers.a
         ${eastl_binary_dir}/libEASTL.a
         ${eastl_binary_dir}/test/packages/EAStdC/libEAStdC.a
@@ -771,11 +771,11 @@ elseif (UNIX)
         pthread
         stdc++fs
         ${sdl2_binary_dir}/libSDL2.a
-        ${shaderc_binary_dir}/libshaderc/libshaderc_combined.a
-        ${spirv_cross_binary_dir}/libspirv-cross-core.a
-        ${spirv_cross_binary_dir}/libspirv-cross-cpp.a
-        ${spirv_cross_binary_dir}/libspirv-cross-glsl.a
-        ${spirv_cross_binary_dir}/libspirv-cross-util.a
+        # ${shaderc_binary_dir}/libshaderc/libshaderc_combined.a
+        # ${spirv_cross_binary_dir}/libspirv-cross-core.a
+        # ${spirv_cross_binary_dir}/libspirv-cross-cpp.a
+        # ${spirv_cross_binary_dir}/libspirv-cross-glsl.a
+        # ${spirv_cross_binary_dir}/libspirv-cross-util.a
         ${flatbuffers_binary_dir}/libflatbuffers.a
         ${eastl_binary_dir}/libEASTL.a
         ${eastl_binary_dir}/test/packages/EAStdC/libEAStdC.a
@@ -797,11 +797,11 @@ elseif(WIN32)
         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/EASTL.lib
         ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/flatbuffers.lib
         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/EAStdC.lib
-        ${shaderc_binary_dir}/libshaderc${CONFIGURATION_SUFFIX}/shaderc_combined.lib
-        ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-core.lib
-        ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-util.lib
-        ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-cpp.lib
-        ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-glsl.lib
+        # ${shaderc_binary_dir}/libshaderc${CONFIGURATION_SUFFIX}/shaderc_combined.lib
+        # ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-core.lib
+        # ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-util.lib
+        # ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-cpp.lib
+        # ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-glsl.lib
         ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/TaskScheduler.lib
     )
 endif()
@@ -860,3 +860,29 @@ set_target_properties(
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PREDEFINED_TARGETS_FOLDER "CustomTargets")
+
+set(
+    spirv_directory
+    ${CMAKE_SOURCE_DIR}/assets/shaders/.spv
+)
+
+add_custom_command(
+    TARGET Viewer PRE_BUILD
+
+    COMMAND ${CMAKE_COMMAND} -E make_directory ${spirv_directory}
+    
+    COMMAND glslangValidator -S frag -E ${CMAKE_SOURCE_DIR}/assets/shaders/Scene.frag >> ${spirv_directory}/Scene.frag.preprocessed
+    COMMAND glslangValidator -S vert -E ${CMAKE_SOURCE_DIR}/assets/shaders/Scene.vert >> ${spirv_directory}/Scene.vert.preprocessed
+
+    COMMAND glslangValidator -S frag -V -q ${CMAKE_SOURCE_DIR}/assets/shaders/Scene.frag -o ${spirv_directory}/Scene.frag.spv >> ${spirv_directory}/Scene.frag.reflection
+    COMMAND glslangValidator -S vert -V -q ${CMAKE_SOURCE_DIR}/assets/shaders/Scene.vert -o ${spirv_directory}/Scene.vert.spv >> ${spirv_directory}/Scene.vert.reflection
+    
+    COMMAND glslangValidator -S frag -V ${CMAKE_SOURCE_DIR}/assets/shaders/Skybox.frag -o ${spirv_directory}/Scene.frag.spv
+    COMMAND glslangValidator -S vert -V ${CMAKE_SOURCE_DIR}/assets/shaders/Skybox.vert -o ${spirv_directory}/Scene.vert.spv
+
+    DEPENDS ${CMAKE_SOURCE_DIR}/assets/shaders/Scene.frag
+    DEPENDS ${CMAKE_SOURCE_DIR}/assets/shaders/Scene.vert
+
+    COMMENT Compiling GLSL ...
+    VERBATIM
+)
