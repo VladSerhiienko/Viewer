@@ -141,6 +141,7 @@ namespace apemodevk {
 
 #include <EASTL/unique_ptr.h>
 #include <EASTL/vector.h>
+#include <EASTL/vector_map.h>
 #include <EASTL/vector_multimap.h>
 #include <EASTL/slist.h>
 #include <EASTL/string.h>
@@ -198,6 +199,9 @@ namespace apemodevk {
 
     template < typename T >
     using vector = eastl::vector< T, platform::StandardAllocator >;
+
+    template < typename K, typename T, typename Cmp = eastl::less< K > >
+    using vector_map = eastl::vector_map< K, T, Cmp, platform::StandardAllocator >;
 
     template < typename K, typename T, typename Cmp = eastl::less< K > >
     using vector_multimap = eastl::vector_multimap< K, T, Cmp, platform::StandardAllocator >;

@@ -215,6 +215,10 @@ bool apemodevk::QueueFamilyBased::SupportsCompute( ) const {
     return apemodevk::HasFlagEq( QueueFamilyProps.queueFlags, VK_QUEUE_COMPUTE_BIT );
 }
 
+bool apemodevk::QueueFamilyBased::IsProtected( ) const {
+    return apemodevk::HasFlagEq( QueueFamilyProps.queueFlags, VK_QUEUE_PROTECTED_BIT );
+}
+
 bool apemodevk::QueueFamilyBased::SupportsSparseBinding( ) const {
     return apemodevk::HasFlagEq( QueueFamilyProps.queueFlags, VK_QUEUE_SPARSE_BINDING_BIT );
 }

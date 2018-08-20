@@ -3,7 +3,7 @@
 
 bool apemodevk::SamplerManager::Recreate( apemodevk::GraphicsDevice* pInNode ) {
     pNode = pInNode;
-    return nullptr != pNode;
+    return ( nullptr != pNode );
 }
 
 void apemodevk::SamplerManager::Release( apemodevk::GraphicsDevice* pNode ) {
@@ -11,43 +11,35 @@ void apemodevk::SamplerManager::Release( apemodevk::GraphicsDevice* pNode ) {
 
     THandle< VkSampler > hSampler;
     for ( auto& storedSampler : StoredSamplers ) {
-        hSampler.Handle = storedSampler.pSampler;
+        hSampler.Handle = storedSampler.second.pSampler;
         hSampler.Deleter.hLogicalDevice = pNode->hLogicalDevice;
         hSampler.Destroy( );
     }
+
+    StoredSamplers.clear( );
 }
 
-constexpr uint32_t kInvalidSamplerIndex = 0xffffffff;
-
-uint32_t apemodevk::SamplerManager::GetSamplerIndex( const VkSamplerCreateInfo& samplerCreateInfo ) {
+VkSampler apemodevk::SamplerManager::GetSampler( const VkSamplerCreateInfo& samplerCreateInfo ) {
     apemodevk_memory_allocation_scope;
 
     const auto samplerId = apemodevk::CityHash64( samplerCreateInfo );
-    const auto samplerIt = eastl::find_if( StoredSamplers.begin( ),
-                                           StoredSamplers.end( ),
-                                           [samplerId]( const StoredSampler& s ) { return samplerId == s.Hash; } );
+    const auto samplerIt = StoredSamplers.find( samplerId );
 
     if ( samplerIt != StoredSamplers.end( ) )
-        return static_cast< uint32_t >( eastl::distance( StoredSamplers.begin( ), samplerIt ) );
+        return samplerIt->second.pSampler;
 
     THandle< VkSampler > hSampler;
     if ( hSampler.Recreate( *pNode, samplerCreateInfo ) ) {
-        const size_t samplerIndex = StoredSamplers.size( );
 
         StoredSampler storedSampler;
-        storedSampler.Hash              = samplerId;
-        storedSampler.pSampler          = hSampler.Release( );
+        storedSampler.pSampler          = hSampler;
         storedSampler.SamplerCreateInfo = samplerCreateInfo;
-        StoredSamplers.push_back( storedSampler );
 
-        return static_cast< uint32_t >( samplerIndex );
+        StoredSamplers[ samplerId ] = std::move( storedSampler );
+        return hSampler.Release( );
     }
 
     platform::LogFmt( platform::LogLevel::Err, "Failed to create sampler." );
     platform::DebugBreak( );
-    return kInvalidSamplerIndex;
-}
-
-bool apemodevk::SamplerManager::IsSamplerIndexValid( const uint32_t samplerIndex ) {
-    return kInvalidSamplerIndex != samplerIndex;
+    return VK_NULL_HANDLE;
 }

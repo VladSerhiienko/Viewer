@@ -222,10 +222,7 @@ bool ViewerApp::Initialize(  ) {
             samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
             samplerCreateInfo.unnormalizedCoordinates = false;
 
-            const uint32_t samplerIndex = pSamplerManager->GetSamplerIndex( samplerCreateInfo );
-            assert( SamplerManager::IsSamplerIndexValid( samplerIndex ) );
-
-            pRadianceCubeMapSampler = pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+            pRadianceCubeMapSampler = pSamplerManager->GetSampler( samplerCreateInfo );
         }
 
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/kyoto_irr.dds" ) ) {
@@ -265,10 +262,7 @@ bool ViewerApp::Initialize(  ) {
             samplerCreateInfo.borderColor             = VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;
             samplerCreateInfo.unnormalizedCoordinates = false;
 
-            const uint32_t samplerIndex = pSamplerManager->GetSamplerIndex( samplerCreateInfo );
-            assert( SamplerManager::IsSamplerIndexValid( samplerIndex ) );
-
-            pIrradianceCubeMapSampler = pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+            pIrradianceCubeMapSampler = pSamplerManager->GetSampler( samplerCreateInfo );
         }
 
         pNkRenderer = apemode::unique_ptr< NuklearRendererSdlBase >( apemode_new NuklearRendererSdlVk( ) );

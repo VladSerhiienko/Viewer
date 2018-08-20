@@ -461,10 +461,7 @@ bool InitializeMaterials( apemode::Scene* pScene, const apemode::vk::SceneUpload
         return false;
     }
 
-    const uint32_t missingSamplerIndex = pParams->pSamplerManager->GetSamplerIndex( GetDefaultSamplerCreateInfo( 0 ) );
-    assert( apemodevk::SamplerManager::IsSamplerIndexValid( missingSamplerIndex ) );
-    pSceneAsset->pMissingSampler = pParams->pSamplerManager->StoredSamplers[ missingSamplerIndex ].pSampler;
-
+    pSceneAsset->pMissingSampler = pParams->pSamplerManager->GetSampler( GetDefaultSamplerCreateInfo( 0 ) );
     return true;
 }
 
@@ -473,11 +470,7 @@ bool FinalizeMaterial( apemode::vk::SceneUploader::MaterialDeviceAsset*    pMate
 
     if ( pMaterialAsset->pBaseColorImg ) {
         const float maxLod = float( pMaterialAsset->pBaseColorImg->ImgCreateInfo.mipLevels );
-
-        VkSamplerCreateInfo samplerCreateInfo = GetDefaultSamplerCreateInfo( maxLod );
-        const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
-        assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
-        pMaterialAsset->pBaseColorSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+        pMaterialAsset->pBaseColorSampler = pParams->pSamplerManager->GetSampler( GetDefaultSamplerCreateInfo( maxLod ) );
 
         VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pBaseColorImg->ImgViewCreateInfo;
         imgViewCreateInfo.image = pMaterialAsset->pBaseColorImg->hImg;
@@ -490,11 +483,7 @@ bool FinalizeMaterial( apemode::vk::SceneUploader::MaterialDeviceAsset*    pMate
 
     if ( pMaterialAsset->pNormalImg ) {
         const float maxLod = float( pMaterialAsset->pNormalImg->ImgCreateInfo.mipLevels );
-
-        VkSamplerCreateInfo samplerCreateInfo = GetDefaultSamplerCreateInfo( maxLod );
-        const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
-        assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
-        pMaterialAsset->pNormalSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+        pMaterialAsset->pNormalSampler = pParams->pSamplerManager->GetSampler( GetDefaultSamplerCreateInfo( maxLod ) );
 
         VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pNormalImg->ImgViewCreateInfo;
         imgViewCreateInfo.image = pMaterialAsset->pNormalImg->hImg;
@@ -507,11 +496,7 @@ bool FinalizeMaterial( apemode::vk::SceneUploader::MaterialDeviceAsset*    pMate
 
     if ( pMaterialAsset->pEmissiveImg ) {
         const float maxLod = float( pMaterialAsset->pEmissiveImg->ImgCreateInfo.mipLevels );
-
-        VkSamplerCreateInfo samplerCreateInfo = GetDefaultSamplerCreateInfo( maxLod );
-        const uint32_t      samplerIndex      = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
-        assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
-        pMaterialAsset->pEmissiveSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+        pMaterialAsset->pEmissiveSampler = pParams->pSamplerManager->GetSampler( GetDefaultSamplerCreateInfo( maxLod ) );
 
         VkImageViewCreateInfo imgViewCreateInfo = pMaterialAsset->pEmissiveImg->ImgViewCreateInfo;
         imgViewCreateInfo.image                 = pMaterialAsset->pEmissiveImg->hImg;
@@ -525,12 +510,8 @@ bool FinalizeMaterial( apemode::vk::SceneUploader::MaterialDeviceAsset*    pMate
 
     if ( pMaterialAsset->pMetallicRoughnessImg ) {
         const float maxLod = float( pMaterialAsset->pMetallicRoughnessImg->ImgCreateInfo.mipLevels );
-
-        VkSamplerCreateInfo samplerCreateInfo = GetDefaultSamplerCreateInfo( maxLod );
-        const uint32_t samplerIndex = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
-        assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
-        pMaterialAsset->pMetallicSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
-        pMaterialAsset->pRoughnessSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+        pMaterialAsset->pMetallicSampler = pParams->pSamplerManager->GetSampler( GetDefaultSamplerCreateInfo( maxLod ) );
+        pMaterialAsset->pRoughnessSampler = pParams->pSamplerManager->GetSampler( GetDefaultSamplerCreateInfo( maxLod ) );
 
         VkImageViewCreateInfo metallicImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessImg->ImgViewCreateInfo;
         metallicImgViewCreateInfo.image                 = pMaterialAsset->pMetallicRoughnessImg->hImg;
@@ -558,19 +539,14 @@ bool FinalizeMaterial( apemode::vk::SceneUploader::MaterialDeviceAsset*    pMate
 
     if ( pMaterialAsset->pOcclusionImg ) {
         const float maxLod = float( pMaterialAsset->pOcclusionImg->ImgCreateInfo.mipLevels );
-
-        VkSamplerCreateInfo samplerCreateInfo = GetDefaultSamplerCreateInfo( maxLod );
-        const uint32_t      samplerIndex      = pParams->pSamplerManager->GetSamplerIndex( samplerCreateInfo );
-        assert( apemodevk::SamplerManager::IsSamplerIndexValid( samplerIndex ) );
-        pMaterialAsset->pOcclusionSampler = pParams->pSamplerManager->StoredSamplers[ samplerIndex ].pSampler;
+        pMaterialAsset->pOcclusionSampler = pParams->pSamplerManager->GetSampler( GetDefaultSamplerCreateInfo( maxLod ) );
 
         VkImageViewCreateInfo occlusionImgViewCreateInfo = pMaterialAsset->pOcclusionImg->ImgViewCreateInfo;
-
-        occlusionImgViewCreateInfo.image = pMaterialAsset->pOcclusionImg->hImg;
-        occlusionImgViewCreateInfo.components.r = VK_COMPONENT_SWIZZLE_B;
-        occlusionImgViewCreateInfo.components.g = VK_COMPONENT_SWIZZLE_ZERO;
-        occlusionImgViewCreateInfo.components.b = VK_COMPONENT_SWIZZLE_ZERO;
-        occlusionImgViewCreateInfo.components.a = VK_COMPONENT_SWIZZLE_ZERO;
+        occlusionImgViewCreateInfo.image                 = pMaterialAsset->pOcclusionImg->hImg;
+        occlusionImgViewCreateInfo.components.r          = VK_COMPONENT_SWIZZLE_B;
+        occlusionImgViewCreateInfo.components.g          = VK_COMPONENT_SWIZZLE_ZERO;
+        occlusionImgViewCreateInfo.components.b          = VK_COMPONENT_SWIZZLE_ZERO;
+        occlusionImgViewCreateInfo.components.a          = VK_COMPONENT_SWIZZLE_ZERO;
 
         if ( !pMaterialAsset->hOcclusionImgView.Recreate( pParams->pNode->hLogicalDevice, occlusionImgViewCreateInfo ) ) {
             return false;

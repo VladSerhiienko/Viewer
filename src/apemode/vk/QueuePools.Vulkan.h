@@ -31,6 +31,7 @@ namespace apemodevk {
         bool SupportsTransfer( ) const;
         bool SupportsGraphics( ) const;
         bool SupportsCompute( ) const;
+        bool IsProtected( ) const;
 
         /* NOTE: Surface support can be checked with QueueFamilyPool. */
     };
