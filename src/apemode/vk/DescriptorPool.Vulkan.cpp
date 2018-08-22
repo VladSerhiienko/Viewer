@@ -112,7 +112,7 @@ VkDescriptorSet apemodevk::DescriptorSetPool::GetDescSet( const DescriptorSetBas
     }
 
     auto descriptorSetHash = cityHashBuilder.Value;
-    auto descriptorSetIt = std::find_if( Sets.begin( ), Sets.end( ), [&]( const DescriptorSetItem& allocatedSet ) {
+    auto descriptorSetIt = eastl::find_if( Sets.begin( ), Sets.end( ), [&]( const DescriptorSetItem& allocatedSet ) {
         return allocatedSet.Hash == descriptorSetHash;
     } );
 
@@ -139,7 +139,7 @@ VkDescriptorSet apemodevk::DescriptorSetPool::GetDescSet( const DescriptorSetBas
     TempWrites.clear( );
     TempWrites.reserve( pDescriptorSetBase->BindingCount );
 
-    std::for_each( pDescriptorSetBase->pBinding,
+    eastl::for_each( pDescriptorSetBase->pBinding,
                    pDescriptorSetBase->pBinding + pDescriptorSetBase->BindingCount,
                    [&]( const DescriptorSetBase::Binding& descriptorSetBinding ) {
                        apemodevk_memory_allocation_scope;

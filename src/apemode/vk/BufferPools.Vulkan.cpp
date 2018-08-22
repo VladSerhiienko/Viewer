@@ -24,7 +24,7 @@ bool apemodevk::HostBufferPool::Page::Recreate( GraphicsDevice *      pInNode,
     pMapped              = nullptr;
 
 #if _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges
-    Ranges.reserve( std::min< uint32_t >( 64, TotalOffsetCount ) );
+    Ranges.reserve( eastl::min< uint32_t >( 64, TotalOffsetCount ) );
 #else
     InitializeStruct( Range );
 #endif
@@ -190,7 +190,7 @@ apemodevk::HostBufferPool::Page *apemodevk::HostBufferPool::FindPage( uint32_t d
                              MinAlignment,
                              HasFlagEq( eBufferUsageFlags, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT )
                                  ? MaxPageRange
-                                 : std::min( MaxPageRange, AlignedOffset( dataStructureSize, MinAlignment ) ),
+                                 : eastl::min( MaxPageRange, AlignedOffset( dataStructureSize, MinAlignment ) ),
                              eBufferUsageFlags,
                              eMemoryPropertyFlags );
 
