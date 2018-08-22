@@ -441,6 +441,7 @@ void apemodevk::CommandBufferFamilyPool::Destroy( ) {
     if ( pNode ) {
         pNode->Await( );
         for ( auto& cmdBuffer : CmdBuffers ) {
+            platform::LogFmt( platform::LogLevel::Info, "Destroying command buffer." );
             cmdBuffer.hCmdBuff.Destroy( );
             cmdBuffer.hCmdPool.Destroy( );
         }
@@ -588,9 +589,6 @@ apemodevk::CommandBufferInPool::CommandBufferInPool( ) : pFence( VK_NULL_HANDLE 
 }
 
 apemodevk::CommandBufferInPool::~CommandBufferInPool( ) {
-    if ( hCmdBuff ) {
-        platform::LogFmt( platform::LogLevel::Info, "Destroying command buffer." );
-    }
 }
 
 apemodevk::CommandBufferInPool::CommandBufferInPool( CommandBufferInPool&& o )

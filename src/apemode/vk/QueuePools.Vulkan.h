@@ -47,7 +47,7 @@ namespace apemodevk {
 
     /**
      * Currently command buffer "in pool" can be submitted to only one queue at a time (no concurrent executions).
-     * Each command pool has only one associated buffer (so external no synchoronization needed).
+     * Each command pool has only one associated buffer (so no external synchoronization needed).
      * Ensure to release the allocated buffer for reusing.
      **/
     struct CommandBufferInPool {
