@@ -607,14 +607,10 @@ set(
     ${CMAKE_SOURCE_DIR}/src/apemode/CityHash.h
     ${CMAKE_SOURCE_DIR}/src/apemode/AppBase.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/AppBase.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/DebugRendererVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/DebugRendererVk.h
     ${CMAKE_SOURCE_DIR}/src/apemode/AppState.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/AppState.h
     ${CMAKE_SOURCE_DIR}/src/apemode/AppSurfaceSdlVk.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/AppSurfaceSdlVk.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/NuklearSdlVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/NuklearSdlVk.h
 )
 
 set(
@@ -634,6 +630,10 @@ set(
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneRendererVk.h
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/SkyboxRendererVk.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/SkyboxRendererVk.h
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/DebugRendererVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/DebugRendererVk.h
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/NuklearSdlVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/NuklearSdlVk.h
 )
 
 
@@ -861,6 +861,9 @@ set_target_properties(
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PREDEFINED_TARGETS_FOLDER "CustomTargets")
 
+# Shaders
+
+# Output directory for the shaders
 set(
     spirv_directory
     ${CMAKE_SOURCE_DIR}/assets/shaders/.spv
@@ -868,21 +871,50 @@ set(
 
 add_custom_command(
     TARGET Viewer PRE_BUILD
-
-    COMMAND ${CMAKE_COMMAND} -E make_directory ${spirv_directory}
-    
-    COMMAND glslangValidator -S frag -E ${CMAKE_SOURCE_DIR}/assets/shaders/Scene.frag >> ${spirv_directory}/Scene.frag.preprocessed
-    COMMAND glslangValidator -S vert -E ${CMAKE_SOURCE_DIR}/assets/shaders/Scene.vert >> ${spirv_directory}/Scene.vert.preprocessed
-
-    COMMAND glslangValidator -S frag -V -q ${CMAKE_SOURCE_DIR}/assets/shaders/Scene.frag -o ${spirv_directory}/Scene.frag.spv >> ${spirv_directory}/Scene.frag.reflection
-    COMMAND glslangValidator -S vert -V -q ${CMAKE_SOURCE_DIR}/assets/shaders/Scene.vert -o ${spirv_directory}/Scene.vert.spv >> ${spirv_directory}/Scene.vert.reflection
-    
-    COMMAND glslangValidator -S frag -V ${CMAKE_SOURCE_DIR}/assets/shaders/Skybox.frag -o ${spirv_directory}/Scene.frag.spv
-    COMMAND glslangValidator -S vert -V ${CMAKE_SOURCE_DIR}/assets/shaders/Skybox.vert -o ${spirv_directory}/Scene.vert.spv
-
-    DEPENDS ${CMAKE_SOURCE_DIR}/assets/shaders/Scene.frag
-    DEPENDS ${CMAKE_SOURCE_DIR}/assets/shaders/Scene.vert
-
-    COMMENT Compiling GLSL ...
-    VERBATIM
+    COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}"
 )
+
+# Source directory for the shaders
+set(
+    shader_directory
+    ${CMAKE_SOURCE_DIR}/assets/shaders
+)
+
+# Shader source files
+set(
+    shader_files
+    ${shader_directory}/Debug.vert
+    ${shader_directory}/Debug.frag
+    ${shader_directory}/NuklearUI.vert
+    ${shader_directory}/NuklearUI.frag
+    ${shader_directory}/Skybox.vert
+    ${shader_directory}/Skybox.frag
+    ${shader_directory}/Scene.vert
+    ${shader_directory}/Scene.frag
+)
+
+# Shader compilation routine
+foreach(shader_file ${shader_files})
+
+    get_filename_component( shader_file_name ${shader_file} NAME )
+
+    string(LENGTH ${shader_file_name} shader_file_name_length)
+    math(EXPR shader_file_name_ext_begin "${shader_file_name_length} - 4")
+    string(SUBSTRING ${shader_file_name} ${shader_file_name_ext_begin} 4 shader_file_name_ext)
+
+    set( shader_file_preprocessed "${spirv_directory}/${shader_file_name}.preprocessed" )
+    set( shader_file_reflection "${spirv_directory}/${shader_file_name}.reflection" )
+    set( shader_file_spv "${spirv_directory}/${shader_file_name}.spv" )
+
+    message(STATUS " ... ")
+    message(STATUS "${shader_file} > ${shader_file_name_ext} > ${shader_file_spv}")
+    message(STATUS "${shader_file} + ${shader_file_preprocessed}")
+    message(STATUS "${shader_file} + ${shader_file_reflection}")
+
+    add_custom_command(
+        TARGET Viewer PRE_BUILD
+        COMMAND glslangValidator -S ${shader_file_name_ext} -E ${shader_file} > ${shader_file_preprocessed}
+        COMMAND glslangValidator -S ${shader_file_name_ext} -V -q ${shader_file} -o ${shader_file_spv} > ${shader_file_reflection}
+    )
+
+endforeach()
