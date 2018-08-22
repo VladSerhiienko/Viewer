@@ -1,6 +1,5 @@
 
 #include <Swapchain.Vulkan.h>
-#include <ShaderCompiler.Vulkan.h>
 #include <ImageUploader.Vulkan.h>
 #include <SamplerManager.Vulkan.h>
 
@@ -8,7 +7,7 @@
 #include <AppState.h>
 
 #include <AppSurfaceSdlVk.h>
-#include <NuklearSdlVk.h>
+#include <NuklearRendererVk.h>
 #include <DebugRendererVk.h>
 #include <SceneRendererVk.h>
 #include <SceneUploaderVk.h>
@@ -24,27 +23,6 @@
 #include <CameraControllerFreeLook.h>
 
 #define kMaxFrames 3
-
-namespace apemodevk {
-
-    class ShaderFileReader : public ShaderCompiler::IShaderFileReader {
-    public:
-        apemodeos::IAssetManager* mAssetManager;
-
-        bool ReadShaderTxtFile( const std::string& FilePath,
-                                std::string&       OutFileFullPath,
-                                std::string&       OutFileContent ) override;
-    };
-
-    class ShaderFeedbackWriter : public ShaderCompiler::IShaderFeedbackWriter {
-    public:
-        void WriteFeedback( EFeedbackType                                     eType,
-                            const std::string&                                FullFilePath,
-                            const ShaderCompiler::IMacroDefinitionCollection* Macros,
-                            const void*                                       pContent, /* Txt or bin, @see EFeedbackType */
-                            const void*                                       pContentEnd ) override;
-    };
-}
 
 namespace apemode {
     class AppState;
@@ -86,20 +64,17 @@ namespace apemode {
         apemodevk::THandle< VkImageView >               hDepthImgViews[ kMaxFrames ];
         apemodevk::THandle< VkDeviceMemory >            hDepthImgMemory[ kMaxFrames ];
 
-        apemode::unique_ptr< apemodevk::ShaderCompiler >       pShaderCompiler;
-        apemode::unique_ptr< apemodevk::ShaderFileReader >     pShaderFileReader;
-        apemode::unique_ptr< apemodevk::ShaderFeedbackWriter > pShaderFeedbackWriter;
         apemode::unique_ptr< apemodevk::SamplerManager >       pSamplerManager;
         apemodevk::unique_ptr< apemodevk::UploadedImage >      RadianceImg;
         apemodevk::unique_ptr< apemodevk::UploadedImage >      IrradianceImg;
         VkSampler                                              pRadianceCubeMapSampler   = VK_NULL_HANDLE;
         VkSampler                                              pIrradianceCubeMapSampler = VK_NULL_HANDLE;
 
-        apemode::unique_ptr< NuklearRendererSdlBase >      pNkRenderer;
-        apemode::unique_ptr< DebugRendererVk >             pDebugRenderer;
-        apemode::unique_ptr< SceneRendererBase >           pSceneRendererBase;
-        apemode::unique_ptr< apemode::vk::Skybox >         pSkybox;
-        apemode::unique_ptr< apemode::vk::SkyboxRenderer > pSkyboxRenderer;
+        apemode::unique_ptr< NuklearRendererSdlBase > pNkRenderer;
+        apemode::unique_ptr< SceneRendererBase >      pSceneRendererBase;
+        apemode::unique_ptr< vk::Skybox >             pSkybox;
+        apemode::unique_ptr< vk::SkyboxRenderer >     pSkyboxRenderer;
+        apemode::unique_ptr< vk::DebugRenderer >    pDebugRenderer;
 
         LoadedScene mLoadedScene;
 

@@ -4,6 +4,8 @@
 #include <DescriptorPool.Vulkan.h>
 #include <GraphicsDevice.Vulkan.h>
 #include <ImageUploader.Vulkan.h>
+
+#include <IAssetManager.h>
 #include <MathInc.h>
 
 #ifndef kMaxFrameCount
@@ -28,7 +30,7 @@ class SkyboxRenderer {
 public:
     struct RecreateParameters {
         apemodevk::GraphicsDevice* pNode           = nullptr;        /* Required */
-        apemodevk::ShaderCompiler* pShaderCompiler = nullptr;        /* Required */
+        apemodeos::IAssetManager*  pAssetManager = nullptr;        /* Required */
         VkDescriptorPool           pDescPool       = VK_NULL_HANDLE; /* Required */
         VkRenderPass               pRenderPass     = VK_NULL_HANDLE; /* Required */
         uint32_t                   FrameCount      = 0;              /* Required */

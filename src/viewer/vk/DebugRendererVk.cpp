@@ -7,79 +7,48 @@ namespace apemode {
     using namespace apemodevk;
 }
 
-bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams ) {
+bool apemode::vk::DebugRenderer::RecreateResources( InitParametersVk* pParams ) {
     apemodevk_memory_allocation_scope;
 
-    if ( nullptr == pInitParams )
+    if ( nullptr == pParams )
         return false;
 
-    const char* vertexShader =
-        "#version 450\n"
-        "#extension GL_ARB_separate_shader_objects : enable\n"
-        "layout(std140, binding = 0) uniform FrameUniformBuffer {\n"
-        "    mat4 worldMatrix;\n"
-        "    mat4 viewMatrix;\n"
-        "    mat4 projectionMatrix;\n"
-        "    vec4 color;\n"
-        "} frameInfo;\n"
-        "layout (location = 0) in vec3 inPosition;\n"
-        "layout (location = 0) out vec4 outColor;\n"
-        "void main( ) {\n"
-        "outColor    = frameInfo.color;\n"
-        "gl_Position = frameInfo.projectionMatrix * frameInfo.viewMatrix * frameInfo.worldMatrix * vec4( inPosition, 1.0 );\n"
-        "}";
-
-    const char* fragmentShader =
-        "#version 450\n"
-        "#extension GL_ARB_separate_shader_objects : enable\n"
-        "layout (location = 0) in vec4 inColor;\n"
-        "layout (location = 0) out vec4 outColor;\n"
-        "void main() {\n"
-        "    outColor = inColor;\n"
-        "}\n";
-
-    apemodevk::GraphicsDevice* pNode = pInitParams->pNode;
-
-    auto compiledVertexShader =
-        pInitParams->pShaderCompiler->Compile( "embedded/debug.vert",
-                                               vertexShader,
-                                               nullptr,
-                                               apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader,
-                                               apemodevk::ShaderCompiler::eShaderOptimization_Performance );
-
-    if ( nullptr == compiledVertexShader ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
-    }
-
-    auto compiledFragmentShader =
-        pInitParams->pShaderCompiler->Compile( "embedded/debug.frag",
-                                               fragmentShader,
-                                               nullptr,
-                                               apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader,
-                                               apemodevk::ShaderCompiler::eShaderOptimization_Performance );
-
-    if ( nullptr == compiledFragmentShader ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
-    }
-
-    VkShaderModuleCreateInfo vertexShaderCreateInfo;
-    InitializeStruct( vertexShaderCreateInfo );
-    vertexShaderCreateInfo.pCode    = compiledVertexShader->GetDwordPtr( );
-    vertexShaderCreateInfo.codeSize = compiledVertexShader->GetByteCount( );
-
-    VkShaderModuleCreateInfo fragmentShaderCreateInfo;
-    InitializeStruct( fragmentShaderCreateInfo );
-    fragmentShaderCreateInfo.pCode    = compiledFragmentShader->GetDwordPtr( );
-    fragmentShaderCreateInfo.codeSize = compiledFragmentShader->GetByteCount( );
+    apemodevk::GraphicsDevice* pNode = pParams->pNode;
 
     THandle< VkShaderModule > hVertexShaderModule;
     THandle< VkShaderModule > hFragmentShaderModule;
-    if ( false == hVertexShaderModule.Recreate( pNode->hLogicalDevice, vertexShaderCreateInfo ) ||
-         false == hFragmentShaderModule.Recreate( pNode->hLogicalDevice, fragmentShaderCreateInfo ) ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
+    {
+        auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/Debug.vert.spv" );
+        auto compiledVertexShader = compiledVertexShaderAsset->GetContentAsBinaryBuffer( );
+        pParams->pAssetManager->Release( compiledVertexShaderAsset );
+        if ( compiledVertexShader.empty( ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/Debug.frag.spv" );
+        auto compiledFragmentShader = compiledFragmentShaderAsset->GetContentAsBinaryBuffer( );
+        pParams->pAssetManager->Release( compiledFragmentShaderAsset );
+        if ( compiledFragmentShader.empty() ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        VkShaderModuleCreateInfo vertexShaderCreateInfo;
+        InitializeStruct( vertexShaderCreateInfo );
+        vertexShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledVertexShader.data( ) );
+        vertexShaderCreateInfo.codeSize = compiledVertexShader.size( );
+
+        VkShaderModuleCreateInfo fragmentShaderCreateInfo;
+        InitializeStruct( fragmentShaderCreateInfo );
+        fragmentShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledFragmentShader.data( ) );
+        fragmentShaderCreateInfo.codeSize = compiledFragmentShader.size( );
+
+        if ( !hVertexShaderModule.Recreate( pNode->hLogicalDevice, vertexShaderCreateInfo ) ||
+             !hFragmentShaderModule.Recreate( pNode->hLogicalDevice, fragmentShaderCreateInfo ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
     }
 
     VkDescriptorSetLayoutBinding bindings[ 1 ];
@@ -105,7 +74,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
         descriptorSetLayout = hDescSetLayout;
     }
 
-    if ( false == DescSets.RecreateResourcesFor( pNode->hLogicalDevice, pInitParams->pDescPool, descriptorSetLayouts ) ) {
+    if ( false == DescSets.RecreateResourcesFor( pNode->hLogicalDevice, pParams->pDescPool, descriptorSetLayouts ) ) {
         apemodevk::platform::DebugBreak( );
         return false;
     }
@@ -154,7 +123,7 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     //
 
     graphicsPipelineCreateInfo.layout     = hPipelineLayout;
-    graphicsPipelineCreateInfo.renderPass = pInitParams->pRenderPass;
+    graphicsPipelineCreateInfo.renderPass = pParams->pRenderPass;
 
     //
 
@@ -335,19 +304,19 @@ bool apemode::DebugRendererVk::RecreateResources( InitParametersVk* pInitParams 
     VkPhysicalDeviceProperties adapterProps;
     vkGetPhysicalDeviceProperties( pNode->pPhysicalDevice, &adapterProps );
 
-    for (uint32_t i = 0; i < pInitParams->FrameCount; ++i) {
+    for (uint32_t i = 0; i < pParams->FrameCount; ++i) {
         BufferPools[ i ].Recreate( pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
-        DescSetPools[ i ].Recreate( pNode->hLogicalDevice, pInitParams->pDescPool, hDescSetLayout );
+        DescSetPools[ i ].Recreate( pNode->hLogicalDevice, pParams->pDescPool, hDescSetLayout );
     }
 
     return true;
 }
 
-void apemode::DebugRendererVk::Reset( uint32_t frameIndex ) {
+void apemode::vk::DebugRenderer::Reset( uint32_t frameIndex ) {
     BufferPools[ frameIndex ].Reset( );
 }
 
-bool apemode::DebugRendererVk::Render( RenderParametersVk* renderParams ) {
+bool apemode::vk::DebugRenderer::Render( RenderParametersVk* renderParams ) {
     apemodevk_memory_allocation_scope;
 
     auto frameIndex = ( renderParams->FrameIndex ) % kMaxFrameCount;
@@ -402,6 +371,6 @@ bool apemode::DebugRendererVk::Render( RenderParametersVk* renderParams ) {
     return true;
 }
 
-void apemode::DebugRendererVk::Flush( uint32_t frameIndex ) {
+void apemode::vk::DebugRenderer::Flush( uint32_t frameIndex ) {
     BufferPools[ frameIndex ].Flush( );
 }

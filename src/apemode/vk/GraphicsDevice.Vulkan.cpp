@@ -2,7 +2,6 @@
 
 #include <GraphicsDevice.Vulkan.h>
 #include <GraphicsManager.Vulkan.h>
-#include <ShaderCompiler.Vulkan.h>
 #include <NativeHandles.Vulkan.h>
 #include <TInfoStruct.Vulkan.h>
 

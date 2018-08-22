@@ -885,7 +885,8 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedResult( vkCreateGraphicsPipelines( InLogicalDeviceHandle, pCache, 1, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateGraphicsPipelines(
+                                     InLogicalDeviceHandle, pCache, 1, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
 
         bool Recreate( VkDevice InLogicalDeviceHandle, VkPipelineCache pCache, VkComputePipelineCreateInfo const &CreateInfo ) {
@@ -893,7 +894,8 @@ namespace apemodevk
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;
-            return VK_SUCCESS == CheckedResult( vkCreateComputePipelines( InLogicalDeviceHandle, pCache, 1, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
+            return VK_SUCCESS == CheckedResult( vkCreateComputePipelines(
+                                     InLogicalDeviceHandle, pCache, 1, &CreateInfo, GetAllocationCallbacks( ), &Handle ) );
         }
     };
 

@@ -247,138 +247,6 @@ message(STATUS "sdl2_binary_dir = ${sdl2_binary_dir}")
 
 #
 #
-# spirv_headers
-#
-#
-
-ExternalProject_Add(
-    spirv_headers
-    GIT_REPOSITORY "git@github.com:KhronosGroup/SPIRV-Headers.git"
-    GIT_TAG "master"
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Headers"
-    CMAKE_ARGS ${default_cmake_args}
-    TEST_COMMAND ""
-    INSTALL_COMMAND ""
-)
-
-ExternalProject_Get_Property(spirv_headers SOURCE_DIR)
-ExternalProject_Get_Property(spirv_headers BINARY_DIR)
-set(spirv_headers_source_dir ${SOURCE_DIR})
-set(spirv_headers_binary_dir ${BINARY_DIR})
-message(STATUS "spirv_headers_source_dir = ${spirv_headers_source_dir}")
-message(STATUS "spirv_headers_binary_dir = ${spirv_headers_binary_dir}")
-
-#
-#
-# glslang
-#
-#
-
-ExternalProject_Add(
-    glslang
-    GIT_REPOSITORY "git@github.com:KhronosGroup/glslang.git"
-    GIT_TAG "master"
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/glslang"
-    CMAKE_ARGS ${default_cmake_args}
-    TEST_COMMAND ""
-    INSTALL_COMMAND ""
-)
-
-ExternalProject_Get_Property(glslang SOURCE_DIR)
-ExternalProject_Get_Property(glslang BINARY_DIR)
-set(glslang_source_dir ${SOURCE_DIR})
-set(glslang_binary_dir ${BINARY_DIR})
-message(STATUS "glslang_source_dir = ${glslang_source_dir}")
-message(STATUS "glslang_binary_dir = ${glslang_binary_dir}")
-
-#
-#
-# spirv_tools
-#
-#
-
-ExternalProject_Add(
-    spirv_tools
-    DEPENDS spirv_headers glslang
-    GIT_REPOSITORY "git@github.com:KhronosGroup/SPIRV-Tools.git"
-    GIT_TAG "master"
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Tools"
-    CMAKE_ARGS ${default_cmake_args} -DSPIRV-Headers_SOURCE_DIR:PATH=${spirv_headers_source_dir}
-    TEST_COMMAND ""
-    INSTALL_COMMAND ""
-)
-
-ExternalProject_Get_Property(spirv_tools SOURCE_DIR)
-ExternalProject_Get_Property(spirv_tools BINARY_DIR)
-set(spirv_tools_source_dir ${SOURCE_DIR})
-set(spirv_tools_binary_dir ${BINARY_DIR})
-message(STATUS "spirv_tools_source_dir = ${spirv_tools_source_dir}")
-message(STATUS "spirv_tools_binary_dir = ${spirv_tools_binary_dir}")
-
-#
-#
-# spirv_cross
-#
-#
-
-ExternalProject_Add(
-    spirv_cross
-    DEPENDS spirv_headers glslang
-    GIT_REPOSITORY "git@github.com:KhronosGroup/SPIRV-Cross.git"
-    GIT_TAG "master"
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Cross"
-    CMAKE_ARGS ${default_cmake_args}
-    TEST_COMMAND ""
-    INSTALL_COMMAND ""
-)
-
-ExternalProject_Get_Property(spirv_cross SOURCE_DIR)
-ExternalProject_Get_Property(spirv_cross BINARY_DIR)
-set(spirv_cross_source_dir ${SOURCE_DIR})
-set(spirv_cross_binary_dir ${BINARY_DIR})
-message(STATUS "spirv_cross_source_dir = ${spirv_cross_source_dir}")
-message(STATUS "spirv_cross_binary_dir = ${spirv_cross_binary_dir}")
-
-#
-#
-# shaderc
-#
-#
-
-ExternalProject_Add(
-    shaderc
-    DEPENDS spirv_tools spirv_headers glslang
-    GIT_REPOSITORY "git@github.com:google/shaderc.git"
-    GIT_TAG "master"
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/shaderc"
-    CMAKE_ARGS ${default_cmake_args} -DSHADERC_ENABLE_SHARED_CRT:BOOL=TRUE # MD
-                                     -DSHADERC_SKIP_TESTS:BOOL=TRUE
-                                     -DSHADERC_SPIRV_TOOLS_DIR:PATH=${spirv_tools_source_dir}
-                                     -DSHADERC_SPIRV_HEADERS_DIR:PATH=${spirv_headers_source_dir}
-                                     -DSHADERC_GLSLANG_DIR:PATH=${glslang_source_dir}
-    TEST_COMMAND ""
-    INSTALL_COMMAND ""
-)
-
-ExternalProject_Get_Property(shaderc SOURCE_DIR)
-ExternalProject_Get_Property(shaderc BINARY_DIR)
-set(shaderc_source_dir ${SOURCE_DIR})
-set(shaderc_binary_dir ${BINARY_DIR})
-message(STATUS "shaderc_source_dir = ${shaderc_source_dir}")
-message(STATUS "shaderc_binary_dir = ${shaderc_binary_dir}")
-
-#
-#
 # TaskScheduler
 #
 #
@@ -462,7 +330,7 @@ set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG" )
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMT_INSTRUMENTED_BUILD")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DMT_INSTRUMENTED_BUILD")
 
-add_definitions("-DAPEMODE_NO_GLOBAL_NEW_DELETE_OP_OVERRIDES")
+# add_definitions("-DAPEMODE_NO_GLOBAL_NEW_DELETE_OP_OVERRIDES")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 
@@ -563,8 +431,6 @@ set(
 
 set(
     shared_vk_ext_source_files
-    # ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ShaderCompiler.Vulkan.h
-    # ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ShaderCompiler.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageUploader.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageUploader.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/SamplerManager.Vulkan.h
@@ -632,8 +498,8 @@ set(
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/SkyboxRendererVk.h
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/DebugRendererVk.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/DebugRendererVk.h
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk/NuklearSdlVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk/NuklearSdlVk.h
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/NuklearRendererVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/NuklearRendererVk.h
 )
 
 
@@ -675,8 +541,6 @@ add_dependencies(
     zlib
     flatbuffers
     nuklear
-    # spirv_cross
-    # shaderc
     DirectXMath
     FbxPipeline
     eastl
@@ -713,9 +577,6 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
     ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
     ${CMAKE_SOURCE_DIR}/dependencies/sdl2/include
-    # ${shaderc_source_dir}/libshaderc/include
-    # ${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Cross
-    # ${CMAKE_SOURCE_DIR}/dependencies/SPIRV-Cross/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
@@ -733,11 +594,6 @@ if (APPLE)
         third_party_libs
         $ENV{VK_SDK_PATH}/lib/libMoltenVK.dylib
         $ENV{VK_SDK_PATH}/lib/libvulkan.dylib
-        # ${shaderc_binary_dir}/libshaderc/libshaderc_combined.a
-        # ${spirv_cross_binary_dir}/libspirv-cross-core.a
-        # ${spirv_cross_binary_dir}/libspirv-cross-cpp.a
-        # ${spirv_cross_binary_dir}/libspirv-cross-glsl.a
-        # ${spirv_cross_binary_dir}/libspirv-cross-util.a
         ${flatbuffers_binary_dir}/libflatbuffers.a
         ${eastl_binary_dir}/libEASTL.a
         ${eastl_binary_dir}/test/packages/EAStdC/libEAStdC.a
@@ -771,11 +627,6 @@ elseif (UNIX)
         pthread
         stdc++fs
         ${sdl2_binary_dir}/libSDL2.a
-        # ${shaderc_binary_dir}/libshaderc/libshaderc_combined.a
-        # ${spirv_cross_binary_dir}/libspirv-cross-core.a
-        # ${spirv_cross_binary_dir}/libspirv-cross-cpp.a
-        # ${spirv_cross_binary_dir}/libspirv-cross-glsl.a
-        # ${spirv_cross_binary_dir}/libspirv-cross-util.a
         ${flatbuffers_binary_dir}/libflatbuffers.a
         ${eastl_binary_dir}/libEASTL.a
         ${eastl_binary_dir}/test/packages/EAStdC/libEAStdC.a
@@ -797,32 +648,9 @@ elseif(WIN32)
         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/EASTL.lib
         ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/flatbuffers.lib
         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/EAStdC.lib
-        # ${shaderc_binary_dir}/libshaderc${CONFIGURATION_SUFFIX}/shaderc_combined.lib
-        # ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-core.lib
-        # ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-util.lib
-        # ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-cpp.lib
-        # ${spirv_cross_binary_dir}${CONFIGURATION_SUFFIX}/spirv-cross-glsl.lib
         ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/TaskScheduler.lib
     )
 endif()
-
-make_directory(${CMAKE_BINARY_DIR})
-make_directory(${CMAKE_BINARY_DIR}/shaders)
-make_directory(${CMAKE_BINARY_DIR}/Debug/shaders)
-make_directory(${CMAKE_BINARY_DIR}/Release/shaders)
-
-foreach( Viewer_shader_source_file ${Viewer_shader_source_files} )
-    if(EXISTS ${Viewer_shader_source_file})
-        add_custom_command(
-            TARGET
-            Viewer
-            POST_BUILD
-            COMMAND ${CMAKE_COMMAND} -E copy
-            ${Viewer_shader_source_file}
-            ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/shaders/
-        )
-    endif()
-endforeach()
 
 if(WIN32)
     set( viewer_dependencies_dlls_pdbs
@@ -906,10 +734,10 @@ foreach(shader_file ${shader_files})
     set( shader_file_reflection "${spirv_directory}/${shader_file_name}.reflection" )
     set( shader_file_spv "${spirv_directory}/${shader_file_name}.spv" )
 
-    message(STATUS " ... ")
-    message(STATUS "${shader_file} > ${shader_file_name_ext} > ${shader_file_spv}")
-    message(STATUS "${shader_file} + ${shader_file_preprocessed}")
-    message(STATUS "${shader_file} + ${shader_file_reflection}")
+    # message(STATUS " ... ")
+    # message(STATUS "${shader_file} > ${shader_file_name_ext} > ${shader_file_spv}")
+    # message(STATUS "${shader_file} + ${shader_file_preprocessed}")
+    # message(STATUS "${shader_file} + ${shader_file_reflection}")
 
     add_custom_command(
         TARGET Viewer PRE_BUILD

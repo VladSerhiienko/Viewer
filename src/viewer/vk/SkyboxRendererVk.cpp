@@ -1,10 +1,8 @@
 
-
 #include <SkyboxRendererVk.h>
 
 #include <BufferPools.Vulkan.h>
 #include <QueuePools.Vulkan.h>
-#include <ShaderCompiler.Vulkan.h>
 
 #include <AppState.h>
 #include <ArrayUtils.h>
@@ -33,45 +31,42 @@ bool apemode::vk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
         return false;
     }
 
-    apemodevk::ShaderCompilerIncludedFileSet includedFiles;
-
-    auto compiledVertexShader = pParams->pShaderCompiler->Compile( "shaders/Skyboxv2.vert",
-                                                                   nullptr,
-                                                                   apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader,
-                                                                   apemodevk::ShaderCompiler::eShaderOptimization_Performance,
-                                                                   &includedFiles );
-
-    if ( nullptr == compiledVertexShader ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
-    }
-
-    auto compiledFragmentShader = pParams->pShaderCompiler->Compile( "shaders/Skybox.frag",
-                                                                     nullptr,
-                                                                     apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader,
-                                                                     apemodevk::ShaderCompiler::eShaderOptimization_Performance,
-                                                                     &includedFiles );
-
-    if ( nullptr == compiledFragmentShader ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
-    }
-
-    VkShaderModuleCreateInfo vertexShaderCreateInfo;
-    apemodevk::InitializeStruct( vertexShaderCreateInfo );
-    vertexShaderCreateInfo.pCode    = compiledVertexShader->GetDwordPtr( );
-    vertexShaderCreateInfo.codeSize = compiledVertexShader->GetByteCount( );
-
-    VkShaderModuleCreateInfo fragmentShaderCreateInfo;
-    apemodevk::InitializeStruct( fragmentShaderCreateInfo );
-    fragmentShaderCreateInfo.pCode    = compiledFragmentShader->GetDwordPtr( );
-    fragmentShaderCreateInfo.codeSize = compiledFragmentShader->GetByteCount( );
+    pNode = pParams->pNode;
 
     THandle< VkShaderModule > hVertexShaderModule;
     THandle< VkShaderModule > hFragmentShaderModule;
-    if ( false == hVertexShaderModule.Recreate( *pParams->pNode, vertexShaderCreateInfo ) ||
-         false == hFragmentShaderModule.Recreate( *pParams->pNode, fragmentShaderCreateInfo ) ) {
-        return false;
+    {
+        auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/Skybox.vert.spv" );
+        auto compiledVertexShader = compiledVertexShaderAsset->GetContentAsBinaryBuffer( );
+        pParams->pAssetManager->Release( compiledVertexShaderAsset );
+        if ( compiledVertexShader.empty( ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/Skybox.frag.spv" );
+        auto compiledFragmentShader = compiledFragmentShaderAsset->GetContentAsBinaryBuffer( );
+        pParams->pAssetManager->Release( compiledFragmentShaderAsset );
+        if ( compiledFragmentShader.empty() ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        VkShaderModuleCreateInfo vertexShaderCreateInfo;
+        InitializeStruct( vertexShaderCreateInfo );
+        vertexShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledVertexShader.data( ) );
+        vertexShaderCreateInfo.codeSize = compiledVertexShader.size( );
+
+        VkShaderModuleCreateInfo fragmentShaderCreateInfo;
+        InitializeStruct( fragmentShaderCreateInfo );
+        fragmentShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledFragmentShader.data( ) );
+        fragmentShaderCreateInfo.codeSize = compiledFragmentShader.size( );
+
+        if ( !hVertexShaderModule.Recreate( pNode->hLogicalDevice, vertexShaderCreateInfo ) ||
+             !hFragmentShaderModule.Recreate( pNode->hLogicalDevice, fragmentShaderCreateInfo ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
     }
 
     VkDescriptorSetLayoutBinding bindings[ 2 ];

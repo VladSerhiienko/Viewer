@@ -1,4 +1,4 @@
-#include <NuklearSdlVk.h>
+#include <NuklearRendererVk.h>
 #include <ArrayUtils.h>
 #include <AppState.h>
 
@@ -6,15 +6,15 @@ namespace apemode {
     using namespace apemodevk;
 }
 
-apemode::NuklearRendererSdlVk::~NuklearRendererSdlVk( ) {
-    apemode::LogInfo( "NuklearRendererSdlVk: Destroying." );
+apemode::vk::NuklearRenderer::~NuklearRenderer( ) {
+    apemode::LogInfo( "NuklearRenderer: Destroying." );
     Shutdown( );
 }
 
-void apemode::NuklearRendererSdlVk::DeviceDestroy( ) {
+void apemode::vk::NuklearRenderer::DeviceDestroy( ) {
     apemode_memory_allocation_scope;
 
-    apemode::LogInfo( "NuklearRendererSdlVk: Destroying device resources." );
+    apemode::LogInfo( "NuklearRenderer: Destroying device resources." );
 
     hUploadBuffer.Destroy( );
     for ( auto& h : hVertexBuffer )
@@ -35,7 +35,7 @@ void apemode::NuklearRendererSdlVk::DeviceDestroy( ) {
     NuklearRendererSdlBase::DeviceDestroy( );
 }
 
-bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsBase ) {
+bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBase ) {
     apemode_memory_allocation_scope;
 
     auto pRenderParams = (RenderParametersVk*) pRenderParamsBase;
@@ -185,61 +185,11 @@ bool apemode::NuklearRendererSdlVk::Render( RenderParametersBase* pRenderParamsB
     return true;
 }
 
-bool apemode::NuklearRendererSdlVk::DeviceCreate( InitParametersBase* pInitParamsBase ) {
+bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParamsBase ) {
     apemode_memory_allocation_scope;
-
-    const char* vertex_shader =
-        "#version 450\n"
-        "#extension GL_ARB_separate_shader_objects : enable\n"
-        "layout(push_constant) uniform PushConstants { vec4 offsetScale; } pushConstants;\n"
-        //"layout(push_constant) uniform PushConstants { mat4 modelViewProjection; } pushConstants;\n"
-        "layout(location=0) in vec2 inPosition;\n"
-        "layout(location=1) in vec2 inTexcoords;\n"
-        "layout(location=2) in vec4 inColor;\n"
-        "layout(location=0) out vec2 outTexcoords;\n"
-        "layout(location=1) out vec4 outColor;\n"
-        "void main() {\n"
-        "   outTexcoords = inTexcoords;\n"
-        "   outColor = inColor;\n"
-        "   gl_Position = vec4(inPosition.xy * pushConstants.offsetScale.zw + pushConstants.offsetScale.xy, 0, 1);\n"
-        //"   gl_Position = pushConstants.modelViewProjection * vec4(inPosition.xy, 0, 1);\n"
-        "}\n";
-
-    const char* fragment_shader =
-        "#version 450\n"
-        "#extension GL_ARB_separate_shader_objects : enable\n"
-        "layout(set=0, binding=0) uniform sampler2D samplerFont;\n"
-        "layout(location=0) in vec2 inTexcoords;\n"
-        "layout(location=1) in vec4 inColor;\n"
-        "layout(location=0) out vec4 outColor;\n"
-        "void main(){\n"
-        "   outColor = inColor * texture(samplerFont, inTexcoords.st);\n"
-        "}\n";
 
     auto pParams = (InitParametersVk*) pInitParamsBase;
     if ( nullptr == pParams ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
-    }
-
-    auto compiledVertexShader = pParams->pShaderCompiler->Compile( "embedded/nuklear.vert",
-                                                                   vertex_shader,
-                                                                   nullptr,
-                                                                   apemodevk::ShaderCompiler::eShaderType_GLSL_VertexShader,
-                                                                   apemodevk::ShaderCompiler::eShaderOptimization_Performance );
-
-    if ( nullptr == compiledVertexShader ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
-    }
-
-    auto compiledFragmentShader = pParams->pShaderCompiler->Compile( "embedded/nuklear.frag",
-                                                                     fragment_shader,
-                                                                     nullptr,
-                                                                     apemodevk::ShaderCompiler::eShaderType_GLSL_FragmentShader,
-                                                                     apemodevk::ShaderCompiler::eShaderOptimization_Performance );
-
-    if ( nullptr == compiledFragmentShader ) {
         apemodevk::platform::DebugBreak( );
         return false;
     }
@@ -248,22 +198,40 @@ bool apemode::NuklearRendererSdlVk::DeviceCreate( InitParametersBase* pInitParam
     pDescPool   = pParams->pDescPool;
     pRenderPass = pParams->pRenderPass;
 
-    VkShaderModuleCreateInfo vertexShaderCreateInfo;
-    InitializeStruct( vertexShaderCreateInfo );
-    vertexShaderCreateInfo.pCode    = compiledVertexShader->GetDwordPtr( );
-    vertexShaderCreateInfo.codeSize = compiledVertexShader->GetByteCount( );
-
-    VkShaderModuleCreateInfo fragmentShaderCreateInfo;
-    InitializeStruct( fragmentShaderCreateInfo );
-    fragmentShaderCreateInfo.pCode    = compiledFragmentShader->GetDwordPtr( );
-    fragmentShaderCreateInfo.codeSize = compiledFragmentShader->GetByteCount( );
-
     THandle< VkShaderModule > hVertexShaderModule;
     THandle< VkShaderModule > hFragmentShaderModule;
-    if ( false == hVertexShaderModule.Recreate( pNode->hLogicalDevice, vertexShaderCreateInfo ) ||
-         false == hFragmentShaderModule.Recreate( pNode->hLogicalDevice, fragmentShaderCreateInfo ) ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
+    {
+        auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/NuklearUI.vert.spv" );
+        auto compiledVertexShader = compiledVertexShaderAsset->GetContentAsBinaryBuffer( );
+        pParams->pAssetManager->Release( compiledVertexShaderAsset );
+        if ( compiledVertexShader.empty( ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/NuklearUI.frag.spv" );
+        auto compiledFragmentShader = compiledFragmentShaderAsset->GetContentAsBinaryBuffer( );
+        pParams->pAssetManager->Release( compiledFragmentShaderAsset );
+        if ( compiledFragmentShader.empty() ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        VkShaderModuleCreateInfo vertexShaderCreateInfo;
+        InitializeStruct( vertexShaderCreateInfo );
+        vertexShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledVertexShader.data( ) );
+        vertexShaderCreateInfo.codeSize = compiledVertexShader.size( );
+
+        VkShaderModuleCreateInfo fragmentShaderCreateInfo;
+        InitializeStruct( fragmentShaderCreateInfo );
+        fragmentShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledFragmentShader.data( ) );
+        fragmentShaderCreateInfo.codeSize = compiledFragmentShader.size( );
+
+        if ( !hVertexShaderModule.Recreate( pNode->hLogicalDevice, vertexShaderCreateInfo ) ||
+             !hFragmentShaderModule.Recreate( pNode->hLogicalDevice, fragmentShaderCreateInfo ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
     }
 
     if ( pNode->hLogicalDevice.IsNotNull( ) && false == hFontSampler.IsNotNull( ) ) {
@@ -283,6 +251,7 @@ bool apemode::NuklearRendererSdlVk::DeviceCreate( InitParametersBase* pInitParam
             return false;
         }
     }
+
     if ( pNode->hLogicalDevice.IsNotNull( ) && false == hDescSetLayout.IsNotNull( ) ) {
         VkDescriptorSetLayoutBinding bindings[ 1 ];
         InitializeStruct( bindings );
@@ -443,10 +412,10 @@ bool apemode::NuklearRendererSdlVk::DeviceCreate( InitParametersBase* pInitParam
     return true;
 }
 
-void* apemode::NuklearRendererSdlVk::DeviceUploadAtlas( InitParametersBase* init_params,
-                                                        const void*         image,
-                                                        uint32_t            width,
-                                                        uint32_t            height ) {
+void* apemode::vk::NuklearRenderer::DeviceUploadAtlas( InitParametersBase* init_params,
+                                                            const void*         image,
+                                                            uint32_t            width,
+                                                            uint32_t            height ) {
 
     InitParametersVk* pParams   = reinterpret_cast< InitParametersVk* >( init_params );
     const uint8_t*    fontImgPixels = reinterpret_cast< const uint8_t* >( image );

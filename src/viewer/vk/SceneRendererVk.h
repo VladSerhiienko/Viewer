@@ -8,6 +8,7 @@
 #include <SceneRendererBase.h>
 #include <SceneUploaderVk.h>
 
+#include <IAssetManager.h>
 #include <MathInc.h>
 
 namespace apemode {
@@ -21,11 +22,11 @@ public:
     virtual ~SceneRenderer( ) = default;
 
     struct RecreateParameters : RecreateParametersBase {
-        apemodevk::GraphicsDevice* pNode           = nullptr;        /* Required */
-        apemodevk::ShaderCompiler* pShaderCompiler = nullptr;        /* Required */
-        VkDescriptorPool           pDescPool       = VK_NULL_HANDLE; /* Required */
-        VkRenderPass               pRenderPass     = VK_NULL_HANDLE; /* Required */
-        uint32_t                   FrameCount      = 0;              /* Required */
+        apemodevk::GraphicsDevice* pNode         = nullptr;        /* Required */
+        apemodeos::IAssetManager*  pAssetManager = nullptr;        /* Required */
+        VkDescriptorPool           pDescPool     = VK_NULL_HANDLE; /* Required */
+        VkRenderPass               pRenderPass   = VK_NULL_HANDLE; /* Required */
+        uint32_t                   FrameCount    = 0;              /* Required */
     };
 
     bool Recreate( const RecreateParametersBase* pParams ) override;

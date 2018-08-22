@@ -4,7 +4,6 @@
 
 #include <QueuePools.Vulkan.h>
 #include <BufferPools.Vulkan.h>
-#include <ShaderCompiler.Vulkan.h>
 #include <ImageUploader.Vulkan.h>
 #include <Buffer.Vulkan.h>
 #include <ImageUploader.Vulkan.h>

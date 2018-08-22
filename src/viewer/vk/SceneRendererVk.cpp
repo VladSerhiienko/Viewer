@@ -6,7 +6,6 @@
 #include <BufferPools.Vulkan.h>
 #include <ImageUploader.Vulkan.h>
 #include <QueuePools.Vulkan.h>
-#include <ShaderCompiler.Vulkan.h>
 #include <TOneTimeCmdBufferSubmit.Vulkan.h>
 
 #include <AppState.h>
@@ -349,46 +348,40 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
 
     pNode = pParams->pNode;
 
-    ShaderCompilerIncludedFileSet includedFiles;
-
-    auto compiledVertexShader = pParams->pShaderCompiler->Compile( "shaders/Scene.vert",
-                                                                   nullptr,
-                                                                   ShaderCompiler::eShaderType_GLSL_VertexShader,
-                                                                   apemodevk::ShaderCompiler::eShaderOptimization_Performance,
-                                                                   &includedFiles );
-
-    if ( nullptr == compiledVertexShader ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
-    }
-
-    auto compiledFragmentShader = pParams->pShaderCompiler->Compile( "shaders/Scene.frag",
-                                                                     nullptr,
-                                                                     ShaderCompiler::eShaderType_GLSL_FragmentShader,
-                                                                     apemodevk::ShaderCompiler::eShaderOptimization_Performance,
-                                                                     &includedFiles );
-
-    if ( nullptr == compiledFragmentShader ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
-    }
-
-    VkShaderModuleCreateInfo vertexShaderCreateInfo;
-    InitializeStruct( vertexShaderCreateInfo );
-    vertexShaderCreateInfo.pCode    = compiledVertexShader->GetDwordPtr( );
-    vertexShaderCreateInfo.codeSize = compiledVertexShader->GetByteCount( );
-
-    VkShaderModuleCreateInfo fragmentShaderCreateInfo;
-    InitializeStruct( fragmentShaderCreateInfo );
-    fragmentShaderCreateInfo.pCode    = compiledFragmentShader->GetDwordPtr( );
-    fragmentShaderCreateInfo.codeSize = compiledFragmentShader->GetByteCount( );
-
     THandle< VkShaderModule > hVertexShaderModule;
     THandle< VkShaderModule > hFragmentShaderModule;
-    if ( false == hVertexShaderModule.Recreate( *pNode, vertexShaderCreateInfo ) ||
-         false == hFragmentShaderModule.Recreate( *pNode, fragmentShaderCreateInfo ) ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
+    {
+        auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/Scene.vert.spv" );
+        auto compiledVertexShader = compiledVertexShaderAsset->GetContentAsBinaryBuffer( );
+        pParams->pAssetManager->Release( compiledVertexShaderAsset );
+        if ( compiledVertexShader.empty( ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/Scene.frag.spv" );
+        auto compiledFragmentShader = compiledFragmentShaderAsset->GetContentAsBinaryBuffer( );
+        pParams->pAssetManager->Release( compiledFragmentShaderAsset );
+        if ( compiledFragmentShader.empty() ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        VkShaderModuleCreateInfo vertexShaderCreateInfo;
+        InitializeStruct( vertexShaderCreateInfo );
+        vertexShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledVertexShader.data( ) );
+        vertexShaderCreateInfo.codeSize = compiledVertexShader.size( );
+
+        VkShaderModuleCreateInfo fragmentShaderCreateInfo;
+        InitializeStruct( fragmentShaderCreateInfo );
+        fragmentShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledFragmentShader.data( ) );
+        fragmentShaderCreateInfo.codeSize = compiledFragmentShader.size( );
+
+        if ( !hVertexShaderModule.Recreate( pNode->hLogicalDevice, vertexShaderCreateInfo ) ||
+             !hFragmentShaderModule.Recreate( pNode->hLogicalDevice, fragmentShaderCreateInfo ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
     }
 
     //

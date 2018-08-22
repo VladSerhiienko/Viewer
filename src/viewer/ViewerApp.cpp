@@ -14,74 +14,6 @@ namespace apemode {
     }
 }
 
-struct EFeedbackTypeWithOStream {
-    apemodevk::ShaderCompiler::IShaderFeedbackWriter::EFeedbackType e;
-
-    EFeedbackTypeWithOStream( apemodevk::ShaderCompiler::IShaderFeedbackWriter::EFeedbackType e ) : e( e ) {
-    }
-
-    // clang-format off
-    template < typename OStream >
-    friend OStream& operator<<( OStream& os, const EFeedbackTypeWithOStream& feedbackType ) {
-        switch ( feedbackType.e ) {
-        case apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Assembly:                 return os << "Assembly";
-        case apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed:             return os << "Preprocessed";
-        case apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_PreprocessedOptimized:    return os << "PreprocessedOptimized";
-        case apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Spv:                      return os << "Spv";
-        case apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_CompilationError:        return os << "CompilationError";
-        case apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_InternalError:           return os << "InternalError";
-        case apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_InvalidAssembly:         return os << "InvalidAssembly";
-        case apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_InvalidStage:            return os << "InvalidStage";
-        case apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_NullResultObject:        return os << "NullResultObject";
-        case apemodevk::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success:                 return os << "Success";
-        default:                                                                                                        return os;
-        }
-    }
-    // clang-format on
-};
-
-bool ShaderFileReader::ReadShaderTxtFile( const std::string& InFilePath,
-                                          std::string&       OutFileFullPath,
-                                          std::string&       OutFileContent ) {
-    apemode_memory_allocation_scope;
-    if ( auto pAsset = mAssetManager->Acquire( InFilePath.c_str( ) ) ) {
-        const auto assetText = pAsset->GetContentAsTextBuffer( );
-        OutFileContent = reinterpret_cast< const char* >( assetText.data() );
-        OutFileFullPath = pAsset->GetId( );
-        mAssetManager->Release( pAsset );
-        return true;
-    }
-
-    apemodevk::platform::DebugBreak( );
-    return false;
-}
-
-void ShaderFeedbackWriter::WriteFeedback( EFeedbackType                                     eType,
-                                          const std::string&                                FullFilePath,
-                                          const ShaderCompiler::IMacroDefinitionCollection* pMacros,
-                                          const void*                                       pContent,
-                                          const void*                                       pContentEnd ) {
-    apemode_memory_allocation_scope;
-
-    const auto feedbackStage            = eType & eFeedbackType_CompilationStageMask;
-    const auto feedbackCompilationError = eType & eFeedbackType_CompilationStatusMask;
-
-    if ( eFeedbackType_CompilationStatus_Success != feedbackCompilationError ) {
-        LogError( "ShaderCompiler: {} / {} / {}",
-                  EFeedbackTypeWithOStream( feedbackStage ),
-                  EFeedbackTypeWithOStream( feedbackCompilationError ),
-                  FullFilePath );
-        LogError( "           Msg: {}", (const char*) pContent );
-        apemode::platform::DebugBreak( );
-    } else {
-        LogInfo( "ShaderCompiler: {} / {} / {}",
-                 EFeedbackTypeWithOStream( feedbackStage ),
-                 EFeedbackTypeWithOStream( feedbackCompilationError ),
-                 FullFilePath );
-        // TODO: Store compiled shader to file system
-    }
-}
-
 const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 //const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
@@ -106,24 +38,9 @@ bool ViewerApp::Initialize(  ) {
     LogInfo( "ViewerApp: Initializing." );
 
     if ( AppBase::Initialize( ) ) {
-        std::string assetsFolder = TGetOption< std::string >( "--assets", "./" );
+        apemode::string8 assetsFolder( TGetOption< std::string >( "--assets", "./" ).c_str( ) );
+        // apemode::string8 interestingFilePattern = ".*\\.(vert|frag|comp|geom|tesc|tese|h|inl|inc|fx)$";
         mAssetManager.UpdateAssets( assetsFolder.c_str( ), nullptr, 0 );
-
-        // Shaders and possible headers ...
-        std::string interestingFilePattern = ".*\\.(vert|frag|comp|geom|tesc|tese|h|inl|inc|fx)$";
-
-        pShaderFileReader = apemode::make_unique< apemode::ShaderFileReader >( );
-        pShaderFeedbackWriter = apemode::make_unique< apemode::ShaderFeedbackWriter >( );
-        pShaderFileReader->mAssetManager = &mAssetManager;
-
-        {   // https://github.com/google/shaderc/issues/356
-            // https://github.com/google/shaderc/issues?utf8=%E2%9C%93&q=leak
-            apemode_named_memory_allocation_scope( leakingShaderCompiler );
-            pShaderCompiler = apemode::make_unique< apemodevk::ShaderCompiler >( );
-        }
-
-        pShaderCompiler->SetShaderFileReader( pShaderFileReader.get( ) );
-        pShaderCompiler->SetShaderFeedbackWriter( pShaderFeedbackWriter.get( ) );
 
         TotalSecs = 0.0f;
 
@@ -265,7 +182,7 @@ bool ViewerApp::Initialize(  ) {
             pIrradianceCubeMapSampler = pSamplerManager->GetSampler( samplerCreateInfo );
         }
 
-        pNkRenderer = apemode::unique_ptr< NuklearRendererSdlBase >( apemode_new NuklearRendererSdlVk( ) );
+        pNkRenderer = apemode::unique_ptr< NuklearRendererSdlBase >( apemode_new vk::NuklearRenderer( ) );
 
         auto queueFamilyPool = pAppSurface->Node.GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
         apemodevk::AcquiredQueue acquiredQueue;
@@ -276,9 +193,9 @@ bool ViewerApp::Initialize(  ) {
 
         auto pFontAsset = mAssetManager.Acquire( "fonts/iosevka-ss07-medium.ttf" );
 
-        NuklearRendererSdlVk::InitParametersVk initParamsNk;
+        vk::NuklearRenderer::InitParametersVk initParamsNk;
         initParamsNk.pNode           = &pAppSurface->Node;
-        initParamsNk.pShaderCompiler = pShaderCompiler.get( );
+        initParamsNk.pAssetManager   = &mAssetManager;
         initParamsNk.pFontAsset      = pFontAsset;
         initParamsNk.pDescPool       = DescriptorPool;
         initParamsNk.pQueue          = acquiredQueue.pQueue;
@@ -291,21 +208,21 @@ bool ViewerApp::Initialize(  ) {
 
         queueFamilyPool->Release( acquiredQueue );
 
-        DebugRendererVk::InitParametersVk initParamsDbg;
+        vk::DebugRenderer::InitParametersVk initParamsDbg;
         initParamsDbg.pNode           = &pAppSurface->Node;
-        initParamsDbg.pShaderCompiler = pShaderCompiler.get( );
+        initParamsDbg.pAssetManager   = &mAssetManager;
         initParamsDbg.pRenderPass     = hDbgRenderPass;
         initParamsDbg.pDescPool       = DescriptorPool;
         initParamsDbg.FrameCount      = FrameCount;
 
-        pDebugRenderer = apemode::unique_ptr< DebugRendererVk >( apemode_new DebugRendererVk() );
+        pDebugRenderer = apemode::unique_ptr< vk::DebugRenderer >( apemode_new vk::DebugRenderer() );
         pDebugRenderer->RecreateResources( &initParamsDbg );
 
         pSceneRendererBase = apemode::unique_ptr< apemode::SceneRendererBase >( pAppSurface->CreateSceneRenderer( ) );
 
         vk::SceneRenderer::RecreateParameters recreateParams;
         recreateParams.pNode           = &pAppSurface->Node;
-        recreateParams.pShaderCompiler = pShaderCompiler.get( );
+        recreateParams.pAssetManager   = &mAssetManager;
         recreateParams.pRenderPass     = hDbgRenderPass;
         recreateParams.pDescPool       = DescriptorPool;
         recreateParams.FrameCount      = FrameCount;
@@ -358,7 +275,7 @@ bool ViewerApp::Initialize(  ) {
 
         vk::SkyboxRenderer::RecreateParameters skyboxRendererRecreateParams;
         skyboxRendererRecreateParams.pNode           = &pAppSurface->Node;
-        skyboxRendererRecreateParams.pShaderCompiler = pShaderCompiler.get();
+        skyboxRendererRecreateParams.pAssetManager   = &mAssetManager;
         skyboxRendererRecreateParams.pRenderPass     = hDbgRenderPass;
         skyboxRendererRecreateParams.pDescPool       = DescriptorPool;
         skyboxRendererRecreateParams.FrameCount      = FrameCount;
@@ -697,7 +614,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         auto projBiasMatrix = CamProjController.ProjBiasMatrix( );
         auto invProjMatrix  = XMMatrixInverse( nullptr, projMatrix );
 
-        DebugRendererVk::SkyboxUBO frameData;
+        vk::DebugRenderer::SkyboxUBO frameData;
         XMStoreFloat4x4( &frameData.ProjMatrix, projMatrix );
         XMStoreFloat4x4( &frameData.ViewMatrix, viewMatrix );
         frameData.Color = {1, 0, 0, 1};
@@ -721,7 +638,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 
         pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
 
-        DebugRendererVk::RenderParametersVk renderParamsDbg;
+        vk::DebugRenderer::RenderParametersVk renderParamsDbg;
         renderParamsDbg.Dims[ 0 ]  = float( width );
         renderParamsDbg.Dims[ 1 ]  = float( height );
         renderParamsDbg.Scale[ 0 ] = 1;
@@ -777,7 +694,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         XMStoreFloat4x4( &sceneRenderParameters.RootMatrix, rootMatrix );
         pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
 
-        NuklearRendererSdlVk::RenderParametersVk renderParamsNk;
+        vk::NuklearRenderer::RenderParametersVk renderParamsNk;
         renderParamsNk.Dims[ 0 ]            = float( width );
         renderParamsNk.Dims[ 1 ]            = float( height );
         renderParamsNk.Scale[ 0 ]           = 1;
