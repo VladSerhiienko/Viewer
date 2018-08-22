@@ -587,6 +587,12 @@ VkResult apemodevk::WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t tim
 apemodevk::CommandBufferInPool::CommandBufferInPool( ) : pFence( VK_NULL_HANDLE ), bInUse( false ) {
 }
 
+apemodevk::CommandBufferInPool::~CommandBufferInPool( ) {
+    if ( hCmdBuff ) {
+        platform::LogFmt( platform::LogLevel::Info, "Destroying command buffer." );
+    }
+}
+
 apemodevk::CommandBufferInPool::CommandBufferInPool( CommandBufferInPool&& o )
     : hCmdBuff( eastl::move( o.hCmdBuff ) )
     , hCmdPool( eastl::move( o.hCmdPool ) )

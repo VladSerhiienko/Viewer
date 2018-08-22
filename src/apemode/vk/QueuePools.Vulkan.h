@@ -59,6 +59,7 @@ namespace apemodevk {
         CommandBufferInPool( );
         CommandBufferInPool( CommandBufferInPool&& o );
         CommandBufferInPool& operator=( CommandBufferInPool&& o );
+        ~CommandBufferInPool();
     };
 
     class CommandBufferFamilyPool : public QueueFamilyBased {
