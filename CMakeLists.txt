@@ -15,6 +15,8 @@ string(TOLOWER  ${BUILD_FOLDER_SUFFIX} BUILD_FOLDER_SUFFIX)
 message(STATUS "BUILD_FOLDER_SUFFIX = ${BUILD_FOLDER_SUFFIX}")
 
 if (WIN32)
+
+
     set(
         default_cmake_args
         -G
@@ -690,6 +692,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PREDEFINED_TARGETS_FOLDER "CustomTargets")
 
 # Shaders
+set( glslangValidatorAbsolute "$ENV{VK_SDK_PATH}/bin/glslangValidator")
 
 # Output directory for the shaders
 set(
@@ -741,8 +744,8 @@ foreach(shader_file ${shader_files})
 
     add_custom_command(
         TARGET Viewer PRE_BUILD
-        COMMAND glslangValidator -S ${shader_file_name_ext} -E ${shader_file} > ${shader_file_preprocessed}
-        COMMAND glslangValidator -S ${shader_file_name_ext} -V -q ${shader_file} -o ${shader_file_spv} > ${shader_file_reflection}
+        COMMAND ${glslangValidatorAbsolute} -S ${shader_file_name_ext} -E ${shader_file} > ${shader_file_preprocessed}
+        COMMAND ${glslangValidatorAbsolute} -S ${shader_file_name_ext} -V -q ${shader_file} -o ${shader_file_spv} > ${shader_file_reflection}
     )
 
 endforeach()
