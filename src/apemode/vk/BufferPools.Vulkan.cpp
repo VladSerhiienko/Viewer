@@ -75,8 +75,8 @@ bool apemodevk::HostBufferPool::Page::Reset( ) {
         CurrentOffsetIndex = 0;
 
         /* If it failed to map buffer upon the creation, try to map it here. Return false if failed. */
-        if ( hBuffer.Handle.allocInfo.pMappedData ) {
-            pMapped = reinterpret_cast< uint8_t * >( hBuffer.Handle.allocInfo.pMappedData );
+        if ( hBuffer.Handle.AllocationInfo.pMappedData ) {
+            pMapped = reinterpret_cast< uint8_t * >( hBuffer.Handle.AllocationInfo.pMappedData );
         } else if ( VK_SUCCESS != CheckedResult( vmaMapMemory( pNode->hAllocator, hBuffer.Handle.pAllocation, (void **) ( &pMapped ) ) ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
@@ -117,7 +117,7 @@ bool apemodevk::HostBufferPool::Page::Flush( ) {
 #endif
         }
 
-        if ( nullptr == hBuffer.Handle.allocInfo.pMappedData ) {
+        if ( nullptr == hBuffer.Handle.AllocationInfo.pMappedData ) {
             vmaUnmapMemory( pNode->hAllocator, hBuffer.Handle.pAllocation );
         }
 
@@ -235,7 +235,7 @@ uint32_t apemodevk::HostBufferPool::Page::Push( const void *pDataStructure, uint
         InitializeStruct( range );
         range.offset = currentMappedOffset;
         range.size   = ByteSize;
-        range.memory = hBuffer.Handle.allocInfo.deviceMemory;
+        range.memory = hBuffer.Handle.AllocationInfo.deviceMemory;
 #endif
     }
 

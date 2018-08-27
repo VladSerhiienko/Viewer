@@ -7,7 +7,7 @@ namespace apemode {
     using namespace apemodevk;
 }
 
-bool apemode::vk::DebugRenderer::RecreateResources( InitParametersVk* pParams ) {
+bool apemode::vk::DebugRenderer::RecreateResources( InitParameters* pParams ) {
     apemodevk_memory_allocation_scope;
 
     if ( nullptr == pParams )
@@ -291,7 +291,7 @@ bool apemode::vk::DebugRenderer::RecreateResources( InitParametersVk* pParams ) 
             return false;
         }
 
-        if ( auto mappedData = hVertexBuffer.Handle.allocInfo.pMappedData ) {
+        if ( auto mappedData = hVertexBuffer.Handle.AllocationInfo.pMappedData ) {
             memcpy( mappedData, vertexBufferData, vertexBufferSize );
         }
     }
@@ -311,7 +311,7 @@ void apemode::vk::DebugRenderer::Reset( uint32_t frameIndex ) {
     BufferPools[ frameIndex ].Reset( );
 }
 
-bool apemode::vk::DebugRenderer::Render( RenderParametersVk* renderParams ) {
+bool apemode::vk::DebugRenderer::Render( RenderParameters* renderParams ) {
     apemodevk_memory_allocation_scope;
 
     auto frameIndex = ( renderParams->FrameIndex ) % kMaxFrameCount;

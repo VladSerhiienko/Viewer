@@ -6,10 +6,10 @@
 namespace apemodevk {
 
 struct BufferComposite {
-    VkBuffer          pBuffer     = VK_NULL_HANDLE;
-    VmaAllocator      pAllocator  = VK_NULL_HANDLE;
-    VmaAllocation     pAllocation = VK_NULL_HANDLE;
-    VmaAllocationInfo allocInfo   = {};
+    VkBuffer          pBuffer        = VK_NULL_HANDLE;
+    VmaAllocator      pAllocator     = VK_NULL_HANDLE;
+    VmaAllocation     pAllocation    = VK_NULL_HANDLE;
+    VmaAllocationInfo AllocationInfo = {};
 };
 
 template <>
@@ -37,57 +37,28 @@ struct THandle< BufferComposite > : public NoCopyAssignPolicy {
     BufferComposite Handle;
     TDeleter        Deleter;
 
-    bool Recreate( VmaAllocator pAllocator, const VkBufferCreateInfo &createInfo, const VmaAllocationCreateInfo &allocInfo ) {
+    inline bool Recreate( VmaAllocator                   pAllocator,
+                          const VkBufferCreateInfo &     bufferCreateInfo,
+                          const VmaAllocationCreateInfo &allocationCreateInfo ) {
         apemodevk_memory_allocation_scope;
 
         Deleter( Handle );
         Handle.pAllocator = pAllocator;
 
-        return VK_SUCCESS ==
-               CheckedResult( vmaCreateBuffer(
-                   pAllocator, &createInfo, &allocInfo, &Handle.pBuffer, &Handle.pAllocation, &Handle.allocInfo ) );
+        return VK_SUCCESS == CheckedResult( vmaCreateBuffer( pAllocator,
+                                                             &bufferCreateInfo,
+                                                             &allocationCreateInfo,
+                                                             &Handle.pBuffer,
+                                                             &Handle.pAllocation,
+                                                             &Handle.AllocationInfo ) );
     }
 
-    inline THandle( ) = default;
-    inline THandle( THandle &&Other ) {
-        Handle = Other.Release( );
-    }
-    inline ~THandle( ) {
-        Destroy( );
+    inline void Swap( SelfType &Other ) {
+        eastl::swap( Handle, Other.Handle );
+        eastl::swap( Deleter, Other.Deleter );
     }
 
-    inline bool IsNull( ) const {
-        return nullptr == Handle.pBuffer;
-    }
-    inline bool IsNotNull( ) const {
-        return nullptr != Handle.pBuffer;
-    }
-    inline void Destroy( ) {
-        Deleter( Handle );
-    }
-
-    inline operator VkBuffer( ) const {
-        return Handle.pBuffer;
-    }
-    inline operator bool( ) const {
-        return nullptr != Handle.pBuffer;
-    }
-    inline VkBuffer *operator( )( ) {
-        return &Handle.pBuffer;
-    }
-    inline operator VkBuffer *( ) {
-        return &Handle.pBuffer;
-    }
-    inline operator VkBuffer const *( ) const {
-        return &Handle.pBuffer;
-    }
-
-    SelfType &operator=( SelfType &&Other ) {
-        Handle = Other.Release( );
-        return *this;
-    }
-
-    BufferComposite Release( ) {
+    inline BufferComposite Release( ) {
         BufferComposite ReleasedHandle = Handle;
         Handle.pAllocation             = nullptr;
         Handle.pAllocator              = nullptr;
@@ -95,17 +66,56 @@ struct THandle< BufferComposite > : public NoCopyAssignPolicy {
         return ReleasedHandle;
     }
 
-    void Swap( SelfType &Other ) {
-        std::swap( Handle, Other.Handle );
-        std::swap( Deleter, Other.Deleter );
+    inline THandle( ) : Handle( ), Deleter( ) {
+    }
+
+    inline THandle( THandle &&Other ) {
+        Swap( Other );
+    }
+
+    inline SelfType &operator=( SelfType &&Other ) {
+        Swap( Other );
+        return *this;
+    }
+
+    inline ~THandle( ) {
+        Destroy( );
+    }
+
+    inline bool IsNull( ) const {
+        return nullptr == Handle.pBuffer;
+    }
+
+    inline bool IsNotNull( ) const {
+        return nullptr != Handle.pBuffer;
+    }
+
+    inline void Destroy( ) {
+        Deleter( Handle );
+    }
+
+    inline operator VkBuffer( ) const {
+        return Handle.pBuffer;
+    }
+
+    inline operator bool( ) const {
+        return nullptr != Handle.pBuffer;
+    }
+
+    inline VkBuffer const *GetAddressOf( ) const {
+        return &Handle.pBuffer;
+    }
+
+    inline VkBuffer *GetAddressOf( ) {
+        return &Handle.pBuffer;
     }
 };
 
 typedef THandle< BufferComposite > BufferCompositeHandle;
 
 inline uint8_t *MapStagingBuffer( GraphicsDevice *pNode, THandle< BufferComposite > &hBuffer ) {
-    if ( hBuffer.Handle.allocInfo.pMappedData ) {
-        return reinterpret_cast< uint8_t * >( hBuffer.Handle.allocInfo.pMappedData );
+    if ( hBuffer.Handle.AllocationInfo.pMappedData ) {
+        return reinterpret_cast< uint8_t * >( hBuffer.Handle.AllocationInfo.pMappedData );
     }
 
     uint8_t *pMapped = nullptr;
@@ -118,7 +128,7 @@ inline uint8_t *MapStagingBuffer( GraphicsDevice *pNode, THandle< BufferComposit
 }
 
 inline void UnmapStagingBuffer( GraphicsDevice *pNode, THandle< BufferComposite > &hBuffer ) {
-    if ( !hBuffer.Handle.allocInfo.pMappedData ) {
+    if ( !hBuffer.Handle.AllocationInfo.pMappedData ) {
         vmaUnmapMemory( pNode->hAllocator, hBuffer.Handle.pAllocation );
     }
 }

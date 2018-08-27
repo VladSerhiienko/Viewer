@@ -23,7 +23,7 @@ struct DebugRenderer {
         XMFLOAT4   Color;
     };
 
-    struct InitParametersVk {
+    struct InitParameters {
         apemodevk::GraphicsDevice *pNode         = nullptr;        /* Required */
         apemodeos::IAssetManager * pAssetManager = nullptr;        /* Required */
         VkDescriptorPool           pDescPool     = VK_NULL_HANDLE; /* Required */
@@ -31,7 +31,7 @@ struct DebugRenderer {
         uint32_t                   FrameCount    = 0;              /* Required, swapchain img count typically */
     };
 
-    struct RenderParametersVk {
+    struct RenderParameters {
         float           Dims[ 2 ]  = {};             /* Required */
         float           Scale[ 2 ] = {};             /* Required */
         VkCommandBuffer pCmdBuffer = VK_NULL_HANDLE; /* Required */
@@ -49,10 +49,10 @@ struct DebugRenderer {
     apemodevk::HostBufferPool                        BufferPools[ kMaxFrameCount ];
     apemodevk::DescriptorSetPool                     DescSetPools[ kMaxFrameCount ];
 
-    bool RecreateResources( InitParametersVk *pInitParams );
+    bool RecreateResources( InitParameters *pInitParams );
 
     void Reset( uint32_t frameIndex );
-    bool Render( RenderParametersVk *pRenderParams );
+    bool Render( RenderParameters *pRenderParams );
     void Flush( uint32_t frameIndex );
 };
 

@@ -184,31 +184,21 @@ bool ViewerApp::Initialize(  ) {
 
         pNkRenderer = apemode::unique_ptr< NuklearRendererSdlBase >( apemode_new vk::NuklearRenderer( ) );
 
-        auto queueFamilyPool = pAppSurface->Node.GetQueuePool( )->GetPool( pAppSurface->PresentQueueFamilyIds[ 0 ] );
-        apemodevk::AcquiredQueue acquiredQueue;
-
-        while ( acquiredQueue.pQueue == nullptr ) {
-            acquiredQueue = queueFamilyPool->Acquire( false );
-        }
-
         auto pFontAsset = mAssetManager.Acquire( "fonts/iosevka-ss07-medium.ttf" );
 
-        vk::NuklearRenderer::InitParametersVk initParamsNk;
+        vk::NuklearRenderer::InitParameters initParamsNk;
         initParamsNk.pNode           = &pAppSurface->Node;
         initParamsNk.pAssetManager   = &mAssetManager;
         initParamsNk.pFontAsset      = pFontAsset;
+        initParamsNk.pSamplerManager = pSamplerManager.get( );
         initParamsNk.pDescPool       = DescriptorPool;
-        initParamsNk.pQueue          = acquiredQueue.pQueue;
-        initParamsNk.QueueFamilyId   = acquiredQueue.QueueFamilyId;
         initParamsNk.pRenderPass     = hDbgRenderPass;
         // initParamsNk.pRenderPass     = hNkRenderPass;
 
         pNkRenderer->Init( &initParamsNk );
         mAssetManager.Release( pFontAsset );
 
-        queueFamilyPool->Release( acquiredQueue );
-
-        vk::DebugRenderer::InitParametersVk initParamsDbg;
+        vk::DebugRenderer::InitParameters initParamsDbg;
         initParamsDbg.pNode           = &pAppSurface->Node;
         initParamsDbg.pAssetManager   = &mAssetManager;
         initParamsDbg.pRenderPass     = hDbgRenderPass;
@@ -638,7 +628,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
 
         pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
 
-        vk::DebugRenderer::RenderParametersVk renderParamsDbg;
+        vk::DebugRenderer::RenderParameters renderParamsDbg;
         renderParamsDbg.Dims[ 0 ]  = float( width );
         renderParamsDbg.Dims[ 1 ]  = float( height );
         renderParamsDbg.Scale[ 0 ] = 1;
@@ -694,7 +684,7 @@ void ViewerApp::Update( float deltaSecs, Input const& inputState ) {
         XMStoreFloat4x4( &sceneRenderParameters.RootMatrix, rootMatrix );
         pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
 
-        vk::NuklearRenderer::RenderParametersVk renderParamsNk;
+        vk::NuklearRenderer::RenderParameters renderParamsNk;
         renderParamsNk.Dims[ 0 ]            = float( width );
         renderParamsNk.Dims[ 1 ]            = float( height );
         renderParamsNk.Scale[ 0 ]           = 1;

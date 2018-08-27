@@ -37,11 +37,11 @@ void apemode::vk::NuklearRenderer::DeviceDestroy( ) {
 bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBase ) {
     apemode_memory_allocation_scope;
 
-    auto pRenderParams = (RenderParametersVk*) pRenderParamsBase;
+    auto pRenderParams = (RenderParameters*) pRenderParamsBase;
     const uint32_t frameIndex = ( pRenderParams->FrameIndex ) % kMaxFrameCount;
     auto& frame = Frames[ frameIndex ];
 
-    if ( frame.hVertexBuffer.allocInfo.size < pRenderParamsBase->MaxVertexBufferSize ) {
+    if ( frame.hVertexBuffer.Handle.AllocationInfo.size < pRenderParamsBase->MaxVertexBufferSize ) {
         frame.hVertexBuffer.Destroy( );
 
         VkBufferCreateInfo bufferCreateInfo;
@@ -60,7 +60,7 @@ bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBa
         }
     }
 
-    if ( frame.hIndexBuffer.allocInfo.size < pRenderParamsBase->MaxElementBufferSize ) {
+    if ( frame.hIndexBuffer.Handle.AllocationInfo.size < pRenderParamsBase->MaxElementBufferSize ) {
         frame.hIndexBuffer.Destroy( );
 
         VkBufferCreateInfo bufferCreateInfo;
@@ -84,8 +84,8 @@ bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBa
     void* elements = nullptr;
 
     /* Load vertices/elements directly into vertex/element buffer */
-    vertices = frame.hVertexBuffer.Handle.allocInfo.pMappedData;
-    elements = frame.hIndexBuffer.Handle.allocInfo.pMappedData;
+    vertices = frame.hVertexBuffer.Handle.AllocationInfo.pMappedData;
+    elements = frame.hIndexBuffer.Handle.AllocationInfo.pMappedData;
 
     /* Fill convert configuration */
     struct nk_convert_config config;
@@ -118,7 +118,7 @@ bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBa
         TDescriptorSetBindings< 1 > descriptorSet;
         descriptorSet.pBinding[ 0 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         descriptorSet.pBinding[ 0 ].ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        descriptorSet.pBinding[ 0 ].ImageInfo.imageView   = FontUploadedImg->hImg;
+        descriptorSet.pBinding[ 0 ].ImageInfo.imageView   = FontUploadedImg->hImgView;
         descriptorSet.pBinding[ 0 ].ImageInfo.sampler     = hFontSampler;
 
         VkDescriptorSet pDescriptorSet[ 1 ] = {frame.DescSetPool.GetDescriptorSet( &descriptorSet )};
@@ -149,7 +149,7 @@ bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBa
         nuklearPC.OffsetScale[ 0 ] = -1;                                  /* Translation X */
         nuklearPC.OffsetScale[ 1 ] = -1;                                  /* Translation Y */
         nuklearPC.OffsetScale[ 2 ] = 2.0f / pRenderParamsBase->Dims[ 0 ]; /* Scaling X */
-        nuklearPC.OffsetScale[ 2 ] = 2.0f / pRenderParamsBase->Dims[ 1 ]; /* Scaling Y */
+        nuklearPC.OffsetScale[ 3 ] = 2.0f / pRenderParamsBase->Dims[ 1 ]; /* Scaling Y */
 
         vkCmdPushConstants( pRenderParams->pCmdBuffer, hPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( nuklearPC ), &nuklearPC );
     }
@@ -187,16 +187,13 @@ bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBa
 bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParamsBase ) {
     apemode_memory_allocation_scope;
 
-    auto pParams = (InitParametersVk*) pInitParamsBase;
+    auto pParams = (InitParameters*) pInitParamsBase;
     if ( nullptr == pParams ) {
         apemodevk::platform::DebugBreak( );
         return false;
     }
 
-    pNode       = pParams->pNode;
-    pDescPool   = pParams->pDescPool;
-    pRenderPass = pParams->pRenderPass;
-
+    pNode = pParams->pNode;
 
     THandle< VkShaderModule > hVertexShaderModule;
     THandle< VkShaderModule > hFragmentShaderModule;
@@ -268,17 +265,12 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
             return false;
         }
 
-        VkDescriptorSetLayout descSetLayouts[] = {hDescSetLayout};
-        if ( false == DescSet.RecreateResourcesFor( pNode->hLogicalDevice, pDescPool, descSetLayouts ) ) {
-            return false;
-        }
-
         for ( auto& frame : Frames ) {
             if ( !frame.DescSetPool.Recreate( *pParams->pNode, pParams->pDescPool, hDescSetLayout ) ) {
                 return false;
             }
 
-            if ( !frame.hVertexBuffer ) {
+            if ( frame.hVertexBuffer.IsNull( ) ) {
                 VkBufferCreateInfo bufferCreateInfo;
                 InitializeStruct( bufferCreateInfo );
 
@@ -295,7 +287,7 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
                 }
             }
 
-            if ( !frame.hIndexBuffer ) {
+            if ( frame.hIndexBuffer.IsNull( ) ) {
                 VkBufferCreateInfo bufferCreateInfo;
                 InitializeStruct( bufferCreateInfo );
 
@@ -321,7 +313,7 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
         VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
         InitializeStruct( pipelineLayoutCreateInfo );
         pipelineLayoutCreateInfo.setLayoutCount         = 1;
-        pipelineLayoutCreateInfo.pSetLayouts            = descSetLayouts;
+        pipelineLayoutCreateInfo.pSetLayouts            = hDescSetLayout.GetAddressOf( );
         pipelineLayoutCreateInfo.pushConstantRangeCount = 1;
         pipelineLayoutCreateInfo.pPushConstantRanges    = &pushConstant;
 
@@ -431,7 +423,7 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
     graphicsPipeline.pColorBlendState    = &pipelineColorBlendState;
     graphicsPipeline.pDynamicState       = &pipelineDynamicState;
     graphicsPipeline.layout              = hPipelineLayout;
-    graphicsPipeline.renderPass          = pRenderPass;
+    graphicsPipeline.renderPass          = pParams->pRenderPass;
 
     VkPipelineCacheCreateInfo pipelineCacheCreateInfo;
     InitializeStruct( pipelineCacheCreateInfo );
@@ -450,7 +442,7 @@ void* apemode::vk::NuklearRenderer::DeviceUploadAtlas( InitParametersBase* init_
                                                        uint32_t            width,
                                                        uint32_t            height ) {
 
-    InitParametersVk* pParams       = reinterpret_cast< InitParametersVk* >( init_params );
+    InitParameters* pParams       = reinterpret_cast< InitParameters* >( init_params );
     const uint8_t*    fontImgPixels = reinterpret_cast< const uint8_t* >( image );
 
     if ( !pParams || !fontImgPixels ) {
@@ -471,5 +463,5 @@ void* apemode::vk::NuklearRenderer::DeviceUploadAtlas( InitParametersBase* init_
     uploadOptions.bImgView = true;
 
     FontUploadedImg = eastl::move( imageUploader.UploadImage( pParams->pNode, *fontSrcImg, uploadOptions ) );
-    return FontUploadedImg ? FontUploadedImg->hImg : nullptr;
+    return FontUploadedImg ? (void*) FontUploadedImg->hImg : nullptr;
 }
