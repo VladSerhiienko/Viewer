@@ -6,7 +6,6 @@
 #include <BufferPools.Vulkan.h>
 #include <ImageUploader.Vulkan.h>
 #include <Buffer.Vulkan.h>
-#include <ImageUploader.Vulkan.h>
 #include <TOneTimeCmdBufferSubmit.Vulkan.h>
 
 #include <MathInc.h>
@@ -34,13 +33,13 @@ struct BufferUploadCmpOpGreaterBySize {
 };
 
 struct ImageUploadInfo {
-    const char*    pszFileName;
-    const uint8_t* pFileContents;
-    size_t         fileContentsSize;
-    bool           bGenerateMipMaps;
-    uint32_t       Id;
+    const char*    pszFileName      = nullptr;
+    const uint8_t* pFileContents    = nullptr;
+    size_t         fileContentsSize = 0;
+    bool           bGenerateMipMaps = false;
+    uint32_t       Id               = 0;
 
-    apemodevk::GraphicsDevice* pNode = nullptr;
+    apemodevk::GraphicsDevice*                        pNode = nullptr;
     apemodevk::unique_ptr< apemodevk::UploadedImage > UploadedImg;
 };
 

@@ -7,6 +7,7 @@
 #include <GraphicsDevice.Vulkan.h>
 #include <GraphicsManager.Vulkan.h>
 #include <Image.Vulkan.h>
+#include <SamplerManager.Vulkan.h>
 #include <NativeHandles.Vulkan.h>
 #include <TInfoStruct.Vulkan.h>
 
@@ -20,14 +21,15 @@ public:
      * submitted to the queue and synchonized.
      */
     struct InitParametersVk : InitParametersBase {
-        apemodevk::GraphicsDevice *pNode         = nullptr;        /* Required */
-        apemodeos::IAssetManager * pAssetManager = nullptr;        /* Required */
-        VkDescriptorPool           pDescPool     = VK_NULL_HANDLE; /* Required */
-        VkRenderPass               pRenderPass   = VK_NULL_HANDLE; /* Required */
-        VkCommandBuffer            pCmdBuffer    = VK_NULL_HANDLE; /* Optional (for uploading font img) */
-        VkQueue                    pQueue        = VK_NULL_HANDLE; /* Optional (for uploading font img) */
-        uint32_t                   QueueFamilyId = 0;              /* Optional (for uploading font img) */
-        uint32_t                   FrameCount    = 0;              /* Required, swapchain img count typically */
+        apemodevk::GraphicsDevice *pNode           = nullptr;        /* Required */
+        apemodevk::SamplerManager *pSamplerManager = nullptr;        /* Required */
+        apemodeos::IAssetManager * pAssetManager   = nullptr;        /* Required */
+        VkDescriptorPool           pDescPool       = VK_NULL_HANDLE; /* Required */
+        VkRenderPass               pRenderPass     = VK_NULL_HANDLE; /* Required */
+        VkCommandBuffer            pCmdBuffer      = VK_NULL_HANDLE; /* Optional (for uploading font img) */
+        VkQueue                    pQueue          = VK_NULL_HANDLE; /* Optional (for uploading font img) */
+        uint32_t                   QueueFamilyId   = 0;              /* Optional (for uploading font img) */
+        uint32_t                   FrameCount      = 0;              /* Required, swapchain img count typically */
     };
 
     struct RenderParametersVk : RenderParametersBase {
@@ -36,28 +38,31 @@ public:
     };
 
 public:
+    apemodevk::GraphicsDevice *                       pNode       = nullptr;
+    VkDescriptorPool                                  pDescPool   = VK_NULL_HANDLE;
+    VkRenderPass                                      pRenderPass = VK_NULL_HANDLE;
+    VkCommandBuffer                                   pCmdBuffer  = VK_NULL_HANDLE;
+    VkSampler                                         hFontSampler;
+    apemodevk::THandle< VkDescriptorSetLayout >       hDescSetLayout;
+    apemodevk::THandle< VkPipelineLayout >            hPipelineLayout;
+    apemodevk::THandle< VkPipelineCache >             hPipelineCache;
+    apemodevk::THandle< VkPipeline >                  hPipeline;
+    apemodevk::unique_ptr< apemodevk::UploadedImage > FontUploadedImg;
+
     static uint32_t const kMaxFrameCount = 3;
+    struct {
+        apemodevk::THandle< apemodevk::BufferComposite > hVertexBuffer;
+        apemodevk::THandle< apemodevk::BufferComposite > hIndexBuffer;
+        apemodevk::DescriptorSetPool                     DescSetPool;
+    } Frames[ kMaxFrameCount ];
 
-    apemodevk::GraphicsDevice *                     pNode       = nullptr;
-    VkDescriptorPool                                pDescPool   = VK_NULL_HANDLE;
-    VkRenderPass                                    pRenderPass = VK_NULL_HANDLE;
-    VkCommandBuffer                                 pCmdBuffer  = VK_NULL_HANDLE;
-    apemodevk::TDescriptorSets< 1 >                 DescSet;
-    apemodevk::THandle< VkSampler >                 hFontSampler;
-    apemodevk::THandle< VkDescriptorSetLayout >     hDescSetLayout;
-    apemodevk::THandle< VkPipelineLayout >          hPipelineLayout;
-    apemodevk::THandle< VkPipelineCache >           hPipelineCache;
-    apemodevk::THandle< VkPipeline >                hPipeline;
-    apemodevk::THandle< apemodevk::ImageComposite > hFontImg;
-    apemodevk::THandle< VkImageView >               hFontImgView;
-
-    apemodevk::THandle< apemodevk::BufferComposite > hUploadBuffer;
-    apemodevk::THandle< apemodevk::BufferComposite > hVertexBuffer[ kMaxFrameCount ];
-    apemodevk::THandle< apemodevk::BufferComposite > hIndexBuffer[ kMaxFrameCount ];
-    apemodevk::THandle< apemodevk::BufferComposite > hUniformBuffer[ kMaxFrameCount ];
-    uint32_t                                         VertexBufferSize[ kMaxFrameCount ] = {0};
-    uint32_t                                         IndexBufferSize[ kMaxFrameCount ]  = {0};
-    apemode::vector< uint8_t >                       BufferContent;
+    // apemodevk::THandle< apemodevk::BufferComposite > hUploadBuffer;
+    // apemodevk::THandle< apemodevk::BufferComposite > hVertexBuffer[ kMaxFrameCount ];
+    // apemodevk::THandle< apemodevk::BufferComposite > hIndexBuffer[ kMaxFrameCount ];
+    // apemodevk::THandle< apemodevk::BufferComposite > hUniformBuffer[ kMaxFrameCount ];
+    // uint32_t                                         VertexBufferSize[ kMaxFrameCount ] = {0};
+    // uint32_t                                         IndexBufferSize[ kMaxFrameCount ]  = {0};
+    // apemodevk::DescriptorSetPool                     DescSetPools[ kMaxFrameCount ];
 
 public:
     virtual ~NuklearRenderer( );

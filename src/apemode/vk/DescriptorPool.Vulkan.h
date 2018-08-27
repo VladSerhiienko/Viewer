@@ -27,8 +27,9 @@ namespace apemodevk
         }
 
         ~TDescriptorSets( ) {
-            if ( VK_NULL_HANDLE != hNode && VK_NULL_HANDLE != hPool )
+            if ( hNode && hPool ) {
                 vkFreeDescriptorSets( hNode, hPool, TCount, hSets );
+            }
         }
 
         bool RecreateResourcesFor( VkDevice         InNode,
@@ -112,17 +113,17 @@ namespace apemodevk
         operator VkDescriptorPool( ) const;
 
     public:
-        apemodevk::GraphicsDevice const *                pNode;
-        apemodevk::THandle<VkDescriptorPool> hDescPool;
+        apemodevk::GraphicsDevice const*       pNode;
+        apemodevk::THandle< VkDescriptorPool > hDescPool;
 
         /** Helps to track descriptor suballocations. */
         VkDescriptorPoolSize DescPoolCounters[ VK_DESCRIPTOR_TYPE_RANGE_SIZE ];
         uint32_t             DescSetCounter;
     };
 
-    struct DescriptorSetBase {
+    struct DescriptorSetBindingsBase {
         struct Binding {
-            uint32_t DstBinding = uint32_t( -1 );
+            uint32_t         DstBinding      = uint32_t( -1 );
             VkDescriptorType eDescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 
             union {
@@ -134,10 +135,10 @@ namespace apemodevk
         Binding* pBinding     = nullptr;
         uint32_t BindingCount = 0;
 
-        DescriptorSetBase( ) {
+        DescriptorSetBindingsBase( ) {
         }
 
-        DescriptorSetBase( Binding* pBinding = nullptr, uint32_t BindingCount = 0 )
+        DescriptorSetBindingsBase( Binding* pBinding = nullptr, uint32_t BindingCount = 0 )
             : pBinding( pBinding ), BindingCount( BindingCount ) {
         }
     };
@@ -147,14 +148,14 @@ namespace apemodevk
     };
 
     template < uint32_t TMaxBindingCount >
-    struct TDescriptorSet : DescriptorSetBase {
-        DescriptorSetBase::Binding Bindings[ TMaxBindingCount ];
+    struct TDescriptorSetBindings : DescriptorSetBindingsBase {
+        DescriptorSetBindingsBase::Binding Bindings[ TMaxBindingCount ];
 
-        TDescriptorSet( ETDescriptorSetNoInit ) : DescriptorSetBase( Bindings, 0 ) {
+        TDescriptorSetBindings( ETDescriptorSetNoInit ) : DescriptorSetBindingsBase( Bindings, 0 ) {
             InitializeStruct( Bindings );
         }
 
-        TDescriptorSet( ) : DescriptorSetBase( Bindings, TMaxBindingCount ) {
+        TDescriptorSetBindings( ) : DescriptorSetBindingsBase( Bindings, TMaxBindingCount ) {
             uint32_t DstBinding = 0;
             for ( auto& binding : Bindings ) {
                 binding.DstBinding = DstBinding++;
@@ -163,18 +164,13 @@ namespace apemodevk
     };
 
     struct DescriptorSetPool {
-        struct DescriptorSetItem {
-            uint64_t        Hash           = uint64_t( -1 );
-            VkDescriptorSet pDescriptorSet = VK_NULL_HANDLE;
-        };
-
-        VkDevice                                  pLogicalDevice       = VK_NULL_HANDLE;
-        VkDescriptorPool                          pDescriptorPool      = VK_NULL_HANDLE;
-        VkDescriptorSetLayout                     pDescriptorSetLayout = VK_NULL_HANDLE;
-        apemodevk::vector< DescriptorSetItem >    Sets;
-        apemodevk::vector< VkWriteDescriptorSet > TempWrites;
+        VkDevice                                           pLogicalDevice       = VK_NULL_HANDLE;
+        VkDescriptorPool                                   pDescriptorPool      = VK_NULL_HANDLE;
+        VkDescriptorSetLayout                              pDescriptorSetLayout = VK_NULL_HANDLE;
+        apemodevk::vector_map< uint64_t, VkDescriptorSet > Sets;
+        apemodevk::vector< VkWriteDescriptorSet >          TempWrites;
 
         bool            Recreate( VkDevice pInLogicalDevice, VkDescriptorPool pInDescPool, VkDescriptorSetLayout pInLayout );
-        VkDescriptorSet GetDescSet( const DescriptorSetBase * pDescriptorSetBase );
+        VkDescriptorSet GetDescriptorSet( const DescriptorSetBindingsBase * pDescriptorSetBase );
     };
 }

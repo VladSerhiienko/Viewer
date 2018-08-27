@@ -97,10 +97,6 @@ bool apemode::vk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
         descriptorSetLayout = hDescSetLayout;
     }
 
-    if ( false == DescSets.RecreateResourcesFor( *pParams->pNode, pParams->pDescPool, descriptorSetLayouts ) ) {
-        return false;
-    }
-
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
     InitializeStruct( pipelineLayoutCreateInfo );
     pipelineLayoutCreateInfo.setLayoutCount = utils::GetArraySizeU( descriptorSetLayouts );
@@ -275,13 +271,13 @@ bool apemode::vk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPa
     VkDescriptorSet descriptorSet[ 1 ]  = {nullptr};
     uint32_t        dynamicOffsets[ 1 ] = {0};
 
-    TDescriptorSet< 2 > descSet;
+    TDescriptorSetBindings< 2 > descSet;
     descSet.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     descSet.pBinding[ 0 ].BufferInfo      = suballocResult.DescriptorBufferInfo;
     descSet.pBinding[ 1 ].eDescriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descSet.pBinding[ 1 ].ImageInfo       = skyboxImageInfo;
 
-    descriptorSet[ 0 ]  = DescSetPools[ FrameIndex ].GetDescSet( &descSet );
+    descriptorSet[ 0 ]  = DescSetPools[ FrameIndex ].GetDescriptorSet( &descSet );
     dynamicOffsets[ 0 ] = suballocResult.DynamicOffset;
 
     vkCmdBindPipeline( pParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipeline );

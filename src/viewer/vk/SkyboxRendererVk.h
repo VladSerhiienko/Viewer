@@ -59,7 +59,6 @@ public:
     apemodevk::THandle< VkPipelineLayout >       hPipelineLayout;
     apemodevk::THandle< VkPipelineCache >        hPipelineCache;
     apemodevk::THandle< VkPipeline >             hPipeline;
-    apemodevk::TDescriptorSets< kMaxFrameCount > DescSets;
     apemodevk::HostBufferPool                    BufferPools[ kMaxFrameCount ];
     apemodevk::DescriptorSetPool                 DescSetPools[ kMaxFrameCount ];
 };

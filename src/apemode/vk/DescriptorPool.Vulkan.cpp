@@ -103,7 +103,7 @@ bool apemodevk::DescriptorSetPool::Recreate( VkDevice              pInLogicalDev
     return true;
 }
 
-VkDescriptorSet apemodevk::DescriptorSetPool::GetDescSet( const DescriptorSetBase* pDescriptorSetBase ) {
+VkDescriptorSet apemodevk::DescriptorSetPool::GetDescriptorSet( const DescriptorSetBindingsBase* pDescriptorSetBase ) {
     apemodevk_memory_allocation_scope;
 
     apemodevk::CityHash64Wrapper cityHashBuilder;
@@ -111,13 +111,11 @@ VkDescriptorSet apemodevk::DescriptorSetPool::GetDescSet( const DescriptorSetBas
         cityHashBuilder.CombineWith( pDescriptorSetBase->pBinding[ i ] );
     }
 
-    auto descriptorSetHash = cityHashBuilder.Value;
-    auto descriptorSetIt = eastl::find_if( Sets.begin( ), Sets.end( ), [&]( const DescriptorSetItem& allocatedSet ) {
-        return allocatedSet.Hash == descriptorSetHash;
-    } );
+    const uint64_t descriptorSetHash = cityHashBuilder.Value;
 
+    auto descriptorSetIt = Sets.find( descriptorSetHash );
     if ( descriptorSetIt != Sets.end( ) )
-        return descriptorSetIt->pDescriptorSet;
+        return descriptorSetIt->second;
 
     VkDescriptorSetAllocateInfo descriptorSetAllocateInfo;
     InitializeStruct( descriptorSetAllocateInfo );
@@ -125,57 +123,56 @@ VkDescriptorSet apemodevk::DescriptorSetPool::GetDescSet( const DescriptorSetBas
     descriptorSetAllocateInfo.descriptorPool     = pDescriptorPool;
     descriptorSetAllocateInfo.pSetLayouts        = &pDescriptorSetLayout;
 
-    VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
-    if ( VK_SUCCESS != vkAllocateDescriptorSets( pLogicalDevice, &descriptorSetAllocateInfo, &descriptorSet ) ) {
+    VkDescriptorSet pDescriptorSet = VK_NULL_HANDLE;
+    if ( VK_SUCCESS != vkAllocateDescriptorSets( pLogicalDevice, &descriptorSetAllocateInfo, &pDescriptorSet ) ) {
         platform::DebugBreak( );
         return nullptr;
     }
 
-    DescriptorSetItem item;
-    item.Hash = descriptorSetHash;
-    item.pDescriptorSet = descriptorSet;
-    Sets.emplace_back( item );
+    Sets[ descriptorSetHash ] = pDescriptorSet;
 
     TempWrites.clear( );
     TempWrites.reserve( pDescriptorSetBase->BindingCount );
 
-    eastl::for_each( pDescriptorSetBase->pBinding,
-                   pDescriptorSetBase->pBinding + pDescriptorSetBase->BindingCount,
-                   [&]( const DescriptorSetBase::Binding& descriptorSetBinding ) {
-                       apemodevk_memory_allocation_scope;
+    auto pBindingIt    = pDescriptorSetBase->pBinding;
+    auto pBindingEndIt = pBindingIt + pDescriptorSetBase->BindingCount;
 
-                       TempWrites.emplace_back( );
+    eastl::for_each( pBindingIt, pBindingEndIt, [&]( const DescriptorSetBindingsBase::Binding& descriptorSetBinding ) {
+        apemodevk_memory_allocation_scope;
 
-                       auto& writeDescriptorSet = TempWrites.back( );
-                       InitializeStruct( writeDescriptorSet );
-                       writeDescriptorSet.descriptorCount = 1;
-                       writeDescriptorSet.dstBinding      = descriptorSetBinding.DstBinding;
-                       writeDescriptorSet.descriptorType  = descriptorSetBinding.eDescriptorType;
-                       writeDescriptorSet.dstSet          = descriptorSet;
+        TempWrites.emplace_back( );
 
-                       switch ( descriptorSetBinding.eDescriptorType ) {
-                           // case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
-                           // case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
-                           case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-                           case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
-                           case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
-                           case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
-                               writeDescriptorSet.pBufferInfo = &descriptorSetBinding.BufferInfo;
-                               break;
+        auto& writeDescriptorSet = TempWrites.back( );
+        InitializeStruct( writeDescriptorSet );
+        writeDescriptorSet.descriptorCount = 1;
+        writeDescriptorSet.dstBinding      = descriptorSetBinding.DstBinding;
+        writeDescriptorSet.descriptorType  = descriptorSetBinding.eDescriptorType;
+        writeDescriptorSet.dstSet          = pDescriptorSet;
 
-                           case VK_DESCRIPTOR_TYPE_SAMPLER:
-                           case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
-                           case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
-                           case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
-                           case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
-                               writeDescriptorSet.pImageInfo = &descriptorSetBinding.ImageInfo;
-                               break;
+        switch ( descriptorSetBinding.eDescriptorType ) {
+            // case VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER:
+            // case VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER:
+            case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+            case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER:
+            case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC:
+            case VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC:
+                writeDescriptorSet.pBufferInfo = &descriptorSetBinding.BufferInfo;
+                break;
 
-                           default:
-                               platform::DebugBreak( );
-                       }
-                   } );
+            case VK_DESCRIPTOR_TYPE_SAMPLER:
+            case VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE:
+            case VK_DESCRIPTOR_TYPE_STORAGE_IMAGE:
+            case VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER:
+            case VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT:
+                writeDescriptorSet.pImageInfo = &descriptorSetBinding.ImageInfo;
+                break;
+
+            default:
+                platform::DebugBreak( );
+                break;
+        }
+    } );
 
     vkUpdateDescriptorSets( pLogicalDevice, static_cast< uint32_t >( TempWrites.size( ) ), TempWrites.data( ), 0, nullptr );
-    return descriptorSet;
+    return pDescriptorSet;
 }

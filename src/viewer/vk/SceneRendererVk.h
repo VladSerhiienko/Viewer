@@ -70,8 +70,11 @@ public:
     apemodevk::THandle< VkPipelineLayout >      hPipelineLayout;
     apemodevk::THandle< VkPipelineCache >       hPipelineCache;
     apemodevk::THandle< VkPipeline >            hPipeline;
-    apemodevk::HostBufferPool                   BufferPools[ kMaxFrameCount ];
-    apemodevk::DescriptorSetPool                DescriptorSetPools[ kMaxFrameCount ][ kDescriptorSetCount ];
+
+    struct {
+        apemodevk::HostBufferPool    BufferPool;
+        apemodevk::DescriptorSetPool DescriptorSetPools[ kDescriptorSetCount ];
+    } Frames[ kMaxFrameCount ];
 };
 
 } // namespace vk

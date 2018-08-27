@@ -74,11 +74,6 @@ bool apemode::vk::DebugRenderer::RecreateResources( InitParametersVk* pParams ) 
         descriptorSetLayout = hDescSetLayout;
     }
 
-    if ( false == DescSets.RecreateResourcesFor( pNode->hLogicalDevice, pParams->pDescPool, descriptorSetLayouts ) ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
-    }
-
     VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
     InitializeStruct( pipelineLayoutCreateInfo );
     pipelineLayoutCreateInfo.setLayoutCount = GetArraySize( descriptorSetLayouts );
@@ -327,11 +322,11 @@ bool apemode::vk::DebugRenderer::Render( RenderParametersVk* renderParams ) {
 
     VkDescriptorSet descriptorSet[ 1 ]  = {nullptr};
 
-    TDescriptorSet< 1 > descSet;
+    TDescriptorSetBindings< 1 > descSet;
     descSet.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     descSet.pBinding[ 0 ].BufferInfo      = suballocResult.DescriptorBufferInfo;
 
-    descriptorSet[ 0 ]  = DescSetPools[ frameIndex ].GetDescSet( &descSet );
+    descriptorSet[ 0 ]  = DescSetPools[ frameIndex ].GetDescriptorSet( &descSet );
 
     vkCmdBindPipeline( renderParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipeline );
     vkCmdBindDescriptorSets( renderParams->pCmdBuffer,

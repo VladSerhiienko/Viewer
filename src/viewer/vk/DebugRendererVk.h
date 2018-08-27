@@ -41,7 +41,6 @@ struct DebugRenderer {
 
     static uint32_t const kMaxFrameCount = 3;
 
-    apemodevk::TDescriptorSets< kMaxFrameCount >     DescSets;
     apemodevk::THandle< VkDescriptorSetLayout >      hDescSetLayout;
     apemodevk::THandle< VkPipelineLayout >           hPipelineLayout;
     apemodevk::THandle< VkPipelineCache >            hPipelineCache;

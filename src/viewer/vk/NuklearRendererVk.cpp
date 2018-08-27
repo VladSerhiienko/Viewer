@@ -1,10 +1,15 @@
 #include <NuklearRendererVk.h>
 #include <ArrayUtils.h>
 #include <AppState.h>
+#include <ImageUploader.Vulkan.h>
 
 namespace apemode {
     using namespace apemodevk;
 }
+
+struct NuklearPC {
+    float OffsetScale[ 4 ];
+};
 
 apemode::vk::NuklearRenderer::~NuklearRenderer( ) {
     apemode::LogInfo( "NuklearRenderer: Destroying." );
@@ -16,17 +21,11 @@ void apemode::vk::NuklearRenderer::DeviceDestroy( ) {
 
     apemode::LogInfo( "NuklearRenderer: Destroying device resources." );
 
-    hUploadBuffer.Destroy( );
-    for ( auto& h : hVertexBuffer )
-        h.Destroy( );
-    for ( auto& h : hIndexBuffer )
-        h.Destroy( );
-    for ( auto& h : hUniformBuffer )
-        h.Destroy( );
+    for ( auto& frame : Frames ) {
+        frame.hVertexBuffer.Destroy( );
+        frame.hIndexBuffer.Destroy( );
+    }
 
-    hFontImgView.Destroy( );
-    hFontImg.Destroy( );
-    hFontSampler.Destroy( );
     hPipeline.Destroy( );
     hPipelineCache.Destroy( );
     hDescSetLayout.Destroy( );
@@ -39,10 +38,11 @@ bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBa
     apemode_memory_allocation_scope;
 
     auto pRenderParams = (RenderParametersVk*) pRenderParamsBase;
-    auto frameIndex   = ( pRenderParams->FrameIndex ) % kMaxFrameCount;
+    const uint32_t frameIndex = ( pRenderParams->FrameIndex ) % kMaxFrameCount;
+    auto& frame = Frames[ frameIndex ];
 
-    if ( hVertexBuffer[ frameIndex ].IsNull( ) || ( VertexBufferSize[ frameIndex ] < pRenderParamsBase->MaxVertexBufferSize ) ) {
-        hVertexBuffer[ frameIndex ].Destroy( );
+    if ( frame.hVertexBuffer.allocInfo.size < pRenderParamsBase->MaxVertexBufferSize ) {
+        frame.hVertexBuffer.Destroy( );
 
         VkBufferCreateInfo bufferCreateInfo;
         InitializeStruct( bufferCreateInfo );
@@ -55,16 +55,13 @@ bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBa
         allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
         allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-        if ( false == hVertexBuffer[ frameIndex ].Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
-            apemodevk::platform::DebugBreak( );
+        if ( !frame.hVertexBuffer.Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
             return false;
         }
-
-        VertexBufferSize[ frameIndex ] = pRenderParamsBase->MaxVertexBufferSize;
     }
 
-    if ( hIndexBuffer[ frameIndex ].IsNull( ) || IndexBufferSize[ frameIndex ] < pRenderParamsBase->MaxElementBufferSize ) {
-        hIndexBuffer[ frameIndex ].Destroy( );
+    if ( frame.hIndexBuffer.allocInfo.size < pRenderParamsBase->MaxElementBufferSize ) {
+        frame.hIndexBuffer.Destroy( );
 
         VkBufferCreateInfo bufferCreateInfo;
         InitializeStruct( bufferCreateInfo );
@@ -77,12 +74,9 @@ bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBa
         allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
         allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-        if ( false == hIndexBuffer[ frameIndex ].Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
-            apemodevk::platform::DebugBreak( );
+        if ( !frame.hIndexBuffer.Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
             return false;
         }
-
-        IndexBufferSize[ frameIndex ] = pRenderParamsBase->MaxElementBufferSize;
     }
 
     /* Convert from command queue into draw list and draw to screen */
@@ -90,8 +84,8 @@ bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBa
     void* elements = nullptr;
 
     /* Load vertices/elements directly into vertex/element buffer */
-    vertices = hVertexBuffer[ frameIndex ].Handle.allocInfo.pMappedData;
-    elements = hIndexBuffer[ frameIndex ].Handle.allocInfo.pMappedData;
+    vertices = frame.hVertexBuffer.Handle.allocInfo.pMappedData;
+    elements = frame.hIndexBuffer.Handle.allocInfo.pMappedData;
 
     /* Fill convert configuration */
     struct nk_convert_config config;
@@ -121,17 +115,23 @@ bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBa
 
     /* Bind pipeline and descriptor sets */
     {
-        VkDescriptorSet descSets[ 1 ] = {DescSet.hSets[ 0 ]};
+        TDescriptorSetBindings< 1 > descriptorSet;
+        descriptorSet.pBinding[ 0 ].eDescriptorType       = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        descriptorSet.pBinding[ 0 ].ImageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        descriptorSet.pBinding[ 0 ].ImageInfo.imageView   = FontUploadedImg->hImg;
+        descriptorSet.pBinding[ 0 ].ImageInfo.sampler     = hFontSampler;
+
+        VkDescriptorSet pDescriptorSet[ 1 ] = {frame.DescSetPool.GetDescriptorSet( &descriptorSet )};
         vkCmdBindPipeline( pRenderParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipeline );
-        vkCmdBindDescriptorSets( pRenderParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipelineLayout, 0, 1, descSets, 0, NULL );
+        vkCmdBindDescriptorSets( pRenderParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipelineLayout, 0, 1, pDescriptorSet, 0, NULL );
     }
 
     /* Bind Vertex And Index Buffer */
     {
-        VkBuffer     vertexBuffers[ 1 ] = {hVertexBuffer[ frameIndex ].Handle.pBuffer};
+        VkBuffer     vertexBuffers[ 1 ] = {frame.hVertexBuffer.Handle.pBuffer};
         VkDeviceSize vertexOffsets[ 1 ] = {0};
         vkCmdBindVertexBuffers( pRenderParams->pCmdBuffer, 0, 1, vertexBuffers, vertexOffsets );
-        vkCmdBindIndexBuffer( pRenderParams->pCmdBuffer, hIndexBuffer[ frameIndex ].Handle.pBuffer, 0, VK_INDEX_TYPE_UINT16 );
+        vkCmdBindIndexBuffer( pRenderParams->pCmdBuffer, frame.hIndexBuffer.Handle.pBuffer, 0, VK_INDEX_TYPE_UINT16 );
     }
 
     VkViewport viewport;
@@ -145,14 +145,13 @@ bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBa
 
     /* Setup scale and translation */
     {
-        float offsetScale[ 4 ] = {
-            -1.0f,                               /* Translation X */
-            -1.0f,                               /* Translation Y */
-            2.0f / pRenderParamsBase->Dims[ 0 ], /* Scaling X */
-            2.0f / pRenderParamsBase->Dims[ 1 ], /* Scaling Y */
-        };
+        NuklearPC nuklearPC;
+        nuklearPC.OffsetScale[ 0 ] = -1;                                  /* Translation X */
+        nuklearPC.OffsetScale[ 1 ] = -1;                                  /* Translation Y */
+        nuklearPC.OffsetScale[ 2 ] = 2.0f / pRenderParamsBase->Dims[ 0 ]; /* Scaling X */
+        nuklearPC.OffsetScale[ 2 ] = 2.0f / pRenderParamsBase->Dims[ 1 ]; /* Scaling Y */
 
-        vkCmdPushConstants( pRenderParams->pCmdBuffer, hPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( float[ 4 ] ), offsetScale );
+        vkCmdPushConstants( pRenderParams->pCmdBuffer, hPipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof( nuklearPC ), &nuklearPC );
     }
 
     const nk_draw_command* cmd        = nullptr;
@@ -198,6 +197,7 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
     pDescPool   = pParams->pDescPool;
     pRenderPass = pParams->pRenderPass;
 
+
     THandle< VkShaderModule > hVertexShaderModule;
     THandle< VkShaderModule > hFragmentShaderModule;
     {
@@ -234,7 +234,7 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
         }
     }
 
-    if ( pNode->hLogicalDevice.IsNotNull( ) && false == hFontSampler.IsNotNull( ) ) {
+    if ( pNode ) {
         VkSamplerCreateInfo fontSamplerCreateInfo;
         InitializeStruct( fontSamplerCreateInfo );
         fontSamplerCreateInfo.magFilter    = VK_FILTER_LINEAR;
@@ -246,20 +246,18 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
         fontSamplerCreateInfo.minLod       = -1000;
         fontSamplerCreateInfo.maxLod       = +1000;
 
-        if ( false == hFontSampler.Recreate( pNode->hLogicalDevice, fontSamplerCreateInfo ) ) {
-            apemodevk::platform::DebugBreak( );
+        hFontSampler = pParams->pSamplerManager->GetSampler( fontSamplerCreateInfo );
+        if ( !hFontSampler ) {
             return false;
         }
-    }
 
-    if ( pNode->hLogicalDevice.IsNotNull( ) && false == hDescSetLayout.IsNotNull( ) ) {
         VkDescriptorSetLayoutBinding bindings[ 1 ];
         InitializeStruct( bindings );
 
         bindings[ 0 ].descriptorType     = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         bindings[ 0 ].descriptorCount    = 1;
         bindings[ 0 ].stageFlags         = VK_SHADER_STAGE_FRAGMENT_BIT;
-        bindings[ 0 ].pImmutableSamplers = hFontSampler;
+        bindings[ 0 ].pImmutableSamplers = &hFontSampler;
 
         VkDescriptorSetLayoutCreateInfo descSetLayoutCreateInfo;
         InitializeStruct( descSetLayoutCreateInfo );
@@ -267,16 +265,52 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
         descSetLayoutCreateInfo.pBindings    = bindings;
 
         if ( false == hDescSetLayout.Recreate( pNode->hLogicalDevice, descSetLayoutCreateInfo ) ) {
-            apemodevk::platform::DebugBreak( );
             return false;
         }
-    }
 
-    if ( pNode->hLogicalDevice.IsNotNull( ) && false == hPipelineLayout.IsNotNull( ) ) {
         VkDescriptorSetLayout descSetLayouts[] = {hDescSetLayout};
         if ( false == DescSet.RecreateResourcesFor( pNode->hLogicalDevice, pDescPool, descSetLayouts ) ) {
-            apemodevk::platform::DebugBreak( );
             return false;
+        }
+
+        for ( auto& frame : Frames ) {
+            if ( !frame.DescSetPool.Recreate( *pParams->pNode, pParams->pDescPool, hDescSetLayout ) ) {
+                return false;
+            }
+
+            if ( !frame.hVertexBuffer ) {
+                VkBufferCreateInfo bufferCreateInfo;
+                InitializeStruct( bufferCreateInfo );
+
+                bufferCreateInfo.size        = pParams->pNode->AdapterProps.limits.maxUniformBufferRange;
+                bufferCreateInfo.usage       = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+                bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+                VmaAllocationCreateInfo allocationCreateInfo = {};
+                allocationCreateInfo.usage                   = VMA_MEMORY_USAGE_CPU_ONLY;
+                allocationCreateInfo.flags                   = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+                if ( !frame.hVertexBuffer.Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
+                    return false;
+                }
+            }
+
+            if ( !frame.hIndexBuffer ) {
+                VkBufferCreateInfo bufferCreateInfo;
+                InitializeStruct( bufferCreateInfo );
+
+                bufferCreateInfo.size        = pParams->pNode->AdapterProps.limits.maxUniformBufferRange;
+                bufferCreateInfo.usage       = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+                bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+                VmaAllocationCreateInfo allocationCreateInfo = {};
+                allocationCreateInfo.usage                   = VMA_MEMORY_USAGE_CPU_ONLY;
+                allocationCreateInfo.flags                   = VMA_ALLOCATION_CREATE_MAPPED_BIT;
+
+                if ( !frame.hIndexBuffer.Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
+                    return false;
+                }
+            }
         }
 
         VkPushConstantRange pushConstant;
@@ -292,7 +326,6 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
         pipelineLayoutCreateInfo.pPushConstantRanges    = &pushConstant;
 
         if ( false == hPipelineLayout.Recreate( pNode->hLogicalDevice, pipelineLayoutCreateInfo ) ) {
-            apemodevk::platform::DebugBreak( );
             return false;
         }
     }
@@ -413,215 +446,30 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
 }
 
 void* apemode::vk::NuklearRenderer::DeviceUploadAtlas( InitParametersBase* init_params,
-                                                            const void*         image,
-                                                            uint32_t            width,
-                                                            uint32_t            height ) {
+                                                       const void*         image,
+                                                       uint32_t            width,
+                                                       uint32_t            height ) {
 
-    InitParametersVk* pParams   = reinterpret_cast< InitParametersVk* >( init_params );
+    InitParametersVk* pParams       = reinterpret_cast< InitParametersVk* >( init_params );
     const uint8_t*    fontImgPixels = reinterpret_cast< const uint8_t* >( image );
-    uint32_t          uploadSize    = width * height * 4 * sizeof( uint8_t );
 
-    // Create the Image:
-    {
-        VkImageCreateInfo imageCreateInfo;
-        InitializeStruct( imageCreateInfo );
-        imageCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
-        imageCreateInfo.format        = VK_FORMAT_R8G8B8A8_UNORM;
-        imageCreateInfo.extent.width  = width;
-        imageCreateInfo.extent.height = height;
-        imageCreateInfo.extent.depth  = 1;
-        imageCreateInfo.mipLevels     = 1;
-        imageCreateInfo.arrayLayers   = 1;
-        imageCreateInfo.samples       = VK_SAMPLE_COUNT_1_BIT;
-        imageCreateInfo.tiling        = VK_IMAGE_TILING_OPTIMAL;
-        imageCreateInfo.usage         = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
-        imageCreateInfo.sharingMode   = VK_SHARING_MODE_EXCLUSIVE;
-        imageCreateInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-
-        VmaAllocationCreateInfo allocationCreateInfo = {};
-        allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-        allocationCreateInfo.flags = 0;
-
-        if ( false == hFontImg.Recreate( pNode->hAllocator, imageCreateInfo, allocationCreateInfo ) ) {
-            apemodevk::platform::DebugBreak( );
-            return nullptr;
-        }
+    if ( !pParams || !fontImgPixels ) {
+        return nullptr;
     }
 
-    // Create the Image View:
-    {
-        VkImageViewCreateInfo fontImgView;
-        InitializeStruct( fontImgView );
-        fontImgView.image                       = hFontImg;
-        fontImgView.viewType                    = VK_IMAGE_VIEW_TYPE_2D;
-        fontImgView.format                      = VK_FORMAT_R8G8B8A8_UNORM;
-        fontImgView.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        fontImgView.subresourceRange.levelCount = 1;
-        fontImgView.subresourceRange.layerCount = 1;
+    apemodevk::ImageDecoder                imageDecoder;
+    apemodevk::ImageDecoder::DecodeOptions decodeOptions;
+    decodeOptions.bGenerateMipMaps = false;
 
-        if ( false == hFontImgView.Recreate( pNode->hLogicalDevice, fontImgView ) ) {
-            apemodevk::platform::DebugBreak( );
-            return nullptr;
-        }
+    auto fontSrcImg = imageDecoder.CreateSourceImage2D( fontImgPixels, VkExtent2D{width, height}, VK_FORMAT_R8G8B8A8_UNORM, decodeOptions );
+    if ( !fontSrcImg ) {
+        return nullptr;
     }
 
-    // Update the Descriptor Set:
-    {
-        VkDescriptorImageInfo fontImgDescriptor;
-        InitializeStruct( fontImgDescriptor );
-        fontImgDescriptor.sampler     = hFontSampler;
-        fontImgDescriptor.imageView   = hFontImgView;
-        fontImgDescriptor.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    apemodevk::ImageUploader                imageUploader;
+    apemodevk::ImageUploader::UploadOptions uploadOptions;
+    uploadOptions.bImgView = true;
 
-        VkWriteDescriptorSet writeDescriptorSet;
-        InitializeStruct( writeDescriptorSet );
-        writeDescriptorSet.dstSet          = DescSet.hSets[ 0 ];
-        writeDescriptorSet.descriptorCount = 1;
-        writeDescriptorSet.descriptorType  = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-        writeDescriptorSet.pImageInfo      = &fontImgDescriptor;
-        vkUpdateDescriptorSets( pNode->hLogicalDevice, 1, &writeDescriptorSet, 0, nullptr );
-    }
-
-    // Create the Upload Buffer:
-    {
-        VkBufferCreateInfo bufferCreateInfo;
-        InitializeStruct( bufferCreateInfo );
-        bufferCreateInfo.size        = uploadSize;
-        bufferCreateInfo.usage       = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-        bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-        VmaAllocationCreateInfo allocationCreateInfo;
-        InitializeStruct( allocationCreateInfo );
-        allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-        allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
-
-        if ( false == hUploadBuffer.Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
-            apemodevk::platform::DebugBreak( );
-            return nullptr;
-        }
-    }
-
-    // Upload to Buffer:
-    if ( auto mappedUploadBufferData = hUploadBuffer.Handle.allocInfo.pMappedData ) {
-        memcpy( mappedUploadBufferData, fontImgPixels, uploadSize );
-    }
-
-    THandle< VkCommandPool >   cmdPool;
-    THandle< VkCommandBuffer > cmdBuffer;
-    VkCommandBuffer            pFinalCmdBuffer = pParams->pCmdBuffer;
-
-    if ( VK_NULL_HANDLE == pFinalCmdBuffer ) {
-
-        VkCommandPoolCreateInfo cmdPoolCreateInfo;
-        InitializeStruct( cmdPoolCreateInfo );
-
-        cmdPoolCreateInfo.flags            = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-        cmdPoolCreateInfo.queueFamilyIndex = pParams->QueueFamilyId;
-
-        if ( false == cmdPool.Recreate( pParams->pNode->hLogicalDevice, cmdPoolCreateInfo ) ) {
-            apemodevk::platform::DebugBreak( );
-            return nullptr;
-        }
-
-        VkCommandBufferAllocateInfo cmdBufferAllocInfo;
-        InitializeStruct( cmdBufferAllocInfo );
-
-        cmdBufferAllocInfo.commandPool        = cmdPool;
-        cmdBufferAllocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-        cmdBufferAllocInfo.commandBufferCount = 1;
-
-        if ( false == cmdBuffer.Recreate( pParams->pNode->hLogicalDevice, cmdBufferAllocInfo ) ) {
-            apemodevk::platform::DebugBreak( );
-            return nullptr;
-        }
-
-        pFinalCmdBuffer = cmdBuffer;
-
-        if ( false == cmdPool.Reset( false ) ) {
-            apemodevk::platform::DebugBreak( );
-            return nullptr;
-        }
-
-        VkCommandBufferBeginInfo cmdBufferBeginInfo;
-        InitializeStruct( cmdBufferBeginInfo );
-        cmdBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-        if ( VK_SUCCESS != CheckedResult( vkBeginCommandBuffer( cmdBuffer, &cmdBufferBeginInfo ) ) ) {
-            return nullptr;
-        }
-    }
-
-    // Copy to Image:
-    {
-        VkImageMemoryBarrier copyBarrier;
-        InitializeStruct( copyBarrier );
-
-        copyBarrier.dstAccessMask               = VK_ACCESS_TRANSFER_WRITE_BIT;
-        copyBarrier.oldLayout                   = VK_IMAGE_LAYOUT_UNDEFINED;
-        copyBarrier.newLayout                   = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        copyBarrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
-        copyBarrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
-        copyBarrier.image                       = hFontImg;
-        copyBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        copyBarrier.subresourceRange.levelCount = 1;
-        copyBarrier.subresourceRange.layerCount = 1;
-
-        vkCmdPipelineBarrier( pFinalCmdBuffer, VK_PIPELINE_STAGE_HOST_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1, &copyBarrier );
-
-        VkBufferImageCopy region;
-        InitializeStruct( region );
-
-        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        region.imageSubresource.layerCount = 1;
-        region.imageExtent.width           = width;
-        region.imageExtent.height          = height;
-        region.imageExtent.depth           = 1;
-
-        vkCmdCopyBufferToImage( pFinalCmdBuffer, hUploadBuffer, hFontImg, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region );
-
-        VkImageMemoryBarrier useBarrier;
-        InitializeStruct( useBarrier );
-
-        useBarrier.srcAccessMask               = VK_ACCESS_TRANSFER_WRITE_BIT;
-        useBarrier.dstAccessMask               = VK_ACCESS_SHADER_READ_BIT;
-        useBarrier.oldLayout                   = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-        useBarrier.newLayout                   = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-        useBarrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
-        useBarrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
-        useBarrier.image                       = hFontImg;
-        useBarrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-        useBarrier.subresourceRange.levelCount = 1;
-        useBarrier.subresourceRange.layerCount = 1;
-
-        vkCmdPipelineBarrier( cmdBuffer,
-                              VK_PIPELINE_STAGE_TRANSFER_BIT,
-                              VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
-                              0,
-                              0,
-                              NULL,
-                              0,
-                              NULL,
-                              1,
-                              &useBarrier );
-    }
-
-    if ( cmdBuffer.IsNotNull( ) ) {
-        VkSubmitInfo submitInfo;
-        InitializeStruct( submitInfo );
-        submitInfo.commandBufferCount = 1;
-        submitInfo.pCommandBuffers    = cmdBuffer;
-
-        if ( VK_SUCCESS != CheckedResult( vkEndCommandBuffer( cmdBuffer ) ) ) {
-            return nullptr;
-        }
-
-        if ( VK_SUCCESS != CheckedResult( vkQueueSubmit( pParams->pQueue, 1, &submitInfo, VK_NULL_HANDLE ) ) ) {
-            return nullptr;
-        }
-
-        if ( VK_SUCCESS != CheckedResult( vkDeviceWaitIdle( pParams->pNode->hLogicalDevice ) ) ) {
-            return nullptr;
-        }
-    }
-
-    return hFontImg.Handle.pImg;
+    FontUploadedImg = eastl::move( imageUploader.UploadImage( pParams->pNode, *fontSrcImg, uploadOptions ) );
+    return FontUploadedImg ? FontUploadedImg->hImg : nullptr;
 }
