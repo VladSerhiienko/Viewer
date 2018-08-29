@@ -7,99 +7,49 @@ apemodevk::DescriptorPool::DescriptorPool( ) : pNode( nullptr ) {
 apemodevk::DescriptorPool::~DescriptorPool( ) {
 }
 
-uint32_t apemodevk::DescriptorPool::GetAvailableSetCount( ) const {
-    return DescSetCounter;
+uint32_t apemodevk::DescriptorPool::GetAvailableDescriptorSetCount( ) const {
+    return MaxDescriptorSetCount;
 }
 
-uint32_t apemodevk::DescriptorPool::GetAvailableDescCount( VkDescriptorType descriptorType ) const {
-    apemode_assert( DescPoolCounters[ descriptorType ].type == DescType, "Desc type mismatch." );
-
-    return DescPoolCounters[ descriptorType ].descriptorCount;
+uint32_t apemodevk::DescriptorPool::GetAvailableDescriptorPoolSize( VkDescriptorType descriptorType ) const {
+    apemode_assert( MaxDescriptorPoolSizes[ descriptorType ].type == DescType, "Desc type mismatch." );
+    return MaxDescriptorPoolSizes[ descriptorType ].descriptorCount;
 }
 
-bool apemodevk::DescriptorPool::RecreateResourcesFor( GraphicsDevice& graphicsNode,
-                                                      uint32_t        maxSets,
-                                                      uint32_t        maxSamplerCount,
-                                                      uint32_t        maxCombinedImgCount,
-                                                      uint32_t        maxSampledImgCount,
-                                                      uint32_t        maxStorageImgCount,
-                                                      uint32_t        maxUniformTexelBufferCount,
-                                                      uint32_t        maxStorageTexelBufferCount,
-                                                      uint32_t        maxUniformBufferCount,
-                                                      uint32_t        maxStorageBufferCount,
-                                                      uint32_t        maxDynamicUniformBufferCount,
-                                                      uint32_t        maxDynamicStorageBufferCount,
-                                                      uint32_t        maxInputAttachmentCount ) {
+bool apemodevk::DescriptorPool::Initialize( InitializeParameters const& initializeParameters ) {
     apemodevk_memory_allocation_scope;
-    DescSetCounter = maxSets;
 
-    // This array is used for creating descriptor pool.
-    VkDescriptorPoolSize descriptorPoolSizes[ VK_DESCRIPTOR_TYPE_RANGE_SIZE ];
+    pNode                 = initializeParameters.pNode;
+    MaxDescriptorSetCount = initializeParameters.MaxDescriptorSetCount;
 
-    apemodevk::utils::ZeroMemory( DescPoolCounters );
-    apemodevk::utils::ZeroMemory( descriptorPoolSizes );
-
-    uint32_t descriptorTypeCounter     = 0;
-    uint32_t sizeCounter               = 0;
-    uint32_t descriptorPoolSizeCounter = 0;
-    for ( const auto maxDescTypeCount : {maxSamplerCount,
-                                         maxCombinedImgCount,
-                                         maxSampledImgCount,
-                                         maxStorageImgCount,
-                                         maxUniformTexelBufferCount,
-                                         maxStorageTexelBufferCount,
-                                         maxUniformBufferCount,
-                                         maxStorageBufferCount,
-                                         maxDynamicUniformBufferCount,
-                                         maxDynamicStorageBufferCount,
-                                         maxInputAttachmentCount} ) {
-        VkDescriptorType descriptorType = static_cast< VkDescriptorType >( descriptorTypeCounter );
-
-        DescPoolCounters[ sizeCounter ].descriptorCount = maxDescTypeCount;
-        DescPoolCounters[ sizeCounter ].type            = descriptorType;
-
-        if ( apemode_unlikely( maxDescTypeCount ) ) {
-            descriptorPoolSizes[ descriptorPoolSizeCounter ] = DescPoolCounters[ sizeCounter ];
-            ++descriptorPoolSizeCounter;
-        }
-
-        ++sizeCounter;
-        ++descriptorTypeCounter;
+    for ( uint32_t typeIndex = 0; typeIndex < VK_DESCRIPTOR_TYPE_RANGE_SIZE; ++typeIndex ) {
+        MaxDescriptorPoolSizes[ typeIndex ].type            = static_cast< VkDescriptorType >( typeIndex );
+        MaxDescriptorPoolSizes[ typeIndex ].descriptorCount = initializeParameters.MaxDescriptorPoolSizes[ typeIndex ];
     }
-
-    // TOFIX Does it make sense creating empty descriptor pool?
-    // TOFIX Is it required by certain API functions just to provide a valid (even empty) pool?
-    apemode_assert( descriptorPoolSizeCounter && maxSets, "Empty descriptor pool." );
 
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
     InitializeStruct( descriptorPoolCreateInfo );
 
-    descriptorPoolCreateInfo.maxSets       = maxSets;
-    descriptorPoolCreateInfo.pPoolSizes    = descriptorPoolSizes;
-    descriptorPoolCreateInfo.poolSizeCount = descriptorPoolSizeCounter;
+    descriptorPoolCreateInfo.maxSets       = MaxDescriptorSetCount;
+    descriptorPoolCreateInfo.pPoolSizes    = MaxDescriptorPoolSizes;
+    descriptorPoolCreateInfo.poolSizeCount = VK_DESCRIPTOR_TYPE_RANGE_SIZE;
 
-    if ( apemode_likely( hDescPool.Recreate( graphicsNode, descriptorPoolCreateInfo ) ) ) {
-        pNode = &graphicsNode;
-        return true;
-    }
-
-    return false;
+    return hDescriptorPool.Recreate( *pNode, descriptorPoolCreateInfo );
 }
 
 apemodevk::DescriptorPool::operator VkDescriptorPool( ) const {
-    return hDescPool;
+    return hDescriptorPool;
 }
 
 bool apemodevk::DescriptorSetPool::Recreate( VkDevice              pInLogicalDevice,
-                                             VkDescriptorPool      pInDescPool,
-                                             VkDescriptorSetLayout pInLayout ) {
+                                             VkDescriptorPool      pInDescriptorPool,
+                                             VkDescriptorSetLayout pInDescriptorSetLayout ) {
     apemodevk_memory_allocation_scope;
 
     pLogicalDevice       = pInLogicalDevice;
-    pDescriptorPool      = pInDescPool;
-    pDescriptorSetLayout = pInLayout;
+    pDescriptorPool      = pInDescriptorPool;
+    pDescriptorSetLayout = pInDescriptorSetLayout;
 
-    TempWrites.reserve( 16 ); /* TOFIX */
     return true;
 }
 
@@ -140,10 +90,9 @@ VkDescriptorSet apemodevk::DescriptorSetPool::GetDescriptorSet( const Descriptor
     eastl::for_each( pBindingIt, pBindingEndIt, [&]( const DescriptorSetBindingsBase::Binding& descriptorSetBinding ) {
         apemodevk_memory_allocation_scope;
 
-        TempWrites.emplace_back( );
-
-        auto& writeDescriptorSet = TempWrites.back( );
+        auto& writeDescriptorSet = TempWrites.emplace_back( );
         InitializeStruct( writeDescriptorSet );
+
         writeDescriptorSet.descriptorCount = 1;
         writeDescriptorSet.dstBinding      = descriptorSetBinding.DstBinding;
         writeDescriptorSet.descriptorType  = descriptorSetBinding.eDescriptorType;

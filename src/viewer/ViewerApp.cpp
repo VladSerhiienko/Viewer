@@ -88,14 +88,19 @@ bool ViewerApp::Initialize(  ) {
             }
         }
 
-        if ( false == DescriptorPool.RecreateResourcesFor( pAppSurface->Node, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256 ) ) {
-            apemode::platform::DebugBreak( );
+        apemodevk::DescriptorPool::InitializeParameters descPoolInitParameters;
+        descPoolInitParameters.pNode                                                               = &pAppSurface->Node;
+        descPoolInitParameters.MaxDescriptorSetCount                                               = 1024;
+        descPoolInitParameters.MaxDescriptorPoolSizes[ VK_DESCRIPTOR_TYPE_SAMPLER ]                = 64;
+        descPoolInitParameters.MaxDescriptorPoolSizes[ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC ] = 1024;
+        descPoolInitParameters.MaxDescriptorPoolSizes[ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER ] = 512;
+
+        if ( false == DescriptorPool.Initialize( descPoolInitParameters ) ) {
             return false;
         }
 
         pSamplerManager = apemode::make_unique< apemodevk::SamplerManager >( );
         if ( false == pSamplerManager->Recreate( &pAppSurface->Node ) ) {
-            apemode::platform::DebugBreak( );
             return false;
         }
 
