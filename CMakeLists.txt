@@ -15,8 +15,6 @@ string(TOLOWER  ${BUILD_FOLDER_SUFFIX} BUILD_FOLDER_SUFFIX)
 message(STATUS "BUILD_FOLDER_SUFFIX = ${BUILD_FOLDER_SUFFIX}")
 
 if (WIN32)
-
-
     set(
         default_cmake_args
         -G
@@ -553,10 +551,10 @@ add_dependencies(
 )
 
 message(STATUS "VK_SDK_PATH = $ENV{VK_SDK_PATH}")
+message(STATUS "MOLTENVK_SDK_PATH = ${MOLTENVK_SDK_PATH}")
 
-target_include_directories(
-    Viewer
-    PUBLIC
+set(
+    Viewer_include_dirs
     ${CMAKE_SOURCE_DIR}/assets/
     ${CMAKE_SOURCE_DIR}/assets/fonts/
     ${CMAKE_SOURCE_DIR}/src/apemode
@@ -588,14 +586,19 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/include/utils
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
     ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
-    $ENV{VK_SDK_PATH}/include
 )
 
 if (APPLE)
     set(
-        third_party_libs
-        $ENV{VK_SDK_PATH}/lib/libMoltenVK.dylib
-        $ENV{VK_SDK_PATH}/lib/libvulkan.dylib
+        Viewer_include_dirs
+        ${Viewer_include_dirs}
+        ${MOLTENVK_SDK_PATH}/MoltenVK/include
+    )
+
+    set(
+        Viewer_third_party_libs
+        debug ${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVK/macOS/libMoltenVK.dylib
+        optimized ${MOLTENVK_SDK_PATH}/Package/Release/MoltenVK/macOS/libMoltenVK.dylib
         ${flatbuffers_binary_dir}/libflatbuffers.a
         ${eastl_binary_dir}/libEASTL.a
         ${eastl_binary_dir}/test/packages/EAStdC/libEAStdC.a
@@ -619,7 +622,12 @@ if (APPLE)
     )
 elseif (UNIX)
     set(
-        third_party_libs
+        Viewer_include_dirs
+        ${Viewer_include_dirs}
+        $ENV{VK_SDK_PATH}/include
+    )
+    set(
+        Viewer_third_party_libs
         $ENV{VK_SDK_PATH}/lib/libvulkan.so
         X11
         Xext
@@ -637,7 +645,12 @@ elseif (UNIX)
     )
 elseif(WIN32)
     set(
-        third_party_libs
+        Viewer_include_dirs
+        ${Viewer_include_dirs}
+        $ENV{VK_SDK_PATH}/include
+    )
+    set(
+        Viewer_third_party_libs
 
         $ENV{VK_SDK_PATH}/lib/vulkan-1.lib
         opengl32.lib
@@ -653,6 +666,17 @@ elseif(WIN32)
         ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/TaskScheduler.lib
     )
 endif()
+
+target_include_directories(
+    Viewer
+    PUBLIC
+    ${Viewer_include_dirs}
+)
+
+target_link_libraries(
+    Viewer
+    ${Viewer_third_party_libs}
+)
 
 if(WIN32)
     set( viewer_dependencies_dlls_pdbs
@@ -676,11 +700,6 @@ foreach( viewer_dependencies_dll_pdb ${viewer_dependencies_dlls_pdbs} )
     )
 endforeach()
 
-target_link_libraries(
-    Viewer
-    ${third_party_libs}
-)
-
 set_target_properties(
     Viewer
     PROPERTIES
@@ -691,27 +710,16 @@ set_target_properties(
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PREDEFINED_TARGETS_FOLDER "CustomTargets")
 
+#
 # Shaders
-set( glslangValidatorAbsolute "$ENV{VK_SDK_PATH}/bin/glslangValidator")
+#
 
-# Output directory for the shaders
-set(
-    spirv_directory
-    ${CMAKE_SOURCE_DIR}/assets/shaders/.spv
-)
-
-add_custom_command(
-    TARGET Viewer PRE_BUILD
-    COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}"
-)
-
+# Shader source files
 # Source directory for the shaders
 set(
     shader_directory
     ${CMAKE_SOURCE_DIR}/assets/shaders
 )
-
-# Shader source files
 set(
     shader_files
     ${shader_directory}/Debug.vert
@@ -723,6 +731,45 @@ set(
     ${shader_directory}/Scene.vert
     ${shader_directory}/Scene.frag
 )
+
+if (APPLE)
+
+set( MoltenVKShaderConverterAbsolute "${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVKShaderConverter/Tools/MoltenVKShaderConverter")
+
+# Output directory for the shaders
+set( spirv_directory ${CMAKE_SOURCE_DIR}/assets/shaders/.spv )
+set( msl_directory ${CMAKE_SOURCE_DIR}/assets/shaders/.msl )
+add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}")
+add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${msl_directory}")
+add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}/.logs")
+add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${msl_directory}/.logs")
+
+# Shader compilation routine
+foreach(shader_file ${shader_files})
+
+    get_filename_component( shader_file_name ${shader_file} NAME )
+
+    string(LENGTH ${shader_file_name} shader_file_name_length)
+    math(EXPR shader_file_name_ext_begin "${shader_file_name_length} - 4")
+    string(SUBSTRING ${shader_file_name} ${shader_file_name_ext_begin} 1 shader_file_name_ext)
+
+    set( shader_file_spv "${spirv_directory}/${shader_file_name}.spv" )
+    set( shader_file_msl "${msl_directory}/${shader_file_name}.metal" )
+    message(STATUS "${shader_file} > ${shader_file_msl} + ${shader_file_spv}")
+
+    add_custom_command(
+        TARGET Viewer PRE_BUILD
+        COMMAND ${MoltenVKShaderConverterAbsolute} -t ${shader_file_name_ext} -gi ${shader_file} -so ${shader_file_spv} -l > "${spirv_directory}/.logs/${shader_file_name}.log.txt"
+        COMMAND ${MoltenVKShaderConverterAbsolute} -t ${shader_file_name_ext} -gi ${shader_file} -mo ${shader_file_msl} -l > "${msl_directory}/.logs/${shader_file_name}.log.txt"
+    )
+endforeach()
+
+else()
+
+# Shaders
+set( glslangValidatorAbsolute "$ENV{VK_SDK_PATH}/bin/glslangValidator")
+set( spirv_directory ${CMAKE_SOURCE_DIR}/assets/shaders/.spv )
+add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}")
 
 # Shader compilation routine
 foreach(shader_file ${shader_files})
@@ -749,3 +796,4 @@ foreach(shader_file ${shader_files})
     )
 
 endforeach()
+endif()
