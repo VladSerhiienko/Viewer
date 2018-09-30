@@ -733,43 +733,18 @@ set(
 )
 
 if (APPLE)
-
-set( MoltenVKShaderConverterAbsolute "${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVKShaderConverter/Tools/MoltenVKShaderConverter")
-
-# Output directory for the shaders
-set( spirv_directory ${CMAKE_SOURCE_DIR}/assets/shaders/.spv )
-set( msl_directory ${CMAKE_SOURCE_DIR}/assets/shaders/.msl )
-add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}")
-add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${msl_directory}")
-add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}/.logs")
-add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${msl_directory}/.logs")
-
-# Shader compilation routine
-foreach(shader_file ${shader_files})
-
-    get_filename_component( shader_file_name ${shader_file} NAME )
-
-    string(LENGTH ${shader_file_name} shader_file_name_length)
-    math(EXPR shader_file_name_ext_begin "${shader_file_name_length} - 4")
-    string(SUBSTRING ${shader_file_name} ${shader_file_name_ext_begin} 1 shader_file_name_ext)
-
-    set( shader_file_spv "${spirv_directory}/${shader_file_name}.spv" )
-    set( shader_file_msl "${msl_directory}/${shader_file_name}.metal" )
-    message(STATUS "${shader_file} > ${shader_file_msl} + ${shader_file_spv}")
-
-    add_custom_command(
-        TARGET Viewer PRE_BUILD
-        COMMAND ${MoltenVKShaderConverterAbsolute} -t ${shader_file_name_ext} -gi ${shader_file} -so ${shader_file_spv} -l > "${spirv_directory}/.logs/${shader_file_name}.log.txt"
-        COMMAND ${MoltenVKShaderConverterAbsolute} -t ${shader_file_name_ext} -gi ${shader_file} -mo ${shader_file_msl} -l > "${msl_directory}/.logs/${shader_file_name}.log.txt"
-    )
-endforeach()
-
+    set( glslangValidatorAbsolute "${MOLTENVK_SDK_PATH}/External/glslang/build/StandAlone/glslangValidator")
 else()
+    set( glslangValidatorAbsolute "$ENV{VK_SDK_PATH}/bin/glslangValidator")
+endif()
+
+message(STATUS "glslangValidator = ${glslangValidatorAbsolute}")
 
 # Shaders
-set( glslangValidatorAbsolute "$ENV{VK_SDK_PATH}/bin/glslangValidator")
 set( spirv_directory ${CMAKE_SOURCE_DIR}/assets/shaders/.spv )
 add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}")
+add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}/.preprocessed")
+add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}/.reflection")
 
 # Shader compilation routine
 foreach(shader_file ${shader_files})
@@ -780,14 +755,13 @@ foreach(shader_file ${shader_files})
     math(EXPR shader_file_name_ext_begin "${shader_file_name_length} - 4")
     string(SUBSTRING ${shader_file_name} ${shader_file_name_ext_begin} 4 shader_file_name_ext)
 
-    set( shader_file_preprocessed "${spirv_directory}/${shader_file_name}.preprocessed" )
-    set( shader_file_reflection "${spirv_directory}/${shader_file_name}.reflection" )
+    set( shader_file_preprocessed "${spirv_directory}/.preprocessed/${shader_file_name}.txt" )
+    set( shader_file_reflection "${spirv_directory}/.reflection/${shader_file_name}.txt" )
     set( shader_file_spv "${spirv_directory}/${shader_file_name}.spv" )
 
-    # message(STATUS " ... ")
-    # message(STATUS "${shader_file} > ${shader_file_name_ext} > ${shader_file_spv}")
-    # message(STATUS "${shader_file} + ${shader_file_preprocessed}")
-    # message(STATUS "${shader_file} + ${shader_file_reflection}")
+    message(STATUS "${shader_file} > ${shader_file_spv}")
+    message(STATUS "${shader_file} + ${shader_file_preprocessed}")
+    message(STATUS "${shader_file} + ${shader_file_reflection}")
 
     add_custom_command(
         TARGET Viewer PRE_BUILD
@@ -796,4 +770,32 @@ foreach(shader_file ${shader_files})
     )
 
 endforeach()
+
+if (APPLE)
+
+    set( MoltenVKShaderConverterAbsolute "${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVKShaderConverter/Tools/MoltenVKShaderConverter")
+
+    # Output directory for the shaders
+    set( msl_directory ${CMAKE_SOURCE_DIR}/assets/shaders/.msl )
+    add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${msl_directory}")
+    add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${msl_directory}/.logs")
+
+    # Shader compilation routine
+    foreach(shader_file ${shader_files})
+        get_filename_component( shader_file_name ${shader_file} NAME )
+        set( shader_file_spv "${spirv_directory}/${shader_file_name}.spv" )
+
+        string(LENGTH ${shader_file_name} shader_file_name_length)
+        math(EXPR shader_file_name_ext_begin "${shader_file_name_length} - 4")
+        string(SUBSTRING ${shader_file_name} ${shader_file_name_ext_begin} 1 shader_file_name_ext)
+
+        set( shader_file_msl "${msl_directory}/${shader_file_name}.metal" )
+        message(STATUS "${shader_file} > ${shader_file_msl}")
+
+        add_custom_command(
+            TARGET Viewer PRE_BUILD
+            COMMAND ${MoltenVKShaderConverterAbsolute} -t ${shader_file_name_ext} -si ${shader_file_spv} -mo ${shader_file_msl} -l > "${msl_directory}/.logs/${shader_file_name}.txt"
+        )
+    endforeach()
+
 endif()
