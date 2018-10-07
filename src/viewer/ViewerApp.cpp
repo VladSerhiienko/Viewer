@@ -254,7 +254,7 @@ bool ViewerApp::Initialize(  ) {
         }
 
         auto sceneFile = TGetOption< std::string >( "scene", "" );
-        mLoadedScene = std::move( LoadSceneFromBin( apemodeos::FileReader( ).ReadBinFile( sceneFile.c_str( ) ) ) );
+        mLoadedScene = LoadSceneFromBin( apemodeos::FileReader( ).ReadBinFile( sceneFile.c_str( ) ) );
 
         vk::SceneUploader::UploadParameters uploadParams;
         uploadParams.pSamplerManager = pSamplerManager.get( );
