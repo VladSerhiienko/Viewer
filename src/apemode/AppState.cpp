@@ -28,7 +28,7 @@ namespace apemode {
     };
 } // namespace apemode
 
-apemode::ImplementedAppState* gState = nullptr;
+static apemode::ImplementedAppState* gState = nullptr;
 
 apemode::AppState* apemode::AppState::Get( ) {
     return gState;
@@ -121,9 +121,17 @@ std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, s
 }
 
 apemode::ImplementedAppState::ImplementedAppState( int argc, const char** argv )
-    : Logger( CreateLogger( spdlog::level::trace, ComposeLogFile( ) ) )
-    , Cmdl( argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION )
+    : Logger( nullptr )
+    , Cmdl( )
     , TaskScheduler( ) {
+    
+    Logger = CreateLogger( spdlog::level::trace, ComposeLogFile( ) );
+    Logger->info("Input argumets:");
+    for (int i = 0; i < argc; ++i) {
+        Logger->info("#{} = {}", i, argv[i]);
+    }
+    
+    Cmdl.parse( argc, argv, argh::parser::PREFER_PARAM_FOR_UNREG_OPTION );
 }
 
 apemode::ImplementedAppState::~ImplementedAppState( ) {

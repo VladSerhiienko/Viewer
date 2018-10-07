@@ -56,6 +56,7 @@
             "type": "shell",
             "command": "cmake",
             "args": [
+                "-G", "Xcode",
                 "-H.", "-Bbuild_darwin_x86_64_appleclang",
                 "-DMOLTENVK_SDK_PATH=/Users/vlad.serhiienko/Projects/Home/MoltenVK",
             ],
@@ -115,6 +116,9 @@
             "label": "Make/Viewer(Darwin/Makefile/AppleClang)",
             "type": "shell",
             "command": "make",
+            "args": [
+                // "-d",
+            ],
             "options": {
                 "cwd": "${workspaceFolder}/build_darwin_x86_64_appleclang"
             },

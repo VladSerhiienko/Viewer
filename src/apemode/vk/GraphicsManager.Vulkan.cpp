@@ -63,65 +63,63 @@ bool EnumerateLayersAndExtensions( uint32_t                          eFlags,
     OutLayerNames.clear( );
     OutExtensionNames.clear( );
 
-    const bool bValidate = HasFlagEq( eFlags, apemodevk::GraphicsManager::kEnableValidation );
+    uint32_t instanceLayeCount = 0;
+    apemodevk::vector< VkLayerProperties > allInstanceLayers;
+    err = vkEnumerateInstanceLayerProperties( &instanceLayeCount, NULL );
+    if ( err )
+        return false;
+    
+    if ( instanceLayeCount > 0 ) {
 
-    const char* instance_validation_layers_alt1[] = {"VK_LAYER_LUNARG_standard_validation"};
-
-    const char* instance_validation_layers_alt2[] = {"VK_LAYER_GOOGLE_threading",
-                                                     "VK_LAYER_LUNARG_parameter_validation",
-                                                     "VK_LAYER_LUNARG_object_tracker",
-                                                     "VK_LAYER_LUNARG_core_validation",
-                                                     "VK_LAYER_GOOGLE_unique_objects"};
-
-    /* Look for validation layers */
-    VkBool32 validation_found = 0;
-    if ( bValidate ) {
-
-        uint32_t instanceLayeCount = 0;
-        err = vkEnumerateInstanceLayerProperties( &instanceLayeCount, NULL );
+        allInstanceLayers.resize( instanceLayeCount );
+        err = vkEnumerateInstanceLayerProperties( &instanceLayeCount, allInstanceLayers.data( ) );
         if ( err )
             return false;
 
-        if ( instanceLayeCount > 0 ) {
+        for ( auto& instanceLayerName : allInstanceLayers ) {
+            apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Debug,
+                                             "> Layer: %s (%u): %s",
+                                             instanceLayerName.layerName,
+                                             instanceLayerName.specVersion,
+                                             instanceLayerName.description );
 
-            apemodevk::vector< VkLayerProperties > allInstanceLayers;
-            allInstanceLayers.resize( instanceLayeCount );
-
-            err = vkEnumerateInstanceLayerProperties( &instanceLayeCount, allInstanceLayers.data( ) );
-            if ( err )
-                return false;
-
-            for ( auto& instanceLayerName : allInstanceLayers ) {
-                apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Debug,
-                                                 "> Layer: %s (%u): %s",
-                                                 instanceLayerName.layerName,
-                                                 instanceLayerName.specVersion,
-                                                 instanceLayerName.description );
-
-                for ( uint32_t j = 0; j < layerCount; ++j ) {
-                    if ( !strcmp( ppszLayers[ j ], instanceLayerName.layerName ) ) {
-                        OutLayerNames.push_back( ppszLayers[ j ] );
-                    }
+            for ( uint32_t j = 0; j < layerCount; ++j ) {
+                if ( !strcmp( ppszLayers[ j ], instanceLayerName.layerName ) ) {
+                    OutLayerNames.push_back( ppszLayers[ j ] );
                 }
             }
+        }
+    }
+    
+    const bool bValidate = HasFlagEq( eFlags, apemodevk::GraphicsManager::kEnableValidation );
+    if ( bValidate ) {
+        /* Look for validation layers */
+        VkBool32 validation_found = 0;
 
-            validation_found = CheckLayers( apemodevk::utils::GetArraySizeU( instance_validation_layers_alt1 ),
-                                            instance_validation_layers_alt1,
+        const char* instance_validation_layers_alt1[] = {"VK_LAYER_LUNARG_standard_validation"};
+
+        const char* instance_validation_layers_alt2[] = {"VK_LAYER_GOOGLE_threading",
+                                                         "VK_LAYER_LUNARG_parameter_validation",
+                                                         "VK_LAYER_LUNARG_object_tracker",
+                                                         "VK_LAYER_LUNARG_core_validation",
+                                                         "VK_LAYER_GOOGLE_unique_objects"};
+
+        validation_found = CheckLayers( apemodevk::utils::GetArraySizeU( instance_validation_layers_alt1 ),
+                                        instance_validation_layers_alt1,
+                                        instanceLayeCount,
+                                        allInstanceLayers.data( ) );
+        if ( validation_found ) {
+            for ( auto n : instance_validation_layers_alt1 ) {
+                AddName( OutLayerNames, n );
+            }
+        } else {
+            validation_found = CheckLayers( apemodevk::utils::GetArraySizeU( instance_validation_layers_alt2 ),
+                                            instance_validation_layers_alt2,
                                             instanceLayeCount,
                                             allInstanceLayers.data( ) );
             if ( validation_found ) {
-                for ( auto n : instance_validation_layers_alt1 ) {
+                for ( auto n : instance_validation_layers_alt2 ) {
                     AddName( OutLayerNames, n );
-                }
-            } else {
-                validation_found = CheckLayers( apemodevk::utils::GetArraySizeU( instance_validation_layers_alt2 ),
-                                                instance_validation_layers_alt2,
-                                                instanceLayeCount,
-                                                allInstanceLayers.data( ) );
-                if ( validation_found ) {
-                    for ( auto n : instance_validation_layers_alt2 ) {
-                        AddName( OutLayerNames, n );
-                    }
                 }
             }
         }

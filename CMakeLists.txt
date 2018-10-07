@@ -17,13 +17,13 @@ message(STATUS "BUILD_FOLDER_SUFFIX = ${BUILD_FOLDER_SUFFIX}")
 if (WIN32)
     set(
         default_cmake_args
-        -G
-        "Visual Studio 15 2017 Win64"
+        -G "Visual Studio 15 2017 Win64"
         -B${BUILD_FOLDER_SUFFIX} "-H."
     )
 elseif(APPLE)
     set(
         default_cmake_args
+        -G "Xcode"
         -B${BUILD_FOLDER_SUFFIX} -H.
     )
 else()
@@ -327,8 +327,21 @@ message(STATUS "VulkanMemoryAllocator_source_dir = ${VulkanMemoryAllocator_sourc
 set( CMAKE_CXX_STANDARD 17 )
 set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG" )
 set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG" )
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMT_INSTRUMENTED_BUILD")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DMT_INSTRUMENTED_BUILD")
+
+if (UNIX)
+add_definitions("-rdynamic")
+endif()
+
+if (UNIX AND APPLE)
+add_definitions("-Wno-invalid-offsetof -Wno-deprecated-declarations -fno-omit-frame-pointer")
+endif()
+
+if(MSVC)
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_UNICODE=1 -DUNICODE=1")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_UNICODE=1 -DUNICODE=1")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMT_UNICODE")
+set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DMT_UNICODE")
+endif()
 
 # add_definitions("-DAPEMODE_NO_GLOBAL_NEW_DELETE_OP_OVERRIDES")
 
@@ -354,7 +367,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
     # using AppleClang
     add_definitions( "-g" )
     add_definitions( "-DHAVE_PTHREAD" )
-    set( CONFIGURATION_SUFFIX "" )
+    set( CONFIGURATION_SUFFIX "/$CONFIGURATION" )
 
     if (UNIX AND APPLE)
         set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DVK_USE_PLATFORM_MACOS_MVK" )
@@ -597,13 +610,13 @@ if (APPLE)
 
     set(
         Viewer_third_party_libs
-        debug ${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVK/macOS/libMoltenVK.dylib
-        optimized ${MOLTENVK_SDK_PATH}/Package/Release/MoltenVK/macOS/libMoltenVK.dylib
-        ${flatbuffers_binary_dir}/libflatbuffers.a
-        ${eastl_binary_dir}/libEASTL.a
-        ${eastl_binary_dir}/test/packages/EAStdC/libEAStdC.a
-        ${sdl2_binary_dir}/libSDL2.a
-        ${TaskScheduler_binary_dir}/libTaskScheduler.a
+        # libMoltenVK.dylib
+        ${MOLTENVK_SDK_PATH}/Package${CONFIGURATION_SUFFIX}/MoltenVK/macOS/libMoltenVK.dylib
+        ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/libflatbuffers.a
+        ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
+        ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a
+        ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/libSDL2.a
+        ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/libTaskScheduler.a
         pthread
         dl
         stdc++
@@ -688,6 +701,23 @@ elseif(UNIX AND NOT APPLE)
         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/libSDL2-2.0.so
         )
 endif()
+
+add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/Debug")
+add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/Release")
+
+add_custom_command(
+    TARGET Viewer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVK/macOS/libMoltenVK.dylib
+    ${CMAKE_BINARY_DIR}/Debug
+)
+
+add_custom_command(
+    TARGET Viewer POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    ${MOLTENVK_SDK_PATH}/Package/Release/MoltenVK/macOS/libMoltenVK.dylib
+    ${CMAKE_BINARY_DIR}/Release
+)
 
 foreach( viewer_dependencies_dll_pdb ${viewer_dependencies_dlls_pdbs} )
     add_custom_command(

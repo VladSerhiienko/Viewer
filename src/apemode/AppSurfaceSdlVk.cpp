@@ -87,6 +87,12 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
 
     const char** ppszExtensions = nullptr;
     size_t extentionCount = 0;
+    
+#ifdef __APPLE__
+    graphicsManagerFlags &= ~apemodevk::GraphicsManager::kEnableValidation;
+    ppszLayers[ layerCount ] = "MoltenVK";
+    ++layerCount;
+#else
 
     if ( TGetOption< bool >( "renderdoc", false ) ) {
         ppszLayers[ layerCount ] = "VK_LAYER_RENDERDOC_Capture";
@@ -105,6 +111,8 @@ bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, cons
         graphicsManagerFlags = 0;
         ++layerCount;
     }
+
+#endif
 
     Logger = apemode::make_unique< GraphicsLogger >( );
     Alloc  = apemode::make_unique< GraphicsAllocator >( );
