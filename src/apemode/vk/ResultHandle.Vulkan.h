@@ -43,7 +43,7 @@ namespace apemodevk {
     inline VkResult CheckedResult( VkResult eResult ) {
 #ifdef _DEBUG
         if ( VK_SUCCESS > eResult ) {
-            platform::LogFmt( platform::LogLevel::Err, __FUNCTION__ ": (ERROR) %u %s.", eResult, ToString( eResult ) );
+            platform::LogFmt( platform::LogLevel::Err, "(ERROR) %u %s.", eResult, ToString( eResult ) );
             platform::DebugBreak( );
         }
 #endif

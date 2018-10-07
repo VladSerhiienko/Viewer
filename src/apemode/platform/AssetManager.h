@@ -3,6 +3,7 @@
 #include <map>
 #include <stdint.h>
 #include <atomic>
+#include <string>
 
 #include <IAssetManager.h>
 

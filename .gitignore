@@ -43,3 +43,5 @@
 assets/images/*
 .DS_Store
 assets/shaders/.spv/*
+assets/shaders/.msl/*
+.vscode/db*

@@ -56,11 +56,9 @@
             "type": "shell",
             "command": "cmake",
             "args": [
+                "-G", "Xcode",
                 "-H.", "-Bbuild_darwin_x86_64_appleclang",
-                // "-DCMAKE_C_COMPILER=/usr/local/Cellar/gcc\\@7/7.3.0/bin/gcc-7",
-                // "-DCMAKE_CXX_COMPILER=/usr/local/Cellar/gcc\\@7/7.3.0/bin/g++-7",
-                // "-DCMAKE_C_COMPILER=/usr/local/opt/llvm@5/bin/clang",
-                // "-DCMAKE_CXX_COMPILER=/usr/local/opt/llvm@5/bin/clang++",
+                "-DMOLTENVK_SDK_PATH=/Users/vlad.serhiienko/Projects/Home/MoltenVK",
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -118,6 +116,9 @@
             "label": "Make/Viewer(Darwin/Makefile/AppleClang)",
             "type": "shell",
             "command": "make",
+            "args": [
+                // "-d",
+            ],
             "options": {
                 "cwd": "${workspaceFolder}/build_darwin_x86_64_appleclang"
             },
