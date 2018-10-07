@@ -336,6 +336,50 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
     return true;
 }
 
+template < uint32_t TShaderStageCount >
+struct TGraphicsPipelineCreateInfoComposite {
+
+    VkPipelineShaderStageCreateInfo        Stages[ TShaderStageCount ];
+    VkPipelineVertexInputStateCreateInfo   PipelineVertexInputStateCreateInfo;
+    VkPipelineInputAssemblyStateCreateInfo PipelineInputAssemblyStateCreateInfo;
+    VkPipelineTessellationStateCreateInfo  PipelineTessellationStateCreateInfo;
+    VkPipelineViewportStateCreateInfo      PipelineViewportStateCreateInfo;
+    VkPipelineRasterizationStateCreateInfo PipelineRasterizationStateCreateInfo;
+    VkPipelineMultisampleStateCreateInfo   PipelineMultisampleStateCreateInfo;
+    VkPipelineDepthStencilStateCreateInfo  PipelineDepthStencilStateCreateInfo;
+    VkPipelineColorBlendStateCreateInfo    PipelineColorBlendStateCreateInfo;
+    VkPipelineDynamicStateCreateInfo       PipelineDynamicStateCreateInfo;
+    VkGraphicsPipelineCreateInfo           GraphicsPipelineCreateInfo;
+
+    TGraphicsPipelineCreateInfoComposite( ) {
+        using namespace apemodevk;
+
+        InitializeStruct( Stages );
+        InitializeStruct( PipelineVertexInputStateCreateInfo );
+        InitializeStruct( PipelineInputAssemblyStateCreateInfo );
+        InitializeStruct( PipelineTessellationStateCreateInfo );
+        InitializeStruct( PipelineViewportStateCreateInfo );
+        InitializeStruct( PipelineRasterizationStateCreateInfo );
+        InitializeStruct( PipelineMultisampleStateCreateInfo );
+        InitializeStruct( PipelineDepthStencilStateCreateInfo );
+        InitializeStruct( PipelineColorBlendStateCreateInfo );
+        InitializeStruct( PipelineDynamicStateCreateInfo );
+        InitializeStruct( GraphicsPipelineCreateInfo );
+
+        GraphicsPipelineCreateInfo.stageCount          = utils::GetArraySizeU( Stages );
+        GraphicsPipelineCreateInfo.pStages             = &Stages[ 0 ];
+        GraphicsPipelineCreateInfo.pVertexInputState   = &PipelineVertexInputStateCreateInfo;
+        GraphicsPipelineCreateInfo.pInputAssemblyState = &PipelineInputAssemblyStateCreateInfo;
+        GraphicsPipelineCreateInfo.pTessellationState  = &PipelineTessellationStateCreateInfo;
+        GraphicsPipelineCreateInfo.pViewportState      = &PipelineViewportStateCreateInfo;
+        GraphicsPipelineCreateInfo.pRasterizationState = &PipelineRasterizationStateCreateInfo;
+        GraphicsPipelineCreateInfo.pMultisampleState   = &PipelineMultisampleStateCreateInfo;
+        GraphicsPipelineCreateInfo.pDepthStencilState  = &PipelineDepthStencilStateCreateInfo;
+        GraphicsPipelineCreateInfo.pColorBlendState    = &PipelineColorBlendStateCreateInfo;
+        GraphicsPipelineCreateInfo.pDynamicState       = &PipelineDynamicStateCreateInfo;
+    }
+};
+
 bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParamsBase ) {
     using namespace apemodevk;
 
