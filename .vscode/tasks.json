@@ -52,7 +52,7 @@
             }
         },
         {
-            "label": "CMake/Viewer(Darwin/Makefile/AppleClang)",
+            "label": "CMake/Viewer(Darwin/Xcode)",
             "type": "shell",
             "command": "cmake",
             "args": [
@@ -113,11 +113,14 @@
             ]
         },
         {
-            "label": "Make/Viewer(Darwin/Makefile/AppleClang)",
+            "label": "Make/Viewer(Darwin/Xcode/Debug)",
             "type": "shell",
-            "command": "make",
+            "command": "xcodebuild",
             "args": [
-                // "-d",
+                "-project",
+                "${workspaceFolder}/build_darwin_x86_64_appleclang/Viewer.xcodeproj",
+                "-configuration",
+                "Debug"
             ],
             "options": {
                 "cwd": "${workspaceFolder}/build_darwin_x86_64_appleclang"
@@ -126,7 +129,26 @@
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": [ "CMake/Viewer(Darwin/Makefile/AppleClang)"]
+            "dependsOn": [ "CMake/Viewer(Darwin/Xcode)"]
+        },
+        {
+            "label": "Make/Viewer(Darwin/Xcode/Release)",
+            "type": "shell",
+            "command": "xcodebuild",
+            "args": [
+                "-project",
+                "${workspaceFolder}/build_darwin_x86_64_appleclang/Viewer.xcodeproj",
+                "-configuration",
+                "Release"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build_darwin_x86_64_appleclang"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [ "CMake/Viewer(Darwin/Xcode)"]
         },
         {
             "label": "Make/Viewer(Linux/Makefile/GNU)",
