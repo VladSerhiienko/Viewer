@@ -215,10 +215,10 @@ struct SceneAnimCurve {
      */
     apemode::vector_map< float, SceneAnimCurveKey > Keys;
 
-    /* Assigns two indices of the keys for the given time value.
+    /* Assigns two indices of the keys for the given time value, loops the time value.
      * The two key indices can be used for accessing actual animation keys' values and interpolating between them.
      */
-    void GetKeyIndices( float time, bool bLoop, uint32_t &i, uint32_t &j ) const;
+    void GetKeyIndices( float &time, bool bLoop, uint32_t &i, uint32_t &j ) const;
 
     /* Returns interpolated curve's value for the given time value.
      */

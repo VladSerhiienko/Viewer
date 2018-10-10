@@ -620,35 +620,65 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
     return LoadedScene{std::move( fileContents ), pSrcScene, std::move( pScene )};
 }
 
-void apemode::SceneAnimCurve::GetKeyIndices( float time, bool bLoop, uint32_t &i, uint32_t &j ) const {
+namespace {
+inline bool NearlyEqual( const float a, const float b ) {
+    return std::abs( a - b ) <= std::numeric_limits< float >::epsilon( );
+}
+inline bool NearlyEqualOrLess( const float a, const float b ) {
+    return std::abs( a - b ) <= std::numeric_limits< float >::epsilon( ) || ( a < b );
+}
+inline bool NearlyEqualOrGreater( const float a, const float b ) {
+    return std::abs( a - b ) <= std::numeric_limits< float >::epsilon( ) || ( a > b );
+}
+} // namespace
+
+void apemode::SceneAnimCurve::GetKeyIndices( float & time, const bool bLoop, uint32_t &i, uint32_t &j ) const {
     if ( bLoop ) {
+        // Loop the given time value.
+        #ifdef SCENEANIMCURVE_USE_MODF
         float relativeTime, fractionalPart, integerPart;
         relativeTime = ( time - TimeMinMaxTotal.x ) / TimeMinMaxTotal.z;
         fractionalPart = modf( relativeTime, &integerPart );
         time = TimeMinMaxTotal.x + TimeMinMaxTotal.z * fractionalPart;
         (void) integerPart;
+        #else
+        float relativeTime, fractionalPart;
+        relativeTime = ( time - TimeMinMaxTotal.x ) / TimeMinMaxTotal.z;
+        fractionalPart = relativeTime - (float)(long)relativeTime;
+        time = TimeMinMaxTotal.x + TimeMinMaxTotal.z * fractionalPart;
+        #endif
     }
 
-    if ( time < TimeMinMaxTotal.x ) {
+    if ( NearlyEqualOrLess( time, TimeMinMaxTotal.x ) ) {
+        // Case: before the curve's first key, or on it.
         i = 0;
         j = 0;
-    } else if ( time > TimeMinMaxTotal.y ) {
+    } else if ( NearlyEqualOrGreater( time, TimeMinMaxTotal.y ) ) {
+        // Case: after the curve's last key, or on it.
         i = static_cast< uint32_t >( Keys.size( ) ) - 1;
         j = i;
     } else {
-        auto lowerBoundIt = Keys.lower_bound( time );
-        if ( lowerBoundIt == Keys.end( ) ) {
+        // Case: inside the curve's timeline.
+        auto matchOrUpperBoundIt = Keys.lower_bound( time );
+        assert(matchOrUpperBoundIt == Keys.end());
+
+        if ( NearlyEqual( matchOrUpperBoundIt->second.Time, time ) ) {
+            // Case: exactly on curve's key.
             i = static_cast< uint32_t >( Keys.size( ) ) - 1;
             j = i;
         } else {
-            auto upperBoundIt = Keys.upper_bound( time );
-            i = static_cast< uint32_t >( eastl::distance( Keys.begin( ), lowerBoundIt ) ) - 1;
-            j = static_cast< uint32_t >( eastl::distance( Keys.begin( ), upperBoundIt ) ) - 1;
+            const auto lowerBoundIt = eastl::prev(matchOrUpperBoundIt);
+            const auto upperBoundIt = matchOrUpperBoundIt;
+            assert(lowerBoundIt == Keys.end());
+
+            // Case: inside the curve's segment.
+            i = static_cast< uint32_t >( eastl::distance( Keys.cbegin( ), lowerBoundIt ) ) - 1;
+            j = static_cast< uint32_t >( eastl::distance( Keys.cbegin( ), upperBoundIt ) ) - 1;
         }
     }
 }
 
-float apemode::SceneAnimCurve::Calculate( float time, bool bLoop ) const {
+float apemode::SceneAnimCurve::Calculate( float time, const bool bLoop ) const {
 
     uint32_t i, j;
     GetKeyIndices( time, bLoop, i, j );
