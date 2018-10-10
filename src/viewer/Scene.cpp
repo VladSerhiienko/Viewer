@@ -707,37 +707,25 @@ const char *apemode::utils::GetCStringProperty( const apemodefb::SceneFb *pScene
 }
 
 bool apemode::utils::GetBoolProperty( const apemodefb::SceneFb *pScene, const uint32_t valueId ) {
-    assert( pScene );
-    assert( apemodefb::EValueTypeFb_Bool == MaterialPropertyGetType( valueId ) );
-
+    assert( pScene && apemodefb::EValueTypeFb_Bool == MaterialPropertyGetType( valueId ) );
     const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
     return pScene->bool_values( )->Get( valueIndex );
 }
 
 float apemode::utils::GetScalarProperty( const apemodefb::SceneFb *pScene, const uint32_t valueId ) {
-    assert( pScene );
-    assert( apemodefb::EValueTypeFb_Float == MaterialPropertyGetType( valueId ) );
-
+    assert( pScene && apemodefb::EValueTypeFb_Float == MaterialPropertyGetType( valueId ) );
     const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
     return pScene->float_values( )->Get( valueIndex );
 }
 
 apemodefb::Vec2Fb apemode::utils::GetVec2Property( const apemodefb::SceneFb *pScene, const uint32_t valueId ) {
-    assert( pScene );
-
-    const auto valueType = MaterialPropertyGetType( valueId );
-    assert( apemodefb::EValueTypeFb_Float2 == valueType );
-
+    assert( pScene && apemodefb::EValueTypeFb_Float2 == MaterialPropertyGetType( valueId ) );
     const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
     return apemodefb::Vec2Fb( pScene->float_values( )->Get( valueIndex ), pScene->float_values( )->Get( valueIndex + 1 ) );
 }
 
 apemodefb::Vec3Fb apemode::utils::GetVec3Property( const apemodefb::SceneFb *pScene, const uint32_t valueId ) {
-    assert( pScene );
-
-    const auto valueType = MaterialPropertyGetType( valueId );
-    assert( apemodefb::EValueTypeFb_Float3 == valueType );
-
+    assert( pScene && apemodefb::EValueTypeFb_Float3 == MaterialPropertyGetType( valueId ) );
     const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
     return apemodefb::Vec3Fb( pScene->float_values( )->Get( valueIndex ),
                               pScene->float_values( )->Get( valueIndex + 1 ),
@@ -747,15 +735,13 @@ apemodefb::Vec3Fb apemode::utils::GetVec3Property( const apemodefb::SceneFb *pSc
 apemodefb::Vec4Fb apemode::utils::GetVec4Property( const apemodefb::SceneFb *pScene,
                                                    const uint32_t            valueId,
                                                    const float               defaultW ) {
-    assert( pScene );
-
-    const auto valueType = MaterialPropertyGetType( valueId );
-    assert( apemodefb::EValueTypeFb_Float3 == valueType || apemodefb::EValueTypeFb_Float4 == valueType );
-
+    assert( pScene && ( apemodefb::EValueTypeFb_Float3 == MaterialPropertyGetType( valueId ) ||
+                        apemodefb::EValueTypeFb_Float4 == MaterialPropertyGetType( valueId ) ) );
     const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
-    return apemodefb::Vec4Fb(
-        pScene->float_values( )->Get( valueIndex ),
-        pScene->float_values( )->Get( valueIndex + 1 ),
-        pScene->float_values( )->Get( valueIndex + 2 ),
-        apemodefb::EValueTypeFb_Float4 == valueType ? pScene->float_values( )->Get( valueIndex + 3 ) : defaultW );
+    return apemodefb::Vec4Fb( pScene->float_values( )->Get( valueIndex ),
+                              pScene->float_values( )->Get( valueIndex + 1 ),
+                              pScene->float_values( )->Get( valueIndex + 2 ),
+                              apemodefb::EValueTypeFb_Float4 == MaterialPropertyGetType( valueId )
+                                  ? pScene->float_values( )->Get( valueIndex + 3 )
+                                  : defaultW );
 }
