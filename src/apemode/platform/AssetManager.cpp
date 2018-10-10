@@ -12,7 +12,7 @@
 
 bool apemodeos::DirectoryExists( const char * pszPath ) {
 #if _WIN32
-    DWORD dwAttrib = GetFileAttributes( pszPath );
+    DWORD dwAttrib = GetFileAttributesA( pszPath );
     return ( dwAttrib != INVALID_FILE_ATTRIBUTES && ( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
 #else
     struct stat statBuffer;
@@ -22,7 +22,7 @@ bool apemodeos::DirectoryExists( const char * pszPath ) {
 
 bool apemodeos::FileExists(  const char * pszPath ) {
 #if _WIN32
-    DWORD dwAttrib = GetFileAttributes( pszPath );
+    DWORD dwAttrib = GetFileAttributesA( pszPath );
     return ( dwAttrib != INVALID_FILE_ATTRIBUTES && !( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
 #else
     struct stat statBuffer;

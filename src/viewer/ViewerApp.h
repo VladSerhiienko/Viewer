@@ -28,7 +28,23 @@ namespace apemode {
     class AppState;
     class AppContent;
 
-    class ViewerApp : public apemode::AppBase {
+    class ViewerApp {
+    public:
+        ViewerApp( );
+        ~ViewerApp( );
+
+        /* Returns true if initialization succeeded, false otherwise.
+         */
+        bool Initialize( const apemode::PlatformSurface* pPlatformSurface );
+
+        /* Returns true if the app is running, false otherwise.
+         */
+        bool Update( float deltaSecs, const apemode::Input& inputState, VkExtent2D extent );
+
+    protected:
+        bool OnResized( );
+
+    private:
         friend AppState;
         friend AppContent;
 
@@ -44,11 +60,13 @@ namespace apemode {
         XMFLOAT4 LightDirection;
         XMFLOAT4 LightColor;
 
-        apemodeos::AssetManager         mAssetManager;
+        apemodeos::AssetManager mAssetManager;
 
         CameraProjectionController                       CamProjController;
         apemode::unique_ptr< CameraControllerInputBase > pCamInput      = nullptr;
         apemode::unique_ptr< CameraControllerBase >      pCamController = nullptr;
+
+        AppSurfaceSdlVk AppSurface;
 
         uint32_t                                        BackbufferIndices[ kMaxFrames ] = {0};
         apemodevk::DescriptorPool                       DescriptorPool;
@@ -64,33 +82,18 @@ namespace apemode {
         apemodevk::THandle< VkImageView >               hDepthImgViews[ kMaxFrames ];
         apemodevk::THandle< VkDeviceMemory >            hDepthImgMemory[ kMaxFrames ];
 
-        apemode::unique_ptr< apemodevk::SamplerManager >       pSamplerManager;
-        apemodevk::unique_ptr< apemodevk::UploadedImage >      RadianceImg;
-        apemodevk::unique_ptr< apemodevk::UploadedImage >      IrradianceImg;
-        VkSampler                                              pRadianceCubeMapSampler   = VK_NULL_HANDLE;
-        VkSampler                                              pIrradianceCubeMapSampler = VK_NULL_HANDLE;
+        apemode::unique_ptr< apemodevk::SamplerManager >  pSamplerManager;
+        apemodevk::unique_ptr< apemodevk::UploadedImage > RadianceImg;
+        apemodevk::unique_ptr< apemodevk::UploadedImage > IrradianceImg;
+        VkSampler                                         pRadianceCubeMapSampler   = VK_NULL_HANDLE;
+        VkSampler                                         pIrradianceCubeMapSampler = VK_NULL_HANDLE;
 
         apemode::unique_ptr< NuklearRendererSdlBase > pNkRenderer;
         apemode::unique_ptr< SceneRendererBase >      pSceneRendererBase;
         apemode::unique_ptr< vk::Skybox >             pSkybox;
         apemode::unique_ptr< vk::SkyboxRenderer >     pSkyboxRenderer;
-        apemode::unique_ptr< vk::DebugRenderer >    pDebugRenderer;
+        apemode::unique_ptr< vk::DebugRenderer >      pDebugRenderer;
 
         LoadedScene mLoadedScene;
-
-    public:
-        ViewerApp( );
-        virtual ~ViewerApp( );
-
-    public:
-        bool                                           Initialize( ) override;
-        apemode::unique_ptr< apemode::AppSurfaceBase > CreateAppSurface( ) override;
-        const char*                                    GetAppName( ) override { return "Viewer"; }
-
-    public:
-        bool OnResized( );
-        void OnFrameMove( ) override;
-        void Update( float deltaSecs, apemode::Input const& inputState ) override;
-        bool IsRunning( ) override;
     };
 }

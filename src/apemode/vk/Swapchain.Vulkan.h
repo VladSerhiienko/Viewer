@@ -56,18 +56,18 @@ namespace apemodevk {
             pPhysicalDevice = pInPhysicalDevice;
 
 #if VK_USE_PLATFORM_IOS_MVK
-            VkIOSSurfaceCreateInfoMVK surfaceCreateInfoMVK;
+            VkIOSSurfaceCreateInfoMVK moltenSurfaceCreateInfo;
 #elif VK_USE_PLATFORM_MACOS_MVK
-            VkMacOSSurfaceCreateInfoMVK surfaceCreateInfoMVK;
+            VkMacOSSurfaceCreateInfoMVK moltenSurfaceCreateInfo;
 #endif
 
-            InitializeStruct( surfaceCreateInfoMVK );
-            surfaceCreateInfoMVK.sType = VK_STRUCTURE_TYPE_IOS_SURFACE_CREATE_INFO_MVK;
-            surfaceCreateInfoMVK.pNext = NULL;
-            surfaceCreateInfoMVK.flags = 0;
-            surfaceCreateInfoMVK.pView = pView;
+            InitializeStruct( moltenSurfaceCreateInfo );
+            moltenSurfaceCreateInfo.sType = VK_STRUCTURE_TYPE_IOS_SURFACE_CREATE_INFO_MVK;
+            moltenSurfaceCreateInfo.pNext = NULL;
+            moltenSurfaceCreateInfo.flags = 0;
+            moltenSurfaceCreateInfo.pView = pView;
 
-            return hSurface.Recreate( pInInstance, surfaceCreateInfoMVK ) && SetSurfaceProperties( );
+            return hSurface.Recreate( pInInstance, moltenSurfaceCreateInfo ) && SetSurfaceProperties( );
         }
 #elif VK_USE_PLATFORM_XLIB_KHR
         inline bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, Display* pDisplayX11, Window pWindowX11 ) {
@@ -87,6 +87,24 @@ namespace apemodevk {
             xlibSurfaceCreateInfoKHR.dpy    = pDisplayX11;
 
             return hSurface.Recreate( pInInstance, xlibSurfaceCreateInfoKHR ) && SetSurfaceProperties( );
+        }
+#elif VK_USE_PLATFORM_ANDROID_KHR
+        inline bool Recreate( VkPhysicalDevice pInPhysicalDevice, VkInstance pInInstance, struct ANativeWindow *pANativeWindow ) {
+            apemodevk_memory_allocation_scope;
+
+            assert( nullptr != pInPhysicalDevice );
+            assert( nullptr != pInInstance );
+            assert( nullptr != pDisplayX11 );
+
+            pInstance       = pInInstance;
+            pPhysicalDevice = pInPhysicalDevice;
+
+            VkAndroidSurfaceCreateInfoKHR androidSurfaceCreateInfoKHR;
+            InitializeStruct( androidSurfaceCreateInfoKHR );
+
+            androidSurfaceCreateInfoKHR.window = pANativeWindow;
+
+            return hSurface.Recreate( pInInstance, androidSurfaceCreateInfoKHR ) && SetSurfaceProperties( );
         }
 #endif
 

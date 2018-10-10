@@ -130,7 +130,7 @@ SceneNodeTransformFrame &apemode::Scene::UpdateTransformProperties( const float 
                                                                     const bool     bLoop,
                                                                     const uint16_t animStackId,
                                                                     const uint16_t animLayerId ) {
-    auto &animTransformFrame = GetAnimatedTransformFrame( animStackId, animLayerId );
+    SceneNodeTransformFrame &animTransformFrame = GetAnimatedTransformFrame( animStackId, animLayerId );
 
     assert( animTransformFrame.Transforms.size( ) == BindPoseFrame.Transforms.size( ) );
     const size_t transformFrameByteSize = sizeof( SceneNodeTransformComposite ) * animTransformFrame.Transforms.size( );
@@ -138,7 +138,7 @@ SceneNodeTransformFrame &apemode::Scene::UpdateTransformProperties( const float 
 
     for ( const auto &node : Nodes ) {
 
-        const auto &animCurveIds = GetAnimCurveIds( node.Id, animStackId, animLayerId );
+        const SceneNodeAnimCurveIds &animCurveIds = GetAnimCurveIds( node.Id, animStackId, animLayerId );
         auto & animTransformComposite = animTransformFrame.Transforms[ node.Id ];
 
         for ( uint32_t propertyIndex = 0; propertyIndex < SceneAnimCurve::ePropertyCount; propertyIndex += SceneAnimCurve::eChannelCount ) {
@@ -390,15 +390,21 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             assert( IsNotNullAndNotEmpty( pAnimCurveFb->keys( ) ) );
             animCurve.Keys.reserve( pAnimCurveFb->keys( )->size( ) );
 
-            std::transform( pAnimCurveFb->keys( )->begin( ),
-                            pAnimCurveFb->keys( )->end( ),
-                            std::back_inserter( animCurve.Keys ),
-                            []( const apemodefb::AnimCurveKeyFb *pKeyFb ) {
-                                return XMFLOAT2{pKeyFb->time( ), pKeyFb->value( )};
-                            } );
+            eastl::transform( pAnimCurveFb->keys( )->begin( ),
+                              pAnimCurveFb->keys( )->end( ),
+                              eastl::inserter( animCurve.Keys, animCurve.Keys.begin( ) ),
+                              []( const apemodefb::AnimCurveKeyFb *pKeyFb ) {
+                                  return eastl::make_pair< float, SceneAnimCurveKey >( pKeyFb->time( ),
+                                                                                       SceneAnimCurveKey{
+                                                                                           pKeyFb->time( ),
+                                                                                           pKeyFb->value( ),
+                                                                                           pKeyFb->arrive_tangent( ),
+                                                                                           pKeyFb->leave_tangent( ),
+                                                                                       } );
+                              } );
 
-            animCurve.TimeMinMaxTotal.x = animCurve.Keys.front( ).x;
-            animCurve.TimeMinMaxTotal.y = animCurve.Keys.back( ).x;
+            animCurve.TimeMinMaxTotal.x = animCurve.Keys.cbegin( )->second.Time;
+            animCurve.TimeMinMaxTotal.y = animCurve.Keys.crbegin( )->second.Time;
             animCurve.TimeMinMaxTotal.z = animCurve.TimeMinMaxTotal.y - animCurve.TimeMinMaxTotal.x;
         }
 
@@ -630,9 +636,15 @@ void apemode::SceneAnimCurve::GetKeyIndices( float time, bool bLoop, uint32_t &i
         i = static_cast< uint32_t >( Keys.size( ) ) - 1;
         j = i;
     } else {
-        const float ii = TimeMinMaxTotal.z / ( time - TimeMinMaxTotal.x );
-        i = static_cast< uint32_t >( floorf( ii ) );
-        j = static_cast< uint32_t >( ceilf( ii ) );
+        auto lowerBoundIt = Keys.lower_bound( time );
+        if ( lowerBoundIt == Keys.end( ) ) {
+            i = static_cast< uint32_t >( Keys.size( ) ) - 1;
+            j = i;
+        } else {
+            auto upperBoundIt = Keys.upper_bound( time );
+            i = static_cast< uint32_t >( eastl::distance( Keys.begin( ), lowerBoundIt ) ) - 1;
+            j = static_cast< uint32_t >( eastl::distance( Keys.begin( ), upperBoundIt ) ) - 1;
+        }
     }
 }
 
@@ -641,11 +653,11 @@ float apemode::SceneAnimCurve::Calculate( float time, bool bLoop ) const {
     uint32_t i, j;
     GetKeyIndices( time, bLoop, i, j );
 
-    const XMFLOAT2 a = Keys[ i ];
-    const XMFLOAT2 b = Keys[ j ];
+    const SceneAnimCurveKey a = Keys.at( i ).second;
+    const SceneAnimCurveKey b = Keys.at( j ).second;
 
-    const float l = ( b.x - a.x ) / ( time - a.x );
-    return ( b.y - a.y ) * l + a.y;
+    const float l = ( b.Time - a.Time ) / ( time - a.Time );
+    return ( b.Value - a.Value ) * l + a.Value;
 }
 
 uint32_t apemode::utils::MaterialPropertyGetIndex( const uint32_t packed ) {

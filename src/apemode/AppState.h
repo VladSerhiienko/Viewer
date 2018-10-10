@@ -1,6 +1,11 @@
 #pragma once
 
 #include <MemoryManager.h>
+
+#ifndef MT_INSTRUMENTED_BUILD
+#define MT_INSTRUMENTED_BUILD 1
+#endif
+
 #include <MTScheduler.h>
 
 #pragma warning( push )

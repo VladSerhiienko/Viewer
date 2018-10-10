@@ -336,13 +336,6 @@ if (UNIX AND APPLE)
 add_definitions("-Wno-invalid-offsetof -Wno-deprecated-declarations -fno-omit-frame-pointer")
 endif()
 
-if(MSVC)
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_UNICODE=1 -DUNICODE=1")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -D_UNICODE=1 -DUNICODE=1")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DMT_UNICODE")
-set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DMT_UNICODE")
-endif()
-
 # add_definitions("-DAPEMODE_NO_GLOBAL_NEW_DELETE_OP_OVERRIDES")
 
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -691,6 +684,25 @@ target_link_libraries(
     ${Viewer_third_party_libs}
 )
 
+if (APPLE)
+    add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/Debug")
+    add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/Release")
+
+    add_custom_command(
+        TARGET Viewer POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVK/macOS/libMoltenVK.dylib
+        ${CMAKE_BINARY_DIR}/Debug
+    )
+
+    add_custom_command(
+        TARGET Viewer POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${MOLTENVK_SDK_PATH}/Package/Release/MoltenVK/macOS/libMoltenVK.dylib
+        ${CMAKE_BINARY_DIR}/Release
+    )
+endif()
+
 if(WIN32)
     set( viewer_dependencies_dlls_pdbs
         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.dll
@@ -701,23 +713,6 @@ elseif(UNIX AND NOT APPLE)
         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/libSDL2-2.0.so
         )
 endif()
-
-add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/Debug")
-add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/Release")
-
-add_custom_command(
-    TARGET Viewer POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVK/macOS/libMoltenVK.dylib
-    ${CMAKE_BINARY_DIR}/Debug
-)
-
-add_custom_command(
-    TARGET Viewer POST_BUILD
-    COMMAND ${CMAKE_COMMAND} -E copy_if_different
-    ${MOLTENVK_SDK_PATH}/Package/Release/MoltenVK/macOS/libMoltenVK.dylib
-    ${CMAKE_BINARY_DIR}/Release
-)
 
 foreach( viewer_dependencies_dll_pdb ${viewer_dependencies_dlls_pdbs} )
     add_custom_command(

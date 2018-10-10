@@ -160,6 +160,15 @@ struct SceneNodeTransform {
     XMMATRIX CalculateGeometricMatrix( ) const;
 };
 
+/* SceneAnimCurvKey class stores time, value, arrive and leave tangents (tangents are only for cubic keys).
+ */
+struct SceneAnimCurveKey {
+    float Time          = 0.0f;
+    float Value         = 0.0f;
+    float ArriveTangent = 0.0f;
+    float LeaveTangent  = 0.0f;
+};
+
 /* SceneAnimCurve class stores curve parameters and time-value keys.
  */
 struct SceneAnimCurve {
@@ -204,7 +213,7 @@ struct SceneAnimCurve {
 
     /* Animation keys, each is the 2D vector where X stands for time and Y stands for value.
      */
-    apemode::vector< XMFLOAT2 > Keys;
+    apemode::vector_map< float, SceneAnimCurveKey > Keys;
 
     /* Assigns two indices of the keys for the given time value.
      * The two key indices can be used for accessing actual animation keys' values and interpolating between them.
