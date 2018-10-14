@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GraphicsManager.Vulkan.h>
+#include <apemode/vk/GraphicsManager.Vulkan.h>
 #include <atomic>
 
 namespace apemodevk {

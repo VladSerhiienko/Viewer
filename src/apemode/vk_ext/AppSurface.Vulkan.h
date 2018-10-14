@@ -1,9 +1,9 @@
 #pragma once
 
-#include <GraphicsDevice.Vulkan.h>
-#include <GraphicsManager.Vulkan.h>
-#include <QueuePools.Vulkan.h>
-#include <Swapchain.Vulkan.h>
+#include <apemode/vk/GraphicsDevice.Vulkan.h>
+#include <apemode/vk/GraphicsManager.Vulkan.h>
+#include <apemode/vk/QueuePools.Vulkan.h>
+#include <apemode/vk/Swapchain.Vulkan.h>
 
 namespace apemodevk {
 

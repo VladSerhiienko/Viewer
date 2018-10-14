@@ -1,7 +1,7 @@
 #pragma once
 
-#include <GraphicsManager.Vulkan.h>
-#include <GraphicsDevice.Vulkan.h>
+#include <apemode/vk/GraphicsManager.Vulkan.h>
+#include <apemode/vk/GraphicsDevice.Vulkan.h>
 
 namespace apemodevk {
     class CommandBuffer;

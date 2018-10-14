@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GraphicsDevice.Vulkan.h>
+#include <apemode/vk/GraphicsDevice.Vulkan.h>
 
 namespace apemodevk {
     struct StoredSampler {

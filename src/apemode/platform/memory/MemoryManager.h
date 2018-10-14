@@ -245,6 +245,7 @@ unique_ptr< T > make_unique( Args&&... args ) {
 #ifndef apemode_named_memory_allocation_scope
 
 namespace apemode {
+namespace platform {
 
 void GetPrevMemoryAllocationScope( const char*& pszSourceFile, unsigned int& sourceLine, const char*& pszSourceFunc );
 void StartMemoryAllocationScope( const char* pszSourceFile, const unsigned int sourceLine, const char* pszSourceFunc );
@@ -262,6 +263,8 @@ struct MemoryAllocationScope {
     MemoryAllocationScope( const char* pszSourceFile, const unsigned int sourceLine, const char* pszSourceFunc );
     ~MemoryAllocationScope( );
 };
+
+} // namespace apemode
 } // namespace apemode
 
 #define apemode_named_memory_allocation_scope( name ) \

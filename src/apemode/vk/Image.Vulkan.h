@@ -1,7 +1,7 @@
 #pragma once
 
-#include <GraphicsDevice.Vulkan.h>
-#include <NativeHandles.Vulkan.h>
+#include <apemode/vk/GraphicsDevice.Vulkan.h>
+#include <apemode/vk/NativeHandles.Vulkan.h>
 
 namespace apemodevk {
 

@@ -449,14 +449,24 @@ set(
 
 add_library(
     ApemodeVulkan
-    SHARED
+    STATIC
     ${ApemodeVulkan_vk_source_files}
     ${ApemodeVulkan_vk_ext_source_files}
 )
 
+if (APPLE)
+    set( Vulkan_include_dirs ${MOLTENVK_SDK_PATH}/MoltenVK/include )
+elseif (UNIX)
+    set( Vulkan_include_dirs $ENV{VK_SDK_PATH}/include )
+elseif(WIN32)
+    set( Vulkan_include_dirs $ENV{VK_SDK_PATH}/include )
+endif()
+
 target_include_directories(
     ApemodeVulkan
     PUBLIC
+    ${Vulkan_include_dirs}
+    ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/apemode/vk
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext
     ${CMAKE_SOURCE_DIR}/dependencies/gli
@@ -482,7 +492,7 @@ set(
     ApemodePlatform_source_files
     ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppState.pp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppState.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppState.h
     ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppInput.h
     ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppSurface.h
@@ -614,6 +624,22 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/include/utils
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
+    ${Vulkan_include_dirs}
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext
+    ${CMAKE_SOURCE_DIR}/dependencies/gli
+    ${CMAKE_SOURCE_DIR}/dependencies/gli/external
+    ${CMAKE_SOURCE_DIR}/dependencies/gli/external/glm
+    ${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator/src
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
+    ${CMAKE_SOURCE_DIR}/dependencies/argh
+    ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
+    ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
 )
 
 add_dependencies(
@@ -649,130 +675,130 @@ add_dependencies(
 message(STATUS "VK_SDK_PATH = $ENV{VK_SDK_PATH}")
 message(STATUS "MOLTENVK_SDK_PATH = ${MOLTENVK_SDK_PATH}")
 
-set(
-    Viewer_include_dirs
-    ${CMAKE_SOURCE_DIR}/assets/
-    ${CMAKE_SOURCE_DIR}/assets/fonts/
-    ${CMAKE_SOURCE_DIR}/src/apemode
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl
-    ${CMAKE_SOURCE_DIR}/src/apemode/vk
-    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory
-    ${CMAKE_SOURCE_DIR}/src/viewer
-    ${CMAKE_SOURCE_DIR}/src/viewer/vk
-    ${CMAKE_SOURCE_DIR}/dependencies/Math
-    ${CMAKE_SOURCE_DIR}/dependencies/gli
-    ${CMAKE_SOURCE_DIR}/dependencies/gli/external
-    ${CMAKE_SOURCE_DIR}/dependencies/gli/external/glm
-    ${CMAKE_SOURCE_DIR}/dependencies/nuklear
-    ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath
-    ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath/Inc
-    ${CMAKE_SOURCE_DIR}/dependencies/argh
-    ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
-    ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
-    ${CMAKE_SOURCE_DIR}/dependencies/sdl2/include
-    ${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator/src
-    ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
-    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
-    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
-    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
-    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
-    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
-    ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/include/utils
-    ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
-    ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
-)
+# set(
+#     Viewer_include_dirs
+#     ${CMAKE_SOURCE_DIR}/assets/
+#     ${CMAKE_SOURCE_DIR}/assets/fonts/
+#     ${CMAKE_SOURCE_DIR}/src/apemode
+#     ${CMAKE_SOURCE_DIR}/src/apemode/platform
+#     ${CMAKE_SOURCE_DIR}/src/apemode/sdl
+#     ${CMAKE_SOURCE_DIR}/src/apemode/vk
+#     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext
+#     ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory
+#     ${CMAKE_SOURCE_DIR}/src/viewer
+#     ${CMAKE_SOURCE_DIR}/src/viewer/vk
+#     ${CMAKE_SOURCE_DIR}/dependencies/Math
+#     ${CMAKE_SOURCE_DIR}/dependencies/gli
+#     ${CMAKE_SOURCE_DIR}/dependencies/gli/external
+#     ${CMAKE_SOURCE_DIR}/dependencies/gli/external/glm
+#     ${CMAKE_SOURCE_DIR}/dependencies/nuklear
+#     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath
+#     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath/Inc
+#     ${CMAKE_SOURCE_DIR}/dependencies/argh
+#     ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
+#     ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
+#     ${CMAKE_SOURCE_DIR}/dependencies/sdl2/include
+#     ${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator/src
+#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
+#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
+#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
+#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
+#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
+#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
+#     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/include/utils
+#     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
+#     ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
+# )
 
-if (APPLE)
-    set(
-        Viewer_include_dirs
-        ${Viewer_include_dirs}
-        ${MOLTENVK_SDK_PATH}/MoltenVK/include
-    )
+# if (APPLE)
+#     set(
+#         Viewer_include_dirs
+#         ${Viewer_include_dirs}
+#         ${MOLTENVK_SDK_PATH}/MoltenVK/include
+#     )
 
-    set(
-        Viewer_third_party_libs
-        # libMoltenVK.dylib
-        ${MOLTENVK_SDK_PATH}/Package${CONFIGURATION_SUFFIX}/MoltenVK/macOS/libMoltenVK.dylib
-        ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/libflatbuffers.a
-        ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
-        ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a
-        ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/libSDL2.a
-        ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/libTaskScheduler.a
-        pthread
-        dl
-        stdc++
-        objc
-        iconv
-        "-framework Foundation"
-        "-framework CoreFoundation"
-        "-framework CoreAudio"
-        "-framework CoreVideo"
-        "-framework IOKit"
-        "-framework Cocoa"
-        "-framework AudioToolbox"
-        "-framework ForceFeedback"
-        "-framework Carbon"
-        "-framework QuartzCore"
-    )
-elseif (UNIX)
-    set(
-        Viewer_include_dirs
-        ${Viewer_include_dirs}
-        $ENV{VK_SDK_PATH}/include
-    )
-    set(
-        Viewer_third_party_libs
-        $ENV{VK_SDK_PATH}/lib/libvulkan.so
-        X11
-        Xext
-        Xcursor
-        Xinerama
-        Xrandr
-        pthread
-        stdc++fs
-        ${sdl2_binary_dir}/libSDL2.a
-        ${flatbuffers_binary_dir}/libflatbuffers.a
-        ${eastl_binary_dir}/libEASTL.a
-        ${eastl_binary_dir}/test/packages/EAStdC/libEAStdC.a
-        ${TaskScheduler_binary_dir}/libTaskScheduler.a
-        dl
-    )
-elseif(WIN32)
-    set(
-        Viewer_include_dirs
-        ${Viewer_include_dirs}
-        $ENV{VK_SDK_PATH}/include
-    )
-    set(
-        Viewer_third_party_libs
+#     set(
+#         Viewer_third_party_libs
+#         # libMoltenVK.dylib
+#         ${MOLTENVK_SDK_PATH}/Package${CONFIGURATION_SUFFIX}/MoltenVK/macOS/libMoltenVK.dylib
+#         ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/libflatbuffers.a
+#         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
+#         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a
+#         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/libSDL2.a
+#         ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/libTaskScheduler.a
+#         pthread
+#         dl
+#         stdc++
+#         objc
+#         iconv
+#         "-framework Foundation"
+#         "-framework CoreFoundation"
+#         "-framework CoreAudio"
+#         "-framework CoreVideo"
+#         "-framework IOKit"
+#         "-framework Cocoa"
+#         "-framework AudioToolbox"
+#         "-framework ForceFeedback"
+#         "-framework Carbon"
+#         "-framework QuartzCore"
+#     )
+# elseif (UNIX)
+#     set(
+#         Viewer_include_dirs
+#         ${Viewer_include_dirs}
+#         $ENV{VK_SDK_PATH}/include
+#     )
+#     set(
+#         Viewer_third_party_libs
+#         $ENV{VK_SDK_PATH}/lib/libvulkan.so
+#         X11
+#         Xext
+#         Xcursor
+#         Xinerama
+#         Xrandr
+#         pthread
+#         stdc++fs
+#         ${sdl2_binary_dir}/libSDL2.a
+#         ${flatbuffers_binary_dir}/libflatbuffers.a
+#         ${eastl_binary_dir}/libEASTL.a
+#         ${eastl_binary_dir}/test/packages/EAStdC/libEAStdC.a
+#         ${TaskScheduler_binary_dir}/libTaskScheduler.a
+#         dl
+#     )
+# elseif(WIN32)
+#     set(
+#         Viewer_include_dirs
+#         ${Viewer_include_dirs}
+#         $ENV{VK_SDK_PATH}/include
+#     )
+#     set(
+#         Viewer_third_party_libs
 
-        $ENV{VK_SDK_PATH}/lib/vulkan-1.lib
-        opengl32.lib
-        winmm.lib
-        imm32.lib
-        version.lib
+#         $ENV{VK_SDK_PATH}/lib/vulkan-1.lib
+#         opengl32.lib
+#         winmm.lib
+#         imm32.lib
+#         version.lib
 
-        ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.lib
-        ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2main.lib
-        ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/EASTL.lib
-        ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/flatbuffers.lib
-        ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/EAStdC.lib
-        ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/TaskScheduler.lib
-    )
-endif()
+#         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.lib
+#         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2main.lib
+#         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/EASTL.lib
+#         ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/flatbuffers.lib
+#         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/EAStdC.lib
+#         ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/TaskScheduler.lib
+#     )
+# endif()
 
-target_include_directories(
-    Viewer
-    PUBLIC
-    ${Viewer_include_dirs}
-)
+# target_include_directories(
+#     Viewer
+#     PUBLIC
+#     ${Viewer_include_dirs}
+# )
 
-target_link_libraries(
-    Viewer
-    ${Viewer_third_party_libs}
-)
+# target_link_libraries(
+#     Viewer
+#     ${Viewer_third_party_libs}
+# )
 
 if (APPLE)
     add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/Debug")

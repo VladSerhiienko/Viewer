@@ -1,7 +1,7 @@
 #include <NuklearRendererVk.h>
-#include <ArrayUtils.h>
-#include <AppState.h>
-#include <ImageUploader.Vulkan.h>
+#include <apemode/platform/ArrayUtils.h>
+#include <apemode/platform/AppState.h>
+#include <apemode/vk_ext/ImageUploader.Vulkan.h>
 
 namespace apemode {
     using namespace apemodevk;
