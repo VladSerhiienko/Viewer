@@ -414,7 +414,7 @@ endif()
 #
 
 set(
-    shared_vk_source_files
+    ApemodeVulkan_vk_source_files
     ${CMAKE_SOURCE_DIR}/src/apemode/vk/CityHash.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/vk/CityHash.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/apemode/vk/Image.Vulkan.h
@@ -438,7 +438,7 @@ set(
 )
 
 set(
-    shared_vk_ext_source_files
+    ApemodeVulkan_vk_ext_source_files
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/AppSurface.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/AppSurface.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageUploader.Vulkan.h
@@ -447,74 +447,126 @@ set(
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/SamplerManager.Vulkan.cpp
 )
 
-set(
-    shared_platform_source_files
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppState.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceSdlBase.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceSdlBase.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/InputSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/Input.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/NuklearSdlBase.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/NuklearSdlBase.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/StopwatchSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/Stopwatch.h
+add_library(
+    ApemodeVulkan
+    SHARED
+    ${ApemodeVulkan_vk_source_files}
+    ${ApemodeVulkan_vk_ext_source_files}
+)
+
+target_include_directories(
+    ApemodeVulkan
+    PUBLIC
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext
+    ${CMAKE_SOURCE_DIR}/dependencies/gli
+    ${CMAKE_SOURCE_DIR}/dependencies/gli/external
+    ${CMAKE_SOURCE_DIR}/dependencies/gli/external/glm
+    ${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator/src
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
+)
+
+add_dependencies(
+    ApemodeVulkan
+    eastl
+    gli
+    VulkanMemoryAllocator
 )
 
 set(
-    shared_sdl_source_files
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppMainSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceSdlBase.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceSdlBase.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/InputSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/Input.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/NuklearSdlBase.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/NuklearSdlBase.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/StopwatchSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/Stopwatch.h
+    ApemodePlatform_source_files
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppState.pp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppState.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppInput.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppSurface.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/IAppShell.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/IAssetManager.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/ArrayUtils.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/CityHash.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/CityHash.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/MathInc.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/Stopwatch.h
+)
+
+add_library( ApemodePlatform
+             STATIC
+             ${ApemodePlatform_source_files} )
+
+target_include_directories(
+    ApemodePlatform
+    PUBLIC
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/dependencies/argh
+    ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
+    ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
+
+)
+
+add_dependencies(
+    ApemodePlatform
+    argh
+    spdlog
+    eastl
+    TaskScheduler
+)
+
+set(
+    ApemodePlatformSdl_source_files
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/AppSurfaceSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/AppSurfaceSdl.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/AppSurfaceSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/InputManagerSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/InputManagerSdl.h
 )
 
 if (APPLE)
-    set ( shared_sdl_source_files
-          ${shared_sdl_source_files}
-          ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceSdlBaseCocoa.mm
-          )
+    set ( ApemodePlatformSdl_source_files
+          ${ApemodePlatformSdl_source_files}
+          ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceCocoaSdl.mm
+        )
 endif()
 
-set(
-    shared_platform_source_files
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/IAssetManager.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/IAssetManager.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AssetManager.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AssetManager.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.h
+add_library( ApemodePlatformSdl
+             STATIC
+             ${ApemodePlatformSdl_source_files} )
+
+target_include_directories(
+    ApemodePlatformSdl
+    PUBLIC
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/dependencies/sdl2/include
+
+)
+
+add_dependencies(
+    ApemodePlatformSdl
+    ApemodePlatform
+    sdl2
 )
 
 set(
-    shared_source_files
-    ${CMAKE_SOURCE_DIR}/src/apemode/CityHash.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/CityHash.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/AppBase.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/AppBase.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/AppState.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/AppState.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/AppSurface.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/AppSurface.h
-)
-
-set(
-    viewer_source_files
-    ${shared_platform_source_files}
-    ${shared_sdl_source_files}
-    ${shared_vk_source_files}
-    ${shared_vk_ext_source_files}
-    ${shared_source_files}
+    Viewer_source_files
     ${CMAKE_SOURCE_DIR}/src/viewer/Scene.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/Scene.h
-    ${CMAKE_SOURCE_DIR}/src/viewer/ViewerApp.cpp
-    ${CMAKE_SOURCE_DIR}/src/viewer/ViewerApp.h
+    ${CMAKE_SOURCE_DIR}/src/viewer/NuklearRendererBase.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/NuklearRendererBase.h
+    ${CMAKE_SOURCE_DIR}/src/viewer/ViewerAppShellFactory.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/ViewerAppShellFactory.h
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/ViewerShellVk.cpp
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk/ViewerShellVk.h
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneUploaderVk.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneUploaderVk.h
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/SceneRendererVk.cpp
@@ -527,8 +579,6 @@ set(
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/NuklearRendererVk.h
 )
 
-
-# vert|frag|comp|geom|tesc|tese|h|inl|inc|fx
 file(
     GLOB
     Viewer_shader_source_files
@@ -546,33 +596,54 @@ file(
     "${CMAKE_SOURCE_DIR}/assets/shaders/*.geom"
 )
 
-add_executable(
-    Viewer
-    ${viewer_source_files}
-    ${Viewer_shader_source_files}
-)
+add_library( Viewer
+             STATIC
+             ${Viewer_source_files}
+             ${Viewer_shader_source_files} )
 
-source_group("Shader Sources" FILES ${Viewer_shader_source_files})
-source_group("Shared Sources" FILES ${shared_source_files})
-source_group("Shared Platform Sources" FILES ${shared_platform_source_files})
-source_group("Shared SDL2 Sources" FILES ${shared_sdl_source_files})
-source_group("Shared Vulkan Extention Sources" FILES ${shared_vk_ext_source_files})
-source_group("Shared Vulkan Sources" FILES ${shared_vk_source_files})
+target_include_directories(
+    Viewer
+    PUBLIC
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/viewer
+    ${CMAKE_SOURCE_DIR}/src/viewer/vk
+    ${CMAKE_SOURCE_DIR}/dependencies/Math
+    ${CMAKE_SOURCE_DIR}/dependencies/nuklear
+    ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath
+    ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath/Inc
+    ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
+    ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/include/utils
+    ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
+)
 
 add_dependencies(
     Viewer
-    argh
-    spdlog
-    zlib
-    flatbuffers
+    ApemodePlatform
+    ApemodeVulkan
     nuklear
+    flatbuffers
     DirectXMath
     FbxPipeline
-    eastl
-    gli
-    sdl2
-    VulkanMemoryAllocator
-    TaskScheduler
+)
+
+set(
+    ViewerSdl_source_files
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/AppMainSdl.cpp
+)
+
+add_executable( ViewerSdl
+                ${ViewerSdl_source_files} )
+
+target_include_directories(
+    ViewerSdl
+    PUBLIC
+    ${CMAKE_SOURCE_DIR}/src
+)
+
+add_dependencies(
+    ViewerSdl
+    Viewer
+    ApemodePlatformSdl
 )
 
 message(STATUS "VK_SDK_PATH = $ENV{VK_SDK_PATH}")
@@ -595,13 +666,13 @@ set(
     ${CMAKE_SOURCE_DIR}/dependencies/gli/external
     ${CMAKE_SOURCE_DIR}/dependencies/gli/external/glm
     ${CMAKE_SOURCE_DIR}/dependencies/nuklear
-    ${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator/src
     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath
     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath/Inc
     ${CMAKE_SOURCE_DIR}/dependencies/argh
     ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
     ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
     ${CMAKE_SOURCE_DIR}/dependencies/sdl2/include
+    ${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator/src
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
