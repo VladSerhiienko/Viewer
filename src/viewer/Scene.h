@@ -5,7 +5,7 @@
 #include <scene_generated.h>
 
 #include <MathInc.h>
-#include <MemoryManager.h>
+#include <apemode/platform/memory/MemoryManager.h>
 
 namespace apemode {
 

@@ -105,7 +105,8 @@
 			"forward_list": "cpp",
 			"variant": "cpp",
 			"optional": "cpp",
-			"typeindex": "cpp"
+			"typeindex": "cpp",
+			"complex": "cpp"
 		}
 	}
 }

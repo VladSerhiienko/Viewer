@@ -1,7 +1,7 @@
 #include <ViewerApp.h>
-#include <MemoryManager.h>
+#include <apemode/platform/memory/MemoryManager.h>
 
-using namespace apemode;
+using namespace apemode::viewer::vk;
 
 namespace apemode {
     using namespace apemodexm;
@@ -17,18 +17,18 @@ namespace apemode {
 const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 //const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
-ViewerApp::ViewerApp( ) {
+ViewerShell::ViewerShell( ) {
     apemode_memory_allocation_scope;
     pCamInput      = apemode::unique_ptr< CameraControllerInputBase >( apemode_new MouseKeyboardCameraControllerInput( ) );
     pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new FreeLookCameraController( ) );
     // pCamController = apemode::make_unique< ModelViewCameraController >( );
 }
 
-ViewerApp::~ViewerApp( ) {
+ViewerShell::~ViewerShell( ) {
     LogInfo( "ViewerApp: Destroyed." );
 }
 
-bool ViewerApp::Initialize( const apemode::PlatformSurface* pPlatformSurface  ) {
+bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  ) {
     apemode_memory_allocation_scope;
     LogInfo( "ViewerApp: Initializing." );
 
@@ -287,7 +287,7 @@ bool ViewerApp::Initialize( const apemode::PlatformSurface* pPlatformSurface  ) 
     return false;
 }
 
-bool apemode::ViewerApp::OnResized( ) {
+bool apemode::ViewerShell::OnResized( ) {
     apemode_memory_allocation_scope;
 
     Width  = AppSurface.Swapchain.ImgExtent.width;
@@ -440,7 +440,7 @@ bool apemode::ViewerApp::OnResized( ) {
     return true;
 }
 
-bool ViewerApp::Update( float deltaSecs, const Input & inputState, const VkExtent2D extent ) {
+bool ViewerShell::Update( float deltaSecs, const Input & inputState, const VkExtent2D extent ) {
     apemode_memory_allocation_scope;
 
     ++FrameId;

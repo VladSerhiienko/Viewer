@@ -221,6 +221,7 @@ set(flatbuffers_binary_dir ${BINARY_DIR})
 message(STATUS "flatbuffers_source_dir = ${flatbuffers_source_dir}")
 message(STATUS "flatbuffers_binary_dir = ${flatbuffers_binary_dir}")
 
+if (WIN32)
 #
 #
 # sdl2
@@ -244,6 +245,7 @@ set(sdl2_source_dir ${SOURCE_DIR})
 set(sdl2_binary_dir ${BINARY_DIR})
 message(STATUS "sdl2_source_dir = ${sdl2_source_dir}")
 message(STATUS "sdl2_binary_dir = ${sdl2_binary_dir}")
+endif()
 
 #
 #
@@ -437,10 +439,27 @@ set(
 
 set(
     shared_vk_ext_source_files
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/AppSurface.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/AppSurface.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageUploader.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageUploader.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/SamplerManager.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/SamplerManager.Vulkan.cpp
+)
+
+set(
+    shared_platform_source_files
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppState.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceSdlBase.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceSdlBase.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/InputSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/Input.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/NuklearSdlBase.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/NuklearSdlBase.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/StopwatchSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/sdl/Stopwatch.h
 )
 
 set(
@@ -481,8 +500,8 @@ set(
     ${CMAKE_SOURCE_DIR}/src/apemode/AppBase.h
     ${CMAKE_SOURCE_DIR}/src/apemode/AppState.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/AppState.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/AppSurfaceSdlVk.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/AppSurfaceSdlVk.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/AppSurface.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/AppSurface.h
 )
 
 set(
