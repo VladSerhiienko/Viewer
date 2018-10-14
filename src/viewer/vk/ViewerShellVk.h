@@ -6,7 +6,7 @@
 #include <AppBase.h>
 #include <AppState.h>
 
-#include <AppSurfaceSdlVk.h>
+#include <AppSurface.h>
 #include <NuklearRendererVk.h>
 #include <DebugRendererVk.h>
 #include <SceneRendererVk.h>
@@ -25,13 +25,16 @@
 #define kMaxFrames 3
 
 namespace apemode {
+namespace viewer {
+namespace vk {
+    
     class AppState;
     class AppContent;
 
-    class ViewerApp {
+    class ViewerShell {
     public:
-        ViewerApp( );
-        ~ViewerApp( );
+        ViewerShell( );
+        ~ViewerShell( );
 
         /* Returns true if initialization succeeded, false otherwise.
          */
@@ -66,7 +69,7 @@ namespace apemode {
         apemode::unique_ptr< CameraControllerInputBase > pCamInput      = nullptr;
         apemode::unique_ptr< CameraControllerBase >      pCamController = nullptr;
 
-        AppSurfaceSdlVk AppSurface;
+        AppSurface AppSurface;
 
         uint32_t                                        BackbufferIndices[ kMaxFrames ] = {0};
         apemodevk::DescriptorPool                       DescriptorPool;
@@ -96,4 +99,7 @@ namespace apemode {
 
         LoadedScene mLoadedScene;
     };
-}
+    
+} // namespace vk
+} // namespace viewer
+} // namespace apemode

@@ -1,16 +1,15 @@
 #include "AssetManager.h"
+#include "tinydir.h"
 
-#include <AppState.h>
-#include <tinydir.h>
+#include <apemode/platform/AppState.h>
 
+#include <stdlib.h>
 #include <fstream>
 #include <iterator>
 #include <regex>
 #include <set>
 
-#include <stdlib.h>
-
-bool apemodeos::DirectoryExists( const char * pszPath ) {
+bool apemode::platform::shared::DirectoryExists( const char * pszPath ) {
 #if _WIN32
     DWORD dwAttrib = GetFileAttributesA( pszPath );
     return ( dwAttrib != INVALID_FILE_ATTRIBUTES && ( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
@@ -20,7 +19,7 @@ bool apemodeos::DirectoryExists( const char * pszPath ) {
 #endif
 }
 
-bool apemodeos::FileExists(  const char * pszPath ) {
+bool apemode::platform::shared::FileExists(  const char * pszPath ) {
 #if _WIN32
     DWORD dwAttrib = GetFileAttributesA( pszPath );
     return ( dwAttrib != INVALID_FILE_ATTRIBUTES && !( dwAttrib & FILE_ATTRIBUTE_DIRECTORY ) );
@@ -71,53 +70,53 @@ std::string ToCanonicalAbsolutPath( const char * pszRelativePath ) {
     return canonicalAbsolutePathBuffer;
 }
 
-const char* apemodeos::AssetFile::GetName( ) const {
+const char* apemode::platform::shared::AssetFile::GetName( ) const {
     return Name.c_str( );
 }
 
-const char* apemodeos::AssetFile::GetId( ) const {
+const char* apemode::platform::shared::AssetFile::GetId( ) const {
     return Path.c_str( );
 }
 
-apemode::vector< uint8_t > apemodeos::AssetFile::GetContentAsTextBuffer( ) const {
+apemode::vector< uint8_t > apemode::platform::shared::AssetFile::GetContentAsTextBuffer( ) const {
     apemode_memory_allocation_scope;
     return std::move( FileReader( ).ReadTxtFile( Path.c_str( ) ) );
 }
 
-apemode::vector< uint8_t > apemodeos::AssetFile::GetContentAsBinaryBuffer( ) const {
+apemode::vector< uint8_t > apemode::platform::shared::AssetFile::GetContentAsBinaryBuffer( ) const {
     apemode_memory_allocation_scope;
     return std::move( FileReader( ).ReadBinFile( Path.c_str( ) ) );
 }
 
-uint64_t apemodeos::AssetFile::GetCurrentVersion( ) const {
+uint64_t apemode::platform::shared::AssetFile::GetCurrentVersion( ) const {
     return LastTimeModified.load(  );
 }
 
-void apemodeos::AssetFile::SetName( const char* pszAssetName ) {
+void apemode::platform::shared::AssetFile::SetName( const char* pszAssetName ) {
     Name = pszAssetName;
 }
 
-void apemodeos::AssetFile::SetId( const char* pszAssetPath ) {
+void apemode::platform::shared::AssetFile::SetId( const char* pszAssetPath ) {
     Path = pszAssetPath;
 }
 
-void apemodeos::AssetFile::SetCurrentVersion( uint64_t version ) {
+void apemode::platform::shared::AssetFile::SetCurrentVersion( uint64_t version ) {
     LastTimeModified.store( version );
 }
 
-const apemodeos::IAsset* apemodeos::AssetManager::Acquire( const char* pszAssetName ) const {
+const apemode::platform::shared::IAsset* apemode::platform::shared::AssetManager::Acquire( const char* pszAssetName ) const {
     auto assetIt = AssetFiles.find( pszAssetName );
 
     if ( assetIt == AssetFiles.end( ) ) {
         return 0;
     }
 
-    const apemodeos::AssetFile* pAsset = &assetIt->second.Asset;
+    const apemode::platform::shared::AssetFile* pAsset = &assetIt->second.Asset;
     std::atomic_fetch_add( &assetIt->second.UseCount, uint32_t( 1 ) );
     return pAsset;
 }
 
-void apemodeos::AssetManager::Release( const apemodeos::IAsset* pAsset ) const {
+void apemode::platform::shared::AssetManager::Release( const apemode::platform::shared::IAsset* pAsset ) const {
     if ( const AssetFile* pAssetFile = static_cast< const AssetFile* >( pAsset ) ) {
         auto assetIt = AssetFiles.find( pAssetFile->GetName( ) );
         if ( assetIt != AssetFiles.end( ) ) {
@@ -152,9 +151,13 @@ void ProcessFiles( TFileCallback callback, const tinydir_dir& dir, bool r ) {
     }
 }
 
-void apemodeos::AssetManager::UpdateAssets( const char*  pszFolderPath,
-                                            const char** ppszFilePatterns,
-                                            size_t       filePatternCount ) {
+apemode::unique_ptr< apemode::platform::IAssetManager > apemode::platform::CreateAssetManager( ) {
+    return apemode::unique_ptr< apemode::platform::IAssetManager >( apemode_new apemode::platform::shared::AssetManager( ) );
+}
+
+void apemode::platform::shared::AssetManager::UpdateAssets( const char*  pszFolderPath,
+                                                            const char** ppszFilePatterns,
+                                                            size_t       filePatternCount ) {
     apemode_memory_allocation_scope;
 
     /* Lock. */
@@ -169,7 +172,7 @@ void apemodeos::AssetManager::UpdateAssets( const char*  pszFolderPath,
 
         /* Check if the file, that is referenced by the asset item exists. */
 
-        const bool bAssetExists = apemodeos::FileExists( assetIt->second.Asset.GetId() );
+        const bool bAssetExists = apemode::platform::shared::FileExists( assetIt->second.Asset.GetId() );
 
         /* File was marked as deleted, destroy asset item. */
 
@@ -236,7 +239,7 @@ void apemodeos::AssetManager::UpdateAssets( const char*  pszFolderPath,
                 const std::string fullPath = ToCanonicalAbsolutPath( pszFilePath );
                 const std::string relativePath = fullPath.substr( storageDirectoryFull.size( ) + ( storageDirectoryFull.back( ) != '/' ) );
 
-                apemodeos::AssetFile* pAsset = nullptr;
+                apemode::platform::shared::AssetFile* pAsset = nullptr;
 
                 auto assetIt = AssetFiles.find( relativePath );
                 if ( assetIt == AssetFiles.end( ) ) {
@@ -300,10 +303,10 @@ apemode::vector< uint8_t > TReadFile( const char* pszFilePath ) {
     return std::move( assetContentBuffer );
 }
 
-apemode::vector< uint8_t > apemodeos::FileReader::ReadBinFile( const char* pszFilePath ) {
+apemode::vector< uint8_t > apemode::platform::shared::FileReader::ReadBinFile( const char* pszFilePath ) {
     return std::move( TReadFile< false >( pszFilePath ) );
 }
 
-apemode::vector< uint8_t > apemodeos::FileReader::ReadTxtFile( const char* pszFilePath ) {
+apemode::vector< uint8_t > apemode::platform::shared::FileReader::ReadTxtFile( const char* pszFilePath ) {
     return std::move( TReadFile< true >( pszFilePath ) );
 }

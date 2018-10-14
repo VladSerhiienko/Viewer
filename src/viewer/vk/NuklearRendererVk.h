@@ -1,6 +1,6 @@
 #pragma once
 
-#include <NuklearSdlBase.h>
+#include <viewer/NuklearRendererBase.h>
 
 #include <Buffer.Vulkan.h>
 #include <DescriptorPool.Vulkan.h>
@@ -15,7 +15,7 @@
 namespace apemode {
 namespace vk {
 
-class NuklearRenderer : public NuklearRendererSdlBase {
+class NuklearRenderer : public NuklearRendererBase {
 public:
     /* User either provides a command buffer or a queue (with family id).
      * In case the command buffer is null, it will be allocated,

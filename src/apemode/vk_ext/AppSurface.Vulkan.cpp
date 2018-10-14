@@ -1,14 +1,14 @@
 
 
-#include <AppState.h>
-#include <AppSurfaceSdlVk.h>
-#include <SceneRendererVk.h>
-#include <MemoryManager.h>
+#include "AppSurface.Vulkan.h"
 
-apemode::AppSurfaceSdlVk::AppSurfaceSdlVk( ) {
+#include <apemode/platform/memory/MemoryManager.h>
+#include <apemode/platform/AppState.h>
+
+apemodevk::AppSurface::AppSurface( ) {
 }
 
-apemode::AppSurfaceSdlVk::~AppSurfaceSdlVk( ) {
+apemodevk::AppSurface::~AppSurface( ) {
 }
 
 // clang-format off
@@ -18,7 +18,7 @@ struct apemode::GraphicsAllocator : apemodevk::GraphicsManager::IAllocator {
                   const char*        sourceFile,
                   const unsigned int sourceLine,
                   const char*        sourceFunc ) override {
-        return apemode::allocate( size, alignment, sourceFile, sourceLine, sourceFunc );
+        return apemode::platform::allocate( size, alignment, sourceFile, sourceLine, sourceFunc );
     }
 
     void* Realloc( void*              pOriginal,
@@ -27,32 +27,32 @@ struct apemode::GraphicsAllocator : apemodevk::GraphicsManager::IAllocator {
                    const char*        sourceFile,
                    const unsigned int sourceLine,
                    const char*        sourceFunc ) override {
-        return apemode::reallocate( pOriginal, size, alignment, sourceFile, sourceLine, sourceFunc );
+        return apemode::platform::reallocate( pOriginal, size, alignment, sourceFile, sourceLine, sourceFunc );
     }
 
     void Free( void*              pMemory,
                const char*        sourceFile,
                const unsigned int sourceLine,
                const char*        sourceFunc ) override {
-        return apemode::deallocate( pMemory, sourceFile, sourceLine, sourceFunc );
+        return apemode::platform::deallocate( pMemory, sourceFile, sourceLine, sourceFunc );
     }
 
     void GetPrevMemoryAllocationScope( const char*&  pszPrevSourceFile,
                                        unsigned int& prevSourceLine,
                                        const char*&  pszPrevSourceFunc ) const override {
-        apemode::GetPrevMemoryAllocationScope( pszPrevSourceFile, prevSourceLine, pszPrevSourceFunc );
+        apemode::platform::GetPrevMemoryAllocationScope( pszPrevSourceFile, prevSourceLine, pszPrevSourceFunc );
     }
 
     void StartMemoryAllocationScope( const char*        pszSourceFile,
                                      const unsigned int sourceLine,
                                      const char*        pszSourceFunc ) const override {
-        apemode::StartMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
+        apemode::platform::StartMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
     }
 
     void EndMemoryAllocationScope( const char*        pszPrevSourceFile,
                                    const unsigned int prevSourceLine,
                                    const char*        pszPrevSourceFunc ) const override {
-        apemode::EndMemoryAllocationScope( pszPrevSourceFile, prevSourceLine, pszPrevSourceFunc );
+        apemode::platform::EndMemoryAllocationScope( pszPrevSourceFile, prevSourceLine, pszPrevSourceFunc );
     }
 };
 
@@ -65,11 +65,11 @@ struct apemode::GraphicsLogger : apemodevk::GraphicsManager::ILogger {
     }
 };
 
-// bool apemode::AppSurfaceSdlVk::Initialize( uint32_t width, uint32_t height, const char* name )
-bool apemode::AppSurfaceSdlVk::Initialize( const PlatformSurface* pPlatformSurface ) {
+// bool apemodevk::AppSurface::Initialize( uint32_t width, uint32_t height, const char* name )
+bool apemodevk::AppSurface::Initialize( const PlatformSurface* pPlatformSurface ) {
     apemode_memory_allocation_scope;
 
-    LogInfo( "AppSurfaceSdlVk: Initializing." );
+    LogInfo( "AppSurface: Initializing." );
 
     uint32_t graphicsManagerFlags = 0;
 
@@ -195,7 +195,7 @@ bool apemode::AppSurfaceSdlVk::Initialize( const PlatformSurface* pPlatformSurfa
     return true;
 }
 
-void apemode::AppSurfaceSdlVk::Finalize( ) {
+void apemodevk::AppSurface::Finalize( ) {
     apemode_memory_allocation_scope;
 
     PresentQueueFamilyIds.clear( );
@@ -205,7 +205,7 @@ void apemode::AppSurfaceSdlVk::Finalize( ) {
     Node.Destroy( );
 }
 
-bool apemode::AppSurfaceSdlVk::Resize( const VkExtent2D extent ) {
+bool apemodevk::AppSurface::Resize( const VkExtent2D extent ) {
     if ( extent.width != Swapchain.ImgExtent.width || extent.height != Swapchain.ImgExtent.height ) {
         apemode_memory_allocation_scope;
         apemodevk::CheckedResult( vkDeviceWaitIdle( Node ) );

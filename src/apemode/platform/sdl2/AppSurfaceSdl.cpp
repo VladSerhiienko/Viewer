@@ -1,19 +1,19 @@
 
-#include "AppSurfaceSdlBase.h"
-#include <AppState.h>
+#include "AppSurface.h"
+#include <apemode/platform/AppState.h>
 
-apemode::AppSurfaceSdlBase::AppSurfaceSdlBase( ) {
+apemode::platform::sdl2::AppSurface::AppSurfaceSdlBase( ) {
 }
 
-apemode::AppSurfaceSdlBase::~AppSurfaceSdlBase( ) {
+apemode::platform::sdl2::AppSurface::~AppSurfaceSdlBase( ) {
     Finalize( );
 }
 
 #ifdef SDL_VIDEO_DRIVER_COCOA
-void* GetNSViewFromNSWindow( void* pNSWindow );
+void* GetNSViewFromNSWindow( void* pNSWindow, bool bEnableMetalLayer );
 #endif
 
-bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, const char* name ) {
+bool apemode::platform::sdl2::AppSurface::Initialize( uint32_t width, uint32_t height, const char* name ) {
     apemode_memory_allocation_scope;
 
     LogInfo( "AppSurfaceSdlBase: Initializing." );
@@ -35,7 +35,7 @@ bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, co
                 pWindowX11  = windowInfo.info.x11.window;
                 LogInfo( "AppSurfaceSdlBase: Resolved Xlib window handles." );
 #elif SDL_VIDEO_DRIVER_COCOA
-                pView = GetNSViewFromNSWindow( windowInfo.info.cocoa.window );
+                pView = GetNSViewFromNSWindow( windowInfo.info.cocoa.window, true );
                 LogInfo( "AppSurfaceSdlBase: Resolved Cocoa window handle." );
 #elif SDL_VIDEO_DRIVER_WINDOWS
                 hWnd      = windowInfo.info.win.window;
@@ -49,7 +49,7 @@ bool apemode::AppSurfaceSdlBase::Initialize( uint32_t width, uint32_t height, co
     return nullptr != pSdlWindow;
 }
 
-void apemode::AppSurfaceSdlBase::Finalize( ) {
+void apemode::platform::sdl2::AppSurface::Finalize( ) {
     if ( pSdlWindow ) {
         LogInfo( "AppSurfaceSdlBase: Deleting window." );
         SDL_DestroyWindow( pSdlWindow );
@@ -57,7 +57,7 @@ void apemode::AppSurfaceSdlBase::Finalize( ) {
     }
 }
 
-uint32_t apemode::AppSurfaceSdlBase::GetWidth( ) const {
+uint32_t apemode::platform::sdl2::AppSurface::GetWidth( ) const {
     SDL_assert( pSdlWindow && "Not initialized." );
 
     int OutWidth;
@@ -65,7 +65,7 @@ uint32_t apemode::AppSurfaceSdlBase::GetWidth( ) const {
     return static_cast< uint32_t >( OutWidth );
 }
 
-uint32_t apemode::AppSurfaceSdlBase::GetHeight( ) const {
+uint32_t apemode::platform::sdl2::AppSurface::GetHeight( ) const {
     SDL_assert( pSdlWindow && "Not initialized." );
 
     int OutHeight;
@@ -73,6 +73,6 @@ uint32_t apemode::AppSurfaceSdlBase::GetHeight( ) const {
     return static_cast< uint32_t >( OutHeight );
 }
 
-void* apemode::AppSurfaceSdlBase::GetWindowHandle( ) {
+void* apemode::platform::sdl2::AppSurface::GetWindowHandle( ) {
     return reinterpret_cast< void* >( pSdlWindow );
 }
