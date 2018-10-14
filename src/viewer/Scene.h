@@ -163,10 +163,18 @@ struct SceneNodeTransform {
 /* SceneAnimCurvKey class stores time, value, arrive and leave tangents (tangents are only for cubic keys).
  */
 struct SceneAnimCurveKey {
-    float Time          = 0.0f;
-    float Value         = 0.0f;
-    float ArriveTangent = 0.0f;
-    float LeaveTangent  = 0.0f;
+    enum EInterpolationMode {
+        eInterpolationMode_Const = 0,
+        eInterpolationMode_Linear,
+        eInterpolationMode_Cubic,
+        eInterpolationModeCount,
+    };
+
+    EInterpolationMode eInterpMode   = eInterpolationMode_Linear;
+    float              Time          = 0.0f;
+    float              Value         = 0.0f;
+    float              ArriveTangent = 0.0f;
+    float              LeaveTangent  = 0.0f;
 };
 
 /* SceneAnimCurve class stores curve parameters and time-value keys.
