@@ -396,6 +396,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                               []( const apemodefb::AnimCurveKeyFb *pKeyFb ) {
                                   return eastl::make_pair< float, SceneAnimCurveKey >( pKeyFb->time( ),
                                                                                        SceneAnimCurveKey{
+                                                                                           SceneAnimCurveKey::EInterpolationMode(pKeyFb->interpolationMode()),
                                                                                            pKeyFb->time( ),
                                                                                            pKeyFb->value( ),
                                                                                            pKeyFb->arrive_tangent( ),
