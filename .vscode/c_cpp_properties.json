@@ -60,6 +60,7 @@
                     "${workspaceFolder}/src/apemode/vk_ext",
                     "${workspaceFolder}/src/apemode",
                     "${workspaceFolder}/src/viewer",
+                    "${workspaceFolder}/src",
                     "${workspaceFolder}/dependencies/gli",
                     "${workspaceFolder}/dependencies/gli/external",
                     "${workspaceFolder}/dependencies/gli/external/glm",

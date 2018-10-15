@@ -2,8 +2,10 @@
 
 #include <apemode/platform/memory/MemoryManager.h>
 
+#ifdef _WIN32
 #ifndef MT_INSTRUMENTED_BUILD
 #define MT_INSTRUMENTED_BUILD 1
+#endif
 #endif
 
 #include <MTScheduler.h>

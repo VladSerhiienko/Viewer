@@ -32,7 +32,7 @@ int main( int argc, char** ppArgs ) {
     appSurface.Windows.hWindow   = appSurfaceSdl.hWnd;
     appSurface.Windows.hInstance = appSurfaceSdl.hInstance;
 #elif SDL_VIDEO_DRIVER_COCOA
-    assert( &appSurface.pViewIOS == &appSurface.pViewMacOS );
+    assert( &appSurface.iOS.pViewIOS == &appSurface.macOS.pViewMacOS );
     appSurface.iOS.pViewIOS = appSurfaceSdl.pView;
 #elif SDL_VIDEO_DRIVER_X11
     appSurface.X11.pDisplayX11 = appSurfaceSdl.pDisplayX11;
