@@ -1,15 +1,16 @@
 #pragma once
 
-#include <BufferPools.Vulkan.h>
-#include <DescriptorPool.Vulkan.h>
-#include <GraphicsDevice.Vulkan.h>
-#include <ImageUploader.Vulkan.h>
-#include <SamplerManager.Vulkan.h>
-#include <SceneRendererBase.h>
-#include <SceneUploaderVk.h>
+#include <viewer/vk/SceneUploaderVk.h>
+#include <viewer/SceneRendererBase.h>
 
-#include <IAssetManager.h>
-#include <MathInc.h>
+#include <apemode/vk/BufferPools.Vulkan.h>
+#include <apemode/vk/DescriptorPool.Vulkan.h>
+#include <apemode/vk/GraphicsDevice.Vulkan.h>
+#include <apemode/vk_ext/ImageUploader.Vulkan.h>
+#include <apemode/vk_ext/SamplerManager.Vulkan.h>
+
+#include <apemode/platform/IAssetManager.h>
+#include <apemode/platform/MathInc.h>
 
 namespace apemode {
 struct Scene;
@@ -22,11 +23,11 @@ public:
     virtual ~SceneRenderer( ) = default;
 
     struct RecreateParameters : RecreateParametersBase {
-        apemodevk::GraphicsDevice* pNode         = nullptr;        /* Required */
-        apemodeos::IAssetManager*  pAssetManager = nullptr;        /* Required */
-        VkDescriptorPool           pDescPool     = VK_NULL_HANDLE; /* Required */
-        VkRenderPass               pRenderPass   = VK_NULL_HANDLE; /* Required */
-        uint32_t                   FrameCount    = 0;              /* Required */
+        apemodevk::GraphicsDevice*        pNode         = nullptr;        /* Required */
+        apemode::platform::IAssetManager* pAssetManager = nullptr;        /* Required */
+        VkDescriptorPool                  pDescPool     = VK_NULL_HANDLE; /* Required */
+        VkRenderPass                      pRenderPass   = VK_NULL_HANDLE; /* Required */
+        uint32_t                          FrameCount    = 0;              /* Required */
     };
 
     bool Recreate( const RecreateParametersBase* pParams ) override;

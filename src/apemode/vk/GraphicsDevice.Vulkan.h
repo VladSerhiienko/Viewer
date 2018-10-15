@@ -10,7 +10,7 @@ namespace apemodevk {
 
     class ShaderCompiler;
 
-    class GraphicsDevice : public NoCopyAssignPolicy {
+    class APEMODEVK_API GraphicsDevice : public NoCopyAssignPolicy {
     public:
         friend Swapchain;
         friend GraphicsManager;

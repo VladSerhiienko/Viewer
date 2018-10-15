@@ -1,33 +1,33 @@
 
-#include <Swapchain.Vulkan.h>
-#include <ImageUploader.Vulkan.h>
-#include <SamplerManager.Vulkan.h>
+#include <apemode/platform/AppState.h>
+#include <apemode/platform/shared/AssetManager.h>
+#include <apemode/platform/AppInput.h>
+#include <apemode/platform/AppSurface.h>
 
-#include <AppBase.h>
-#include <AppState.h>
+#include <apemode/vk/Swapchain.Vulkan.h>
+#include <apemode/vk_ext/AppSurface.Vulkan.h>
+#include <apemode/vk_ext/ImageUploader.Vulkan.h>
+#include <apemode/vk_ext/SamplerManager.Vulkan.h>
 
-#include <AppSurface.h>
 #include <NuklearRendererVk.h>
 #include <DebugRendererVk.h>
 #include <SceneRendererVk.h>
 #include <SceneUploaderVk.h>
 #include <SkyboxRendererVk.h>
 
-#include <Input.h>
-#include <Scene.h>
-#include <Camera.h>
-#include <AssetManager.h>
-#include <CameraControllerInputMouseKeyboard.h>
-#include <CameraControllerProjection.h>
-#include <CameraControllerModelView.h>
-#include <CameraControllerFreeLook.h>
+#include <viewer/Scene.h>
+#include <viewer/Camera.h>
+#include <viewer/CameraControllerInputMouseKeyboard.h>
+#include <viewer/CameraControllerProjection.h>
+#include <viewer/CameraControllerModelView.h>
+#include <viewer/CameraControllerFreeLook.h>
 
 #define kMaxFrames 3
 
 namespace apemode {
 namespace viewer {
 namespace vk {
-    
+
     class AppState;
     class AppContent;
 
@@ -38,11 +38,11 @@ namespace vk {
 
         /* Returns true if initialization succeeded, false otherwise.
          */
-        bool Initialize( const apemode::PlatformSurface* pPlatformSurface );
+        bool Initialize( const apemodevk::PlatformSurface* pPlatformSurface );
 
         /* Returns true if the app is running, false otherwise.
          */
-        bool Update( float deltaSecs, const apemode::Input& inputState, VkExtent2D extent );
+        bool Update( float deltaSecs, const apemode::platform::AppInput* inputState, VkExtent2D extent );
 
     protected:
         bool OnResized( );
@@ -63,13 +63,13 @@ namespace vk {
         XMFLOAT4 LightDirection;
         XMFLOAT4 LightColor;
 
-        apemodeos::AssetManager mAssetManager;
+        apemode::platform::shared::AssetManager mAssetManager;
 
-        CameraProjectionController                       CamProjController;
-        apemode::unique_ptr< CameraControllerInputBase > pCamInput      = nullptr;
-        apemode::unique_ptr< CameraControllerBase >      pCamController = nullptr;
+        apemode::CameraProjectionController                       CamProjController;
+        apemode::unique_ptr< apemode::CameraControllerInputBase > pCamInput      = nullptr;
+        apemode::unique_ptr< apemode::CameraControllerBase >      pCamController = nullptr;
 
-        AppSurface AppSurface;
+        apemodevk::AppSurface Surface;
 
         uint32_t                                        BackbufferIndices[ kMaxFrames ] = {0};
         apemodevk::DescriptorPool                       DescriptorPool;
@@ -91,15 +91,15 @@ namespace vk {
         VkSampler                                         pRadianceCubeMapSampler   = VK_NULL_HANDLE;
         VkSampler                                         pIrradianceCubeMapSampler = VK_NULL_HANDLE;
 
-        apemode::unique_ptr< NuklearRendererSdlBase > pNkRenderer;
-        apemode::unique_ptr< SceneRendererBase >      pSceneRendererBase;
-        apemode::unique_ptr< vk::Skybox >             pSkybox;
-        apemode::unique_ptr< vk::SkyboxRenderer >     pSkyboxRenderer;
-        apemode::unique_ptr< vk::DebugRenderer >      pDebugRenderer;
+        apemode::unique_ptr< NuklearRendererBase >         pNkRenderer;
+        apemode::unique_ptr< SceneRendererBase >           pSceneRendererBase;
+        apemode::unique_ptr< apemode::vk::Skybox >         pSkybox;
+        apemode::unique_ptr< apemode::vk::SkyboxRenderer > pSkyboxRenderer;
+        apemode::unique_ptr< apemode::vk::DebugRenderer >  pDebugRenderer;
 
         LoadedScene mLoadedScene;
     };
-    
+
 } // namespace vk
 } // namespace viewer
 } // namespace apemode

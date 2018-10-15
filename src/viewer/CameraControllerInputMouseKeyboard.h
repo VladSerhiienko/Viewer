@@ -16,7 +16,8 @@ namespace apemode {
             OrbitDelta = {0.0f, 0.0f};
         }
 
-        void Update( float _dt, apemode::Input const& _input, XMFLOAT2 _widthHeight ) override {
+        void Update( float _dt, apemode::platform::AppInput const& _input, XMFLOAT2 _widthHeight ) override {
+            using namespace apemode::platform;
             XMFLOAT3 mxyz = {_input.Analogs[ kAnalogInput_MouseX ],
                                    _input.Analogs[ kAnalogInput_MouseY ],
                                    _input.Analogs[ kAnalogInput_MouseScroll ]};

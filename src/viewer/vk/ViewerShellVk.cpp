@@ -1,4 +1,4 @@
-#include <ViewerApp.h>
+#include "ViewerShellVk.h"
 #include <apemode/platform/memory/MemoryManager.h>
 
 using namespace apemode::viewer::vk;
@@ -32,7 +32,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
     apemode_memory_allocation_scope;
     LogInfo( "ViewerApp: Initializing." );
 
-    if ( AppSurface.Initialize( pPlatformSurface ) ) {
+    if ( Surface.Initialize( pPlatformSurface, nullptr, nullptr, nullptr, 0, 0, nullptr, 0, 0 ) ) {
         apemode::string8 assetsFolder( TGetOption< std::string >( "--assets", "./" ).c_str( ) );
         // apemode::string8 interestingFilePattern = ".*\\.(vert|frag|comp|geom|tesc|tese|h|inl|inc|fx)$";
         mAssetManager.UpdateAssets( assetsFolder.c_str( ), nullptr, 0 );
@@ -41,7 +41,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
 
         FrameId    = 0;
         FrameIndex = 0;
-        FrameCount = AppSurface.Swapchain.GetBufferCount( );
+        FrameCount = Surface.Swapchain.GetBufferCount( );
 
         OnResized( );
 
@@ -50,9 +50,9 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
             VkCommandPoolCreateInfo cmdPoolCreateInfo;
             InitializeStruct( cmdPoolCreateInfo );
             cmdPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-            cmdPoolCreateInfo.queueFamilyIndex = AppSurface.PresentQueueFamilyIds[0];
+            cmdPoolCreateInfo.queueFamilyIndex = Surface.PresentQueueFamilyIds[0];
 
-            if ( false == hCmdPool[ i ].Recreate( AppSurface.Node, cmdPoolCreateInfo ) ) {
+            if ( false == hCmdPool[ i ].Recreate( Surface.Node, cmdPoolCreateInfo ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
@@ -63,22 +63,22 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
             cmdBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
             cmdBufferAllocInfo.commandBufferCount = 1;
 
-            if ( false == hCmdBuffers[ i ].Recreate( AppSurface.Node, cmdBufferAllocInfo ) ) {
+            if ( false == hCmdBuffers[ i ].Recreate( Surface.Node, cmdBufferAllocInfo ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
 
             VkSemaphoreCreateInfo semaphoreCreateInfo;
             InitializeStruct( semaphoreCreateInfo );
-            if ( false == hPresentCompleteSemaphores[ i ].Recreate( AppSurface.Node, semaphoreCreateInfo ) ||
-                 false == hRenderCompleteSemaphores[ i ].Recreate( AppSurface.Node, semaphoreCreateInfo ) ) {
+            if ( false == hPresentCompleteSemaphores[ i ].Recreate( Surface.Node, semaphoreCreateInfo ) ||
+                 false == hRenderCompleteSemaphores[ i ].Recreate( Surface.Node, semaphoreCreateInfo ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
         }
 
         apemodevk::DescriptorPool::InitializeParameters descPoolInitParameters;
-        descPoolInitParameters.pNode                                                               = &AppSurface.Node;
+        descPoolInitParameters.pNode                                                               = &Surface.Node;
         descPoolInitParameters.MaxDescriptorSetCount                                               = 1024;
         descPoolInitParameters.MaxDescriptorPoolSizes[ VK_DESCRIPTOR_TYPE_SAMPLER ]                = 64;
         descPoolInitParameters.MaxDescriptorPoolSizes[ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC ] = 1024;
@@ -89,7 +89,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
         }
 
         pSamplerManager = apemode::make_unique< apemodevk::SamplerManager >( );
-        if ( false == pSamplerManager->Recreate( &AppSurface.Node ) ) {
+        if ( false == pSamplerManager->Recreate( &Surface.Node ) ) {
             return false;
         }
 
@@ -112,7 +112,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
                 loadOptions.bImgView = true;
 
                 auto srcImg = imgDecoder.DecodeSourceImageFromData( texAssetBin.data(), texAssetBin.size(), decodeOptions );
-                RadianceImg = imgUploader.UploadImage( &AppSurface.Node, *srcImg, loadOptions );
+                RadianceImg = imgUploader.UploadImage( &Surface.Node, *srcImg, loadOptions );
             }
 
             VkSamplerCreateInfo samplerCreateInfo;
@@ -152,7 +152,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
                 loadOptions.bImgView = true;
 
                 auto srcImg = imgDecoder.DecodeSourceImageFromData( texAssetBin.data(), texAssetBin.size(), decodeOptions );
-                IrradianceImg = imgUploader.UploadImage( &AppSurface.Node, *srcImg, loadOptions );
+                IrradianceImg = imgUploader.UploadImage( &Surface.Node, *srcImg, loadOptions );
             }
 
             VkSamplerCreateInfo samplerCreateInfo;
@@ -176,12 +176,12 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
             pIrradianceCubeMapSampler = pSamplerManager->GetSampler( samplerCreateInfo );
         }
 
-        pNkRenderer = apemode::unique_ptr< NuklearRendererSdlBase >( apemode_new vk::NuklearRenderer( ) );
+        pNkRenderer = apemode::unique_ptr< NuklearRendererBase >( apemode_new apemode::vk::NuklearRenderer( ) );
 
         auto pFontAsset = mAssetManager.Acquire( "fonts/iosevka-ss07-medium.ttf" );
 
-        vk::NuklearRenderer::InitParameters initParamsNk;
-        initParamsNk.pNode           = &AppSurface.Node;
+        apemode::vk::NuklearRenderer::InitParameters initParamsNk;
+        initParamsNk.pNode           = &Surface.Node;
         initParamsNk.pAssetManager   = &mAssetManager;
         initParamsNk.pFontAsset      = pFontAsset;
         initParamsNk.pSamplerManager = pSamplerManager.get( );
@@ -192,20 +192,20 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
         pNkRenderer->Init( &initParamsNk );
         mAssetManager.Release( pFontAsset );
 
-        vk::DebugRenderer::InitParameters initParamsDbg;
-        initParamsDbg.pNode           = &AppSurface.Node;
+        apemode::vk::DebugRenderer::InitParameters initParamsDbg;
+        initParamsDbg.pNode           = &Surface.Node;
         initParamsDbg.pAssetManager   = &mAssetManager;
         initParamsDbg.pRenderPass     = hDbgRenderPass;
         initParamsDbg.pDescPool       = DescriptorPool;
         initParamsDbg.FrameCount      = FrameCount;
 
-        pDebugRenderer = apemode::unique_ptr< vk::DebugRenderer >( apemode_new vk::DebugRenderer() );
+        pDebugRenderer = apemode::unique_ptr< apemode::vk::DebugRenderer >( apemode_new apemode::vk::DebugRenderer() );
         pDebugRenderer->RecreateResources( &initParamsDbg );
 
         pSceneRendererBase = apemode::unique_ptr< apemode::SceneRendererBase >( apemode_new apemode::vk::SceneRenderer( ) );
 
-        vk::SceneRenderer::RecreateParameters recreateParams;
-        recreateParams.pNode           = &AppSurface.Node;
+        apemode::vk::SceneRenderer::RecreateParameters recreateParams;
+        recreateParams.pNode           = &Surface.Node;
         recreateParams.pAssetManager   = &mAssetManager;
         recreateParams.pRenderPass     = hDbgRenderPass;
         recreateParams.pDescPool       = DescriptorPool;
@@ -243,34 +243,34 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
         }
 
         auto sceneFile = TGetOption< std::string >( "scene", "" );
-        mLoadedScene = LoadSceneFromBin( apemodeos::FileReader( ).ReadBinFile( sceneFile.c_str( ) ) );
+        mLoadedScene = LoadSceneFromBin( apemode::platform::shared::FileReader( ).ReadBinFile( sceneFile.c_str( ) ) );
 
-        vk::SceneUploader::UploadParameters uploadParams;
+        apemode::vk::SceneUploader::UploadParameters uploadParams;
         uploadParams.pSamplerManager = pSamplerManager.get( );
         uploadParams.pSrcScene       = mLoadedScene.pSrcScene;
         uploadParams.pImgUploader    = &imgUploader;
-        uploadParams.pNode           = &AppSurface.Node;
+        uploadParams.pNode           = &Surface.Node;
 
-        vk::SceneUploader sceneUploader;
+        apemode::vk::SceneUploader sceneUploader;
         if ( false == sceneUploader.UploadScene( mLoadedScene.pScene.get( ), &uploadParams ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
 
-        vk::SkyboxRenderer::RecreateParameters skyboxRendererRecreateParams;
-        skyboxRendererRecreateParams.pNode           = &AppSurface.Node;
+        apemode::vk::SkyboxRenderer::RecreateParameters skyboxRendererRecreateParams;
+        skyboxRendererRecreateParams.pNode           = &Surface.Node;
         skyboxRendererRecreateParams.pAssetManager   = &mAssetManager;
         skyboxRendererRecreateParams.pRenderPass     = hDbgRenderPass;
         skyboxRendererRecreateParams.pDescPool       = DescriptorPool;
         skyboxRendererRecreateParams.FrameCount      = FrameCount;
 
-        pSkyboxRenderer = apemode::make_unique< vk::SkyboxRenderer >( );
+        pSkyboxRenderer = apemode::make_unique< apemode::vk::SkyboxRenderer >( );
         if ( false == pSkyboxRenderer->Recreate( &skyboxRendererRecreateParams ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
 
-        pSkybox                = apemode::make_unique< vk::Skybox >( );
+        pSkybox                = apemode::make_unique< apemode::vk::Skybox >( );
         pSkybox->pSampler      = pRadianceCubeMapSampler;
         pSkybox->pImgView      = RadianceImg->hImgView;
         pSkybox->Dimension     = RadianceImg->ImgCreateInfo.extent.width;
@@ -287,18 +287,18 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
     return false;
 }
 
-bool apemode::ViewerShell::OnResized( ) {
+bool apemode::viewer::vk::ViewerShell::OnResized( ) {
     apemode_memory_allocation_scope;
 
-    Width  = AppSurface.Swapchain.ImgExtent.width;
-    Height = AppSurface.Swapchain.ImgExtent.height;
+    Width  = Surface.Swapchain.ImgExtent.width;
+    Height = Surface.Swapchain.ImgExtent.height;
 
     VkImageCreateInfo depthImgCreateInfo;
     InitializeStruct( depthImgCreateInfo );
     depthImgCreateInfo.imageType     = VK_IMAGE_TYPE_2D;
     depthImgCreateInfo.format        = sDepthFormat;
-    depthImgCreateInfo.extent.width  = AppSurface.Swapchain.ImgExtent.width;
-    depthImgCreateInfo.extent.height = AppSurface.Swapchain.ImgExtent.height;
+    depthImgCreateInfo.extent.width  = Surface.Swapchain.ImgExtent.width;
+    depthImgCreateInfo.extent.height = Surface.Swapchain.ImgExtent.height;
     depthImgCreateInfo.extent.depth  = 1;
     depthImgCreateInfo.mipLevels     = 1;
     depthImgCreateInfo.arrayLayers   = 1;
@@ -321,14 +321,14 @@ bool apemode::ViewerShell::OnResized( ) {
     allocationCreateInfo.flags = 0;
 
     for ( uint32_t i = 0; i < FrameCount; ++i ) {
-        if ( false == hDepthImgs[ i ].Recreate( AppSurface.Node.hAllocator, depthImgCreateInfo, allocationCreateInfo ) ) {
+        if ( false == hDepthImgs[ i ].Recreate( Surface.Node.hAllocator, depthImgCreateInfo, allocationCreateInfo ) ) {
             return false;
         }
     }
 
     for ( uint32_t i = 0; i < FrameCount; ++i ) {
         depthImgViewCreateInfo.image = hDepthImgs[ i ];
-        if ( false == hDepthImgViews[ i ].Recreate( AppSurface.Node, depthImgViewCreateInfo ) ) {
+        if ( false == hDepthImgViews[ i ].Recreate( Surface.Node, depthImgViewCreateInfo ) ) {
             return false;
         }
     }
@@ -336,7 +336,7 @@ bool apemode::ViewerShell::OnResized( ) {
     VkAttachmentDescription colorDepthAttachments[ 2 ];
     InitializeStruct( colorDepthAttachments );
 
-    colorDepthAttachments[ 0 ].format         = AppSurface.Surface.eColorFormat;
+    colorDepthAttachments[ 0 ].format         = Surface.Surface.eColorFormat;
     colorDepthAttachments[ 0 ].samples        = VK_SAMPLE_COUNT_1_BIT;
     colorDepthAttachments[ 0 ].loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorDepthAttachments[ 0 ].storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
@@ -391,12 +391,12 @@ bool apemode::ViewerShell::OnResized( ) {
     renderPassCreateInfoDbg.subpassCount    = 1;
     renderPassCreateInfoDbg.pSubpasses      = &subpassDbg;
 
-    if ( false == hNkRenderPass.Recreate( AppSurface.Node, renderPassCreateInfoNk ) ) {
+    if ( false == hNkRenderPass.Recreate( Surface.Node, renderPassCreateInfoNk ) ) {
         apemode::platform::DebugBreak( );
         return false;
     }
 
-    if ( false == hDbgRenderPass.Recreate( AppSurface.Node, renderPassCreateInfoDbg ) ) {
+    if ( false == hDbgRenderPass.Recreate( Surface.Node, renderPassCreateInfoDbg ) ) {
         apemode::platform::DebugBreak( );
         return false;
     }
@@ -405,33 +405,33 @@ bool apemode::ViewerShell::OnResized( ) {
     InitializeStruct( framebufferCreateInfoNk );
     framebufferCreateInfoNk.renderPass      = hNkRenderPass;
     framebufferCreateInfoNk.attachmentCount = 1;
-    framebufferCreateInfoNk.width           = AppSurface.Swapchain.ImgExtent.width;
-    framebufferCreateInfoNk.height          = AppSurface.Swapchain.ImgExtent.height;
+    framebufferCreateInfoNk.width           = Surface.Swapchain.ImgExtent.width;
+    framebufferCreateInfoNk.height          = Surface.Swapchain.ImgExtent.height;
     framebufferCreateInfoNk.layers          = 1;
 
     VkFramebufferCreateInfo framebufferCreateInfoDbg;
     InitializeStruct( framebufferCreateInfoDbg );
     framebufferCreateInfoDbg.renderPass      = hDbgRenderPass;
     framebufferCreateInfoDbg.attachmentCount = 2;
-    framebufferCreateInfoDbg.width           = AppSurface.Swapchain.ImgExtent.width;
-    framebufferCreateInfoDbg.height          = AppSurface.Swapchain.ImgExtent.height;
+    framebufferCreateInfoDbg.width           = Surface.Swapchain.ImgExtent.width;
+    framebufferCreateInfoDbg.height          = Surface.Swapchain.ImgExtent.height;
     framebufferCreateInfoDbg.layers          = 1;
 
     for ( uint32_t i = 0; i < FrameCount; ++i ) {
-        VkImageView attachments[ 1 ] = {AppSurface.Swapchain.Buffers[ i ].hImgView};
+        VkImageView attachments[ 1 ] = {Surface.Swapchain.Buffers[ i ].hImgView};
         framebufferCreateInfoNk.pAttachments = attachments;
 
-        if ( false == hNkFramebuffers[ i ].Recreate( AppSurface.Node, framebufferCreateInfoNk ) ) {
+        if ( false == hNkFramebuffers[ i ].Recreate( Surface.Node, framebufferCreateInfoNk ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
     }
 
     for ( uint32_t i = 0; i < FrameCount; ++i ) {
-        VkImageView attachments[ 2 ] = {AppSurface.Swapchain.Buffers[ i ].hImgView, hDepthImgViews[ i ]};
+        VkImageView attachments[ 2 ] = {Surface.Swapchain.Buffers[ i ].hImgView, hDepthImgViews[ i ]};
         framebufferCreateInfoDbg.pAttachments = attachments;
 
-        if ( false == hDbgFramebuffers[ i ].Recreate( AppSurface.Node, framebufferCreateInfoDbg ) ) {
+        if ( false == hDbgFramebuffers[ i ].Recreate( Surface.Node, framebufferCreateInfoDbg ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
@@ -440,20 +440,20 @@ bool apemode::ViewerShell::OnResized( ) {
     return true;
 }
 
-bool ViewerShell::Update( float deltaSecs, const Input & inputState, const VkExtent2D extent ) {
+bool ViewerShell::Update( float deltaSecs, const apemode::platform::AppInput * inputState, const VkExtent2D extent ) {
     apemode_memory_allocation_scope;
 
     ++FrameId;
     FrameIndex = FrameId % (uint64_t) FrameCount;
     TotalSecs += deltaSecs;
 
-    if ( inputState.bIsQuitRequested ||
-         inputState.IsFirstPressed( kDigitalInput_BackButton ) ||
-         inputState.IsFirstPressed( kDigitalInput_KeyEscape ) ) {
+    if ( inputState->bIsQuitRequested ||
+         inputState->IsFirstPressed( apemode::platform::kDigitalInput_BackButton ) ||
+         inputState->IsFirstPressed( apemode::platform::kDigitalInput_KeyEscape ) ) {
         return false;
     }
 
-    if ( AppSurface.Resize( extent ) ) {
+    if ( Surface.Resize( extent ) ) {
         OnResized( );
     }
 
@@ -528,20 +528,20 @@ bool ViewerShell::Update( float deltaSecs, const Input & inputState, const VkExt
     }
     nk_end(ctx);
 
-    pCamInput->Update( deltaSecs, inputState, {float( Width ), float( Height )} );
+    pCamInput->Update( deltaSecs, *inputState, {float( Width ), float( Height )} );
     pCamController->Orbit( pCamInput->OrbitDelta );
     pCamController->Dolly( pCamInput->DollyDelta );
     pCamController->Update( deltaSecs );
 
-    auto queueFamilyPool = AppSurface.Node.GetQueuePool( )->GetPool( AppSurface.PresentQueueFamilyIds[ 0 ] );
+    auto queueFamilyPool = Surface.Node.GetQueuePool( )->GetPool( Surface.PresentQueueFamilyIds[ 0 ] );
     auto acquiredQueue   = queueFamilyPool->Acquire( true );
     while ( acquiredQueue.pQueue == nullptr ) {
         acquiredQueue = queueFamilyPool->Acquire( true );
     }
 
-    VkDevice        device                   = AppSurface.Node.hLogicalDevice;
+    VkDevice        device                   = Surface.Node.hLogicalDevice;
     VkQueue         queue                    = acquiredQueue.pQueue;
-    VkSwapchainKHR  swapchain                = AppSurface.Swapchain.hSwapchain;
+    VkSwapchainKHR  swapchain                = Surface.Swapchain.hSwapchain;
     VkFence         fence                    = acquiredQueue.pFence;
     VkSemaphore     presentCompleteSemaphore = hPresentCompleteSemaphores[ FrameIndex ];
     VkSemaphore     renderCompleteSemaphore  = hRenderCompleteSemaphores[ FrameIndex ];
@@ -579,14 +579,14 @@ bool ViewerShell::Update( float deltaSecs, const Input & inputState, const VkExt
     InitializeStruct( renderPassBeginInfo );
     renderPassBeginInfo.renderPass               = hDbgRenderPass;
     renderPassBeginInfo.framebuffer              = hDbgFramebuffers[ FrameIndex ];
-    renderPassBeginInfo.renderArea.extent.width  = AppSurface.Swapchain.ImgExtent.width;
-    renderPassBeginInfo.renderArea.extent.height = AppSurface.Swapchain.ImgExtent.height;
+    renderPassBeginInfo.renderArea.extent.width  = Surface.Swapchain.ImgExtent.width;
+    renderPassBeginInfo.renderArea.extent.height = Surface.Swapchain.ImgExtent.height;
     renderPassBeginInfo.clearValueCount          = 2;
     renderPassBeginInfo.pClearValues             = clearValue;
 
     vkCmdBeginRenderPass( pCmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-    XMFLOAT2 extentF{float( AppSurface.Swapchain.ImgExtent.width ), float( AppSurface.Swapchain.ImgExtent.height )};
+    XMFLOAT2 extentF{float( Surface.Swapchain.ImgExtent.width ), float( Surface.Swapchain.ImgExtent.height )};
 
     auto viewMatrix     = pCamController->ViewMatrix( );
     auto invViewMatrix  = XMMatrixInverse( nullptr, viewMatrix );
@@ -594,7 +594,7 @@ bool ViewerShell::Update( float deltaSecs, const Input & inputState, const VkExt
     auto projBiasMatrix = CamProjController.ProjBiasMatrix( );
     auto invProjMatrix  = XMMatrixInverse( nullptr, projMatrix );
 
-    vk::DebugRenderer::SkyboxUBO frameData;
+    apemode::vk::DebugRenderer::SkyboxUBO frameData;
     XMStoreFloat4x4( &frameData.ProjMatrix, projMatrix );
     XMStoreFloat4x4( &frameData.ViewMatrix, viewMatrix );
     frameData.Color = {1, 0, 0, 1};
@@ -603,7 +603,7 @@ bool ViewerShell::Update( float deltaSecs, const Input & inputState, const VkExt
     pDebugRenderer->Reset( FrameIndex );
     pSceneRendererBase->Reset( mLoadedScene.pScene.get( ), FrameIndex );
 
-    vk::SkyboxRenderer::RenderParameters skyboxRenderParams;
+    apemode::vk::SkyboxRenderer::RenderParameters skyboxRenderParams;
     XMStoreFloat4x4( &skyboxRenderParams.InvViewMatrix, invViewMatrix );
     XMStoreFloat4x4( &skyboxRenderParams.InvProjMatrix, invProjMatrix );
     XMStoreFloat4x4( &skyboxRenderParams.ProjBiasMatrix, projBiasMatrix );
@@ -613,12 +613,12 @@ bool ViewerShell::Update( float deltaSecs, const Input & inputState, const VkExt
     skyboxRenderParams.Scale.y     = 1;
     skyboxRenderParams.FrameIndex  = FrameIndex;
     skyboxRenderParams.pCmdBuffer  = pCmdBuffer;
-    skyboxRenderParams.pNode       = &AppSurface.Node;
+    skyboxRenderParams.pNode       = &Surface.Node;
     skyboxRenderParams.FieldOfView = apemodexm::DegreesToRadians( 67 );
 
     pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
 
-    vk::DebugRenderer::RenderParameters renderParamsDbg;
+    apemode::vk::DebugRenderer::RenderParameters renderParamsDbg;
     renderParamsDbg.Dims[ 0 ]  = extentF.x;
     renderParamsDbg.Dims[ 1 ]  = extentF.y;
     renderParamsDbg.Scale[ 0 ] = 1;
@@ -649,14 +649,14 @@ bool ViewerShell::Update( float deltaSecs, const Input & inputState, const VkExt
 
     XMMATRIX rootMatrix = XMMatrixRotationY( WorldRotationY );
 
-    vk::SceneRenderer::RenderParameters sceneRenderParameters;
+    apemode::vk::SceneRenderer::RenderParameters sceneRenderParameters;
     sceneRenderParameters.Dims.x                   = extentF.x;
     sceneRenderParameters.Dims.y                   = extentF.y;
     sceneRenderParameters.Scale.x                  = 1;
     sceneRenderParameters.Scale.y                  = 1;
     sceneRenderParameters.FrameIndex               = FrameIndex;
     sceneRenderParameters.pCmdBuffer               = pCmdBuffer;
-    sceneRenderParameters.pNode                    = &AppSurface.Node;
+    sceneRenderParameters.pNode                    = &Surface.Node;
     sceneRenderParameters.RadianceMap.eImgLayout   = RadianceImg->eImgLayout;
     sceneRenderParameters.RadianceMap.pImgView     = RadianceImg->hImgView;
     sceneRenderParameters.RadianceMap.pSampler     = pRadianceCubeMapSampler;
@@ -674,7 +674,7 @@ bool ViewerShell::Update( float deltaSecs, const Input & inputState, const VkExt
     XMStoreFloat4x4( &sceneRenderParameters.RootMatrix, rootMatrix );
     pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
 
-    vk::NuklearRenderer::RenderParameters renderParamsNk;
+    apemode::vk::NuklearRenderer::RenderParameters renderParamsNk;
     renderParamsNk.Dims[ 0 ]            = extentF.x;
     renderParamsNk.Dims[ 1 ]            = extentF.y;
     renderParamsNk.Scale[ 0 ]           = 1;
@@ -726,5 +726,6 @@ bool ViewerShell::Update( float deltaSecs, const Input & inputState, const VkExt
     }
 
     queueFamilyPool->Release(acquiredQueue);
+    return true;
 }
 

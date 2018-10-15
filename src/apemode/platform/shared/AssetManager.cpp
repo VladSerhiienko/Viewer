@@ -104,7 +104,7 @@ void apemode::platform::shared::AssetFile::SetCurrentVersion( uint64_t version )
     LastTimeModified.store( version );
 }
 
-const apemode::platform::shared::IAsset* apemode::platform::shared::AssetManager::Acquire( const char* pszAssetName ) const {
+const apemode::platform::IAsset* apemode::platform::shared::AssetManager::Acquire( const char* pszAssetName ) const {
     auto assetIt = AssetFiles.find( pszAssetName );
 
     if ( assetIt == AssetFiles.end( ) ) {
@@ -116,7 +116,7 @@ const apemode::platform::shared::IAsset* apemode::platform::shared::AssetManager
     return pAsset;
 }
 
-void apemode::platform::shared::AssetManager::Release( const apemode::platform::shared::IAsset* pAsset ) const {
+void apemode::platform::shared::AssetManager::Release( const apemode::platform::IAsset* pAsset ) const {
     if ( const AssetFile* pAssetFile = static_cast< const AssetFile* >( pAsset ) ) {
         auto assetIt = AssetFiles.find( pAssetFile->GetName( ) );
         if ( assetIt != AssetFiles.end( ) ) {

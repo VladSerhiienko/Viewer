@@ -7,7 +7,7 @@
 
 namespace apemode {
 namespace platform {
-    
+
 enum DigitalInput {
     // keyboard
     kDigitalInput_KeyEscape = 0,
@@ -173,31 +173,29 @@ public:
     uint32_t TouchIdCount;
 
 public:
-    AppInput( );
-    ~AppInput( );
+    inline AppInput( );
+    inline ~AppInput( );
 
 public:
     /* @return True if touches are supported and enabled.
      * @note False value means mouse is currently being tracked.
      */
-    bool     IsTouchEnabled( ) const;
-    uint32_t GetTouchCount( ) const;
-    uint32_t GetFirstTouchId( ) const;
-    uint32_t GetLastTouchId( ) const;
-    bool     IsTouchTracked( uint32_t TouchId ) const;
+    inline bool     IsTouchEnabled( ) const;
+    inline uint32_t GetTouchCount( ) const;
+    inline uint32_t GetFirstTouchId( ) const;
+    inline uint32_t GetLastTouchId( ) const;
+    inline bool     IsTouchTracked( uint32_t TouchId ) const;
 
-    bool  IsAnyPressed( ) const;
-    bool  IsTrackingTouchesOrMousePressed( ) const;
-    bool  IsPressed( DigitalInputUInt InDigitalInput ) const;
-    bool  IsFirstPressed( DigitalInputUInt InDigitalInput ) const;
-    bool  IsReleased( DigitalInputUInt InDigitalInput ) const;
-    bool  IsFirstReleased( DigitalInputUInt InDigitalInput ) const;
-    float GetDurationPressed( DigitalInputUInt InDigitalInput ) const;
-    float GetAnalogInput( AnalogInputUInt InAnalogInput ) const;
-    float GetTimeCorrectedAnalogInput( AnalogInputUInt InAnalogInput ) const;
+    inline bool  IsAnyPressed( ) const;
+    inline bool  IsTrackingTouchesOrMousePressed( ) const;
+    inline bool  IsPressed( DigitalInputUInt InDigitalInput ) const;
+    inline bool  IsFirstPressed( DigitalInputUInt InDigitalInput ) const;
+    inline bool  IsReleased( DigitalInputUInt InDigitalInput ) const;
+    inline bool  IsFirstReleased( DigitalInputUInt InDigitalInput ) const;
+    inline float GetDurationPressed( DigitalInputUInt InDigitalInput ) const;
+    inline float GetAnalogInput( AnalogInputUInt InAnalogInput ) const;
+    inline float GetTimeCorrectedAnalogInput( AnalogInputUInt InAnalogInput ) const;
 };
-
-#ifdef APEMODE_PLATFORM_APPINPUT_IMPLEMENTATION
 
 AppInput::AppInput( )
     : bFocused( false )
@@ -274,8 +272,6 @@ float AppInput::GetDurationPressed( DigitalInputUInt InDigitalInput ) const {
 float AppInput::GetAnalogInput( AnalogInputUInt InAnalogInput ) const {
     return Analogs[ InAnalogInput ];
 }
-
-#endif
 
 } // namespace platform
 } // namespace apemode

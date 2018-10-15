@@ -13,7 +13,7 @@ namespace apemodevk
     class DescriptorSetLayout;
     class DescriptorSetLayoutBuilder;
 
-    class DescriptorPool : public NoCopyAssignPolicy {
+    class APEMODEVK_API DescriptorPool : public NoCopyAssignPolicy {
     public:
         DescriptorPool( );
         ~DescriptorPool( );
@@ -39,8 +39,8 @@ namespace apemodevk
         apemodevk::THandle< VkDescriptorPool > hDescriptorPool;
     };
 
-    struct DescriptorSetBindingsBase {
-        struct Binding {
+    struct APEMODEVK_API DescriptorSetBindingsBase {
+        struct APEMODEVK_API Binding {
             uint32_t         DstBinding      = uint32_t( -1 );
             VkDescriptorType eDescriptorType = VK_DESCRIPTOR_TYPE_MAX_ENUM;
 
@@ -56,7 +56,7 @@ namespace apemodevk
         DescriptorSetBindingsBase( ) {
         }
 
-        DescriptorSetBindingsBase( Binding* pBinding = nullptr, uint32_t BindingCount = 0 )
+        DescriptorSetBindingsBase( Binding* pBinding, uint32_t BindingCount )
             : pBinding( pBinding ), BindingCount( BindingCount ) {
         }
     };
@@ -81,7 +81,7 @@ namespace apemodevk
         }
     };
 
-    struct DescriptorSetPool {
+    struct APEMODEVK_API DescriptorSetPool {
         VkDevice                                           pLogicalDevice       = VK_NULL_HANDLE;
         VkDescriptorPool                                   pDescriptorPool      = VK_NULL_HANDLE;
         VkDescriptorSetLayout                              pDescriptorSetLayout = VK_NULL_HANDLE;

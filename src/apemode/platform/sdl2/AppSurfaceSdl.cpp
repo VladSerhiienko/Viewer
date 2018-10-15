@@ -1,11 +1,10 @@
 
-#include "AppSurface.h"
-#include <apemode/platform/AppState.h>
+#include "AppSurfaceSdl.h"
 
-apemode::platform::sdl2::AppSurface::AppSurfaceSdlBase( ) {
+apemode::platform::sdl2::AppSurface::AppSurface( ) {
 }
 
-apemode::platform::sdl2::AppSurface::~AppSurfaceSdlBase( ) {
+apemode::platform::sdl2::AppSurface::~AppSurface( ) {
     Finalize( );
 }
 
@@ -14,16 +13,14 @@ void* GetNSViewFromNSWindow( void* pNSWindow, bool bEnableMetalLayer );
 #endif
 
 bool apemode::platform::sdl2::AppSurface::Initialize( uint32_t width, uint32_t height, const char* name ) {
-    apemode_memory_allocation_scope;
-
-    LogInfo( "AppSurfaceSdlBase: Initializing." );
+    SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "AppSurface: Initializing." );
 
     if ( nullptr == pSdlWindow && !SDL_Init( SDL_INIT_VIDEO | SDL_INIT_EVENTS ) ) {
         const uint32_t sdlWindowProps = SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_VULKAN;
         pSdlWindow = SDL_CreateWindow( name, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, width, height, sdlWindowProps );
 
         if ( pSdlWindow ) {
-            LogInfo( "AppSurfaceSdlBase: Created a window." );
+            SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "AppSurface: Created a window." );
 
             SDL_SysWMinfo windowInfo{};
             windowInfo.version.major = SDL_MAJOR_VERSION;
@@ -33,14 +30,14 @@ bool apemode::platform::sdl2::AppSurface::Initialize( uint32_t width, uint32_t h
 #ifdef SDL_VIDEO_DRIVER_X11
                 pDisplayX11 = windowInfo.info.x11.display;
                 pWindowX11  = windowInfo.info.x11.window;
-                LogInfo( "AppSurfaceSdlBase: Resolved Xlib window handles." );
+                SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "AppSurface: Resolved Xlib window handles." );
 #elif SDL_VIDEO_DRIVER_COCOA
                 pView = GetNSViewFromNSWindow( windowInfo.info.cocoa.window, true );
-                LogInfo( "AppSurfaceSdlBase: Resolved Cocoa window handle." );
+                SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "AppSurface: Resolved Cocoa window handle." );
 #elif SDL_VIDEO_DRIVER_WINDOWS
                 hWnd      = windowInfo.info.win.window;
                 hInstance = (HINSTANCE) GetWindowLongPtrA( windowInfo.info.win.window, GWLP_HINSTANCE );
-                LogInfo( "AppSurfaceSdlBase: Resolved Win32 handles." );
+                SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "AppSurface: Resolved Win32 handles." );
 #endif
             }
         }
@@ -51,7 +48,7 @@ bool apemode::platform::sdl2::AppSurface::Initialize( uint32_t width, uint32_t h
 
 void apemode::platform::sdl2::AppSurface::Finalize( ) {
     if ( pSdlWindow ) {
-        LogInfo( "AppSurfaceSdlBase: Deleting window." );
+        SDL_LogInfo( SDL_LOG_CATEGORY_VIDEO, "AppSurface: Deleting window." );
         SDL_DestroyWindow( pSdlWindow );
         pSdlWindow = nullptr;
     }

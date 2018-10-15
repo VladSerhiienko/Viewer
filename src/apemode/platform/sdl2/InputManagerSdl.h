@@ -8,11 +8,11 @@ namespace sdl2 {
 
 /* Updates input state, adapts it the current platform or framework.
  */
-class InputManager {
+class AppInputManager {
 public:
-    InputManager( );
+    AppInputManager( );
     void Update( AppInput& appInputState, float elapsedSeconds );
-    
+
 private:
     uint32_t KeyMapping[ kDigitalInput_NumKeys ];
 };

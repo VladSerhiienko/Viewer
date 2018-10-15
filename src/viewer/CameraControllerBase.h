@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MathInc.h"
+#include <apemode/platform/MathInc.h>
 
 namespace apemode {
     struct CameraControllerBase {

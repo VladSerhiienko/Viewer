@@ -172,7 +172,7 @@ void CallDestructor( T* pObj ) {
 
 #define apemode_new new ( apemode::platform::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ )
 #define apemode_delete( pObj )                     \
-    apemode::platform::platform::CallDestructor( ( pObj ) ), \
+    apemode::platform::CallDestructor( ( pObj ) ), \
     operator delete( ( pObj ), apemode::platform::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj = nullptr
 
 #include <EASTL/linked_ptr.h>

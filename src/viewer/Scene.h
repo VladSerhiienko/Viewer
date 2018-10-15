@@ -4,7 +4,7 @@
 #include <flatbuffers/util.h>
 #include <scene_generated.h>
 
-#include <MathInc.h>
+#include <apemode/platform/MathInc.h>
 #include <apemode/platform/memory/MemoryManager.h>
 
 namespace apemode {

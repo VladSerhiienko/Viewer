@@ -1,6 +1,3 @@
-#include <apemode/platform/memory/MemoryManager.h>
-
-#define APEMODE_PLATFORM_APPINPUT_IMPLEMENTATION 1
 #include <apemode/platform/sdl2/InputManagerSdl.h>
 
 #include <SDL.h>
@@ -8,23 +5,22 @@
 #include <cassert>
 #include <algorithm>
 
+using namespace apemode::platform;
 using namespace apemode::platform::sdl2;
 
 namespace {
 void BuildSdlKeyMapping( uint32_t* pOutKeyMapping );
 void LogTouches( uint32_t stateIndex, bool const* touchButtonsState );
-void InputManagerUpdateMouse( Input& appInputState, float const elapsedSeconds );
-void InputManagerUpdateTouches( Input& appInputState, float const elapsedSeconds );
+void InputManagerUpdateMouse( AppInput& appInputState, float const elapsedSeconds );
+void InputManagerUpdateTouches( AppInput& appInputState, float const elapsedSeconds );
 } // namespace
 
-InputManager::InputManager( ) {
+AppInputManager::AppInputManager( ) {
     memset( KeyMapping, 0, sizeof( KeyMapping ) );
     BuildSdlKeyMapping( KeyMapping );
 }
 
-void InputManager::Update( Input& appInputState, float const elapsedSeconds ) {
-    apemode_memory_allocation_scope;
-
+void AppInputManager::Update( AppInput& appInputState, float const elapsedSeconds ) {
     SDL_PumpEvents( );
 
     SDL_Event events[ 16 ];
@@ -90,10 +86,7 @@ void InputManager::Update( Input& appInputState, float const elapsedSeconds ) {
 }
 
 namespace {
-
-void InputManagerUpdateMouse( Input& appInputState, float const elapsedSeconds ) {
-    apemode_memory_allocation_scope;
-
+void InputManagerUpdateMouse( AppInput& appInputState, float const elapsedSeconds ) {
     int RelativeMouseDeltaX, RelativeMouseDeltaY;
     const uint32_t PressedMouseButtonBitmask = SDL_GetMouseState( &RelativeMouseDeltaX, &RelativeMouseDeltaY );
 
@@ -119,7 +112,7 @@ void InputManagerUpdateMouse( Input& appInputState, float const elapsedSeconds )
         appInputState.Buttons[ 0 ][ kDigitalInput_Mouse4 ] = true;
 }
 
-void InputManagerUpdateTouches( Input& appInputState, float const elapsedSeconds ) {
+void InputManagerUpdateTouches( AppInput& appInputState, float const elapsedSeconds ) {
 
     appInputState.bIsUsingTouch = SDL_GetNumTouchDevices( ) > 0;
     if ( appInputState.bIsUsingTouch ) {
@@ -173,7 +166,7 @@ void InputManagerUpdateTouches( Input& appInputState, float const elapsedSeconds
 
                         if ( TouchIt != TouchItEnd ) {
                             uint32_t TouchIdx = (uint32_t) std::distance( appInputState.TouchIds, TouchIt );
-                            appInputState.TouchIds[ TouchIdx ] = Input::sInvalidTouchValue;
+                            appInputState.TouchIds[ TouchIdx ] = AppInput::sInvalidTouchValue;
 
                             std::sort( appInputState.TouchIds, TouchItEnd );
                             TouchIt = std::unique( appInputState.TouchIds, TouchItEnd );
@@ -221,8 +214,6 @@ void LogTouches( uint32_t stateIndex, bool const* touchButtonsState ) {
 }
 
 void BuildSdlKeyMapping( uint32_t* pOutKeyMapping ) {
-    apemode_memory_allocation_scope;
-
     pOutKeyMapping[ kDigitalInput_KeyEscape ]       = SDL_SCANCODE_ESCAPE;
     pOutKeyMapping[ kDigitalInput_Key1 ]            = SDL_SCANCODE_1;
     pOutKeyMapping[ kDigitalInput_Key2 ]            = SDL_SCANCODE_2;

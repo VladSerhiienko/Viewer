@@ -31,7 +31,7 @@ void apemode::vk::NuklearRenderer::DeviceDestroy( ) {
     hDescSetLayout.Destroy( );
     hPipelineLayout.Destroy( );
 
-    NuklearRendererSdlBase::DeviceDestroy( );
+    NuklearRendererBase::DeviceDestroy( );
 }
 
 bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBase ) {

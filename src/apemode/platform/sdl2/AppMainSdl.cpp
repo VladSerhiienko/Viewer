@@ -4,6 +4,7 @@
 
 #include <viewer/ViewerAppShellFactory.h>
 #include <apemode/platform/Stopwatch.h>
+#include <apemode/platform/AppSurface.h>
 
 #include <SDL_main.h>
 
@@ -12,9 +13,8 @@
 #endif
 
 int main( int argc, char** ppArgs ) {
-    apemode_memory_allocation_scope;
 
-    apemode::unique_ptr< apemode::platform::IAppShell > appShell( apemode::viewer::vk::CreateViewer( argc, ppArgs ) );
+    std::unique_ptr< apemode::platform::IAppShell > appShell( apemode::viewer::vk::CreateViewer( argc, (const char**) ppArgs ) );
     if ( !appShell ) {
         return -1;
     }
@@ -29,27 +29,25 @@ int main( int argc, char** ppArgs ) {
     appSurface.OverrideHeight = (int) appSurfaceSdl.GetHeight( );
 
 #if SDL_VIDEO_DRIVER_WINDOWS
-    appSurface.hWindow   = appSurfaceSdl.hWnd;
-    appSurface.hInstance = appSurfaceSdl.hInstance;
+    appSurface.Windows.hWindow   = appSurfaceSdl.hWnd;
+    appSurface.Windows.hInstance = appSurfaceSdl.hInstance;
 #elif SDL_VIDEO_DRIVER_COCOA
     assert( &appSurface.pViewIOS == &appSurface.pViewMacOS );
-    appSurface.pViewIOS = appSurfaceSdl.pView;
+    appSurface.iOS.pViewIOS = appSurfaceSdl.pView;
 #elif SDL_VIDEO_DRIVER_X11
-    appSurface.pDisplayX11 = appSurfaceSdl.pDisplayX11;
-    appSurface.pWindowX11  = &appSurfaceSdl.pWindowX11;
+    appSurface.X11.pDisplayX11 = appSurfaceSdl.pDisplayX11;
+    appSurface.X11.pWindowX11  = &appSurfaceSdl.pWindowX11;
 #endif
 
-    apemode::platform::Stopwatch          stopwatch;
-    apemode::platform::AppInput           appInputState;
-    apemode::platform::sdl2::InputManager inputManagerSdl;
+    apemode::platform::Stopwatch             stopwatch;
+    apemode::platform::AppInput              appInputState;
+    apemode::platform::sdl2::AppInputManager inputManagerSdl;
 
-    if ( app && app->Initialize( &appSurface ) ) {
-        apemode_memory_allocation_scope;
+    if ( appShell && appShell->Initialize( &appSurface ) ) {
         inputManagerSdl.Update( appInputState, 0 );
         stopwatch.Start( );
 
-        while ( app->Update( &appInputState ) ) {
-            apemode_memory_allocation_scope;
+        while ( appShell->Update( &appInputState ) ) {
             inputManagerSdl.Update( appInputState, stopwatch.GetElapsedSeconds( ) );
             stopwatch.Start( );
         }

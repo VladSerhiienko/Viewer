@@ -6,7 +6,7 @@
 namespace apemodevk {
 
     /** @brief ISourceImage interface is used by ImageLoader for creating textures out of it. */
-    class ISourceImage {
+    class APEMODEVK_API ISourceImage {
     public:
         virtual ~ISourceImage( )                                               = default;
         virtual VkImageViewType GetImageViewType( ) const                      = 0; /** @return Image view type. */
@@ -21,7 +21,7 @@ namespace apemodevk {
     };
 
     /** @brief ImageDecoder class for decoding image file bufferes to ISourceImage instances. */
-    class ImageDecoder {
+    class APEMODEVK_API ImageDecoder {
     public:
         struct DecodeOptions {
             enum EImageFileFormat {
@@ -62,7 +62,7 @@ namespace apemodevk {
     };
 
     /** @brief LoadedImage struct contains a VkImage with the optional VkImageView, and their descriptors. */
-    struct UploadedImage {
+    struct APEMODEVK_API UploadedImage {
         THandle< ImageComposite > hImg;              /**! @brief The image. */
         THandle< VkImageView >    hImgView;          /**! @brief The image view. */
         VkImageCreateInfo         ImgCreateInfo;     /**! @brief The image descriptor. */
@@ -76,7 +76,7 @@ namespace apemodevk {
     };
 
     /** @brief ImageLoader class create GPU images according to ISourceImage instances. */
-    class ImageUploader {
+    class APEMODEVK_API ImageUploader {
     public:
         /** @brief LoadOptions contains properties to customize the usage and loading of GPU images. */
         struct UploadOptions {

@@ -1,7 +1,7 @@
 #include "DebugRendererVk.h"
 
-#include <TInfoStruct.Vulkan.h>
-#include <ArrayUtils.h>
+#include <apemode/vk/TInfoStruct.Vulkan.h>
+#include <apemode/platform/ArrayUtils.h>
 
 namespace apemode {
     using namespace apemodevk;

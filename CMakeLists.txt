@@ -409,7 +409,7 @@ endif()
 
 #
 #
-# shared sources
+# ApemodeVulkan
 #
 #
 
@@ -455,12 +455,62 @@ add_library(
 )
 
 if (APPLE)
+
     set( Vulkan_include_dirs ${MOLTENVK_SDK_PATH}/MoltenVK/include )
-elseif (UNIX)
-    set( Vulkan_include_dirs $ENV{VK_SDK_PATH}/include )
+    set( Vulkan_third_party_libs
+         # TODO: Frameworks
+         # pthread
+         # dl
+         # stdc++
+         # objc
+         # iconv
+         # "-framework Foundation"
+         # "-framework CoreFoundation"
+         # "-framework CoreAudio"
+         # "-framework CoreVideo"
+         # "-framework IOKit"
+         # "-framework Cocoa"
+         # "-framework AudioToolbox"
+         # "-framework ForceFeedback"
+         # "-framework Carbon"
+         # "-framework QuartzCore"
+         ${MOLTENVK_SDK_PATH}/Package${CONFIGURATION_SUFFIX}/MoltenVK/macOS/libMoltenVK.dylib
+         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
+         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a )
+
 elseif(WIN32)
+
     set( Vulkan_include_dirs $ENV{VK_SDK_PATH}/include )
+    set( Vulkan_third_party_libs
+         # TODO: Other common libraries
+         # opengl32.lib
+         # winmm.lib
+         # imm32.lib
+         # version.lib
+         $ENV{VK_SDK_PATH}/lib/vulkan-1.lib
+         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/EASTL.lib
+         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/EAStdC.lib )
+
+elseif (UNIX)
+
+    set( Vulkan_include_dirs $ENV{VK_SDK_PATH}/include )
+    set( Vulkan_third_party_libs
+         # TODO: Other common libraries
+         # X11
+         # Xext
+         # Xcursor
+         # Xinerama
+         # Xrandr
+         # pthread
+         # stdc++fs
+         # dl
+         $ENV{VK_SDK_PATH}/lib/libvulkan.so
+         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
+         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a )
+
 endif()
+
+# target_compile_definitions(ApemodeVulkan PRIVATE -DAPEMODE_VULKAN_DLLEXPORT)
 
 target_include_directories(
     ApemodeVulkan
@@ -469,9 +519,6 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/src
     ${CMAKE_SOURCE_DIR}/src/apemode/vk
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext
-    ${CMAKE_SOURCE_DIR}/dependencies/gli
-    ${CMAKE_SOURCE_DIR}/dependencies/gli/external
-    ${CMAKE_SOURCE_DIR}/dependencies/gli/external/glm
     ${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator/src
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
@@ -479,7 +526,19 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
+    ${CMAKE_SOURCE_DIR}/dependencies/gli
+    ${CMAKE_SOURCE_DIR}/dependencies/gli/external
+    ${CMAKE_SOURCE_DIR}/dependencies/gli/external/glm
 )
+
+# target_link_libraries(
+#     ApemodeVulkan
+#     ${Vulkan_third_party_libs}
+# )
+                       
+# set_target_properties( ApemodeVulkan
+#                        PROPERTIES
+#                        WINDOWS_EXPORT_ALL_SYMBOLS ON )
 
 add_dependencies(
     ApemodeVulkan
@@ -488,10 +547,67 @@ add_dependencies(
     VulkanMemoryAllocator
 )
 
+#
+#
+# ApemodePlatform
+#
+#
+
+if (APPLE)
+
+    set( ApemodePlatform_third_party_libs
+         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
+         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a
+         ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/libTaskScheduler.a
+         pthread
+         # dl
+         # stdc++
+         # objc
+         # iconv
+         # "-framework Foundation"
+         # "-framework CoreFoundation"
+         # "-framework CoreAudio"
+         # "-framework CoreVideo"
+         # "-framework IOKit"
+         # "-framework Cocoa"
+         # "-framework AudioToolbox"
+         # "-framework ForceFeedback"
+         # "-framework Carbon"
+         # "-framework QuartzCore"
+        )
+
+elseif(WIN32)
+
+    set( ApemodePlatform_third_party_libs
+         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/EASTL.lib
+         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/EAStdC.lib
+         ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/TaskScheduler.lib
+         )
+
+elseif (UNIX)
+
+    set( ApemodePlatform_third_party_libs
+         # TODO: Other common libraries
+         # X11
+         # Xext
+         # Xcursor
+         # Xinerama
+         # Xrandr
+         # pthread
+         # stdc++fs
+         # dl
+         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
+         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a
+         ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/libTaskScheduler.a )
+
+endif()
+
 set(
     ApemodePlatform_source_files
     ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/shared/AssetManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/shared/AssetManager.h
     ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppState.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppState.h
     ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppInput.h
@@ -509,6 +625,10 @@ add_library( ApemodePlatform
              STATIC
              ${ApemodePlatform_source_files} )
 
+# target_compile_definitions( ApemodePlatform
+#                             PRIVATE
+#                             -DAPEMODE_PLATFORM_DLLEXPORT)
+
 target_include_directories(
     ApemodePlatform
     PUBLIC
@@ -522,8 +642,14 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
     ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
-
 )
+
+# target_link_libraries( ApemodePlatform
+#                        ${ApemodePlatform_third_party_libs} )
+                       
+# set_target_properties( ApemodePlatform
+#                        PROPERTIES
+#                        WINDOWS_EXPORT_ALL_SYMBOLS ON )
 
 add_dependencies(
     ApemodePlatform
@@ -533,39 +659,11 @@ add_dependencies(
     TaskScheduler
 )
 
-set(
-    ApemodePlatformSdl_source_files
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/AppSurfaceSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/AppSurfaceSdl.h
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/AppSurfaceSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/InputManagerSdl.cpp
-    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/InputManagerSdl.h
-)
-
-if (APPLE)
-    set ( ApemodePlatformSdl_source_files
-          ${ApemodePlatformSdl_source_files}
-          ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceCocoaSdl.mm
-        )
-endif()
-
-add_library( ApemodePlatformSdl
-             STATIC
-             ${ApemodePlatformSdl_source_files} )
-
-target_include_directories(
-    ApemodePlatformSdl
-    PUBLIC
-    ${CMAKE_SOURCE_DIR}/src
-    ${CMAKE_SOURCE_DIR}/dependencies/sdl2/include
-
-)
-
-add_dependencies(
-    ApemodePlatformSdl
-    ApemodePlatform
-    sdl2
-)
+#
+#
+# Viewer
+#
+#
 
 set(
     Viewer_source_files
@@ -607,9 +705,11 @@ file(
 )
 
 add_library( Viewer
-             STATIC
+             SHARED
              ${Viewer_source_files}
              ${Viewer_shader_source_files} )
+
+target_compile_definitions(Viewer PRIVATE -DAPEMODE_VIEWER_DLLEXPORT)
 
 target_include_directories(
     Viewer
@@ -642,6 +742,19 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
 )
 
+target_link_libraries(
+    Viewer
+    ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/flatbuffers.lib
+    ${CMAKE_SOURCE_DIR}/build_windows_amd64_msvc${CONFIGURATION_SUFFIX}/ApemodePlatform.lib
+    ${CMAKE_SOURCE_DIR}/build_windows_amd64_msvc${CONFIGURATION_SUFFIX}/ApemodeVulkan.lib
+    ${Vulkan_third_party_libs}
+    ${ApemodePlatform_third_party_libs}
+)
+                       
+# set_target_properties( Viewer
+#                        PROPERTIES
+#                        WINDOWS_EXPORT_ALL_SYMBOLS ON )
+
 add_dependencies(
     Viewer
     ApemodePlatform
@@ -650,12 +763,37 @@ add_dependencies(
     flatbuffers
     DirectXMath
     FbxPipeline
+    eastl
+    gli
+    VulkanMemoryAllocator
+    argh
+    spdlog
+    eastl
+    TaskScheduler
 )
+
+#
+#
+# ViewerSdl
+#
+#
 
 set(
     ViewerSdl_source_files
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/AppSurfaceSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/AppSurfaceSdl.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/AppSurfaceSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/InputManagerSdl.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/InputManagerSdl.h
     ${CMAKE_SOURCE_DIR}/src/apemode/platform/sdl2/AppMainSdl.cpp
 )
+
+if (APPLE)
+    set ( ViewerSdl_source_files
+          ${ViewerSdl_source_files}
+          ${CMAKE_SOURCE_DIR}/src/apemode/sdl/AppSurfaceCocoaSdl.mm
+        )
+endif()
 
 add_executable( ViewerSdl
                 ${ViewerSdl_source_files} )
@@ -664,12 +802,31 @@ target_include_directories(
     ViewerSdl
     PUBLIC
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/dependencies/argh
+    ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
+    ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
+    ${CMAKE_SOURCE_DIR}/dependencies/sdl2/include
+)
+
+target_link_libraries(
+    ViewerSdl
+    ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.lib
+    ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2main.lib
+    # ${CMAKE_SOURCE_DIR}/build_windows_amd64_msvc${CONFIGURATION_SUFFIX}/ApemodePlatform.lib
+    ${CMAKE_SOURCE_DIR}/build_windows_amd64_msvc${CONFIGURATION_SUFFIX}/Viewer.lib
+    # ${ApemodePlatform_third_party_libs}
 )
 
 add_dependencies(
     ViewerSdl
+    ApemodePlatform
     Viewer
-    ApemodePlatformSdl
 )
 
 message(STATUS "VK_SDK_PATH = $ENV{VK_SDK_PATH}")

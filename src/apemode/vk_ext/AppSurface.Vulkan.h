@@ -7,11 +7,7 @@
 
 namespace apemodevk {
 
-struct GraphicsLogger;
-struct GraphicsAllocator;
-struct GraphicsMemoryAllocationScope;
-
-struct PlatformSurface {
+struct APEMODEVK_API PlatformSurface {
     VkExtent2D OverrideExtent{0, 0};
 
 #if defined( VK_USE_PLATFORM_MACOS_MVK ) && VK_USE_PLATFORM_MACOS_MVK
@@ -35,21 +31,25 @@ struct PlatformSurface {
  * It tries also to handle resizing in OnFrameMove, but there is an error with image state.
  * The barriors in case of resizing must be managed explicitely.
  */
-class AppSurface {
+class APEMODEVK_API AppSurface {
 public:
     AppSurface( );
     virtual ~AppSurface( );
 
-    bool Initialize( const PlatformSurface* pPlatformSurface );
+    bool Initialize( const PlatformSurface*                  pPlatformSurface,
+                     apemodevk::GraphicsManager::ILogger*    pLogger,
+                     apemodevk::GraphicsManager::IAllocator* pAllocator,
+                     const char**                            ppszLayers,
+                     size_t                                  requiredLayerCount,
+                     size_t                                  optionalLayerCount,
+                     const char**                            ppszExtensions,
+                     size_t                                  requiredExtensionCount,
+                     size_t                                  optionalExtensionCount );
     bool Resize( VkExtent2D extent );
     void Finalize( );
 
 public:
-    std::vector< uint32_t > PresentQueueFamilyIds;
-
-    apemode::unique_ptr< GraphicsAllocator > Alloc;
-    apemode::unique_ptr< GraphicsLogger >    Logger;
-
+    apemodevk::vector< uint32_t >                       PresentQueueFamilyIds;
     apemodevk::unique_ptr< apemodevk::GraphicsManager > Manager;
     apemodevk::Surface                                  Surface;
     apemodevk::Swapchain                                Swapchain;

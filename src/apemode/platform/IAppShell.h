@@ -3,7 +3,7 @@
 namespace apemode {
 namespace platform {
 
-struct AppInput;
+class AppInput;
 struct AppSurface;
 
 struct IAppShell {

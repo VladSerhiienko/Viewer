@@ -1,6 +1,6 @@
 
 #include "Scene.h"
-#include <AppState.h>
+#include <apemode/platform/AppState.h>
 #include <apemode/platform/memory/MemoryManager.h>
 
 #ifndef PI

@@ -1,5 +1,16 @@
 #pragma once
 
+#define APEMODEVK_API
+//#ifdef _WIN32
+//#ifdef APEMODE_VULKAN_DLLEXPORT
+//#define APEMODEVK_API __declspec(dllexport)
+//#else
+//#define APEMODEVK_API __declspec(dllimport)
+//#endif
+//#else
+//#define APEMODEVK_API
+//#endif
+
 #ifdef _WIN32 // ------------------------------------------------------------------
 
     #ifndef VK_USE_PLATFORM_WIN32_KHR
@@ -308,19 +319,19 @@ namespace apemodevk {
 namespace apemodevk {
     struct ScalableAllocPolicy {};
 
-    class NoAssignPolicy {
+    class APEMODEVK_API NoAssignPolicy {
         void operator=( const NoAssignPolicy & );
     public:
         NoAssignPolicy( ) { }
     };
 
-    class NoCopyPolicy {
+    class APEMODEVK_API NoCopyPolicy {
         NoCopyPolicy( const NoCopyPolicy & );
     public:
         NoCopyPolicy( ) { }
     };
 
-    class NoCopyAssignPolicy : NoCopyPolicy, NoAssignPolicy {
+    class APEMODEVK_API NoCopyAssignPolicy : NoCopyPolicy, NoAssignPolicy {
     public:
         NoCopyAssignPolicy( ) { }
     };

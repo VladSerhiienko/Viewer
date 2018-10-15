@@ -28,10 +28,9 @@ public:
         typedef void ( *NkClipbardPasteFn )( nk_handle, struct nk_text_edit * );
         typedef void ( *NkClipbardCopyFn )( nk_handle, const char *, int );
 
-        NkClipbardPasteFn pClipboardPasteCallback = nullptr; /* Optional */
-        NkClipbardCopyFn  pClipboardCopyCallback  = nullptr; /* Optional */
-
-        const apemodeos::IAsset *pFontAsset = nullptr; /* Required */
+        NkClipbardPasteFn                pClipboardPasteCallback = nullptr; /* Optional */
+        NkClipbardCopyFn                 pClipboardCopyCallback  = nullptr; /* Optional */
+        const apemode::platform::IAsset *pFontAsset              = nullptr; /* Required */
     };
 
     struct RenderParametersBase {
