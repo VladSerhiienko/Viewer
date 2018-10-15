@@ -283,14 +283,15 @@ apemodevk::GraphicsDevice::GraphicsDevice( ) {
 }
 
 apemodevk::GraphicsDevice::~GraphicsDevice( ) {
-    Destroy( );
 }
 
 void apemodevk::GraphicsDevice::Destroy( ) {
-    Queues.Destroy( );
-    CmdBuffers.Destroy( );
-    hAllocator.Destroy( );
-    hLogicalDevice.Destroy( );
+    if ( hLogicalDevice ) {
+        Queues.Destroy( );
+        CmdBuffers.Destroy( );
+        hAllocator.Destroy( );
+        hLogicalDevice.Destroy( );
+    }
 }
 
 apemodevk::GraphicsDevice::operator VkDevice( ) const {

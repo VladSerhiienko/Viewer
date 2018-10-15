@@ -49,11 +49,11 @@ public:
     void Finalize( );
 
 public:
-    apemodevk::vector< uint32_t >                       PresentQueueFamilyIds;
-    apemodevk::unique_ptr< apemodevk::GraphicsManager > Manager;
-    apemodevk::Surface                                  Surface;
-    apemodevk::Swapchain                                Swapchain;
-    apemodevk::GraphicsDevice                           Node;
+    apemodevk::vector< uint32_t > PresentQueueFamilyIds;
+    apemodevk::GraphicsManager*   Manager;
+    apemodevk::Surface            Surface;
+    apemodevk::Swapchain          Swapchain;
+    apemodevk::GraphicsDevice     Node;
 };
 
 } // namespace apemodevk

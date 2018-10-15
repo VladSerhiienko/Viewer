@@ -78,6 +78,11 @@ bool apemodevk::QueuePool::Inititalize( GraphicsDevice*                pInNode,
 }
 
 void apemodevk::QueuePool::Destroy( ) {
+    if ( pNode ) {
+        pNode = nullptr;
+        vector< QueueFamilyPool >( ).swap( Pools );
+        vector_multimap< VkQueueFlags, uint32_t >( ).swap( QueueFamilyIds );
+    }
 }
 
 apemodevk::QueuePool::QueuePool( ) : pNode( nullptr ) {
@@ -90,6 +95,7 @@ apemodevk::QueuePool::QueuePool( QueuePool&& other )
 }
 
 apemodevk::QueuePool::~QueuePool( ) {
+    Destroy( );
 }
 
 apemodevk::QueueFamilyPool* apemodevk::QueuePool::GetPool( uint32_t queueFamilyIndex ) {
@@ -387,6 +393,7 @@ void apemodevk::CommandBufferPool::Destroy( ) {
         }
 
         Pools.clear( );
+        vector< CommandBufferFamilyPool >( ).swap( Pools );
     }
 }
 

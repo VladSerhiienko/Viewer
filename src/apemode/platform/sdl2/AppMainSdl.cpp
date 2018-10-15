@@ -47,8 +47,8 @@ int main( int argc, char** ppArgs ) {
         inputManagerSdl.Update( appInputState, 0 );
         stopwatch.Start( );
 
-        while ( appShell->Update( &appInputState ) ) {
-            inputManagerSdl.Update( appInputState, stopwatch.GetElapsedSeconds( ) );
+        while ( appShell->Update( &appSurface, &appInputState ) ) {
+            inputManagerSdl.Update( appInputState, (float)stopwatch.GetElapsedSeconds( ) );
             stopwatch.Start( );
         }
     }

@@ -26,10 +26,15 @@ apemodevk::Swapchain::~Swapchain( ) {
 }
 
 void apemodevk::Swapchain::Destroy( ) {
-    for ( auto& buffer : Buffers )
-        buffer.hImgView.Destroy( );
+    if ( pNode ) {
+        pNode = nullptr;
 
-    hSwapchain.Destroy( );
+        for ( auto& buffer : Buffers )
+            buffer.hImgView.Destroy( );
+        apemodevk::vector< Buffer >( ).swap( Buffers );
+
+        hSwapchain.Destroy( );
+    }
 }
 
 bool apemodevk::Swapchain::ExtractSwapchainBuffers( VkImage* pOutBuffers ) {

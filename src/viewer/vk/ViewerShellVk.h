@@ -3,6 +3,7 @@
 #include <apemode/platform/shared/AssetManager.h>
 #include <apemode/platform/AppInput.h>
 #include <apemode/platform/AppSurface.h>
+#include <apemode/platform/Stopwatch.h>
 
 #include <apemode/vk/Swapchain.Vulkan.h>
 #include <apemode/vk_ext/AppSurface.Vulkan.h>
@@ -30,6 +31,8 @@ namespace vk {
 
     class AppState;
     class AppContent;
+    class GraphicsLogger;
+    class GraphicsAllocator;
 
     class ViewerShell {
     public:
@@ -42,7 +45,7 @@ namespace vk {
 
         /* Returns true if the app is running, false otherwise.
          */
-        bool Update( float deltaSecs, const apemode::platform::AppInput* inputState, VkExtent2D extent );
+        bool Update( VkExtent2D currentExtent, const apemode::platform::AppInput* inputState );
 
     protected:
         bool OnResized( );
@@ -63,11 +66,15 @@ namespace vk {
         XMFLOAT4 LightDirection;
         XMFLOAT4 LightColor;
 
+        apemode::platform::Stopwatch            Stopwatch;
         apemode::platform::shared::AssetManager mAssetManager;
 
         apemode::CameraProjectionController                       CamProjController;
         apemode::unique_ptr< apemode::CameraControllerInputBase > pCamInput      = nullptr;
         apemode::unique_ptr< apemode::CameraControllerBase >      pCamController = nullptr;
+
+        apemode::unique_ptr< GraphicsLogger >    Logger;
+        apemode::unique_ptr< GraphicsAllocator > Allocator;
 
         apemodevk::AppSurface Surface;
 

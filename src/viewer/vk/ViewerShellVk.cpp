@@ -14,6 +14,60 @@ namespace apemode {
     }
 }
 
+// clang-format off
+struct apemode::viewer::vk::GraphicsAllocator : apemodevk::GraphicsManager::IAllocator {
+    void* Malloc( size_t             size,
+                  size_t             alignment,
+                  const char*        sourceFile,
+                  const unsigned int sourceLine,
+                  const char*        sourceFunc ) override {
+        return apemode::platform::allocate( size, alignment, sourceFile, sourceLine, sourceFunc );
+    }
+
+    void* Realloc( void*              pOriginal,
+                   size_t             size,
+                   size_t             alignment,
+                   const char*        sourceFile,
+                   const unsigned int sourceLine,
+                   const char*        sourceFunc ) override {
+        return apemode::platform::reallocate( pOriginal, size, alignment, sourceFile, sourceLine, sourceFunc );
+    }
+
+    void Free( void*              pMemory,
+               const char*        sourceFile,
+               const unsigned int sourceLine,
+               const char*        sourceFunc ) override {
+        return apemode::platform::deallocate( pMemory, sourceFile, sourceLine, sourceFunc );
+    }
+
+    void GetPrevMemoryAllocationScope( const char*&  pszPrevSourceFile,
+                                       unsigned int& prevSourceLine,
+                                       const char*&  pszPrevSourceFunc ) const override {
+        apemode::platform::GetPrevMemoryAllocationScope( pszPrevSourceFile, prevSourceLine, pszPrevSourceFunc );
+    }
+
+    void StartMemoryAllocationScope( const char*        pszSourceFile,
+                                     const unsigned int sourceLine,
+                                     const char*        pszSourceFunc ) const override {
+        apemode::platform::StartMemoryAllocationScope( pszSourceFile, sourceLine, pszSourceFunc );
+    }
+
+    void EndMemoryAllocationScope( const char*        pszPrevSourceFile,
+                                   const unsigned int prevSourceLine,
+                                   const char*        pszPrevSourceFunc ) const override {
+        apemode::platform::EndMemoryAllocationScope( pszPrevSourceFile, prevSourceLine, pszPrevSourceFunc );
+    }
+};
+
+struct apemode::viewer::vk::GraphicsLogger : apemodevk::GraphicsManager::ILogger {
+    spdlog::logger* pLogger = apemode::AppState::Get( )->GetLogger( );
+    void Log( const LogLevel eLevel, const char* pszMsg ) override {
+        pLogger->log( static_cast< spdlog::level::level_enum >( eLevel ), pszMsg );
+    }
+};
+
+// clang-format on
+
 const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 //const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
@@ -21,7 +75,7 @@ ViewerShell::ViewerShell( ) {
     apemode_memory_allocation_scope;
     pCamInput      = apemode::unique_ptr< CameraControllerInputBase >( apemode_new MouseKeyboardCameraControllerInput( ) );
     pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new FreeLookCameraController( ) );
-    // pCamController = apemode::make_unique< ModelViewCameraController >( );
+    // pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new ModelViewCameraController( ) );
 }
 
 ViewerShell::~ViewerShell( ) {
@@ -32,9 +86,42 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
     apemode_memory_allocation_scope;
     LogInfo( "ViewerApp: Initializing." );
 
-    if ( Surface.Initialize( pPlatformSurface, nullptr, nullptr, nullptr, 0, 0, nullptr, 0, 0 ) ) {
+    Logger    = apemode::make_unique< GraphicsLogger >( );
+    Allocator = apemode::make_unique< GraphicsAllocator >( );
+
+    apemode::vector< char* > ppszLayers;
+    apemode::vector< char* > ppszExtensions;
+    size_t                   optionalLayerCount = 0;
+    size_t                   optionalExtentionCount = 0;
+
+#ifdef __APPLE__
+    ppszLayers.push_back( "MoltenVK" );
+#else
+
+    if ( TGetOption< bool >( "renderdoc", false ) ) {
+        ppszLayers.push_back( "VK_LAYER_RENDERDOC_Capture" );
+    }
+
+    if ( TGetOption< bool >( "vktrace", false ) ) {
+        ppszLayers.push_back( "VK_LAYER_LUNARG_vktrace" );
+    }
+
+    if ( TGetOption< bool >( "vkapidump", false ) ) {
+        ppszLayers.push_back( "VK_LAYER_LUNARG_api_dump" );
+    }
+
+#endif
+
+    if ( Surface.Initialize( pPlatformSurface,
+                             Logger.get( ),
+                             Allocator.get( ),
+                             (const char**) ppszLayers.data( ),
+                             ppszLayers.size( ) - optionalExtentionCount,
+                             optionalExtentionCount,
+                             (const char**) ppszExtensions.data( ),
+                             ppszExtensions.size( ) - optionalLayerCount,
+                             optionalLayerCount ) ) {
         apemode::string8 assetsFolder( TGetOption< std::string >( "--assets", "./" ).c_str( ) );
-        // apemode::string8 interestingFilePattern = ".*\\.(vert|frag|comp|geom|tesc|tese|h|inl|inc|fx)$";
         mAssetManager.UpdateAssets( assetsFolder.c_str( ), nullptr, 0 );
 
         TotalSecs = 0.0f;
@@ -281,6 +368,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
         LightDirection = XMFLOAT4( 0, 1, 0, 1 );
         LightColor     = XMFLOAT4( 1, 1, 1, 1 );
 
+        Stopwatch.Start();
         return true;
     }
 
@@ -440,8 +528,11 @@ bool apemode::viewer::vk::ViewerShell::OnResized( ) {
     return true;
 }
 
-bool ViewerShell::Update( float deltaSecs, const apemode::platform::AppInput * inputState, const VkExtent2D extent ) {
+bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platform::AppInput* inputState ) {
     apemode_memory_allocation_scope;
+
+    const float deltaSecs = (float) Stopwatch.GetElapsedSeconds( );
+    Stopwatch.Start( );
 
     ++FrameId;
     FrameIndex = FrameId % (uint64_t) FrameCount;
@@ -453,7 +544,7 @@ bool ViewerShell::Update( float deltaSecs, const apemode::platform::AppInput * i
         return false;
     }
 
-    if ( Surface.Resize( extent ) ) {
+    if ( Surface.Resize( currentExtent ) ) {
         OnResized( );
     }
 
@@ -728,4 +819,3 @@ bool ViewerShell::Update( float deltaSecs, const apemode::platform::AppInput * i
     queueFamilyPool->Release(acquiredQueue);
     return true;
 }
-

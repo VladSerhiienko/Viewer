@@ -751,10 +751,6 @@ target_link_libraries(
     ${ApemodePlatform_third_party_libs}
 )
                        
-# set_target_properties( Viewer
-#                        PROPERTIES
-#                        WINDOWS_EXPORT_ALL_SYMBOLS ON )
-
 add_dependencies(
     Viewer
     ApemodePlatform
@@ -818,14 +814,11 @@ target_link_libraries(
     ViewerSdl
     ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2.lib
     ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/SDL2main.lib
-    # ${CMAKE_SOURCE_DIR}/build_windows_amd64_msvc${CONFIGURATION_SUFFIX}/ApemodePlatform.lib
-    ${CMAKE_SOURCE_DIR}/build_windows_amd64_msvc${CONFIGURATION_SUFFIX}/Viewer.lib
-    # ${ApemodePlatform_third_party_libs}
+    ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/Viewer.lib
 )
 
 add_dependencies(
     ViewerSdl
-    ApemodePlatform
     Viewer
 )
 
@@ -999,7 +992,7 @@ foreach( viewer_dependencies_dll_pdb ${viewer_dependencies_dlls_pdbs} )
 endforeach()
 
 set_target_properties(
-    Viewer
+    ViewerSdl
     PROPERTIES
     VS_DEBUGGER_WORKING_DIRECTORY
     "$(OutDir)"
