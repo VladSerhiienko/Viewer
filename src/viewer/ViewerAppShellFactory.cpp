@@ -1,5 +1,6 @@
 #include "ViewerAppShellFactory.h"
 #include <viewer/vk/ViewerShellVk.h>
+#include <memory>
 
 namespace apemode {
 namespace viewer {

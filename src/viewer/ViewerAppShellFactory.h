@@ -10,8 +10,9 @@
 #define APEMODE_VIEWER_API
 #endif
 
-#include <apemode/platform/memory/MemoryManager.h>
-#include <apemode/platform/IAppShell.h>
+//#include <apemode/platform/memory/MemoryManager.h>
+#include "apemode/platform/IAppShell.h"
+#include <memory>
 
 namespace apemode {
 namespace viewer {

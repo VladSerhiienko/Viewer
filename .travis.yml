@@ -24,7 +24,6 @@ matrix:
 before_script:
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
     brew update;
-    brew install boost;
     fi
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
     sudo apt-get install;
@@ -67,17 +66,6 @@ script:
     make;
     cd ..;
     fi
-
-script:
-  - export CC=/usr/bin/gcc-6
-  - export CXX=/usr/bin/g++-6
-  - gcc -v && g++ -v && cmake --version
-  - sed -i 's,git@github.com:,https://github.com/,g' CMakeLists.txt
-  - rm -rf dependencies
-  - rm -rf build_linux_x86_64_gnu
-  - cmake -H. -Bbuild_linux_x86_64_gnu
-  - cd build_linux_x86_64_gnu
-  - make
 
 notifications:
   email:
