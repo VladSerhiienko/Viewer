@@ -1,15 +1,16 @@
-#include <SceneUploaderVk.h>
-#include <Scene.h>
-#include <AppState.h>
+#include "SceneUploaderVk.h"
+#include <viewer/Scene.h>
 
-#include <QueuePools.Vulkan.h>
-#include <BufferPools.Vulkan.h>
-#include <ImageUploader.Vulkan.h>
-#include <Buffer.Vulkan.h>
-#include <TOneTimeCmdBufferSubmit.Vulkan.h>
+#include <apemode/vk/QueuePools.Vulkan.h>
+#include <apemode/vk/BufferPools.Vulkan.h>
+#include <apemode/vk/Buffer.Vulkan.h>
+#include <apemode/vk/TOneTimeCmdBufferSubmit.Vulkan.h>
+#include <apemode/vk_ext/ImageUploader.Vulkan.h>
 
-#include <MathInc.h>
-#include <ArrayUtils.h>
+#include <apemode/platform/AppState.h>
+#include <apemode/platform/MathInc.h>
+#include <apemode/platform/ArrayUtils.h>
+
 #include <cstdlib>
 
 namespace {

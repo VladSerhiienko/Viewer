@@ -1,7 +1,7 @@
 #pragma once
 
-#include <GraphicsManager.Vulkan.h>
-#include <QueuePools.Vulkan.h>
+#include <apemode/vk/GraphicsManager.Vulkan.h>
+#include <apemode/vk/QueuePools.Vulkan.h>
 
 namespace apemodevk {
     class Swapchain;
@@ -10,7 +10,7 @@ namespace apemodevk {
 
     class ShaderCompiler;
 
-    class GraphicsDevice : public NoCopyAssignPolicy {
+    class APEMODEVK_API GraphicsDevice : public NoCopyAssignPolicy {
     public:
         friend Swapchain;
         friend GraphicsManager;

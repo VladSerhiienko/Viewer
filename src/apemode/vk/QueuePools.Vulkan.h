@@ -1,6 +1,6 @@
 #pragma once
 
-#include <GraphicsManager.Vulkan.h>
+#include <apemode/vk/GraphicsManager.Vulkan.h>
 #include <atomic>
 
 namespace apemodevk {
@@ -16,7 +16,7 @@ namespace apemodevk {
         | VK_QUEUE_TRANSFER_BIT;
 
     /* Basic properties for the objects that depend on queue family id */
-    struct QueueFamilyBased {
+    struct APEMODEVK_API QueueFamilyBased {
         /* Queue properties: */
 
         uint32_t                QueueFamilyId    = kInvalidIndex;
@@ -36,7 +36,7 @@ namespace apemodevk {
         /* NOTE: Surface support can be checked with QueueFamilyPool. */
     };
 
-    struct AcquiredCommandBuffer {
+    struct APEMODEVK_API AcquiredCommandBuffer {
         VkCommandBuffer pCmdBuffer    = VK_NULL_HANDLE; /* Handle */
         VkCommandPool   pCmdPool      = VK_NULL_HANDLE; /* Command pool handle (associated with the Handle) */
         VkFence         pFence        = VK_NULL_HANDLE; /* Last queue fence */
@@ -50,7 +50,7 @@ namespace apemodevk {
      * Each command pool has only one associated buffer (so no external synchoronization needed).
      * Ensure to release the allocated buffer for reusing.
      **/
-    struct CommandBufferInPool {
+    struct APEMODEVK_API CommandBufferInPool {
         THandle< VkCommandBuffer > hCmdBuff; /* Handle */
         THandle< VkCommandPool >   hCmdPool; /* Command pool handle (associated with the Handle) */
         VkFence                    pFence;   /* Last queue fence */
@@ -62,7 +62,7 @@ namespace apemodevk {
         ~CommandBufferInPool();
     };
 
-    class CommandBufferFamilyPool : public QueueFamilyBased {
+    class APEMODEVK_API CommandBufferFamilyPool : public QueueFamilyBased {
         friend class CommandBufferPool;
 
     public:
@@ -84,7 +84,7 @@ namespace apemodevk {
         bool                  Release( const AcquiredCommandBuffer& acquireCmdBuffer );
     };
 
-    class CommandBufferPool {
+    class APEMODEVK_API CommandBufferPool : public NoCopyAssignPolicy {
     public:
         GraphicsDevice*                   pNode         = nullptr;
         uint32_t                          QueueFamilyId = 0;
@@ -126,16 +126,17 @@ namespace apemodevk {
     class QueuePool;
     class QueueFamilyPool;
 
-    struct QueueInPool {
+    struct APEMODEVK_API QueueInPool {
         VkQueue          hQueue = VK_NULL_HANDLE; /* Handle */
         VkFence          hFence = VK_NULL_HANDLE; /* Indicates that the execution is in progress */
         std::atomic_bool bInUse;                  /* Indicates that it is used by other thread */
 
         QueueInPool( );
+        QueueInPool( QueueInPool&& other );
         QueueInPool( const QueueInPool& other );
     };
 
-    struct AcquiredQueue {
+    struct APEMODEVK_API AcquiredQueue {
         VkQueue  pQueue        = VK_NULL_HANDLE;          /* Free to use queue. */
         VkFence  pFence        = VK_NULL_HANDLE;          /* Acquire() can optionally ignore fence status. */
         uint32_t QueueFamilyId = kInvalidIndex;           /* Queue family index */
@@ -143,14 +144,13 @@ namespace apemodevk {
         VkResult eResult       = VK_SUCCESS;              /* The error code that occurred during the queue acquisition */
     };
 
-    class QueueFamilyPool : public QueueFamilyBased {
+    class APEMODEVK_API QueueFamilyPool : public QueueFamilyBased, public NoCopyAssignPolicy {
     public:
         GraphicsDevice*       pNode = nullptr;
         vector< QueueInPool > Queues;
 
-        QueueFamilyPool( )                              = default;
-        QueueFamilyPool( QueueFamilyPool&& other )      = default;
-        QueueFamilyPool( const QueueFamilyPool& other ) = default;
+        QueueFamilyPool( );
+        QueueFamilyPool( QueueFamilyPool&& other );
         ~QueueFamilyPool( );
 
         bool Inititalize( GraphicsDevice* pNode, uint32_t queueFamilyIndex, VkQueueFamilyProperties const& queueFamilyProps );
@@ -178,13 +178,14 @@ namespace apemodevk {
     /**
      * QueuePool is created by device.
      */
-    class QueuePool {
+    class APEMODEVK_API QueuePool : public NoCopyAssignPolicy {
     public:
         GraphicsDevice*                           pNode = nullptr;
         vector< QueueFamilyPool >                 Pools;
         vector_multimap< VkQueueFlags, uint32_t > QueueFamilyIds;
 
-        QueuePool( ) = default;
+        QueuePool( );
+        QueuePool( QueuePool&& other );
         ~QueuePool( );
 
         bool Inititalize( GraphicsDevice*                pNode,
@@ -225,7 +226,7 @@ namespace apemodevk {
      * Returns VK_SUCCESS if it is signaled.
      * Waits for fence with the provided timeout otherwise.
      **/
-    VkResult WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t timeout = ~0ULL );
+    VkResult APEMODEVK_API WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t timeout = ~0ULL );
 
     /**
      * @brief Checks if the returned structure indicates that the operation succeeded.

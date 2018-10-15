@@ -1,11 +1,11 @@
 
-#include <SkyboxRendererVk.h>
+#include "SkyboxRendererVk.h"
 
-#include <BufferPools.Vulkan.h>
-#include <QueuePools.Vulkan.h>
+#include <apemode/vk/BufferPools.Vulkan.h>
+#include <apemode/vk/QueuePools.Vulkan.h>
 
-#include <AppState.h>
-#include <ArrayUtils.h>
+#include <apemode/platform/AppState.h>
+#include <apemode/platform/ArrayUtils.h>
 
 using namespace apemode;
 using namespace DirectX;

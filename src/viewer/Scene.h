@@ -4,8 +4,8 @@
 #include <flatbuffers/util.h>
 #include <scene_generated.h>
 
-#include <MathInc.h>
-#include <MemoryManager.h>
+#include <apemode/platform/MathInc.h>
+#include <apemode/platform/memory/MemoryManager.h>
 
 namespace apemode {
 
@@ -160,6 +160,23 @@ struct SceneNodeTransform {
     XMMATRIX CalculateGeometricMatrix( ) const;
 };
 
+/* SceneAnimCurvKey class stores time, value, arrive and leave tangents (tangents are only for cubic keys).
+ */
+struct SceneAnimCurveKey {
+    enum EInterpolationMode {
+        eInterpolationMode_Const = 0,
+        eInterpolationMode_Linear,
+        eInterpolationMode_Cubic,
+        eInterpolationModeCount,
+    };
+
+    EInterpolationMode eInterpMode   = eInterpolationMode_Linear;
+    float              Time          = 0.0f;
+    float              Value         = 0.0f;
+    float              ArriveTangent = 0.0f;
+    float              LeaveTangent  = 0.0f;
+};
+
 /* SceneAnimCurve class stores curve parameters and time-value keys.
  */
 struct SceneAnimCurve {
@@ -204,12 +221,12 @@ struct SceneAnimCurve {
 
     /* Animation keys, each is the 2D vector where X stands for time and Y stands for value.
      */
-    apemode::vector< XMFLOAT2 > Keys;
+    apemode::vector_map< float, SceneAnimCurveKey > Keys;
 
-    /* Assigns two indices of the keys for the given time value.
+    /* Assigns two indices of the keys for the given time value, loops the time value.
      * The two key indices can be used for accessing actual animation keys' values and interpolating between them.
      */
-    void GetKeyIndices( float time, bool bLoop, uint32_t &i, uint32_t &j ) const;
+    void GetKeyIndices( float &time, bool bLoop, uint32_t &i, uint32_t &j ) const;
 
     /* Returns interpolated curve's value for the given time value.
      */

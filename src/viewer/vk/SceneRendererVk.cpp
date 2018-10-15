@@ -1,17 +1,18 @@
 
-#include <SceneRendererVk.h>
-#include <SceneUploaderVk.h>
+#include "SceneRendererVk.h"
 
-#include <Buffer.Vulkan.h>
-#include <BufferPools.Vulkan.h>
-#include <ImageUploader.Vulkan.h>
-#include <QueuePools.Vulkan.h>
-#include <TOneTimeCmdBufferSubmit.Vulkan.h>
+#include <viewer/vk/SceneUploaderVk.h>
+#include <viewer/Scene.h>
 
-#include <AppState.h>
-#include <ArrayUtils.h>
-#include <MathInc.h>
-#include <Scene.h>
+#include <apemode/vk/Buffer.Vulkan.h>
+#include <apemode/vk/BufferPools.Vulkan.h>
+#include <apemode/vk/QueuePools.Vulkan.h>
+#include <apemode/vk/TOneTimeCmdBufferSubmit.Vulkan.h>
+#include <apemode/vk_ext/ImageUploader.Vulkan.h>
+
+#include <apemode/platform/AppState.h>
+#include <apemode/platform/ArrayUtils.h>
+#include <apemode/platform/MathInc.h>
 
 namespace apemodevk {
 

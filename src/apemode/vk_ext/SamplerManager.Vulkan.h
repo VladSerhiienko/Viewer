@@ -1,14 +1,14 @@
 #pragma once
 
-#include <GraphicsDevice.Vulkan.h>
+#include <apemode/vk/GraphicsDevice.Vulkan.h>
 
 namespace apemodevk {
-    struct StoredSampler {
+    struct APEMODEVK_API StoredSampler {
         VkSampler           pSampler = nullptr;
         VkSamplerCreateInfo SamplerCreateInfo;
     };
 
-    class SamplerManager {
+    class APEMODEVK_API SamplerManager {
     public:
         apemodevk::GraphicsDevice*                       pNode;
         apemodevk::vector_map< uint64_t, StoredSampler > StoredSamplers;

@@ -78,9 +78,24 @@ bool apemodevk::QueuePool::Inititalize( GraphicsDevice*                pInNode,
 }
 
 void apemodevk::QueuePool::Destroy( ) {
+    if ( pNode ) {
+        pNode = nullptr;
+        vector< QueueFamilyPool >( ).swap( Pools );
+        vector_multimap< VkQueueFlags, uint32_t >( ).swap( QueueFamilyIds );
+    }
+}
+
+apemodevk::QueuePool::QueuePool( ) : pNode( nullptr ) {
+}
+
+apemodevk::QueuePool::QueuePool( QueuePool&& other )
+    : pNode( other.pNode )
+    , Pools( eastl::move( other.Pools ) )
+    , QueueFamilyIds( eastl::move( other.QueueFamilyIds ) ) {
 }
 
 apemodevk::QueuePool::~QueuePool( ) {
+    Destroy( );
 }
 
 apemodevk::QueueFamilyPool* apemodevk::QueuePool::GetPool( uint32_t queueFamilyIndex ) {
@@ -164,6 +179,13 @@ void apemodevk::QueueFamilyPool::Destroy( ) {
             }
         }
     }
+}
+
+apemodevk::QueueFamilyPool::QueueFamilyPool( ) : pNode( nullptr ) {
+}
+
+apemodevk::QueueFamilyPool::QueueFamilyPool( QueueFamilyPool&& other )
+    : pNode( other.pNode ), Queues( eastl::move( other.Queues ) ) {
 }
 
 apemodevk::QueueFamilyPool::~QueueFamilyPool( ) {
@@ -333,6 +355,13 @@ bool apemodevk::QueueFamilyPool::Release( const apemodevk::AcquiredQueue& acquir
 apemodevk::QueueInPool::QueueInPool( ) : bInUse( false ) {
 }
 
+apemodevk::QueueInPool::QueueInPool( QueueInPool && other )
+    : hQueue( other.hQueue )
+    , hFence( other.hFence )
+    , bInUse( other.bInUse.load( std::memory_order_relaxed ) )
+{
+}
+
 apemodevk::QueueInPool::QueueInPool( const QueueInPool& other )
     : hQueue( other.hQueue )
     , hFence( other.hFence )
@@ -364,6 +393,7 @@ void apemodevk::CommandBufferPool::Destroy( ) {
         }
 
         Pools.clear( );
+        vector< CommandBufferFamilyPool >( ).swap( Pools );
     }
 }
 

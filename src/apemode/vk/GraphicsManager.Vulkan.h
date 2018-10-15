@@ -1,12 +1,12 @@
 #pragma once
 
-#include <NativeHandles.Vulkan.h>
-#include <TInfoStruct.Vulkan.h>
+#include <apemode/vk/NativeHandles.Vulkan.h>
+#include <apemode/vk/TInfoStruct.Vulkan.h>
 
 namespace apemodevk {
     class GraphicsDevice;
 
-    class GraphicsManager : public NoCopyAssignPolicy {
+    class APEMODEVK_API GraphicsManager : public NoCopyAssignPolicy {
     public:
         friend class GraphicsDevice;
 
@@ -15,17 +15,17 @@ namespace apemodevk {
             kEnableValidation = 1 << 0, // Enable validation layers.
         };
 
-        struct APIVersion : public apemodevk::ScalableAllocPolicy {
+        struct APEMODEVK_API APIVersion : public apemodevk::ScalableAllocPolicy {
             uint32_t Major, Minor, Patch;
             APIVersion( );
         };
 
-        struct ILogger {
+        struct APEMODEVK_API ILogger {
             using LogLevel = platform::LogLevel;
             virtual void Log( LogLevel lvl, const char* pszMsg ) = 0;
         };
 
-        struct AllocationCallbacks {
+        struct APEMODEVK_API AllocationCallbacks {
             static void* AllocationFunction( void*                   pUserData,
                                              size_t                  size,
                                              size_t                  alignment,
@@ -52,7 +52,7 @@ namespace apemodevk {
         };
 
         /* Allocator interface, allows tracking. */
-        struct IAllocator {
+        struct APEMODEVK_API IAllocator {
             /* malloc */
             virtual void* Malloc( size_t             size,
                                   size_t             alignment,

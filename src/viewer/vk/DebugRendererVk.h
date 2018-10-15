@@ -1,12 +1,12 @@
 #pragma once
 
-#include <Buffer.Vulkan.h>
-#include <BufferPools.Vulkan.h>
-#include <DescriptorPool.Vulkan.h>
-#include <GraphicsDevice.Vulkan.h>
+#include <apemode/vk/Buffer.Vulkan.h>
+#include <apemode/vk/BufferPools.Vulkan.h>
+#include <apemode/vk/DescriptorPool.Vulkan.h>
+#include <apemode/vk/GraphicsDevice.Vulkan.h>
 
-#include <IAssetManager.h>
-#include <MathInc.h>
+#include <apemode/platform/IAssetManager.h>
+#include <apemode/platform/MathInc.h>
 
 namespace apemode {
 namespace vk {
@@ -24,11 +24,11 @@ struct DebugRenderer {
     };
 
     struct InitParameters {
-        apemodevk::GraphicsDevice *pNode         = nullptr;        /* Required */
-        apemodeos::IAssetManager * pAssetManager = nullptr;        /* Required */
-        VkDescriptorPool           pDescPool     = VK_NULL_HANDLE; /* Required */
-        VkRenderPass               pRenderPass   = VK_NULL_HANDLE; /* Required */
-        uint32_t                   FrameCount    = 0;              /* Required, swapchain img count typically */
+        apemodevk::GraphicsDevice *       pNode         = nullptr;        /* Required */
+        apemode::platform::IAssetManager *pAssetManager = nullptr;        /* Required */
+        VkDescriptorPool                  pDescPool     = VK_NULL_HANDLE; /* Required */
+        VkRenderPass                      pRenderPass   = VK_NULL_HANDLE; /* Required */
+        uint32_t                          FrameCount    = 0;              /* Required, swapchain img count typically */
     };
 
     struct RenderParameters {

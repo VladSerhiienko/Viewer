@@ -1,7 +1,7 @@
 
 #include "Scene.h"
-#include <AppState.h>
-#include <MemoryManager.h>
+#include <apemode/platform/AppState.h>
+#include <apemode/platform/memory/MemoryManager.h>
 
 #ifndef PI
 #define PI 3.14159265358979323846264338327950288
@@ -130,7 +130,7 @@ SceneNodeTransformFrame &apemode::Scene::UpdateTransformProperties( const float 
                                                                     const bool     bLoop,
                                                                     const uint16_t animStackId,
                                                                     const uint16_t animLayerId ) {
-    auto &animTransformFrame = GetAnimatedTransformFrame( animStackId, animLayerId );
+    SceneNodeTransformFrame &animTransformFrame = GetAnimatedTransformFrame( animStackId, animLayerId );
 
     assert( animTransformFrame.Transforms.size( ) == BindPoseFrame.Transforms.size( ) );
     const size_t transformFrameByteSize = sizeof( SceneNodeTransformComposite ) * animTransformFrame.Transforms.size( );
@@ -138,7 +138,7 @@ SceneNodeTransformFrame &apemode::Scene::UpdateTransformProperties( const float 
 
     for ( const auto &node : Nodes ) {
 
-        const auto &animCurveIds = GetAnimCurveIds( node.Id, animStackId, animLayerId );
+        const SceneNodeAnimCurveIds &animCurveIds = GetAnimCurveIds( node.Id, animStackId, animLayerId );
         auto & animTransformComposite = animTransformFrame.Transforms[ node.Id ];
 
         for ( uint32_t propertyIndex = 0; propertyIndex < SceneAnimCurve::ePropertyCount; propertyIndex += SceneAnimCurve::eChannelCount ) {
@@ -390,15 +390,22 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             assert( IsNotNullAndNotEmpty( pAnimCurveFb->keys( ) ) );
             animCurve.Keys.reserve( pAnimCurveFb->keys( )->size( ) );
 
-            std::transform( pAnimCurveFb->keys( )->begin( ),
-                            pAnimCurveFb->keys( )->end( ),
-                            std::back_inserter( animCurve.Keys ),
-                            []( const apemodefb::AnimCurveKeyFb *pKeyFb ) {
-                                return XMFLOAT2{pKeyFb->time( ), pKeyFb->value( )};
-                            } );
+            eastl::transform( pAnimCurveFb->keys( )->begin( ),
+                              pAnimCurveFb->keys( )->end( ),
+                              eastl::inserter( animCurve.Keys, animCurve.Keys.begin( ) ),
+                              []( const apemodefb::AnimCurveKeyFb *pKeyFb ) {
+                                  return eastl::make_pair< float, SceneAnimCurveKey >( pKeyFb->time( ),
+                                                                                       SceneAnimCurveKey{
+                                                                                           SceneAnimCurveKey::EInterpolationMode(pKeyFb->interpolationMode()),
+                                                                                           pKeyFb->time( ),
+                                                                                           pKeyFb->value( ),
+                                                                                           pKeyFb->arrive_tangent( ),
+                                                                                           pKeyFb->leave_tangent( ),
+                                                                                       } );
+                              } );
 
-            animCurve.TimeMinMaxTotal.x = animCurve.Keys.front( ).x;
-            animCurve.TimeMinMaxTotal.y = animCurve.Keys.back( ).x;
+            animCurve.TimeMinMaxTotal.x = animCurve.Keys.cbegin( )->second.Time;
+            animCurve.TimeMinMaxTotal.y = animCurve.Keys.crbegin( )->second.Time;
             animCurve.TimeMinMaxTotal.z = animCurve.TimeMinMaxTotal.y - animCurve.TimeMinMaxTotal.x;
         }
 
@@ -614,38 +621,74 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
     return LoadedScene{std::move( fileContents ), pSrcScene, std::move( pScene )};
 }
 
-void apemode::SceneAnimCurve::GetKeyIndices( float time, bool bLoop, uint32_t &i, uint32_t &j ) const {
+namespace {
+inline bool NearlyEqual( const float a, const float b ) {
+    return std::abs( a - b ) <= std::numeric_limits< float >::epsilon( );
+}
+inline bool NearlyEqualOrLess( const float a, const float b ) {
+    return std::abs( a - b ) <= std::numeric_limits< float >::epsilon( ) || ( a < b );
+}
+inline bool NearlyEqualOrGreater( const float a, const float b ) {
+    return std::abs( a - b ) <= std::numeric_limits< float >::epsilon( ) || ( a > b );
+}
+} // namespace
+
+void apemode::SceneAnimCurve::GetKeyIndices( float & time, const bool bLoop, uint32_t &i, uint32_t &j ) const {
     if ( bLoop ) {
+        // Loop the given time value.
+        #ifdef SCENEANIMCURVE_USE_MODF
         float relativeTime, fractionalPart, integerPart;
         relativeTime = ( time - TimeMinMaxTotal.x ) / TimeMinMaxTotal.z;
         fractionalPart = modf( relativeTime, &integerPart );
         time = TimeMinMaxTotal.x + TimeMinMaxTotal.z * fractionalPart;
         (void) integerPart;
+        #else
+        float relativeTime, fractionalPart;
+        relativeTime = ( time - TimeMinMaxTotal.x ) / TimeMinMaxTotal.z;
+        fractionalPart = relativeTime - (float)(long)relativeTime;
+        time = TimeMinMaxTotal.x + TimeMinMaxTotal.z * fractionalPart;
+        #endif
     }
 
-    if ( time < TimeMinMaxTotal.x ) {
+    if ( NearlyEqualOrLess( time, TimeMinMaxTotal.x ) ) {
+        // Case: before the curve's first key, or on it.
         i = 0;
         j = 0;
-    } else if ( time > TimeMinMaxTotal.y ) {
+    } else if ( NearlyEqualOrGreater( time, TimeMinMaxTotal.y ) ) {
+        // Case: after the curve's last key, or on it.
         i = static_cast< uint32_t >( Keys.size( ) ) - 1;
         j = i;
     } else {
-        const float ii = TimeMinMaxTotal.z / ( time - TimeMinMaxTotal.x );
-        i = static_cast< uint32_t >( floorf( ii ) );
-        j = static_cast< uint32_t >( ceilf( ii ) );
+        // Case: inside the curve's timeline.
+        auto matchOrUpperBoundIt = Keys.lower_bound( time );
+        assert(matchOrUpperBoundIt == Keys.end());
+
+        if ( NearlyEqual( matchOrUpperBoundIt->second.Time, time ) ) {
+            // Case: exactly on curve's key.
+            i = static_cast< uint32_t >( Keys.size( ) ) - 1;
+            j = i;
+        } else {
+            const auto lowerBoundIt = eastl::prev(matchOrUpperBoundIt);
+            const auto upperBoundIt = matchOrUpperBoundIt;
+            assert(lowerBoundIt == Keys.end());
+
+            // Case: inside the curve's segment.
+            i = static_cast< uint32_t >( eastl::distance( Keys.cbegin( ), lowerBoundIt ) ) - 1;
+            j = static_cast< uint32_t >( eastl::distance( Keys.cbegin( ), upperBoundIt ) ) - 1;
+        }
     }
 }
 
-float apemode::SceneAnimCurve::Calculate( float time, bool bLoop ) const {
+float apemode::SceneAnimCurve::Calculate( float time, const bool bLoop ) const {
 
     uint32_t i, j;
     GetKeyIndices( time, bLoop, i, j );
 
-    const XMFLOAT2 a = Keys[ i ];
-    const XMFLOAT2 b = Keys[ j ];
+    const SceneAnimCurveKey a = Keys.at( i ).second;
+    const SceneAnimCurveKey b = Keys.at( j ).second;
 
-    const float l = ( b.x - a.x ) / ( time - a.x );
-    return ( b.y - a.y ) * l + a.y;
+    const float l = ( b.Time - a.Time ) / ( time - a.Time );
+    return ( b.Value - a.Value ) * l + a.Value;
 }
 
 uint32_t apemode::utils::MaterialPropertyGetIndex( const uint32_t packed ) {
@@ -665,37 +708,25 @@ const char *apemode::utils::GetCStringProperty( const apemodefb::SceneFb *pScene
 }
 
 bool apemode::utils::GetBoolProperty( const apemodefb::SceneFb *pScene, const uint32_t valueId ) {
-    assert( pScene );
-    assert( apemodefb::EValueTypeFb_Bool == MaterialPropertyGetType( valueId ) );
-
+    assert( pScene && apemodefb::EValueTypeFb_Bool == MaterialPropertyGetType( valueId ) );
     const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
     return pScene->bool_values( )->Get( valueIndex );
 }
 
 float apemode::utils::GetScalarProperty( const apemodefb::SceneFb *pScene, const uint32_t valueId ) {
-    assert( pScene );
-    assert( apemodefb::EValueTypeFb_Float == MaterialPropertyGetType( valueId ) );
-
+    assert( pScene && apemodefb::EValueTypeFb_Float == MaterialPropertyGetType( valueId ) );
     const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
     return pScene->float_values( )->Get( valueIndex );
 }
 
 apemodefb::Vec2Fb apemode::utils::GetVec2Property( const apemodefb::SceneFb *pScene, const uint32_t valueId ) {
-    assert( pScene );
-
-    const auto valueType = MaterialPropertyGetType( valueId );
-    assert( apemodefb::EValueTypeFb_Float2 == valueType );
-
+    assert( pScene && apemodefb::EValueTypeFb_Float2 == MaterialPropertyGetType( valueId ) );
     const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
     return apemodefb::Vec2Fb( pScene->float_values( )->Get( valueIndex ), pScene->float_values( )->Get( valueIndex + 1 ) );
 }
 
 apemodefb::Vec3Fb apemode::utils::GetVec3Property( const apemodefb::SceneFb *pScene, const uint32_t valueId ) {
-    assert( pScene );
-
-    const auto valueType = MaterialPropertyGetType( valueId );
-    assert( apemodefb::EValueTypeFb_Float3 == valueType );
-
+    assert( pScene && apemodefb::EValueTypeFb_Float3 == MaterialPropertyGetType( valueId ) );
     const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
     return apemodefb::Vec3Fb( pScene->float_values( )->Get( valueIndex ),
                               pScene->float_values( )->Get( valueIndex + 1 ),
@@ -705,15 +736,13 @@ apemodefb::Vec3Fb apemode::utils::GetVec3Property( const apemodefb::SceneFb *pSc
 apemodefb::Vec4Fb apemode::utils::GetVec4Property( const apemodefb::SceneFb *pScene,
                                                    const uint32_t            valueId,
                                                    const float               defaultW ) {
-    assert( pScene );
-
-    const auto valueType = MaterialPropertyGetType( valueId );
-    assert( apemodefb::EValueTypeFb_Float3 == valueType || apemodefb::EValueTypeFb_Float4 == valueType );
-
+    assert( pScene && ( apemodefb::EValueTypeFb_Float3 == MaterialPropertyGetType( valueId ) ||
+                        apemodefb::EValueTypeFb_Float4 == MaterialPropertyGetType( valueId ) ) );
     const uint32_t valueIndex = MaterialPropertyGetIndex( valueId );
-    return apemodefb::Vec4Fb(
-        pScene->float_values( )->Get( valueIndex ),
-        pScene->float_values( )->Get( valueIndex + 1 ),
-        pScene->float_values( )->Get( valueIndex + 2 ),
-        apemodefb::EValueTypeFb_Float4 == valueType ? pScene->float_values( )->Get( valueIndex + 3 ) : defaultW );
+    return apemodefb::Vec4Fb( pScene->float_values( )->Get( valueIndex ),
+                              pScene->float_values( )->Get( valueIndex + 1 ),
+                              pScene->float_values( )->Get( valueIndex + 2 ),
+                              apemodefb::EValueTypeFb_Float4 == MaterialPropertyGetType( valueId )
+                                  ? pScene->float_values( )->Get( valueIndex + 3 )
+                                  : defaultW );
 }

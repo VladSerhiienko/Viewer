@@ -1,7 +1,7 @@
 #include <NuklearRendererVk.h>
-#include <ArrayUtils.h>
-#include <AppState.h>
-#include <ImageUploader.Vulkan.h>
+#include <apemode/platform/ArrayUtils.h>
+#include <apemode/platform/AppState.h>
+#include <apemode/vk_ext/ImageUploader.Vulkan.h>
 
 namespace apemode {
     using namespace apemodevk;
@@ -31,7 +31,7 @@ void apemode::vk::NuklearRenderer::DeviceDestroy( ) {
     hDescSetLayout.Destroy( );
     hPipelineLayout.Destroy( );
 
-    NuklearRendererSdlBase::DeviceDestroy( );
+    NuklearRendererBase::DeviceDestroy( );
 }
 
 bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBase ) {

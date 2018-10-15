@@ -5,8 +5,8 @@
 //#include <mathfu/vector.h>
 //#include <mathfu/glsl_mappings.h>
 
-#include <GraphicsDevice.Vulkan.h>
-#include <Buffer.Vulkan.h>
+#include <apemode/vk/GraphicsDevice.Vulkan.h>
+#include <apemode/vk/Buffer.Vulkan.h>
 
 #define _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges 1
 

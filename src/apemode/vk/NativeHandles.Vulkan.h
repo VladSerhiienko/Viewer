@@ -1,6 +1,6 @@
 #pragma once
 
-#include <THandle.Vulkan.h>
+#include <apemode/vk/THandle.Vulkan.h>
 
 namespace apemodevk
 {
@@ -18,7 +18,7 @@ namespace apemodevk
     template <>
     struct THandleDeleter< VkDevice >  {
         void operator( )( VkDevice &Handle ) {
-            if ( Handle == nullptr )
+            if ( Handle == VK_NULL_HANDLE )
                 return;
 
             vkDestroyDevice( Handle, GetAllocationCallbacks( ) );
@@ -420,7 +420,7 @@ namespace apemodevk
     template <>
     struct THandleDeleter< VmaAllocator > {
         void operator( )( VmaAllocator &Handle ) {
-            if ( Handle == nullptr )
+            if ( Handle == VK_NULL_HANDLE )
                 return;
 
             vmaDestroyAllocator( Handle );
