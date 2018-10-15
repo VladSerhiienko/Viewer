@@ -1,33 +1,72 @@
+language: cpp
 dist: trusty
 sudo: required
-language:
-  - cpp
-compiler:
-  - gcc
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - gcc-6
-      - g++-6
-      - cmake
 
-branches:
-  only:
-    - master
+matrix:
+  include:
+  - os: osx
+    osx_image: xcode9.4
+  - os: linux
+    compiler:
+      - gcc
+      - clang
+    addons:
+      apt:
+        sources:
+          - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-5.0
+        packages:
+          - clang-5.0
+          - gcc-6
+          - g++-6
+          - cmake
 
 before_script:
-  - sudo apt-get install 
-  - sudo apt-get -qq update
-  - sudo apt-get -y install python3 libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxext-dev
+  - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
+    brew update;
+    brew install boost;
+    fi
+  - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+    sudo apt-get install;
+    sudo apt-get -qq update;
+    sudo apt-get -y install python3 libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxext-dev; 
+    fi
 
 install:
-  - wget -O vulkansdk.run https://sdk.lunarg.com/sdk/download/1.1.73.0/linux/vulkansdk-linux-x86_64-1.1.73.0.run
-  - chmod ugo+x vulkansdk.run
-  - ./vulkansdk.run
-  - export VK_SDK_PATH=$TRAVIS_BUILD_DIR/VulkanSDK/1.1.73.0/x86_64
-  - export VULKAN_SDK=$TRAVIS_BUILD_DIR/VulkanSDK/1.1.73.0/x86_64
+  - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
+    git clone https://github.com/KhronosGroup/MoltenVK.git;
+    cd MoltenVK;
+    ./fetchDependencies;
+    xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Release)" build;
+    cd ..;
+    export MOLTENVK_SDK_PATH=$TRAVIS_BUILD_DIR/MoltenVK;
+    fi
+  - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+    wget -O vulkansdk.run https://sdk.lunarg.com/sdk/download/1.1.73.0/linux/vulkansdk-linux-x86_64-1.1.73.0.run;
+    chmod ugo+x vulkansdk.run;
+    ./vulkansdk.run;
+    export VK_SDK_PATH=$TRAVIS_BUILD_DIR/VulkanSDK/1.1.73.0/x86_64;
+    export VULKAN_SDK=$TRAVIS_BUILD_DIR/VulkanSDK/1.1.73.0/x86_64;
+    fi
+
+script:
+  - cmake --version
+  - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
+    sed -i '' "s,git@github.com:,https://github.com/,g" CMakeLists.txt;
+    cmake -H. -Bbuild_darwin_x86_64_appleclang -DMOLTENVK_SDK_PATH=$MOLTENVK_SDK_PATH;
+    cd build_darwin_x86_64_appleclang;
+    xcodebuild -project Viewer.xcodeproj build;
+    cd ..;
+    fi
+  - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
+    export CC=/usr/bin/gcc-6;
+    export CXX=/usr/bin/g++-6;
+    sed -i 's,git@github.com:,https://github.com/,g' CMakeLists.txt;
+    cmake -H. -Bbuild_linux_x86_64_gnu;
+    cd build_linux_x86_64_gnu;
+    make;
+    cd ..;
+    fi
 
 script:
   - export CC=/usr/bin/gcc-6
