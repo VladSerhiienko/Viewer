@@ -27,6 +27,12 @@ public:
         platformSurface.hWnd      = (HWND) pAppSurface->Windows.hWindow;
         platformSurface.hInstance = (HINSTANCE) pAppSurface->Windows.hInstance;
 #endif
+#if VK_USE_PLATFORM_MACOS_MVK
+        platformSurface.pViewMacOS = pAppSurface->macOS.pViewMacOS;
+#endif
+#if VK_USE_PLATFORM_IOS_MVK
+        platformSurface.pViewIOS = pAppSurface->iOS.pViewIOS;
+#endif
 
         return pShell->Initialize( &platformSurface );
     }

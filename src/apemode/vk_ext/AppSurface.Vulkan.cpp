@@ -50,19 +50,19 @@ bool apemodevk::AppSurface::Initialize( const PlatformSurface*                  
         return false;
     }
 
-#if defined( VK_USE_PLATFORM_WIN32_KHR ) && VK_USE_PLATFORM_WIN32_KHR
+#if VK_USE_PLATFORM_WIN32_KHR
     Surface.Recreate( Node.pPhysicalDevice, Manager->hInstance, pPlatformSurface->hInstance, pPlatformSurface->hWnd );
 #endif
-#if defined( VK_USE_PLATFORM_XLIB_KHR ) && VK_USE_PLATFORM_XLIB_KHR
+#if VK_USE_PLATFORM_XLIB_KHR
     Surface.Recreate( Node.pPhysicalDevice, Manager->hInstance, pPlatformSurface->pDisplayX11, pPlatformSurface->pWindowX11 );
 #endif
-#ifdef defined( VK_USE_PLATFORM_IOS_MVK ) && VK_USE_PLATFORM_IOS_MVK
+#if VK_USE_PLATFORM_IOS_MVK
     Surface.Recreate( Node.pPhysicalDevice, Manager->hInstance, pPlatformSurface->pViewIOS );
 #endif
-#ifdef defined( VK_USE_PLATFORM_MACOS_MVK ) && VK_USE_PLATFORM_MACOS_MVK
+#if VK_USE_PLATFORM_MACOS_MVK
     Surface.Recreate( Node.pPhysicalDevice, Manager->hInstance, pPlatformSurface->pViewMacOS );
 #endif
-#ifdef defined( VK_USE_PLATFORM_ANDROID_KHR ) && VK_USE_PLATFORM_ANDROID_KHR
+#if VK_USE_PLATFORM_ANDROID_KHR
     Surface.Recreate( Node.pPhysicalDevice, Manager->hInstance, pPlatformSurface->pANativeWindow );
 #endif
 

@@ -8,32 +8,41 @@
 
 #import "MainViewController.h"
 #import <QuartzCore/CAMetalLayer.h>
+
+#include "apemode/platform/AppInput.h"
+#include "apemode/platform/AppSurface.h"
 #include "viewer/ViewerAppShellFactory.h"
-//#include <viewer/ViewerAppShellFactory.h>
+
+struct App {
+    apemode::platform::AppInput input;
+    apemode::platform::AppSurface surface;
+    std::unique_ptr<apemode::platform::IAppShell> shell;
+};
 
 @implementation MainViewController{
     CVDisplayLinkRef    _displayLink;
-    std::unique_ptr<apemode::platform::IAppShell> pAppShell;
-    // struct demo demo;
+    struct App app;
 }
 
 -(void) dealloc {
-    // demo_cleanup(&demo);
+    app.shell.reset();
     CVDisplayLinkRelease(_displayLink);
-    // [super dealloc];
 }
 
 #pragma mark Display loop callback function
 
 /** Rendering loop callback function for use with a CVDisplayLink. */
-static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
+namespace {
+CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
                                     const CVTimeStamp* now,
                                     const CVTimeStamp* outputTime,
                                     CVOptionFlags flagsIn,
                                     CVOptionFlags* flagsOut,
                                     void* target) {
-    // demo_draw((struct demo*)target);
+    App * app = static_cast<App*>(target);
+    app->shell->Update(&app->surface, &app->input);
     return kCVReturnSuccess;
+}
 }
 
 - (void)viewDidLoad {
@@ -41,22 +50,21 @@ static CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     // Back the view with a layer created by the makeBackingLayer method.
     self.view.wantsLayer = YES;
-    // const char* arg = "cube";
-    // demo_main(&demo, self.view, 1, &arg);
-
+    
+    app.surface.iOS.pViewIOS = (__bridge void*) self.view;
+    app.surface.macOS.pViewMacOS = (__bridge void*) self.view;
+    app.surface.OverrideWidth = (int) self.view.frame.size.width;
+    app.surface.OverrideHeight = (int) self.view.frame.size.height;
+    
+    app.shell = apemode::viewer::vk::CreateViewer(0, nullptr);
+    app.shell->Initialize(&app.surface);
+    
     CVDisplayLinkCreateWithActiveCGDisplays(&_displayLink);
-    CVDisplayLinkSetOutputCallback(_displayLink, &DisplayLinkCallback, /*&demo*/ nil);
+    CVDisplayLinkSetOutputCallback(_displayLink, &DisplayLinkCallback, &app);
     CVDisplayLinkStart(_displayLink);
 }
 
-//- (void)setRepresentedObject:(id)representedObject {
-//    [super setRepresentedObject:representedObject];
-//
-//    // Update the view, if already loaded.
-//}
-
 @end
-
 
 #pragma mark -
 #pragma mark MainView

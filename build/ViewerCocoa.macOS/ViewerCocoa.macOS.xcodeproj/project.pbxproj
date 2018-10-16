@@ -47,6 +47,7 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
+		CA7BB1DB217688B90036FA6C /* libMoltenVK.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libMoltenVK.dylib; path = ../../build_darwin_x86_64_appleclang/Debug/libMoltenVK.dylib; sourceTree = "<group>"; };
 		CADD333D2175190E00344B07 /* ViewerCocoa.macOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ViewerCocoa.macOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CADD33402175190E00344B07 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
 		CADD33412175190E00344B07 /* AppDelegate.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = AppDelegate.m; sourceTree = "<group>"; };
@@ -120,6 +121,7 @@
 		CADD337121751A0400344B07 /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				CA7BB1DB217688B90036FA6C /* libMoltenVK.dylib */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
@@ -366,6 +368,10 @@
 				CODE_SIGN_ENTITLEMENTS = ViewerCocoa.macOS/ViewerCocoa_macOS.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"VK_USE_PLATFORM_MACOS_MVK=1",
+					"DEBUG=1",
+				);
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = ViewerCocoa.macOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -386,6 +392,7 @@
 				CODE_SIGN_ENTITLEMENTS = ViewerCocoa.macOS/ViewerCocoa_macOS.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = "VK_USE_PLATFORM_MACOS_MVK=1";
 				HEADER_SEARCH_PATHS = "";
 				INFOPLIST_FILE = ViewerCocoa.macOS/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = (
