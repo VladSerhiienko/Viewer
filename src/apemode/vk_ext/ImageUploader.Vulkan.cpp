@@ -1,3 +1,9 @@
+
+#pragma warning(disable:4309)
+#include <gli/gli.hpp>
+#include <gli/generate_mipmaps.hpp>
+#pragma warning(default:4309)
+
 #include <BufferPools.Vulkan.h>
 #include <ImageUploader.Vulkan.h>
 #include <apemode/platform/memory/MemoryManager.h>
@@ -6,11 +12,6 @@
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
-
-#pragma warning(disable:4309)
-#include <gli/gli.hpp>
-#include <gli/generate_mipmaps.hpp>
-#pragma warning(default:4309)
 
 enum EImageDecodeDriver {
     eImageDecodeDriver_Null = 0,

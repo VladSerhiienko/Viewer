@@ -52,7 +52,7 @@ script:
   - cmake --version
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
     sed -i '' "s,git@github.com:,https://github.com/,g" CMakeLists.txt;
-    cmake -H. -Bbuild_darwin_x86_64_appleclang -DMOLTENVK_SDK_PATH=$MOLTENVK_SDK_PATH;
+    cmake -G Xcode -H. -Bbuild_darwin_x86_64_appleclang -DMOLTENVK_SDK_PATH=$MOLTENVK_SDK_PATH;
     cd build_darwin_x86_64_appleclang;
     xcodebuild -project Viewer.xcodeproj build;
     cd ..;
