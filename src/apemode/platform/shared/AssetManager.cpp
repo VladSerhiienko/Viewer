@@ -104,6 +104,10 @@ void apemode::platform::shared::AssetFile::SetCurrentVersion( uint64_t version )
     LastTimeModified.store( version );
 }
 
+
+apemode::platform::shared::AssetManager::AssetManager() : InUse(false), AssetFiles() {
+}
+
 const apemode::platform::IAsset* apemode::platform::shared::AssetManager::Acquire( const char* pszAssetName ) const {
     auto assetIt = AssetFiles.find( pszAssetName );
 

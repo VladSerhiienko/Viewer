@@ -67,12 +67,9 @@ bool apemodevk::AppSurface::Initialize( const PlatformSurface*                  
 #endif
 
     uint32_t queueFamilyIndex = 0;
-    apemodevk::QueueFamilyPool* queueFamilyPool  = nullptr;
-
     while ( auto currentQueueFamilyPool = Node.GetQueuePool( )->GetPool( queueFamilyIndex++ ) ) {
         if ( currentQueueFamilyPool->SupportsPresenting( Surface.hSurface ) ) {
             PresentQueueFamilyIds.push_back( queueFamilyIndex - 1 );
-            break;
         }
     }
 

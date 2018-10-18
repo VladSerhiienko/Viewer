@@ -56,13 +56,13 @@ namespace apemodevk {
             pPhysicalDevice = pInPhysicalDevice;
 
 #if VK_USE_PLATFORM_IOS_MVK
-            VkIOSSurfaceCreateInfoMVK moltenSurfaceCreateInfo;
+            VkIOSSurfaceCreateInfoMVK moltenSurfaceCreateInfo = {};
+            moltenSurfaceCreateInfo.sType = VK_STRUCTURE_TYPE_IOS_SURFACE_CREATE_INFO_MVK;
 #elif VK_USE_PLATFORM_MACOS_MVK
-            VkMacOSSurfaceCreateInfoMVK moltenSurfaceCreateInfo;
+            VkMacOSSurfaceCreateInfoMVK moltenSurfaceCreateInfo = {};
+            moltenSurfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
 #endif
 
-            InitializeStruct( moltenSurfaceCreateInfo );
-            moltenSurfaceCreateInfo.sType = VK_STRUCTURE_TYPE_IOS_SURFACE_CREATE_INFO_MVK;
             moltenSurfaceCreateInfo.pNext = NULL;
             moltenSurfaceCreateInfo.flags = 0;
             moltenSurfaceCreateInfo.pView = pView;
@@ -110,6 +110,63 @@ namespace apemodevk {
 
     protected:
         bool SetSurfaceProperties( );
+    };
+    
+    class APEMODEVK_API PresentEngine : public NoCopyAssignPolicy {
+    public:
+        struct Frame {
+         THandle<VkSemaphore> ImgAcquiredSemaphore;
+         THandle<VkSemaphore> ImgCompleteSemaphore;
+         THandle<VkSemaphore> ImgOwnershipTransferredSemaphore;
+        };
+        
+        apemodevk::GraphicsDevice*  pNode;
+        apemodevk::Surface*        pSurface;
+        apemodevk::vector<Frame> Frames;
+        uint32_t GraphicsQueueFamilyId = -1;
+        uint32_t PresentQueueFamilyId = -1;
+        
+        bool UsesSeparatePresentQueue() const {
+            return GraphicsQueueFamilyId != PresentQueueFamilyId;
+        }
+        
+        bool Initialize(apemodevk::GraphicsDevice* pInNode,
+                        apemodevk::Surface*        pInSurface,
+                        uint32_t frameCount) {
+            assert(pNode);
+            assert(frameCount);
+            
+            pNode = pInNode;
+            pSurface = pInSurface;
+            Frames.resize(frameCount);
+            
+            GraphicsQueueFamilyId = -1;
+            PresentQueueFamilyId = -1;
+            
+            auto r = pNode->GetQueuePool()->QueueFamilyIds.equal_range(VK_QUEUE_GRAPHICS_BIT);
+            if(r.first == pNode->GetQueuePool()->QueueFamilyIds.end()) {
+                return false;
+            }
+            
+        
+            GraphicsQueueFamilyId = r.first->second;
+            
+            for ( auto it = r.first ; it != r.second; ++it ) {
+                auto p = pNode->GetQueuePool()->GetPool(it->second);
+                if (p && p->SupportsPresenting(pSurface->hSurface.Handle)) {
+                    GraphicsQueueFamilyId = it->second;
+                    PresentQueueFamilyId = it->second;
+                    break;
+                }
+            }
+            
+            
+            
+            for (auto & queuePool : pNode->GetQueuePool()->Pools) {
+            
+            }
+        
+        }
     };
 
     class APEMODEVK_API Swapchain : public NoCopyAssignPolicy {

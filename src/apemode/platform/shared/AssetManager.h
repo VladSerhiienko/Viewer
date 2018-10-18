@@ -37,6 +37,7 @@ protected:
 /* The class is designed to be thread-safe.
  */
 struct AssetManager : IAssetManager {
+    AssetManager();
     virtual ~AssetManager( ) = default;
 
     const IAsset* Acquire( const char* pszAssetName ) const override;

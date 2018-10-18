@@ -23,8 +23,6 @@
 #include <viewer/CameraControllerModelView.h>
 #include <viewer/CameraControllerFreeLook.h>
 
-#define kMaxFrames 3
-
 namespace apemode {
 namespace viewer {
 namespace vk {
@@ -36,25 +34,45 @@ namespace vk {
 
     class ViewerShell {
     public:
+        
+        struct Frame {
+            uint32_t                                        BackbufferIndex;
+            apemodevk::THandle< VkCommandPool >             hCmdPool;
+            apemodevk::THandle< VkCommandBuffer >           hCmdBuffer;
+            apemodevk::THandle< VkSemaphore >               hPresentCompleteSemaphore;
+            apemodevk::THandle< VkSemaphore >               hRenderCompleteSemaphore;
+            apemodevk::THandle< VkFramebuffer >             hNkFramebuffer;
+            apemodevk::THandle< VkFramebuffer >             hDbgFramebuffer;
+            apemodevk::THandle< apemodevk::ImageComposite > hDepthImg;
+            apemodevk::THandle< VkImageView >               hDepthImgView;
+            apemodevk::THandle< VkDeviceMemory >            hDepthImgMemory;
+        };
+    
         ViewerShell( );
         ~ViewerShell( );
 
         /* Returns true if initialization succeeded, false otherwise.
          */
         bool Initialize( const apemodevk::PlatformSurface* pPlatformSurface );
-
+        
         /* Returns true if the app is running, false otherwise.
          */
         bool Update( VkExtent2D currentExtent, const apemode::platform::AppInput* inputState );
 
-    protected:
         bool OnResized( );
+        
+        void IncFrame();
+        void UpdateCamera(const apemode::platform::AppInput* inputState);
+        void UpdateUI(const VkExtent2D currentExtent, const apemode::platform::AppInput* pAppInput);
+        void Populate(Frame * pCurrentFrame, Frame * pSwapchainFrame, VkCommandBuffer pCmdBuffer);
+        
 
     private:
         friend AppState;
         friend AppContent;
 
         float TotalSecs = 0.0f;
+        float DeltaSecs = 0.0f;
 
         uint32_t Width      = 0;
         uint32_t Height     = 0;
@@ -77,21 +95,12 @@ namespace vk {
         apemode::unique_ptr< GraphicsAllocator > Allocator;
 
         apemodevk::AppSurface Surface;
-
-        uint32_t                                        BackbufferIndices[ kMaxFrames ] = {0};
         apemodevk::DescriptorPool                       DescriptorPool;
-        apemodevk::THandle< VkCommandPool >             hCmdPool[ kMaxFrames ];
-        apemodevk::THandle< VkCommandBuffer >           hCmdBuffers[ kMaxFrames ];
-        apemodevk::THandle< VkSemaphore >               hPresentCompleteSemaphores[ kMaxFrames ];
-        apemodevk::THandle< VkSemaphore >               hRenderCompleteSemaphores[ kMaxFrames ];
-        apemodevk::THandle< VkRenderPass >              hNkRenderPass;
-        apemodevk::THandle< VkFramebuffer >             hNkFramebuffers[ kMaxFrames ];
-        apemodevk::THandle< VkRenderPass >              hDbgRenderPass;
-        apemodevk::THandle< VkFramebuffer >             hDbgFramebuffers[ kMaxFrames ];
-        apemodevk::THandle< apemodevk::ImageComposite > hDepthImgs[ kMaxFrames ];
-        apemodevk::THandle< VkImageView >               hDepthImgViews[ kMaxFrames ];
-        apemodevk::THandle< VkDeviceMemory >            hDepthImgMemory[ kMaxFrames ];
-
+            apemodevk::THandle< VkRenderPass >              hNkRenderPass;
+            apemodevk::THandle< VkRenderPass >              hDbgRenderPass;
+        
+        apemodevk::vector<Frame> Frames;
+        
         apemode::unique_ptr< apemodevk::SamplerManager >  pSamplerManager;
         apemodevk::unique_ptr< apemodevk::UploadedImage > RadianceImg;
         apemodevk::unique_ptr< apemodevk::UploadedImage > IrradianceImg;

@@ -27,7 +27,8 @@ namespace apemodevk {
                ( VK_QUEUE_FAMILY_IGNORED != oneTimeCmdBufferSubmitResult.QueueId );
     }
 
-    constexpr uint64_t kDefaultQueueTimeoutNanos = 16 * 1000000; /* 16 ms */
+    constexpr uint64_t kDefaultQueueAcquireTimeoutNanos = 16 * 1000000; /* 16 ms */
+    constexpr uint64_t kDefaultQueueAwaitTimeoutNanos = ( ~0ULL ); /* too many ms */
 
     /**
      * @brief The utlitly functon is used for populating and submitting command buffers.
@@ -45,16 +46,19 @@ namespace apemodevk {
      * of the operation.
      */
     template < typename TPopulateCmdBufferFn /* = bool( VkCommandBuffer ) { ... } */ >
-    inline OneTimeCmdBufferSubmitResult TOneTimeCmdBufferSubmit( GraphicsDevice*      pNode,
-                                                                 uint32_t             queueFamilyId, /* = 0 */
-                                                                 bool                 pAwaitQueue,   /* = true */
-                                                                 TPopulateCmdBufferFn populateCmdBufferFn,
-                                                                 uint64_t             queueAcquireTimeout  = kDefaultQueueTimeoutNanos,
-                                                                 uint64_t             queueAwaitTimeout    = ( ~0ULL ),
-                                                                 const VkSemaphore*   pSignalSemaphores    = nullptr,
-                                                                 uint32_t             signalSemaphoreCount = 0,
-                                                                 const VkSemaphore*   pWaitSemaphores      = nullptr,
-                                                                 uint32_t             waitSemaphoreCount   = 0 ) {
+    inline OneTimeCmdBufferSubmitResult TOneTimeCmdBufferSubmit(
+        GraphicsDevice*             pNode,
+        uint32_t                    queueFamilyId, /* = 0 */
+        bool                        bAwaitQueue,   /* = true */
+        TPopulateCmdBufferFn        populateCmdBufferFn,
+        uint64_t                    queueAcquireTimeout  = kDefaultQueueAcquireTimeoutNanos,
+        uint64_t                    queueAwaitTimeout    = kDefaultQueueAwaitTimeoutNanos,
+        const VkSemaphore*          pSignalSemaphores    = nullptr,
+        uint32_t                    signalSemaphoreCount = 0,
+        const VkPipelineStageFlags* pWaitDstStageMask    = nullptr,
+        const VkSemaphore*          pWaitSemaphores      = nullptr,
+        uint32_t                    waitSemaphoreCount   = 0 )
+    {
         OneTimeCmdBufferSubmitResult result {};
         /* Get command buffer from pool */
         auto pCmdBufferPool = pNode ? pNode->GetCommandBufferPool( ) : nullptr;
@@ -169,6 +173,7 @@ namespace apemodevk {
             submitInfo.pSignalSemaphores    = pSignalSemaphores;
             submitInfo.signalSemaphoreCount = signalSemaphoreCount;
             submitInfo.pWaitSemaphores      = pWaitSemaphores;
+            submitInfo.pWaitDstStageMask    = pWaitDstStageMask;
             submitInfo.waitSemaphoreCount   = waitSemaphoreCount;
             submitInfo.pCommandBuffers      = &acquiredCmdBuffer.pCmdBuffer;
             submitInfo.commandBufferCount   = 1;
@@ -188,7 +193,7 @@ namespace apemodevk {
 
             result.QueueId = acquiredQueue.QueueId;
 
-            if ( pAwaitQueue ) {
+            if ( bAwaitQueue ) {
 
                 result.eResult = WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence, queueAwaitTimeout );
                 if ( VK_SUCCESS > result.eResult ) {

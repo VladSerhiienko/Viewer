@@ -1,5 +1,6 @@
 #include "ViewerShellVk.h"
 #include <apemode/platform/memory/MemoryManager.h>
+#include <apemode/vk/TOneTimeCmdBufferSubmit.Vulkan.h>
 
 using namespace apemode::viewer::vk;
 
@@ -71,7 +72,7 @@ struct apemode::viewer::vk::GraphicsLogger : apemodevk::GraphicsManager::ILogger
 const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 //const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
-ViewerShell::ViewerShell( ) {
+ViewerShell::ViewerShell( ) : mAssetManager() {
     apemode_memory_allocation_scope;
     pCamInput      = apemode::unique_ptr< CameraControllerInputBase >( apemode_new MouseKeyboardCameraControllerInput( ) );
     pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new FreeLookCameraController( ) );
@@ -89,8 +90,8 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
     Logger    = apemode::make_unique< GraphicsLogger >( );
     Allocator = apemode::make_unique< GraphicsAllocator >( );
 
-    apemode::vector< char* > ppszLayers;
-    apemode::vector< char* > ppszExtensions;
+    apemode::vector< const char* > ppszLayers;
+    apemode::vector< const char* > ppszExtensions;
     size_t                   optionalLayerCount = 0;
     size_t                   optionalExtentionCount = 0;
 
@@ -127,38 +128,38 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
         TotalSecs = 0.0f;
 
         FrameId    = 0;
-        FrameIndex = 0;
-        FrameCount = Surface.Swapchain.GetBufferCount( );
+        FrameIndex = Surface.Swapchain.GetBufferCount( );
+        Frames.resize(Surface.Swapchain.GetBufferCount( ));
 
         OnResized( );
 
-        for ( uint32_t i = 0; i < FrameCount; ++i ) {
+        for ( uint32_t i = 0; i < Frames.size(); ++i ) {
 
             VkCommandPoolCreateInfo cmdPoolCreateInfo;
             InitializeStruct( cmdPoolCreateInfo );
             cmdPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
             cmdPoolCreateInfo.queueFamilyIndex = Surface.PresentQueueFamilyIds[0];
 
-            if ( false == hCmdPool[ i ].Recreate( Surface.Node, cmdPoolCreateInfo ) ) {
+            if ( false == Frames[i].hCmdPool.Recreate( Surface.Node, cmdPoolCreateInfo ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
 
             VkCommandBufferAllocateInfo cmdBufferAllocInfo;
             InitializeStruct( cmdBufferAllocInfo );
-            cmdBufferAllocInfo.commandPool = hCmdPool[ i ];
+            cmdBufferAllocInfo.commandPool = Frames[ i ].hCmdPool;
             cmdBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
             cmdBufferAllocInfo.commandBufferCount = 1;
 
-            if ( false == hCmdBuffers[ i ].Recreate( Surface.Node, cmdBufferAllocInfo ) ) {
+            if ( false == Frames[ i ].hCmdBuffer.Recreate( Surface.Node, cmdBufferAllocInfo ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
 
             VkSemaphoreCreateInfo semaphoreCreateInfo;
             InitializeStruct( semaphoreCreateInfo );
-            if ( false == hPresentCompleteSemaphores[ i ].Recreate( Surface.Node, semaphoreCreateInfo ) ||
-                 false == hRenderCompleteSemaphores[ i ].Recreate( Surface.Node, semaphoreCreateInfo ) ) {
+            if ( false == Frames[ i ].hPresentCompleteSemaphore.Recreate( Surface.Node, semaphoreCreateInfo ) ||
+                 false == Frames[ i ].hRenderCompleteSemaphore.Recreate( Surface.Node, semaphoreCreateInfo ) ) {
                 apemode::platform::DebugBreak( );
                 return false;
             }
@@ -284,7 +285,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
         initParamsDbg.pAssetManager   = &mAssetManager;
         initParamsDbg.pRenderPass     = hDbgRenderPass;
         initParamsDbg.pDescPool       = DescriptorPool;
-        initParamsDbg.FrameCount      = FrameCount;
+        initParamsDbg.FrameCount      = Frames.size();
 
         pDebugRenderer = apemode::unique_ptr< apemode::vk::DebugRenderer >( apemode_new apemode::vk::DebugRenderer() );
         pDebugRenderer->RecreateResources( &initParamsDbg );
@@ -296,9 +297,10 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
         recreateParams.pAssetManager   = &mAssetManager;
         recreateParams.pRenderPass     = hDbgRenderPass;
         recreateParams.pDescPool       = DescriptorPool;
-        recreateParams.FrameCount      = FrameCount;
+        recreateParams.FrameCount      = Frames.size();
 
         /*
+        --assets "/Users/vlad.serhiienko/Projects/Home/Viewer/assets" --scene "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rainier-ak-3d.fbxp"
         --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/bristleback-dota-fan-art.fbxp"
         --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/wild-west-motorcycle.fbxp"
         --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/wild-west-sniper-rifle.fbxp"
@@ -349,7 +351,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
         skyboxRendererRecreateParams.pAssetManager   = &mAssetManager;
         skyboxRendererRecreateParams.pRenderPass     = hDbgRenderPass;
         skyboxRendererRecreateParams.pDescPool       = DescriptorPool;
-        skyboxRendererRecreateParams.FrameCount      = FrameCount;
+        skyboxRendererRecreateParams.FrameCount      = Frames.size();
 
         pSkyboxRenderer = apemode::make_unique< apemode::vk::SkyboxRenderer >( );
         if ( false == pSkyboxRenderer->Recreate( &skyboxRendererRecreateParams ) ) {
@@ -408,15 +410,15 @@ bool apemode::viewer::vk::ViewerShell::OnResized( ) {
     allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
     allocationCreateInfo.flags = 0;
 
-    for ( uint32_t i = 0; i < FrameCount; ++i ) {
-        if ( false == hDepthImgs[ i ].Recreate( Surface.Node.hAllocator, depthImgCreateInfo, allocationCreateInfo ) ) {
+    for ( uint32_t i = 0; i < Frames.size(); ++i ) {
+        if ( false == Frames[ i ].hDepthImg.Recreate( Surface.Node.hAllocator, depthImgCreateInfo, allocationCreateInfo ) ) {
             return false;
         }
     }
 
-    for ( uint32_t i = 0; i < FrameCount; ++i ) {
-        depthImgViewCreateInfo.image = hDepthImgs[ i ];
-        if ( false == hDepthImgViews[ i ].Recreate( Surface.Node, depthImgViewCreateInfo ) ) {
+    for ( uint32_t i = 0; i < Frames.size(); ++i ) {
+        depthImgViewCreateInfo.image = Frames[ i ].hDepthImg;
+        if ( false == Frames[ i ].hDepthImgView.Recreate( Surface.Node, depthImgViewCreateInfo ) ) {
             return false;
         }
     }
@@ -505,21 +507,21 @@ bool apemode::viewer::vk::ViewerShell::OnResized( ) {
     framebufferCreateInfoDbg.height          = Surface.Swapchain.ImgExtent.height;
     framebufferCreateInfoDbg.layers          = 1;
 
-    for ( uint32_t i = 0; i < FrameCount; ++i ) {
+    for ( uint32_t i = 0; i < Frames.size(); ++i ) {
         VkImageView attachments[ 1 ] = {Surface.Swapchain.Buffers[ i ].hImgView};
         framebufferCreateInfoNk.pAttachments = attachments;
 
-        if ( false == hNkFramebuffers[ i ].Recreate( Surface.Node, framebufferCreateInfoNk ) ) {
+        if ( false == Frames[ i ].hNkFramebuffer.Recreate( Surface.Node, framebufferCreateInfoNk ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
     }
 
-    for ( uint32_t i = 0; i < FrameCount; ++i ) {
-        VkImageView attachments[ 2 ] = {Surface.Swapchain.Buffers[ i ].hImgView, hDepthImgViews[ i ]};
+    for ( uint32_t i = 0; i < Frames.size(); ++i ) {
+        VkImageView attachments[ 2 ] = {Surface.Swapchain.Buffers[ i ].hImgView, Frames[ i ].hDepthImgView};
         framebufferCreateInfoDbg.pAttachments = attachments;
 
-        if ( false == hDbgFramebuffers[ i ].Recreate( Surface.Node, framebufferCreateInfoDbg ) ) {
+        if ( false == Frames[ i ].hDbgFramebuffer.Recreate( Surface.Node, framebufferCreateInfoDbg ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
@@ -528,67 +530,37 @@ bool apemode::viewer::vk::ViewerShell::OnResized( ) {
     return true;
 }
 
-bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platform::AppInput* inputState ) {
-    apemode_memory_allocation_scope;
+void ViewerShell::UpdateUI(const VkExtent2D currentExtent, const apemode::platform::AppInput* pAppInput) {
+    auto pNkContext = &pNkRenderer->Context;
+    
+    pNkRenderer->HandleInput(pAppInput);
+    if ( nk_begin( pNkContext, "Viewer", nk_rect( 10, 10, 180, 500 ), NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_MOVABLE ) ) {
 
-    const float deltaSecs = (float) Stopwatch.GetElapsedSeconds( );
-    Stopwatch.Start( );
-
-    ++FrameId;
-    FrameIndex = FrameId % (uint64_t) FrameCount;
-    TotalSecs += deltaSecs;
-
-    if ( inputState->bIsQuitRequested ||
-         inputState->IsFirstPressed( apemode::platform::kDigitalInput_BackButton ) ||
-         inputState->IsFirstPressed( apemode::platform::kDigitalInput_KeyEscape ) ) {
-        return false;
-    }
-
-    if ( Surface.Resize( currentExtent ) ) {
-        OnResized( );
-    }
-
-    /*
-    UpdateUI( deltaSecs, inputState ):
-    nk_input_begin( &pNkRenderer->Context ); {
-        SDL_Event evt;
-        while ( SDL_PollEvent( &evt ) )
-            pNkRenderer->HandleEvent( &evt );
-        nk_input_end( &pNkRenderer->Context );
-    }
-    */
-
-    auto ctx = &pNkRenderer->Context;
-    float clearColor[ 4 ] = {0.5f, 0.5f, 1.0f, 1.0f};
-
-    if ( nk_begin( ctx, "Viewer", nk_rect( 10, 10, 180, 500 ), NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_MOVABLE ) ) {
-
-        auto viewMatrix = GetMatrix( pCamController->ViewMatrix( ) );
         auto invViewMatrix = GetMatrix( XMMatrixInverse( nullptr, pCamController->ViewMatrix( ) ) );
 
-        nk_layout_row_dynamic(ctx, 10, 1);
-        nk_labelf( ctx,
+        nk_layout_row_dynamic(pNkContext, 10, 1);
+        nk_labelf( pNkContext,
                    NK_TEXT_LEFT,
                    "View: %2.2f %2.2f %2.2f %2.2f ",
                    invViewMatrix._11,
                    invViewMatrix._12,
                    invViewMatrix._13,
                    invViewMatrix._14 );
-        nk_labelf( ctx,
+        nk_labelf( pNkContext,
                    NK_TEXT_LEFT,
                    "    : %2.2f %2.2f %2.2f %2.2f ",
                    invViewMatrix._21,
                    invViewMatrix._22,
                    invViewMatrix._23,
                    invViewMatrix._24 );
-        nk_labelf( ctx,
+        nk_labelf( pNkContext,
                    NK_TEXT_LEFT,
                    "    : %2.2f %2.2f %2.2f %2.2f ",
                    invViewMatrix._31,
                    invViewMatrix._32,
                    invViewMatrix._33,
                    invViewMatrix._34 );
-        nk_labelf( ctx,
+        nk_labelf( pNkContext,
                    NK_TEXT_LEFT,
                    "    : %2.2f %2.2f %2.2f %2.2f ",
                    invViewMatrix._41,
@@ -596,67 +568,49 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
                    invViewMatrix._43,
                    invViewMatrix._44 );
 
-        nk_labelf( ctx, NK_TEXT_LEFT, "WorldRotationY" );
-        nk_slider_float( ctx, 0, &WorldRotationY, apemodexm::XM_2PI, 0.1f );
+        nk_labelf( pNkContext, NK_TEXT_LEFT, "WorldRotationY" );
+        nk_slider_float( pNkContext, 0, &WorldRotationY, apemodexm::XM_2PI, 0.1f );
 
-        nk_labelf( ctx, NK_TEXT_LEFT, "LightColorR" );
-        nk_slider_float( ctx, 0, &LightColor.x, 1, 0.1f );
+        nk_labelf( pNkContext, NK_TEXT_LEFT, "LightColorR" );
+        nk_slider_float( pNkContext, 0, &LightColor.x, 1, 0.1f );
 
-        nk_labelf( ctx, NK_TEXT_LEFT, "LightColorG" );
-        nk_slider_float( ctx, 0, &LightColor.y, 1, 0.1f );
+        nk_labelf( pNkContext, NK_TEXT_LEFT, "LightColorG" );
+        nk_slider_float( pNkContext, 0, &LightColor.y, 1, 0.1f );
 
-        nk_labelf( ctx, NK_TEXT_LEFT, "LightColorB" );
-        nk_slider_float( ctx, 0, &LightColor.z, 1, 0.1f );
+        nk_labelf( pNkContext, NK_TEXT_LEFT, "LightColorB" );
+        nk_slider_float( pNkContext, 0, &LightColor.z, 1, 0.1f );
 
-        nk_labelf( ctx, NK_TEXT_LEFT, "LightDirectionX" );
-        nk_slider_float( ctx, -1, &LightDirection.x, 1, 0.1f );
+        nk_labelf( pNkContext, NK_TEXT_LEFT, "LightDirectionX" );
+        nk_slider_float( pNkContext, -1, &LightDirection.x, 1, 0.1f );
 
-        nk_labelf( ctx, NK_TEXT_LEFT, "LightDirectionY" );
-        nk_slider_float( ctx, -1, &LightDirection.y, 1, 0.1f );
+        nk_labelf( pNkContext, NK_TEXT_LEFT, "LightDirectionY" );
+        nk_slider_float( pNkContext, -1, &LightDirection.y, 1, 0.1f );
 
-        nk_labelf( ctx, NK_TEXT_LEFT, "LightDirectionZ" );
-        nk_slider_float( ctx, -1, &LightDirection.z, 1, 0.1f );
+        nk_labelf( pNkContext, NK_TEXT_LEFT, "LightDirectionZ" );
+        nk_slider_float( pNkContext, -1, &LightDirection.z, 1, 0.1f );
     }
-    nk_end(ctx);
+    nk_end(pNkContext);
 
-    pCamInput->Update( deltaSecs, *inputState, {float( Width ), float( Height )} );
+}
+
+void ViewerShell::IncFrame() {
+    DeltaSecs = (float) Stopwatch.GetElapsedSeconds( );
+    Stopwatch.Start( );
+
+    FrameIndex = FrameId % (uint64_t) Frames.size();
+    TotalSecs += DeltaSecs;
+}
+
+void ViewerShell::UpdateCamera(const apemode::platform::AppInput *pAppInput) {
+    pCamInput->Update( DeltaSecs, *pAppInput, {float( Width ), float( Height )} );
     pCamController->Orbit( pCamInput->OrbitDelta );
     pCamController->Dolly( pCamInput->DollyDelta );
-    pCamController->Update( deltaSecs );
+    pCamController->Update( DeltaSecs );
+}
 
-    auto queueFamilyPool = Surface.Node.GetQueuePool( )->GetPool( Surface.PresentQueueFamilyIds[ 0 ] );
-    auto acquiredQueue   = queueFamilyPool->Acquire( true );
-    while ( acquiredQueue.pQueue == nullptr ) {
-        acquiredQueue = queueFamilyPool->Acquire( true );
-    }
+void ViewerShell::Populate(Frame * pCurrentFrame, Frame * pSwapchainFrame, VkCommandBuffer pCmdBuffer) {
 
-    VkDevice        device                   = Surface.Node.hLogicalDevice;
-    VkQueue         queue                    = acquiredQueue.pQueue;
-    VkSwapchainKHR  swapchain                = Surface.Swapchain.hSwapchain;
-    VkFence         fence                    = acquiredQueue.pFence;
-    VkSemaphore     presentCompleteSemaphore = hPresentCompleteSemaphores[ FrameIndex ];
-    VkSemaphore     renderCompleteSemaphore  = hRenderCompleteSemaphores[ FrameIndex ];
-    VkCommandPool   pCmdPool                 = hCmdPool[ FrameIndex ];
-    VkCommandBuffer pCmdBuffer               = hCmdBuffers[ FrameIndex ];
-
-    VkFramebuffer framebufferNk = hNkFramebuffers[ FrameIndex ];
-    VkFramebuffer framebufferDbg = hDbgFramebuffers[ FrameIndex ];
-
-    CheckedResult( WaitForFence( device, fence ) );
-
-    CheckedResult( vkAcquireNextImageKHR( device,
-        swapchain,
-        UINT64_MAX,
-        presentCompleteSemaphore,
-        VK_NULL_HANDLE,
-        &BackbufferIndices[ FrameIndex ] ) );
-
-    CheckedResult( vkResetCommandPool( device, pCmdPool, 0 ) );
-
-    VkCommandBufferBeginInfo commandBufferBeginInfo;
-    InitializeStruct( commandBufferBeginInfo );
-    commandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-    CheckedResult( vkBeginCommandBuffer( pCmdBuffer, &commandBufferBeginInfo ) );
+    float clearColor[ 4 ] = {0.5f, 0.5f, 1.0f, 1.0f};
 
     VkClearValue clearValue[ 2 ];
     clearValue[ 0 ].color.float32[ 0 ]   = clearColor[ 0 ];
@@ -669,7 +623,7 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
     VkRenderPassBeginInfo renderPassBeginInfo;
     InitializeStruct( renderPassBeginInfo );
     renderPassBeginInfo.renderPass               = hDbgRenderPass;
-    renderPassBeginInfo.framebuffer              = hDbgFramebuffers[ FrameIndex ];
+    renderPassBeginInfo.framebuffer              = pSwapchainFrame->hDbgFramebuffer;
     renderPassBeginInfo.renderArea.extent.width  = Surface.Swapchain.ImgExtent.width;
     renderPassBeginInfo.renderArea.extent.height = Surface.Swapchain.ImgExtent.height;
     renderPassBeginInfo.clearValueCount          = 2;
@@ -725,18 +679,18 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
     worldMatrix = XMMatrixScaling( scale, scale * 2, scale ) * XMMatrixTranslation( 0, scale * 3, 0 );
     XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
     frameData.Color = {0, 1, 0, 1};
-    pDebugRenderer->Render( &renderParamsDbg );
+    // pDebugRenderer->Render( &renderParamsDbg );
 
     worldMatrix = XMMatrixScaling( scale, scale, scale * 2 ) * XMMatrixTranslation( 0, 0, scale * 3 );
     XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
     frameData.Color = {0, 0, 1, 1};
-    pDebugRenderer->Render( &renderParamsDbg );
+    // pDebugRenderer->Render( &renderParamsDbg );
 
 
     worldMatrix = XMMatrixScaling( scale * 2, scale, scale ) * XMMatrixTranslation( scale * 3, 0, 0 );
     XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
     frameData.Color = { 1, 0, 0, 1 };
-    pDebugRenderer->Render( &renderParamsDbg );
+    // pDebugRenderer->Render( &renderParamsDbg );
 
     XMMATRIX rootMatrix = XMMatrixRotationY( WorldRotationY );
 
@@ -763,7 +717,7 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
     XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.InvProjMatrix, invProjMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.RootMatrix, rootMatrix );
-    pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
+//    pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
 
     apemode::vk::NuklearRenderer::RenderParameters renderParamsNk;
     renderParamsNk.Dims[ 0 ]            = extentF.x;
@@ -785,37 +739,97 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
     pSceneRendererBase->Flush( mLoadedScene.pScene.get( ), FrameIndex );
     pSkyboxRenderer->Flush( FrameIndex );
 
-    VkPipelineStageFlags waitPipelineStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+}
 
-    VkSubmitInfo submitInfo;
-    InitializeStruct( submitInfo );
-    submitInfo.signalSemaphoreCount = 1;
-    submitInfo.pSignalSemaphores    = &renderCompleteSemaphore;
-    submitInfo.waitSemaphoreCount   = 1;
-    submitInfo.pWaitSemaphores      = &presentCompleteSemaphore;
-    submitInfo.pWaitDstStageMask    = &waitPipelineStage;
-    submitInfo.commandBufferCount   = 1;
-    submitInfo.pCommandBuffers      = &pCmdBuffer;
+bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platform::AppInput* pAppInput ) {
+    apemode_memory_allocation_scope;
 
-    CheckedResult( vkEndCommandBuffer( pCmdBuffer ) );
-    CheckedResult( vkResetFences( device, 1, &fence ) );
-    CheckedResult( vkQueueSubmit( queue, 1, &submitInfo, fence ) );
+    if ( pAppInput->bIsQuitRequested ||
+         pAppInput->IsFirstPressed( apemode::platform::kDigitalInput_BackButton ) ||
+         pAppInput->IsFirstPressed( apemode::platform::kDigitalInput_KeyEscape ) ) {
+        return false;
+    }
+
+    if ( currentExtent.width && currentExtent.height && Surface.Resize( currentExtent ) ) {
+        OnResized( );
+    }
+
+    IncFrame( );
+    // UpdateUI( currentExtent, pAppInput );
+    UpdateCamera( pAppInput );
+
+    Frame & currentFrame = Frames[ FrameIndex ];
+
+    CheckedResult( vkAcquireNextImageKHR( Surface.Node.hLogicalDevice,
+                                          Surface.Swapchain.hSwapchain,
+                                          UINT64_MAX,
+                                          currentFrame.hPresentCompleteSemaphore,
+                                          VK_NULL_HANDLE,
+                                          &currentFrame.BackbufferIndex ) );
+    
+    
+    
+    Frame & swapchainFrame = Frames[ currentFrame.BackbufferIndex ];
+    
+    const uint32_t queueFamilyId = 0;
+    VkPipelineStageFlags eColorAttachmentOutputStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
+    apemodevk::OneTimeCmdBufferSubmitResult submitResult =
+        apemodevk::TOneTimeCmdBufferSubmit( &Surface.Node,
+                                            queueFamilyId,
+                                            false,
+                                            [&]( VkCommandBuffer pCmdBuffer ) {
+                                                Populate( &currentFrame, &swapchainFrame, pCmdBuffer );
+                                                return true;
+                                            },
+                                            apemodevk::kDefaultQueueAwaitTimeoutNanos,
+                                            apemodevk::kDefaultQueueAwaitTimeoutNanos,
+                                            currentFrame.hRenderCompleteSemaphore.GetAddressOf( ),
+                                            1,
+                                            &eColorAttachmentOutputStage,
+                                            currentFrame.hPresentCompleteSemaphore.GetAddressOf( ),
+                                            1 );
+
+    if (submitResult.eResult != VK_SUCCESS) {
+        return false;
+    }
+    
+    
+    const uint32_t queueId = submitResult.QueueId;
+    apemodevk::platform::LogFmt(apemodevk::platform::Info, "------------------------------");
+    apemodevk::platform::LogFmt(apemodevk::platform::Info, "Submitted to Queue: %u %u", queueId, queueFamilyId);
+    apemodevk::platform::LogFmt(apemodevk::platform::Info, "> Backbuffer index: %u", currentFrame.BackbufferIndex);
+    apemodevk::platform::LogFmt(apemodevk::platform::Info, "> Signal semaphore: %p", currentFrame.hRenderCompleteSemaphore.Handle);
+    apemodevk::platform::LogFmt(apemodevk::platform::Info, ">   Wait semaphore: %p", currentFrame.hPresentCompleteSemaphore.Handle);
+    apemodevk::platform::LogFmt(apemodevk::platform::Info, "------------------------------");
 
     if ( FrameId ) {
-        uint32_t    presentIndex    = ( FrameIndex + FrameCount - 1 ) % FrameCount;
-        VkSemaphore renderSemaphore = hRenderCompleteSemaphores[ presentIndex ];
+        // TODO: Acquire correctly.
+        apemodevk::QueueInPool& currentQueue = Surface.Node.GetQueuePool( )->Pools[ queueFamilyId ].Queues[ queueId ];
+        currentQueue.bInUse                  = true;
+
+        uint32_t presentIndex                = ( FrameIndex + Frames.size( ) - 1 ) % Frames.size( );
+        Frame&   presentingFrame             = Frames[ presentIndex ];
 
         VkPresentInfoKHR presentInfoKHR;
         InitializeStruct( presentInfoKHR );
         presentInfoKHR.waitSemaphoreCount = 1;
-        presentInfoKHR.pWaitSemaphores    = &renderSemaphore;
+        presentInfoKHR.pWaitSemaphores    = presentingFrame.hRenderCompleteSemaphore.GetAddressOf( );
         presentInfoKHR.swapchainCount     = 1;
-        presentInfoKHR.pSwapchains        = &swapchain;
-        presentInfoKHR.pImageIndices      = &BackbufferIndices[ presentIndex ];
+        presentInfoKHR.pSwapchains        = Surface.Swapchain.hSwapchain.GetAddressOf( );
+        presentInfoKHR.pImageIndices      = &presentingFrame.BackbufferIndex;
 
-        CheckedResult( vkQueuePresentKHR( queue, &presentInfoKHR ) );
+        CheckedResult( vkQueuePresentKHR( currentQueue.hQueue, &presentInfoKHR ) );
+        
+        apemodevk::platform::LogFmt(apemodevk::platform::Info, "------------------------------");
+        apemodevk::platform::LogFmt(apemodevk::platform::Info, "Present to Queue: %u %u", queueId, queueFamilyId);
+        apemodevk::platform::LogFmt(apemodevk::platform::Info, "> Backbuffer index: %u", presentingFrame.BackbufferIndex);
+        apemodevk::platform::LogFmt(apemodevk::platform::Info, ">   Wait semaphore: %p", presentingFrame.hRenderCompleteSemaphore.Handle);
+        apemodevk::platform::LogFmt(apemodevk::platform::Info, "------------------------------");
+        currentQueue.bInUse = false;
     }
 
-    queueFamilyPool->Release(acquiredQueue);
+    ++FrameId;
     return true;
 }
+

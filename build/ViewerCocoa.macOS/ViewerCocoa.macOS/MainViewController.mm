@@ -13,6 +13,8 @@
 #include "apemode/platform/AppSurface.h"
 #include "viewer/ViewerAppShellFactory.h"
 
+#include <vector>
+
 struct App {
     apemode::platform::AppInput input;
     apemode::platform::AppSurface surface;
@@ -43,6 +45,18 @@ CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
     app->shell->Update(&app->surface, &app->input);
     return kCVReturnSuccess;
 }
+
+std::vector<const char*> getProcessArguments() {
+    std::vector<const char*> ppszArgs;
+    NSArray * args = [[NSProcessInfo processInfo] arguments];
+    ppszArgs.reserve((size_t)[args count]);
+    
+    for (NSString * arg in args)
+        ppszArgs.push_back([arg UTF8String]);
+    
+    return ppszArgs;
+}
+
 }
 
 - (void)viewDidLoad {
@@ -50,13 +64,16 @@ CVReturn DisplayLinkCallback(CVDisplayLinkRef displayLink,
 
     // Back the view with a layer created by the makeBackingLayer method.
     self.view.wantsLayer = YES;
+    // [self.view.window setFrame:NSMakeRect(0, 0, 1280, 800) display:true];
     
     app.surface.iOS.pViewIOS = (__bridge void*) self.view;
     app.surface.macOS.pViewMacOS = (__bridge void*) self.view;
-    app.surface.OverrideWidth = (int) self.view.frame.size.width;
-    app.surface.OverrideHeight = (int) self.view.frame.size.height;
+    app.surface.OverrideWidth = 0; //(int) self.view.frame.size.width;
+    app.surface.OverrideHeight = 0; //(int) self.view.frame.size.height;
     
-    app.shell = apemode::viewer::vk::CreateViewer(0, nullptr);
+    std::vector<const char*> ppszArgs = getProcessArguments();
+    
+    app.shell = apemode::viewer::vk::CreateViewer((int)ppszArgs.size(), ppszArgs.data());
     app.shell->Initialize(&app.surface);
     
     CVDisplayLinkCreateWithActiveCGDisplays(&_displayLink);
