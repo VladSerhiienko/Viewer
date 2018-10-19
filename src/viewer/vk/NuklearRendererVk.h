@@ -35,7 +35,12 @@ public:
         uint32_t        FrameIndex = 0;              /* Required */
     };
 
-public:
+    struct Frame {
+        apemodevk::THandle< apemodevk::BufferComposite > hVertexBuffer;
+        apemodevk::THandle< apemodevk::BufferComposite > hIndexBuffer;
+        apemodevk::DescriptorSetPool                     DescSetPool;
+    };
+
     apemodevk::GraphicsDevice *                       pNode = nullptr;
     VkSampler                                         hFontSampler;
     apemodevk::THandle< VkDescriptorSetLayout >       hDescSetLayout;
@@ -43,13 +48,7 @@ public:
     apemodevk::THandle< VkPipelineCache >             hPipelineCache;
     apemodevk::THandle< VkPipeline >                  hPipeline;
     apemodevk::unique_ptr< apemodevk::UploadedImage > FontUploadedImg;
-
-    static uint32_t const kMaxFrameCount = 3;
-    struct {
-        apemodevk::THandle< apemodevk::BufferComposite > hVertexBuffer;
-        apemodevk::THandle< apemodevk::BufferComposite > hIndexBuffer;
-        apemodevk::DescriptorSetPool                     DescSetPool;
-    } Frames[ kMaxFrameCount ];
+    apemodevk::vector< Frame >                        Frames;
 
 public:
     virtual ~NuklearRenderer( );

@@ -227,10 +227,12 @@ bool apemode::vk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
         return false;
     }
 
-    for ( uint32_t i = 0; i < pParams->FrameCount; ++i ) {
-        BufferPools[ i ].Recreate( pParams->pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
+    Frames.resize( pParams->FrameCount );
 
-        if ( false == DescSetPools[ i ].Recreate( *pParams->pNode, pParams->pDescPool, hDescSetLayout ) ) {
+    for ( uint32_t i = 0; i < pParams->FrameCount; ++i ) {
+        Frames[ i ].BufferPool.Recreate( pParams->pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
+
+        if ( false == Frames[ i ].DescriptorSetPool.Recreate( *pParams->pNode, pParams->pDescPool, hDescSetLayout ) ) {
             return false;
         }
     }
@@ -240,14 +242,14 @@ bool apemode::vk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
 
 void apemode::vk::SkyboxRenderer::Reset( uint32_t FrameIndex ) {
     apemodevk_memory_allocation_scope;
-    BufferPools[ FrameIndex ].Reset( );
+    Frames[ FrameIndex ].BufferPool.Reset( );
 }
 
 bool apemode::vk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pParams ) {
     using namespace apemodevk;
     apemodevk_memory_allocation_scope;
 
-    auto FrameIndex = (pParams->FrameIndex) % kMaxFrameCount;
+    const uint32_t FrameIndex = ( pParams->FrameIndex ) % kMaxFrameCount;
 
     SkyboxUBO skyboxUBO;
     skyboxUBO.InvView   = pParams->InvViewMatrix;
@@ -258,7 +260,7 @@ bool apemode::vk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPa
     skyboxUBO.Params0.z = float( pSkybox->Dimension );     /* u_textureCubeDim0 */
     skyboxUBO.Params0.w = float( pSkybox->LevelOfDetail ); /* u_textureCubeLod0 */
 
-    auto suballocResult = BufferPools[ FrameIndex ].TSuballocate( skyboxUBO );
+    auto suballocResult = Frames[ FrameIndex ].BufferPool.TSuballocate( skyboxUBO );
     assert( VK_NULL_HANDLE != suballocResult.DescriptorBufferInfo.buffer );
     suballocResult.DescriptorBufferInfo.range = sizeof( SkyboxUBO );
 
@@ -277,7 +279,7 @@ bool apemode::vk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPa
     descSet.pBinding[ 1 ].eDescriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     descSet.pBinding[ 1 ].ImageInfo       = skyboxImageInfo;
 
-    descriptorSet[ 0 ]  = DescSetPools[ FrameIndex ].GetDescriptorSet( &descSet );
+    descriptorSet[ 0 ]  = Frames[ FrameIndex ].DescriptorSetPool.GetDescriptorSet( &descSet );
     dynamicOffsets[ 0 ] = suballocResult.DynamicOffset;
 
     vkCmdBindPipeline( pParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipeline );
@@ -321,5 +323,5 @@ bool apemode::vk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPa
 }
 
 void apemode::vk::SkyboxRenderer::Flush( uint32_t FrameIndex ) {
-    BufferPools[ FrameIndex ].Flush( );
+    Frames[ FrameIndex ].BufferPool.Flush( );
 }

@@ -112,7 +112,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
 
     vkCmdSetScissor( pParams->pCmdBuffer, 0, 1, &scissor );
 
-    const uint32_t frameIndex = pParams->FrameIndex % kMaxFrameCount;
+    const uint32_t frameIndex = pParams->FrameIndex;
     auto& frame = Frames[ frameIndex ];
 
     VkDescriptorSet ppDescriptorSets[ 2 ] = {nullptr};
@@ -702,8 +702,10 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
         return false;
     }
 
+    Frames.resize( pParams->FrameCount );
+
     for ( uint32_t i = 0; i < pParams->FrameCount; ++i ) {
-        auto & frame = Frames[i];
+        auto& frame = Frames[ i ];
 
         frame.BufferPool.Recreate( pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
         frame.DescriptorSetPools[ kDescriptorSetForPass ].Recreate( *pNode, pParams->pDescPool, hDescriptorSetLayouts[ kDescriptorSetForPass ] );

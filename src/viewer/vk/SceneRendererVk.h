@@ -61,21 +61,21 @@ public:
     bool RenderScene( const Scene* pScene, const SceneRenderParametersBase* pParams ) override;
     bool Flush( const Scene* pScene, uint32_t FrameIndex ) override;
 
-    static constexpr uint32_t kMaxFrameCount        = 3;
     static constexpr uint32_t kDescriptorSetCount   = 2;
     static constexpr uint32_t kDescriptorSetForPass = 0;
     static constexpr uint32_t kDescriptorSetForObj  = 1;
+
+    struct Frame {
+        apemodevk::HostBufferPool    BufferPool;
+        apemodevk::DescriptorSetPool DescriptorSetPools[ kDescriptorSetCount ];
+    };
 
     apemodevk::GraphicsDevice*                  pNode = nullptr;
     apemodevk::THandle< VkDescriptorSetLayout > hDescriptorSetLayouts[ kDescriptorSetCount ];
     apemodevk::THandle< VkPipelineLayout >      hPipelineLayout;
     apemodevk::THandle< VkPipelineCache >       hPipelineCache;
     apemodevk::THandle< VkPipeline >            hPipeline;
-
-    struct {
-        apemodevk::HostBufferPool    BufferPool;
-        apemodevk::DescriptorSetPool DescriptorSetPools[ kDescriptorSetCount ];
-    } Frames[ kMaxFrameCount ];
+    apemodevk::vector< Frame >                  Frames;
 };
 
 } // namespace vk

@@ -50,6 +50,11 @@ public:
         XMFLOAT4X4                 ProjBiasMatrix;               /* Required */
     };
 
+    struct Frame {
+        apemodevk::HostBufferPool    BufferPool;
+        apemodevk::DescriptorSetPool DescriptorSetPool;
+    };
+
     void Reset( uint32_t FrameIndex );
     bool Render( Skybox* pSkybox, RenderParameters* pParams );
     void Flush( uint32_t FrameIndex );
@@ -59,8 +64,7 @@ public:
     apemodevk::THandle< VkPipelineLayout >       hPipelineLayout;
     apemodevk::THandle< VkPipelineCache >        hPipelineCache;
     apemodevk::THandle< VkPipeline >             hPipeline;
-    apemodevk::HostBufferPool                    BufferPools[ kMaxFrameCount ];
-    apemodevk::DescriptorSetPool                 DescSetPools[ kMaxFrameCount ];
+    apemodevk::vector< Frame >                   Frames;
 };
 } // namespace vk
 } // namespace apemode

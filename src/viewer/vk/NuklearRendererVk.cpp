@@ -38,7 +38,7 @@ bool apemode::vk::NuklearRenderer::Render( RenderParametersBase* pRenderParamsBa
     apemode_memory_allocation_scope;
 
     auto pRenderParams = (RenderParameters*) pRenderParamsBase;
-    const uint32_t frameIndex = ( pRenderParams->FrameIndex ) % kMaxFrameCount;
+    const uint32_t frameIndex = pRenderParams->FrameIndex;
     auto& frame = Frames[ frameIndex ];
 
     if ( frame.hVertexBuffer.Handle.AllocationInfo.size < pRenderParamsBase->MaxVertexBufferSize ) {
@@ -264,6 +264,8 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
         if ( false == hDescSetLayout.Recreate( pNode->hLogicalDevice, descSetLayoutCreateInfo ) ) {
             return false;
         }
+
+        Frames.resize( pParams->FrameCount );
 
         for ( auto& frame : Frames ) {
             if ( !frame.DescSetPool.Recreate( *pParams->pNode, pParams->pDescPool, hDescSetLayout ) ) {
