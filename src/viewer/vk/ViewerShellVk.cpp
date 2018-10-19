@@ -134,28 +134,6 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface  
         OnResized( );
 
         for ( uint32_t i = 0; i < Frames.size(); ++i ) {
-
-            VkCommandPoolCreateInfo cmdPoolCreateInfo;
-            InitializeStruct( cmdPoolCreateInfo );
-            cmdPoolCreateInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-            cmdPoolCreateInfo.queueFamilyIndex = Surface.PresentQueueFamilyIds[0];
-
-            if ( false == Frames[i].hCmdPool.Recreate( Surface.Node, cmdPoolCreateInfo ) ) {
-                apemode::platform::DebugBreak( );
-                return false;
-            }
-
-            VkCommandBufferAllocateInfo cmdBufferAllocInfo;
-            InitializeStruct( cmdBufferAllocInfo );
-            cmdBufferAllocInfo.commandPool = Frames[ i ].hCmdPool;
-            cmdBufferAllocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-            cmdBufferAllocInfo.commandBufferCount = 1;
-
-            if ( false == Frames[ i ].hCmdBuffer.Recreate( Surface.Node, cmdBufferAllocInfo ) ) {
-                apemode::platform::DebugBreak( );
-                return false;
-            }
-
             VkSemaphoreCreateInfo semaphoreCreateInfo;
             InitializeStruct( semaphoreCreateInfo );
             if ( false == Frames[ i ].hPresentCompleteSemaphore.Recreate( Surface.Node, semaphoreCreateInfo ) ||
@@ -532,7 +510,7 @@ bool apemode::viewer::vk::ViewerShell::OnResized( ) {
 
 void ViewerShell::UpdateUI(const VkExtent2D currentExtent, const apemode::platform::AppInput* pAppInput) {
     auto pNkContext = &pNkRenderer->Context;
-    
+
     pNkRenderer->HandleInput(pAppInput);
     if ( nk_begin( pNkContext, "Viewer", nk_rect( 10, 10, 180, 500 ), NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_MOVABLE ) ) {
 
@@ -717,7 +695,7 @@ void ViewerShell::Populate(Frame * pCurrentFrame, Frame * pSwapchainFrame, VkCom
     XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.InvProjMatrix, invProjMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.RootMatrix, rootMatrix );
-//    pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
+    pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
 
     apemode::vk::NuklearRenderer::RenderParameters renderParamsNk;
     renderParamsNk.Dims[ 0 ]            = extentF.x;
@@ -755,7 +733,7 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
     }
 
     IncFrame( );
-    // UpdateUI( currentExtent, pAppInput );
+    UpdateUI( currentExtent, pAppInput );
     UpdateCamera( pAppInput );
 
     Frame & currentFrame = Frames[ FrameIndex ];
@@ -766,11 +744,11 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
                                           currentFrame.hPresentCompleteSemaphore,
                                           VK_NULL_HANDLE,
                                           &currentFrame.BackbufferIndex ) );
-    
-    
-    
+
+
+
     Frame & swapchainFrame = Frames[ currentFrame.BackbufferIndex ];
-    
+
     const uint32_t queueFamilyId = 0;
     VkPipelineStageFlags eColorAttachmentOutputStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
@@ -793,15 +771,18 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
     if (submitResult.eResult != VK_SUCCESS) {
         return false;
     }
-    
-    
+
+
     const uint32_t queueId = submitResult.QueueId;
+
+    /*
     apemodevk::platform::LogFmt(apemodevk::platform::Info, "------------------------------");
     apemodevk::platform::LogFmt(apemodevk::platform::Info, "Submitted to Queue: %u %u", queueId, queueFamilyId);
     apemodevk::platform::LogFmt(apemodevk::platform::Info, "> Backbuffer index: %u", currentFrame.BackbufferIndex);
     apemodevk::platform::LogFmt(apemodevk::platform::Info, "> Signal semaphore: %p", currentFrame.hRenderCompleteSemaphore.Handle);
     apemodevk::platform::LogFmt(apemodevk::platform::Info, ">   Wait semaphore: %p", currentFrame.hPresentCompleteSemaphore.Handle);
     apemodevk::platform::LogFmt(apemodevk::platform::Info, "------------------------------");
+    */
 
     if ( FrameId ) {
         // TODO: Acquire correctly.
@@ -820,12 +801,15 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
         presentInfoKHR.pImageIndices      = &presentingFrame.BackbufferIndex;
 
         CheckedResult( vkQueuePresentKHR( currentQueue.hQueue, &presentInfoKHR ) );
-        
+
+        /*
         apemodevk::platform::LogFmt(apemodevk::platform::Info, "------------------------------");
         apemodevk::platform::LogFmt(apemodevk::platform::Info, "Present to Queue: %u %u", queueId, queueFamilyId);
         apemodevk::platform::LogFmt(apemodevk::platform::Info, "> Backbuffer index: %u", presentingFrame.BackbufferIndex);
         apemodevk::platform::LogFmt(apemodevk::platform::Info, ">   Wait semaphore: %p", presentingFrame.hRenderCompleteSemaphore.Handle);
         apemodevk::platform::LogFmt(apemodevk::platform::Info, "------------------------------");
+        */
+
         currentQueue.bInUse = false;
     }
 

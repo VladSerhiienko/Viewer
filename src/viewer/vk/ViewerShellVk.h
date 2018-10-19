@@ -34,11 +34,9 @@ namespace vk {
 
     class ViewerShell {
     public:
-        
+
         struct Frame {
             uint32_t                                        BackbufferIndex;
-            apemodevk::THandle< VkCommandPool >             hCmdPool;
-            apemodevk::THandle< VkCommandBuffer >           hCmdBuffer;
             apemodevk::THandle< VkSemaphore >               hPresentCompleteSemaphore;
             apemodevk::THandle< VkSemaphore >               hRenderCompleteSemaphore;
             apemodevk::THandle< VkFramebuffer >             hNkFramebuffer;
@@ -47,25 +45,25 @@ namespace vk {
             apemodevk::THandle< VkImageView >               hDepthImgView;
             apemodevk::THandle< VkDeviceMemory >            hDepthImgMemory;
         };
-    
+
         ViewerShell( );
         ~ViewerShell( );
 
         /* Returns true if initialization succeeded, false otherwise.
          */
         bool Initialize( const apemodevk::PlatformSurface* pPlatformSurface );
-        
+
         /* Returns true if the app is running, false otherwise.
          */
         bool Update( VkExtent2D currentExtent, const apemode::platform::AppInput* inputState );
 
         bool OnResized( );
-        
+
         void IncFrame();
         void UpdateCamera(const apemode::platform::AppInput* inputState);
         void UpdateUI(const VkExtent2D currentExtent, const apemode::platform::AppInput* pAppInput);
         void Populate(Frame * pCurrentFrame, Frame * pSwapchainFrame, VkCommandBuffer pCmdBuffer);
-        
+
 
     private:
         friend AppState;
@@ -98,9 +96,9 @@ namespace vk {
         apemodevk::DescriptorPool                       DescriptorPool;
             apemodevk::THandle< VkRenderPass >              hNkRenderPass;
             apemodevk::THandle< VkRenderPass >              hDbgRenderPass;
-        
+
         apemodevk::vector<Frame> Frames;
-        
+
         apemode::unique_ptr< apemodevk::SamplerManager >  pSamplerManager;
         apemodevk::unique_ptr< apemodevk::UploadedImage > RadianceImg;
         apemodevk::unique_ptr< apemodevk::UploadedImage > IrradianceImg;
