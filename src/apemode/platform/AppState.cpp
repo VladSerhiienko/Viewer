@@ -68,11 +68,11 @@ std::string ComposeLogFile( ) {
     pCurrentTime = localtime( &currentSystemTime );
 #endif
 
-    std::stringstream curentTimeStrStream;
-    curentTimeStrStream << std::put_time( pCurrentTime, "%F-%T-" );
-    curentTimeStrStream << currentSystemTime;
+    std::stringstream currentTimeStrStream;
+    currentTimeStrStream << std::put_time( pCurrentTime, "%F-%T-" );
+    currentTimeStrStream << currentSystemTime;
 
-    std::string curentTimeStr = curentTimeStrStream.str( );
+    std::string curentTimeStr = currentTimeStrStream.str( );
     std::replace( curentTimeStr.begin( ), curentTimeStr.end( ), ' ', '-' );
     std::replace( curentTimeStr.begin( ), curentTimeStr.end( ), ':', '-' );
 

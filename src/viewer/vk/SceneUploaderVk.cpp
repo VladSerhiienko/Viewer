@@ -56,7 +56,7 @@ void UploadImage( ImageUploadInfo* pUploadInfo ) {
 
     apemodevk::ImageUploader::UploadOptions uploadOptions;
     apemodevk::ImageUploader imgUploader;
-    pUploadInfo->UploadedImg = std::move( imgUploader.UploadImage( pUploadInfo->pNode, *srcImg, uploadOptions ) );
+    pUploadInfo->UploadedImg = imgUploader.UploadImage( pUploadInfo->pNode, *srcImg, uploadOptions );
 }
 
 struct ImageUploadTask {
@@ -354,12 +354,6 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
     if ( nullptr == pMappedStagingMemory ) {
         return false;
     }
-
-    /* A limit that the code does not reach. */
-    const uint64_t totalBytesAllowed = stagingMemorySize;
-
-    /* Tracks the amount of allocated host memory (approx). */
-    uint64_t totalBytesAllocated = 0;
 
     /* While there are elements that need to be uploaded. */
     auto pCurrFillInfo = pMeshUploadIt;

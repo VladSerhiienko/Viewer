@@ -77,8 +77,19 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 ViewerShell::ViewerShell( ) : mAssetManager( ) {
     apemode_memory_allocation_scope;
     pCamInput      = apemode::unique_ptr< CameraControllerInputBase >( apemode_new MouseKeyboardCameraControllerInput( ) );
-    pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new FreeLookCameraController( ) );
-    // pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new ModelViewCameraController( ) );
+    // pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new FreeLookCameraController( ) );
+    
+    /*
+    auto pFreeLookCameraController = (FreeLookCameraController*)pCamController.get();
+    pFreeLookCameraController->Position.x = 50;
+    pFreeLookCameraController->Position.y = 50;
+    pFreeLookCameraController->Position.z = 50;
+    pFreeLookCameraController->PositionDst.x = 50;
+    pFreeLookCameraController->PositionDst.y = 50;
+    pFreeLookCameraController->PositionDst.z = 50;
+    */
+    
+    pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new ModelViewCameraController( ) );
 }
 
 ViewerShell::~ViewerShell( ) {
@@ -140,7 +151,6 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
             InitializeStruct( semaphoreCreateInfo );
             if ( false == Frames[ i ].hPresentCompleteSemaphore.Recreate( Surface.Node, semaphoreCreateInfo ) ||
                  false == Frames[ i ].hRenderCompleteSemaphore.Recreate( Surface.Node, semaphoreCreateInfo ) ) {
-                apemode::platform::DebugBreak( );
                 return false;
             }
         }
@@ -255,6 +265,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         initParamsNk.pSamplerManager = pSamplerManager.get( );
         initParamsNk.pDescPool       = DescriptorPool;
         initParamsNk.pRenderPass     = hDbgRenderPass;
+        initParamsNk.FrameCount      = uint32_t( Frames.size( ) );
         // initParamsNk.pRenderPass     = hNkRenderPass;
 
         pNkRenderer->Init( &initParamsNk );
@@ -265,7 +276,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         initParamsDbg.pAssetManager = &mAssetManager;
         initParamsDbg.pRenderPass   = hDbgRenderPass;
         initParamsDbg.pDescPool     = DescriptorPool;
-        initParamsDbg.FrameCount    = Frames.size( );
+        initParamsDbg.FrameCount    = uint32_t( Frames.size( ) );
 
         pDebugRenderer = apemode::unique_ptr< apemode::vk::DebugRenderer >( apemode_new apemode::vk::DebugRenderer( ) );
         pDebugRenderer->RecreateResources( &initParamsDbg );
@@ -277,7 +288,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         recreateParams.pAssetManager = &mAssetManager;
         recreateParams.pRenderPass   = hDbgRenderPass;
         recreateParams.pDescPool     = DescriptorPool;
-        recreateParams.FrameCount    = Frames.size( );
+        recreateParams.FrameCount    = uint32_t( Frames.size( ) );
 
         /*
         --assets "/Users/vlad.serhiienko/Projects/Home/Viewer/assets" --scene
@@ -332,7 +343,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         skyboxRendererRecreateParams.pAssetManager = &mAssetManager;
         skyboxRendererRecreateParams.pRenderPass   = hDbgRenderPass;
         skyboxRendererRecreateParams.pDescPool     = DescriptorPool;
-        skyboxRendererRecreateParams.FrameCount    = Frames.size( );
+        skyboxRendererRecreateParams.FrameCount    = uint32_t( Frames.size( ) );
 
         pSkyboxRenderer = apemode::make_unique< apemode::vk::SkyboxRenderer >( );
         if ( false == pSkyboxRenderer->Recreate( &skyboxRendererRecreateParams ) ) {
@@ -578,14 +589,18 @@ void ViewerShell::UpdateUI( const VkExtent2D currentExtent, const apemode::platf
 void ViewerShell::IncFrame( ) {
     DeltaSecs = (float) Stopwatch.GetElapsedSeconds( );
     Stopwatch.Start( );
+    
+    LogInfo("IncFrame: dt={}", DeltaSecs);
 
-    FrameIndex = FrameId % (uint64_t) Frames.size( );
+    FrameIndex = uint32_t(FrameId % Frames.size( ));
     TotalSecs += DeltaSecs;
 }
 
 void ViewerShell::UpdateCamera( const apemode::platform::AppInput* pAppInput ) {
     XMFLOAT2 extentF{float( Surface.Swapchain.ImgExtent.width ), float( Surface.Swapchain.ImgExtent.height )};
     pCamInput->Update( DeltaSecs, *pAppInput, extentF );
+    
+    pCamController->Orbit( {0.01, 0} );
     pCamController->Orbit( pCamInput->OrbitDelta );
     pCamController->Dolly( pCamInput->DollyDelta );
     pCamController->Update( DeltaSecs );
@@ -661,17 +676,17 @@ void ViewerShell::Populate( Frame* pCurrentFrame, Frame* pSwapchainFrame, VkComm
     worldMatrix = XMMatrixScaling( scale, scale * 2, scale ) * XMMatrixTranslation( 0, scale * 3, 0 );
     XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
     frameData.Color = {0, 1, 0, 1};
-    // pDebugRenderer->Render( &renderParamsDbg );
+    pDebugRenderer->Render( &renderParamsDbg );
 
     worldMatrix = XMMatrixScaling( scale, scale, scale * 2 ) * XMMatrixTranslation( 0, 0, scale * 3 );
     XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
     frameData.Color = {0, 0, 1, 1};
-    // pDebugRenderer->Render( &renderParamsDbg );
+    pDebugRenderer->Render( &renderParamsDbg );
 
     worldMatrix = XMMatrixScaling( scale * 2, scale, scale ) * XMMatrixTranslation( scale * 3, 0, 0 );
     XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
     frameData.Color = {1, 0, 0, 1};
-    // pDebugRenderer->Render( &renderParamsDbg );
+    pDebugRenderer->Render( &renderParamsDbg );
 
     XMMATRIX rootMatrix = XMMatrixRotationY( WorldRotationY );
 
@@ -698,7 +713,7 @@ void ViewerShell::Populate( Frame* pCurrentFrame, Frame* pSwapchainFrame, VkComm
     XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.InvProjMatrix, invProjMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.RootMatrix, rootMatrix );
-    pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
+    // pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
 
     apemode::vk::NuklearRenderer::RenderParameters renderParamsNk;
     renderParamsNk.Dims[ 0 ]            = extentF.x;
@@ -711,8 +726,8 @@ void ViewerShell::Populate( Frame* pCurrentFrame, Frame* pSwapchainFrame, VkComm
     renderParamsNk.FrameIndex           = FrameIndex;
     renderParamsNk.pCmdBuffer           = pCmdBuffer;
 
-    pNkRenderer->Render( &renderParamsNk );
-    nk_clear( &pNkRenderer->Context );
+    // pNkRenderer->Render( &renderParamsNk );
+    // nk_clear( &pNkRenderer->Context );
 
     vkCmdEndRenderPass( pCmdBuffer );
 
@@ -734,7 +749,7 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
     }
 
     IncFrame( );
-    UpdateUI( currentExtent, pAppInput );
+    // UpdateUI( currentExtent, pAppInput );
     UpdateCamera( pAppInput );
 
     Frame& currentFrame = Frames[ FrameIndex ];
@@ -787,8 +802,10 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
         // TODO: Acquire correctly.
         apemodevk::QueueInPool& currentQueue = Surface.Node.GetQueuePool( )->Pools[ queueFamilyId ].Queues[ queueId ];
         currentQueue.bInUse                  = true;
+        
+        const uint32_t frameCount = uint32_t( Frames.size( ) );
 
-        uint32_t presentIndex    = ( FrameIndex + Frames.size( ) - 1 ) % Frames.size( );
+        uint32_t presentIndex    = ( FrameIndex + frameCount - 1 ) % frameCount;
         Frame&   presentingFrame = Frames[ presentIndex ];
 
         VkPresentInfoKHR presentInfoKHR;

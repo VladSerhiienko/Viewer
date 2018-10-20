@@ -44,6 +44,8 @@ assets/images/*
 .DS_Store
 assets/shaders/.spv/*
 assets/shaders/.msl/*
+assets/shaders/spv/*
+assets/shaders/msl/*
 .vscode/db*
 
 # Xcode
@@ -126,3 +128,4 @@ fastlane/test_output
 iOSInjectionProject/
 
 */DerivedData/*
+projects/Viewer/DerivedData/*

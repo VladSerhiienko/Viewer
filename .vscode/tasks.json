@@ -58,7 +58,7 @@
             "args": [
                 "-G", "Xcode",
                 "-H.", "-Bbuild_darwin_x86_64_appleclang",
-                "-DMOLTENVK_SDK_PATH=/Users/vlad.serhiienko/Projects/Home/MoltenVK",
+                "-DMOLTENVK_SDK_PATH=${workspaceFolder}/dependencies/MoltenVK",
             ],
             "options": {
                 "cwd": "${workspaceFolder}"

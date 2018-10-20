@@ -14,6 +14,9 @@
 #ifdef USE_DLMALLOC
 
 #define MSPACES 1
+#if __APPLE__
+#define HAVE_MORECORE 0
+#endif
 #define USE_DL_PREFIX 1
 #define MALLOC_ALIGNMENT ( apemode::platform::kAlignment )
 #include "dlmalloc.cc"
@@ -267,7 +270,7 @@ apemode::platform::MemoryAllocationScope::~MemoryAllocationScope( ) {
 #endif
 
 #ifndef APEMODE_NO_GLOBAL_NEW_DELETE_OP_OVERRIDES
-#define APEMODE_ENABLE_GLOBAL_NEW_DELETE_OP_OVERRIDES
+//#define APEMODE_ENABLE_GLOBAL_NEW_DELETE_OP_OVERRIDES
 #endif
 
 #ifdef APEMODE_ENABLE_GLOBAL_NEW_DELETE_OP_OVERRIDES

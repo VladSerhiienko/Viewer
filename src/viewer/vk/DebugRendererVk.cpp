@@ -18,7 +18,7 @@ bool apemode::vk::DebugRenderer::RecreateResources( InitParameters* pParams ) {
     THandle< VkShaderModule > hVertexShaderModule;
     THandle< VkShaderModule > hFragmentShaderModule;
     {
-        auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/Debug.vert.spv" );
+        auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/Debug.vert.spv" );
         auto compiledVertexShader = compiledVertexShaderAsset->GetContentAsBinaryBuffer( );
         pParams->pAssetManager->Release( compiledVertexShaderAsset );
         if ( compiledVertexShader.empty( ) ) {
@@ -26,7 +26,7 @@ bool apemode::vk::DebugRenderer::RecreateResources( InitParameters* pParams ) {
             return false;
         }
 
-        auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/Debug.frag.spv" );
+        auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/Debug.frag.spv" );
         auto compiledFragmentShader = compiledFragmentShaderAsset->GetContentAsBinaryBuffer( );
         pParams->pAssetManager->Release( compiledFragmentShaderAsset );
         if ( compiledFragmentShader.empty() ) {

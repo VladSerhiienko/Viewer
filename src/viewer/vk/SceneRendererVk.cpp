@@ -397,7 +397,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
     THandle< VkShaderModule > hVertexShaderModule;
     THandle< VkShaderModule > hFragmentShaderModule;
     {
-        auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/Scene.vert.spv" );
+        auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/Scene.vert.spv" );
         auto compiledVertexShader = compiledVertexShaderAsset->GetContentAsBinaryBuffer( );
         pParams->pAssetManager->Release( compiledVertexShaderAsset );
         if ( compiledVertexShader.empty( ) ) {
@@ -405,7 +405,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
             return false;
         }
 
-        auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/Scene.frag.spv" );
+        auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/Scene.frag.spv" );
         auto compiledFragmentShader = compiledFragmentShaderAsset->GetContentAsBinaryBuffer( );
         pParams->pAssetManager->Release( compiledFragmentShaderAsset );
         if ( compiledFragmentShader.empty() ) {

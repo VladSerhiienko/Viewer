@@ -100,10 +100,15 @@ namespace apemodevk
     inline void SetStructType( TStruct ( &uninitializedStructs )[ TArraySize ] ) {
         using namespace traits;
         if ( HasStructureType< TStruct >( ) ) {
-            auto sType = reinterpret_cast< VkStructureType * >( &uninitializedStructs[ 0 ] );
+//            auto sType = reinterpret_cast< VkStructureType * >( &uninitializedStructs[ 0 ] );
+//            for ( size_t i = 0; i < TArraySize; ++i ) {
+//                *sType = GetStructureType< TStruct >( );
+//                sType += sizeof( TStruct );
+//            }
             for ( auto &uninitializedStruct : uninitializedStructs ) {
-                *sType = GetStructureType< TStruct >( );
-                sType = reinterpret_cast< VkStructureType * >( ( reinterpret_cast< uint8_t * >( sType ) + sizeof( TStruct ) ) );
+                *reinterpret_cast< VkStructureType * >(&uninitializedStruct) = GetStructureType< TStruct >( );
+                // uninitializedStruct.sType = GetStructureType< TStruct >( );
+                // sType = reinterpret_cast< VkStructureType * >( ( reinterpret_cast< uint8_t * >( sType ) + sizeof( TStruct ) ) );
             }
         }
     }

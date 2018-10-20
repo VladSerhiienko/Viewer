@@ -1,8 +1,8 @@
 //
 //  main.m
-//  ViewerCocoa.macOS
+//  Viewer macOS
 //
-//  Created by Vlad Serhiienko on 10/15/18.
+//  Created by Vlad Serhiienko on 10/19/18.
 //  Copyright © 2018 Vlad Serhiienko. All rights reserved.
 //
 

@@ -194,11 +194,12 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
     }
 
     pNode = pParams->pNode;
+    Frames.resize(pParams->FrameCount);
 
     THandle< VkShaderModule > hVertexShaderModule;
     THandle< VkShaderModule > hFragmentShaderModule;
     {
-        auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/NuklearUI.vert.spv" );
+        auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/NuklearUI.vert.spv" );
         auto compiledVertexShader = compiledVertexShaderAsset->GetContentAsBinaryBuffer( );
         pParams->pAssetManager->Release( compiledVertexShaderAsset );
         if ( compiledVertexShader.empty( ) ) {
@@ -206,7 +207,7 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
             return false;
         }
 
-        auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/.spv/NuklearUI.frag.spv" );
+        auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/NuklearUI.frag.spv" );
         auto compiledFragmentShader = compiledFragmentShaderAsset->GetContentAsBinaryBuffer( );
         pParams->pAssetManager->Release( compiledFragmentShaderAsset );
         if ( compiledFragmentShader.empty() ) {
@@ -264,8 +265,6 @@ bool apemode::vk::NuklearRenderer::DeviceCreate( InitParametersBase* pInitParams
         if ( false == hDescSetLayout.Recreate( pNode->hLogicalDevice, descSetLayoutCreateInfo ) ) {
             return false;
         }
-
-        Frames.resize( pParams->FrameCount );
 
         for ( auto& frame : Frames ) {
             if ( !frame.DescSetPool.Recreate( *pParams->pNode, pParams->pDescPool, hDescSetLayout ) ) {

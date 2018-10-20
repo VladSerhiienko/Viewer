@@ -295,6 +295,26 @@ set(zlib_binary_dir ${BINARY_DIR})
 message(STATUS "zlib_source_dir = ${zlib_source_dir}")
 message(STATUS "zlib_binary_dir = ${zlib_binary_dir}")
 
+if (APPLE)
+
+ExternalProject_Add(
+    MoltenVK
+    GIT_REPOSITORY "git@github.com:KhronosGroup/MoltenVK.git"
+    GIT_TAG "master"
+    CONFIGURE_COMMAND ""
+    INSTALL_COMMAND ""
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    TEST_COMMAND ""
+    BUILD_IN_SOURCE 1
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/MoltenVK"
+    BUILD_COMMAND   ./fetchDependencies &&
+                    xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Debug) (macOS only)" build &&
+                    xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Release) (macOS only)" build
+)
+ 
+endif ()
+
 #
 #
 # VulkanMemoryAllocator
@@ -513,6 +533,7 @@ add_dependencies(
     eastl
     gli
     VulkanMemoryAllocator
+    MoltenVK
 )
 
 #
@@ -913,7 +934,7 @@ endif()
 message(STATUS "glslangValidator = ${glslangValidatorAbsolute}")
 
 # Shaders
-set( spirv_directory ${CMAKE_SOURCE_DIR}/assets/shaders/.spv )
+set( spirv_directory ${CMAKE_SOURCE_DIR}/assets/shaders/spv )
 add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}")
 add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}/.preprocessed")
 add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}/.reflection")
@@ -948,7 +969,7 @@ if (APPLE)
     set( MoltenVKShaderConverterAbsolute "${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVKShaderConverter/Tools/MoltenVKShaderConverter")
 
     # Output directory for the shaders
-    set( msl_directory ${CMAKE_SOURCE_DIR}/assets/shaders/.msl )
+    set( msl_directory ${CMAKE_SOURCE_DIR}/assets/shaders/msl )
     add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${msl_directory}")
     add_custom_command( TARGET Viewer PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${msl_directory}/.logs")
 

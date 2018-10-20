@@ -73,10 +73,12 @@ namespace apemodevk {
             return result;
         }
 
+        /*
         apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Trace,
                                      "TOneTimeCmdBufferSubmit: Acq C %u, Q %u",
                                      acquiredCmdBuffer.CmdBufferId,
                                      acquiredCmdBuffer.QueueFamilyId );
+        */
 
         /* Reset command pool */
 
@@ -123,9 +125,11 @@ namespace apemodevk {
             AcquiredQueue acquiredQueue = pQueueFamilyPool->Acquire( false );
             const uint64_t queueTimeStart = GetPerformanceCounter( );
 
+            /*
             apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Trace,
                                          "TOneTimeCmdBufferSubmit: Acq Q @%p",
                                          acquiredQueue.pQueue );
+            */
 
             while ( acquiredQueue.pQueue == nullptr ) {
 
@@ -178,10 +182,12 @@ namespace apemodevk {
             submitInfo.pCommandBuffers      = &acquiredCmdBuffer.pCmdBuffer;
             submitInfo.commandBufferCount   = 1;
 
+            /*
             apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Trace,
                                          "TOneTimeCmdBufferSubmit: Sbm Q %u %u",
                                          acquiredQueue.QueueId,
                                          acquiredQueue.QueueFamilyId );
+            */
 
             result.eResult = vkQueueSubmit( acquiredQueue.pQueue, 1, &submitInfo, acquiredQueue.pFence );
             if ( VK_SUCCESS != CheckedResult( result.eResult ) ) {

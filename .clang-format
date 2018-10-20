@@ -1,7 +1,6 @@
 BasedOnStyle: "Google"
 ColumnLimit: 128
 # ------------------------------
-Language: Cpp
 Standard: Cpp11
 
 UseTab: Never
