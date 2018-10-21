@@ -428,6 +428,8 @@ bool InitializeMaterials( apemode::Scene* pScene, const apemode::vk::SceneUpload
 
     apemodevk::ImageUploader::UploadOptions  loadOptions;
     apemodevk::ImageDecoder::DecodeOptions decodeOptions;
+    
+    loadOptions.bImgView = true;
     decodeOptions.bGenerateMipMaps = false;
 
     imageBytes[ 0 ] = 0;

@@ -88,8 +88,17 @@ ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     pFreeLookCameraController->PositionDst.y = 50;
     pFreeLookCameraController->PositionDst.z = 50;
     */
-
+    
+    //*
     pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new ModelViewCameraController( ) );
+    auto pModelViewCameraController = (ModelViewCameraController*)pCamController.get();
+    pModelViewCameraController->Position.x = 50;
+    pModelViewCameraController->Position.y = 50;
+    pModelViewCameraController->Position.z = 50;
+    pModelViewCameraController->PositionDst.x = 50;
+    pModelViewCameraController->PositionDst.y = 50;
+    pModelViewCameraController->PositionDst.z = 50;
+    //*/
 }
 
 ViewerShell::~ViewerShell( ) {
