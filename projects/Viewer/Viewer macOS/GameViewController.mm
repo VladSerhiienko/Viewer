@@ -53,6 +53,12 @@ std::vector< const char* > getProcessArguments( ) {
     App              app;
 }
 
+-(void) dealloc {
+    app.shell = nullptr;
+    CVDisplayLinkRelease(displayLink);
+    // [super dealloc];
+}
+
 - (void)viewDidLoad {
     [super viewDidLoad];
 
