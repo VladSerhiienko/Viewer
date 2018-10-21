@@ -528,13 +528,24 @@ target_include_directories(
 #                        PROPERTIES
 #                        WINDOWS_EXPORT_ALL_SYMBOLS ON )
 
-add_dependencies(
-    ApemodeVulkan
-    eastl
-    gli
-    VulkanMemoryAllocator
-    MoltenVK
-)
+
+
+if (APPLE)
+    add_dependencies(
+        ApemodeVulkan
+        eastl
+        gli
+        VulkanMemoryAllocator
+        MoltenVK
+        )
+else ()
+    add_dependencies(
+        ApemodeVulkan
+        eastl
+        gli
+        VulkanMemoryAllocator
+        )
+endif ()
 
 #
 #

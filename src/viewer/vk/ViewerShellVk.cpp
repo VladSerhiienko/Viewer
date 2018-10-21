@@ -74,12 +74,12 @@ public:
 const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 // const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
-ViewerShell::ViewerShell( ) : mAssetManager( ) {
+ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     apemode_memory_allocation_scope;
     pCamInput      = apemode::unique_ptr< CameraControllerInputBase >( apemode_new MouseKeyboardCameraControllerInput( ) );
-    // pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new FreeLookCameraController( ) );
-    
+
     /*
+    pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new FreeLookCameraController( ) );
     auto pFreeLookCameraController = (FreeLookCameraController*)pCamController.get();
     pFreeLookCameraController->Position.x = 50;
     pFreeLookCameraController->Position.y = 50;
@@ -88,7 +88,7 @@ ViewerShell::ViewerShell( ) : mAssetManager( ) {
     pFreeLookCameraController->PositionDst.y = 50;
     pFreeLookCameraController->PositionDst.z = 50;
     */
-    
+
     pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new ModelViewCameraController( ) );
 }
 
@@ -136,7 +136,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
                              ppszExtensions.size( ) - optionalLayerCount,
                              optionalLayerCount ) ) {
         apemode::string8 assetsFolder( TGetOption< std::string >( "--assets", "./" ).c_str( ) );
-        mAssetManager.UpdateAssets( assetsFolder.c_str( ), nullptr, 0 );
+        FileAssetManager.UpdateAssets( assetsFolder.c_str( ), nullptr, 0 );
 
         TotalSecs = 0.0f;
 
@@ -176,11 +176,11 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
 
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/kyoto_lod.dds" ) ) {
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_skybox.dds" ) ) {
-        if ( auto pTexAsset = mAssetManager.Acquire( "images/Environment/bolonga_lod.dds" ) ) {
+        if ( auto pTexAsset = FileAssetManager.Acquire( "images/Environment/bolonga_lod.dds" ) ) {
             apemode_memory_allocation_scope;
             {
                 const auto texAssetBin = pTexAsset->GetContentAsBinaryBuffer( );
-                mAssetManager.Release( pTexAsset );
+                FileAssetManager.Release( pTexAsset );
 
                 apemodevk::ImageDecoder::DecodeOptions decodeOptions;
                 decodeOptions.eFileFormat      = apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_DDS;
@@ -216,11 +216,11 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
 
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/kyoto_irr.dds" ) ) {
         // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_iem.dds" ) ) {
-        if ( auto pTexAsset = mAssetManager.Acquire( "images/Environment/bolonga_irr.dds" ) ) {
+        if ( auto pTexAsset = FileAssetManager.Acquire( "images/Environment/bolonga_irr.dds" ) ) {
             apemode_memory_allocation_scope;
             {
                 const auto texAssetBin = pTexAsset->GetContentAsBinaryBuffer( );
-                mAssetManager.Release( pTexAsset );
+                FileAssetManager.Release( pTexAsset );
 
                 apemodevk::ImageDecoder::DecodeOptions decodeOptions;
                 decodeOptions.eFileFormat      = apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_DDS;
@@ -256,11 +256,11 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
 
         pNkRenderer = apemode::unique_ptr< NuklearRendererBase >( apemode_new apemode::vk::NuklearRenderer( ) );
 
-        auto pFontAsset = mAssetManager.Acquire( "fonts/iosevka-ss07-medium.ttf" );
+        auto pFontAsset = FileAssetManager.Acquire( "fonts/iosevka-ss07-medium.ttf" );
 
         apemode::vk::NuklearRenderer::InitParameters initParamsNk;
         initParamsNk.pNode           = &Surface.Node;
-        initParamsNk.pAssetManager   = &mAssetManager;
+        initParamsNk.pAssetManager   = &FileAssetManager;
         initParamsNk.pFontAsset      = pFontAsset;
         initParamsNk.pSamplerManager = pSamplerManager.get( );
         initParamsNk.pDescPool       = DescriptorPool;
@@ -269,11 +269,11 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         // initParamsNk.pRenderPass     = hNkRenderPass;
 
         pNkRenderer->Init( &initParamsNk );
-        mAssetManager.Release( pFontAsset );
+        FileAssetManager.Release( pFontAsset );
 
         apemode::vk::DebugRenderer::InitParameters initParamsDbg;
         initParamsDbg.pNode         = &Surface.Node;
-        initParamsDbg.pAssetManager = &mAssetManager;
+        initParamsDbg.pAssetManager = &FileAssetManager;
         initParamsDbg.pRenderPass   = hDbgRenderPass;
         initParamsDbg.pDescPool     = DescriptorPool;
         initParamsDbg.FrameCount    = uint32_t( Frames.size( ) );
@@ -285,7 +285,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
 
         apemode::vk::SceneRenderer::RecreateParameters recreateParams;
         recreateParams.pNode         = &Surface.Node;
-        recreateParams.pAssetManager = &mAssetManager;
+        recreateParams.pAssetManager = &FileAssetManager;
         recreateParams.pRenderPass   = hDbgRenderPass;
         recreateParams.pDescPool     = DescriptorPool;
         recreateParams.FrameCount    = uint32_t( Frames.size( ) );
@@ -340,7 +340,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
 
         apemode::vk::SkyboxRenderer::RecreateParameters skyboxRendererRecreateParams;
         skyboxRendererRecreateParams.pNode         = &Surface.Node;
-        skyboxRendererRecreateParams.pAssetManager = &mAssetManager;
+        skyboxRendererRecreateParams.pAssetManager = &FileAssetManager;
         skyboxRendererRecreateParams.pRenderPass   = hDbgRenderPass;
         skyboxRendererRecreateParams.pDescPool     = DescriptorPool;
         skyboxRendererRecreateParams.FrameCount    = uint32_t( Frames.size( ) );
@@ -371,9 +371,6 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
 
 bool apemode::viewer::vk::ViewerShell::OnResized( ) {
     apemode_memory_allocation_scope;
-
-    Width  = Surface.Swapchain.ImgExtent.width;
-    Height = Surface.Swapchain.ImgExtent.height;
 
     VkImageCreateInfo depthImgCreateInfo;
     InitializeStruct( depthImgCreateInfo );
@@ -587,21 +584,21 @@ void ViewerShell::UpdateUI( const VkExtent2D currentExtent, const apemode::platf
     nk_end( pNkContext );
 }
 
-void ViewerShell::IncFrame( ) {
+void ViewerShell::UpdateTime( ) {
     DeltaSecs = (float) Stopwatch.GetElapsedSeconds( );
     Stopwatch.Start( );
-    
-    LogInfo("IncFrame: dt={}", DeltaSecs);
 
-    FrameIndex = uint32_t(FrameId % Frames.size( ));
+    // LogInfo("IncFrame: dt={}", DeltaSecs);
+
+    FrameIndex = uint32_t( FrameId % Frames.size( ) );
     TotalSecs += DeltaSecs;
 }
 
 void ViewerShell::UpdateCamera( const apemode::platform::AppInput* pAppInput ) {
     XMFLOAT2 extentF{float( Surface.Swapchain.ImgExtent.width ), float( Surface.Swapchain.ImgExtent.height )};
     pCamInput->Update( DeltaSecs, *pAppInput, extentF );
-    
-    pCamController->Orbit( {0.01, 0} );
+
+    pCamController->Orbit( {0.01f * DeltaSecs, 0} );
     pCamController->Orbit( pCamInput->OrbitDelta );
     pCamController->Dolly( pCamInput->DollyDelta );
     pCamController->Update( DeltaSecs );
@@ -730,7 +727,7 @@ void ViewerShell::Populate( Frame* pCurrentFrame, Frame* pSwapchainFrame, VkComm
     pNkRenderer->Render( &renderParamsNk );
     nk_clear( &pNkRenderer->Context );
     // apemodevk::platform::LogFmt(apemodevk::platform::Info, "nk_clear");
-    
+
     vkCmdEndRenderPass( pCmdBuffer );
 
     pDebugRenderer->Flush( FrameIndex );
@@ -750,7 +747,7 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
         OnResized( );
     }
 
-    IncFrame( );
+    UpdateTime( );
     UpdateUI( currentExtent, pAppInput );
     UpdateCamera( pAppInput );
 
@@ -804,7 +801,7 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
         // TODO: Acquire correctly.
         apemodevk::QueueInPool& currentQueue = Surface.Node.GetQueuePool( )->Pools[ queueFamilyId ].Queues[ queueId ];
         currentQueue.bInUse                  = true;
-        
+
         const uint32_t frameCount = uint32_t( Frames.size( ) );
 
         uint32_t presentIndex    = ( FrameIndex + frameCount - 1 ) % frameCount;

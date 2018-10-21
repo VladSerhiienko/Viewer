@@ -28,7 +28,6 @@ namespace viewer {
 namespace vk {
 
     class AppState;
-    class AppContent;
     class GraphicsLogger;
     class GraphicsAllocator;
 
@@ -59,21 +58,16 @@ namespace vk {
 
         bool OnResized( );
 
-        void IncFrame();
+        void UpdateTime();
         void UpdateCamera(const apemode::platform::AppInput* inputState);
         void UpdateUI(const VkExtent2D currentExtent, const apemode::platform::AppInput* pAppInput);
         void Populate(Frame * pCurrentFrame, Frame * pSwapchainFrame, VkCommandBuffer pCmdBuffer);
 
-
     private:
         friend AppState;
-        friend AppContent;
 
-        float TotalSecs = 0.0f;
-        float DeltaSecs = 0.0f;
-
-        uint32_t Width      = 0;
-        uint32_t Height     = 0;
+        float    TotalSecs  = 0.0f;
+        float    DeltaSecs  = 0.0f;
         uint32_t FrameCount = 0;
         uint32_t FrameIndex = 0;
         uint64_t FrameId    = 0;
@@ -82,36 +76,29 @@ namespace vk {
         XMFLOAT4 LightDirection;
         XMFLOAT4 LightColor;
 
-        apemode::platform::Stopwatch            Stopwatch;
-        apemode::platform::shared::AssetManager mAssetManager;
-
+        apemode::platform::Stopwatch                              Stopwatch;
+        apemode::platform::shared::AssetManager                   FileAssetManager;
         apemode::CameraProjectionController                       CamProjController;
-        apemode::unique_ptr< apemode::CameraControllerInputBase > pCamInput      = nullptr;
-        apemode::unique_ptr< apemode::CameraControllerBase >      pCamController = nullptr;
-
-        apemode::unique_ptr< GraphicsLogger >    Logger;
-        apemode::unique_ptr< GraphicsAllocator > Allocator;
-
-        apemodevk::AppSurface Surface;
-        apemodevk::DescriptorPool                       DescriptorPool;
-            apemodevk::THandle< VkRenderPass >              hNkRenderPass;
-            apemodevk::THandle< VkRenderPass >              hDbgRenderPass;
-
-        apemodevk::vector<Frame> Frames;
-
-        apemode::unique_ptr< apemodevk::SamplerManager >  pSamplerManager;
-        apemodevk::unique_ptr< apemodevk::UploadedImage > RadianceImg;
-        apemodevk::unique_ptr< apemodevk::UploadedImage > IrradianceImg;
-        VkSampler                                         pRadianceCubeMapSampler   = VK_NULL_HANDLE;
-        VkSampler                                         pIrradianceCubeMapSampler = VK_NULL_HANDLE;
-
-        apemode::unique_ptr< NuklearRendererBase >         pNkRenderer;
-        apemode::unique_ptr< SceneRendererBase >           pSceneRendererBase;
-        apemode::unique_ptr< apemode::vk::Skybox >         pSkybox;
-        apemode::unique_ptr< apemode::vk::SkyboxRenderer > pSkyboxRenderer;
-        apemode::unique_ptr< apemode::vk::DebugRenderer >  pDebugRenderer;
-
-        LoadedScene mLoadedScene;
+        apemode::unique_ptr< apemode::CameraControllerInputBase > pCamInput;
+        apemode::unique_ptr< apemode::CameraControllerBase >      pCamController;
+        apemode::unique_ptr< GraphicsLogger >                     Logger;
+        apemode::unique_ptr< GraphicsAllocator >                  Allocator;
+        apemodevk::AppSurface                                     Surface;
+        apemodevk::DescriptorPool                                 DescriptorPool;
+        apemodevk::THandle< VkRenderPass >                        hNkRenderPass;
+        apemodevk::THandle< VkRenderPass >                        hDbgRenderPass;
+        apemodevk::vector< Frame >                                Frames;
+        apemode::unique_ptr< apemodevk::SamplerManager >          pSamplerManager;
+        apemodevk::unique_ptr< apemodevk::UploadedImage >         RadianceImg;
+        apemodevk::unique_ptr< apemodevk::UploadedImage >         IrradianceImg;
+        VkSampler                                                 pRadianceCubeMapSampler   = VK_NULL_HANDLE;
+        VkSampler                                                 pIrradianceCubeMapSampler = VK_NULL_HANDLE;
+        apemode::unique_ptr< NuklearRendererBase >                pNkRenderer;
+        apemode::unique_ptr< SceneRendererBase >                  pSceneRendererBase;
+        apemode::unique_ptr< apemode::vk::Skybox >                pSkybox;
+        apemode::unique_ptr< apemode::vk::SkyboxRenderer >        pSkyboxRenderer;
+        apemode::unique_ptr< apemode::vk::DebugRenderer >         pDebugRenderer;
+        LoadedScene                                               mLoadedScene;
     };
 
 } // namespace vk

@@ -62,5 +62,5 @@ struct default_delete< apemode::platform::IAppShell > {
 } // namespace std
 
 std::unique_ptr< apemode::platform::IAppShell > apemode::viewer::vk::CreateViewer( int args, const char** ppArgs ) {
-    return std::unique_ptr< apemode::platform::IAppShell >( apemode_new ViewerAppShellBridge( args, ppArgs ) );
+    return std::unique_ptr< apemode::platform::IAppShell >( new ViewerAppShellBridge( args, ppArgs ) );
 }
