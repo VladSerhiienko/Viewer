@@ -714,7 +714,7 @@ void ViewerShell::Populate( Frame* pCurrentFrame, Frame* pSwapchainFrame, VkComm
     XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.InvProjMatrix, invProjMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.RootMatrix, rootMatrix );
-    // pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
+    pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
 
     apemode::vk::NuklearRenderer::RenderParameters renderParamsNk;
     renderParamsNk.Dims[ 0 ]            = extentF.x;

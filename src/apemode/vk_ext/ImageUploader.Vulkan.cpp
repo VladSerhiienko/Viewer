@@ -500,25 +500,25 @@ apemodevk::unique_ptr< apemodevk::ISourceImage > apemodevk::ImageDecoder::Create
     gli::format             gliFmt     = ToGLIFormat( eImgFmt );
     gli::detail::formatInfo gliFmtInfo = gli::detail::get_format_info( gliFmt );
     gli::extent2d           gliExtent  = gli::extent2d( imageExtent.width, imageExtent.height );
-    gli::texture            texture    = gli::texture2d( gliFmt, gliExtent, 1, gliFmtInfo.Swizzles );
+    gli::texture            gliTexture = gli::texture2d( gliFmt, gliExtent, 1, gliFmtInfo.Swizzles );
 
-    memcpy( texture.data( ), pImageBytes, imageExtent.width * imageExtent.height * 4 );
+    memcpy( gliTexture.data( ), pImageBytes, imageExtent.width * imageExtent.height * 4 );
 
     /* Check if the user needs mipmaps.
      * Note, that DDS and KTX files can contain mipmaps. */
-    if ( !texture.empty( ) && decodeOptions.bGenerateMipMaps && ( 1 == texture.levels( ) ) ) {
+    if ( !gliTexture.empty( ) && decodeOptions.bGenerateMipMaps && ( 1 == gliTexture.levels( ) ) ) {
         /* Cannot generate mipmaps the data is compressed. */
-        if ( !gli::is_compressed( texture.format( ) ) ) {
-            const gli::texture dumplicateWithMipMaps = DuplicateWithMipMaps( texture );
-            texture = GenerateMipMaps( dumplicateWithMipMaps );
+        if ( !gli::is_compressed( gliTexture.format( ) ) ) {
+            const gli::texture dumplicateWithMipMaps = DuplicateWithMipMaps( gliTexture );
+            gliTexture = GenerateMipMaps( dumplicateWithMipMaps );
         }
     }
 
-    if ( texture.empty( ) ) {
+    if ( gliTexture.empty( ) ) {
         return nullptr;
     }
 
-    auto sourceImage = make_unique< SourceImage >( eastl::move( texture ) );
+    auto sourceImage = make_unique< SourceImage >( eastl::move( gliTexture ) );
     return unique_ptr< ISourceImage >( sourceImage.release( ) );
 }
 
@@ -530,23 +530,23 @@ apemodevk::unique_ptr< apemodevk::ISourceImage > apemodevk::ImageDecoder::Decode
         return nullptr;
     }
 
-    gli::texture texture = LoadTexture( pFileContent, fileContentSize, decodeOptions.eFileFormat );
+    gli::texture gliTexture = LoadTexture( pFileContent, fileContentSize, decodeOptions.eFileFormat );
 
     /* Check if the user needs mipmaps.
      * Note, that DDS and KTX files can contain mipmaps. */
-    if ( !texture.empty( ) && decodeOptions.bGenerateMipMaps && ( 1 == texture.levels( ) ) ) {
+    if ( !gliTexture.empty( ) && decodeOptions.bGenerateMipMaps && ( 1 == gliTexture.levels( ) ) ) {
         /* Cannot generate mipmaps the data is compressed. */
-        if ( !gli::is_compressed( texture.format( ) ) ) {
-            const gli::texture dumplicateWithMipMaps = DuplicateWithMipMaps( texture );
-            texture = GenerateMipMaps( dumplicateWithMipMaps );
+        if ( !gli::is_compressed( gliTexture.format( ) ) ) {
+            const gli::texture dumplicateWithMipMaps = DuplicateWithMipMaps( gliTexture );
+            gliTexture = GenerateMipMaps( dumplicateWithMipMaps );
         }
     }
 
-    if ( texture.empty( ) ) {
+    if ( gliTexture.empty( ) ) {
         return nullptr;
     }
 
-    auto sourceImage = make_unique< SourceImage >( eastl::move( texture ) );
+    auto sourceImage = make_unique< SourceImage >( eastl::move( gliTexture ) );
     return unique_ptr< ISourceImage >( sourceImage.release( ) );
 }
 

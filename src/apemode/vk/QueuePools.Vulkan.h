@@ -10,7 +10,7 @@ namespace apemodevk {
     class CommandBufferPool;
     class CommandBufferFamilyPool;
 
-    static const VkQueueFlags sQueueAllBits
+    static constexpr VkQueueFlags sQueueAllBits
         = VK_QUEUE_COMPUTE_BIT
         | VK_QUEUE_GRAPHICS_BIT
         | VK_QUEUE_TRANSFER_BIT;
@@ -206,7 +206,7 @@ namespace apemodevk {
          * @param bIgnoreFenceStatus If any command buffer submitted to this queue is in the executable state,
          *                           it is moved to the pending state. Note, that VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT
          *                           command buffers will be invalidated (unless explicit vkWaitForFences).
-         * @param RequiredQueueFlags Flags that must be available enabled (try to pick only the needed bits).
+         * @param eRequiredQueueFlags Flags that must be available enabled (try to pick only the needed bits).
          * @param bExactMatchByFlags Only the flags in RequiredQueueFlags must be present (for copy queues is important).
          * @return Unused queue, or null if none was found.
          * @note Release for reusing, @see Release().

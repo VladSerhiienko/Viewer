@@ -51,7 +51,7 @@ namespace apemodevk {
         uint32_t                    queueFamilyId, /* = 0 */
         bool                        bAwaitQueue,   /* = true */
         TPopulateCmdBufferFn        populateCmdBufferFn,
-        uint64_t                    queueAcquireTimeout  = kDefaultQueueAcquireTimeoutNanos,
+        uint64_t                    queueAcquireTimeout  = kDefaultQueueAwaitTimeoutNanos,
         uint64_t                    queueAwaitTimeout    = kDefaultQueueAwaitTimeoutNanos,
         const VkSemaphore*          pSignalSemaphores    = nullptr,
         uint32_t                    signalSemaphoreCount = 0,
