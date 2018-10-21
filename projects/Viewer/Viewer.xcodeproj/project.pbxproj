@@ -771,6 +771,12 @@
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"RELEASE=1",
+					"_XOPEN_SOURCE=600",
+					"_DARWIN_C_SOURCE=1",
+					"$(inherited)",
+				);
 				INFOPLIST_FILE = "Viewer macOS/Info.plist";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

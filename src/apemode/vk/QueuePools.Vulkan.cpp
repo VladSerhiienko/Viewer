@@ -301,7 +301,7 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
             /* vkGetFenceStatus -> VK_NOT_READY: The fence is unsignaled. */
             /* vkGetFenceStatus -> VK_ERROR_DEVICE_LOST: The device is lost. */
 
-            const VkResult eFenceStatus = vkGetFenceStatus( *pNode, queue.hFence );
+            const VkResult eFenceStatus = GetFenceStatus( pNode, queue.hFence );
 
             if ( VK_SUCCESS > CheckedResult( eFenceStatus ) ) {
                 /* Move back to unused state */
@@ -549,7 +549,7 @@ apemodevk::AcquiredCommandBuffer apemodevk::CommandBufferFamilyPool::Acquire( bo
              * Fence won't be checked.
              * Check if the fence is signaled. */
             if ( !cmdBuffer.pFence || bIgnoreFence ||
-                 VK_SUCCESS == CheckedResult( vkGetFenceStatus( *pNode, cmdBuffer.pFence ) ) ) {
+                 VK_SUCCESS == CheckedResult( GetFenceStatus( pNode, cmdBuffer.pFence ) ) ) {
                 AcquiredCommandBuffer acquiredCommandBuffer;
                 acquiredCommandBuffer.QueueFamilyId = QueueFamilyId;
                 acquiredCommandBuffer.pCmdBuffer    = cmdBuffer.hCmdBuff;
@@ -598,13 +598,46 @@ bool apemodevk::CommandBufferFamilyPool::Release( const AcquiredCommandBuffer& a
 //    , bInUse( other.bInUse.load( std::memory_order_relaxed ) ) {
 //}
 
-VkResult apemodevk::WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t timeout ) {
+namespace {
+// TODO: CommandPool interface.
+void OnFenceSucceeded( apemodevk::GraphicsDevice* pNode, VkFence pFence ) {
+    assert( pNode && pFence );
+    apemodevk::CommandBufferPool* pCmdBufferPool = pNode->GetCommandBufferPool( );
+    for ( auto& familyPool : pCmdBufferPool->Pools ) {
+        for ( auto& cmdBuffer : familyPool.CmdBuffers ) {
+            // The command buffer is initialized and submitted with the same fence, and not in use.
+            if ( cmdBuffer.hCmdBuff.IsNotNull( ) && ( cmdBuffer.pFence == pFence ) &&
+                 ( false == cmdBuffer.bInUse.exchange( true, std::memory_order_acquire ) ) ) {
+                cmdBuffer.pFence = nullptr;
+                cmdBuffer.bInUse.exchange( false, std::memory_order_release );
+            }
+        }
+    }
+}
+} // namespace
+
+VkResult apemodevk::GetFenceStatus( GraphicsDevice* pNode, VkFence pFence ) {
     apemodevk_memory_allocation_scope;
 
     VkResult err;
-    switch ( err = CheckedResult( vkGetFenceStatus( pDevice, pFence ) ) ) {
+    switch ( err = CheckedResult( vkGetFenceStatus( pNode->hLogicalDevice, pFence ) ) ) {
+        case VK_SUCCESS: {
+            OnFenceSucceeded( pNode, pFence );
+        } break;
+        default:
+            break;
+    }
+
+    return err;
+}
+
+VkResult apemodevk::WaitForFence( GraphicsDevice* pNode, VkFence pFence, uint64_t timeout ) {
+    apemodevk_memory_allocation_scope;
+
+    VkResult err;
+    switch ( err = CheckedResult( vkGetFenceStatus( pNode->hLogicalDevice, pFence ) ) ) {
         case VK_NOT_READY:
-             err = CheckedResult( vkWaitForFences( pDevice, 1, &pFence, true, timeout ) );
+            err = CheckedResult( vkWaitForFences( pNode->hLogicalDevice, 1, &pFence, true, timeout ) );
             // case VK_ERROR_OUT_OF_HOST_MEMORY:
             // case VK_ERROR_OUT_OF_DEVICE_MEMORY:
             // case VK_ERROR_DEVICE_LOST:
@@ -612,6 +645,9 @@ VkResult apemodevk::WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t tim
             break;
     }
 
+    if ( VK_SUCCESS == err ) {
+        OnFenceSucceeded( pNode, pFence );
+    }
     return err;
 }
 

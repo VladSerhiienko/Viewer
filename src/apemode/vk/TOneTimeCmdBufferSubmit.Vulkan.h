@@ -156,7 +156,7 @@ namespace apemodevk {
                 }
             }
 
-            result.eResult = WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence, queueAcquireTimeout );
+            result.eResult = WaitForFence( pNode, acquiredQueue.pFence, queueAcquireTimeout );
             if ( VK_SUCCESS != result.eResult ) {
                 // VK_ERROR_OUT_OF_HOST_MEMORY
                 // VK_ERROR_OUT_OF_DEVICE_MEMORY
@@ -201,7 +201,7 @@ namespace apemodevk {
 
             if ( bAwaitQueue ) {
 
-                result.eResult = WaitForFence( pNode->hLogicalDevice, acquiredQueue.pFence, queueAwaitTimeout );
+                result.eResult = WaitForFence( pNode, acquiredQueue.pFence, queueAwaitTimeout );
                 if ( VK_SUCCESS > result.eResult ) {
                     // VK_ERROR_OUT_OF_HOST_MEMORY
                     // VK_ERROR_OUT_OF_DEVICE_MEMORY

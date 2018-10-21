@@ -221,12 +221,14 @@ namespace apemodevk {
         void Release( const AcquiredQueue& acquiredQueue );
     };
 
+    VkResult APEMODEVK_API GetFenceStatus( GraphicsDevice* pNode, VkFence pFence );
+
     /**
      * Checks the stage of fence
      * Returns VK_SUCCESS if it is signaled.
      * Waits for fence with the provided timeout otherwise.
      **/
-    VkResult APEMODEVK_API WaitForFence( VkDevice pDevice, VkFence pFence, uint64_t timeout = ~0ULL );
+    VkResult APEMODEVK_API WaitForFence( GraphicsDevice* pNode, VkFence pFence, uint64_t timeout = ~0ULL );
 
     /**
      * @brief Checks if the returned structure indicates that the operation succeeded.

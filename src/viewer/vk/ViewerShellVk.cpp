@@ -523,13 +523,14 @@ bool apemode::viewer::vk::ViewerShell::OnResized( ) {
 }
 
 void ViewerShell::UpdateUI( const VkExtent2D currentExtent, const apemode::platform::AppInput* pAppInput ) {
-    auto pNkContext = &pNkRenderer->Context;
 
     pNkRenderer->HandleInput( pAppInput );
-    if ( nk_begin( pNkContext,
-                   "Viewer",
-                   nk_rect( 10, 10, 180, 500 ),
-                   NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_MOVABLE ) ) {
+
+    auto pNkContext = &pNkRenderer->Context;
+
+    constexpr uint32_t windowFlags = NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_MOVABLE;
+    // apemodevk::platform::LogFmt(apemodevk::platform::Info, "nk_begin");
+    if ( nk_begin( pNkContext, "Viewer", nk_rect( 10, 10, 180, 500 ), windowFlags ) ) {
         auto invViewMatrix = GetMatrix( XMMatrixInverse( nullptr, pCamController->ViewMatrix( ) ) );
 
         nk_layout_row_dynamic( pNkContext, 10, 1 );
@@ -726,9 +727,10 @@ void ViewerShell::Populate( Frame* pCurrentFrame, Frame* pSwapchainFrame, VkComm
     renderParamsNk.FrameIndex           = FrameIndex;
     renderParamsNk.pCmdBuffer           = pCmdBuffer;
 
-    // pNkRenderer->Render( &renderParamsNk );
-    // nk_clear( &pNkRenderer->Context );
-
+    pNkRenderer->Render( &renderParamsNk );
+    nk_clear( &pNkRenderer->Context );
+    // apemodevk::platform::LogFmt(apemodevk::platform::Info, "nk_clear");
+    
     vkCmdEndRenderPass( pCmdBuffer );
 
     pDebugRenderer->Flush( FrameIndex );
@@ -749,7 +751,7 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
     }
 
     IncFrame( );
-    // UpdateUI( currentExtent, pAppInput );
+    UpdateUI( currentExtent, pAppInput );
     UpdateCamera( pAppInput );
 
     Frame& currentFrame = Frames[ FrameIndex ];

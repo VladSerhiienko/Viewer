@@ -7,9 +7,7 @@ apemodevk::AppSurface::AppSurface( ) {
 }
 
 apemodevk::AppSurface::~AppSurface( ) {
-    if ( GetGraphicsManager( ) ) {
-        Finalize( );
-    }
+    Finalize( );
 }
 
 bool apemodevk::AppSurface::Initialize( const PlatformSurface*                  pPlatformSurface,
@@ -46,7 +44,7 @@ bool apemodevk::AppSurface::Initialize( const PlatformSurface*                  
     apemodevk_memory_allocation_scope;
     apemodevk::platform::Log( platform::Info, "apemodevk::AppSurface::Initialize" );
 
-    if ( !Node.RecreateResourcesFor( 0, Manager->ppAdapters[ 0 ], nullptr, 0, nullptr, 0 ) ) {
+    if ( !Node.RecreateResourcesFor( 0, Manager->ppAdapters.front(), nullptr, 0, nullptr, 0 ) ) {
         return false;
     }
 
@@ -114,15 +112,17 @@ bool apemodevk::AppSurface::Initialize( const PlatformSurface*                  
 }
 
 void apemodevk::AppSurface::Finalize( ) {
-    {
-        apemodevk_memory_allocation_scope;
-        Surface.Destroy( );
-        Swapchain.Destroy( );
-        Node.Destroy( );
-        apemodevk::vector< uint32_t >( ).swap( PresentQueueFamilyIds );
-    }
+    if ( GetGraphicsManager( ) ) {
+        {
+            apemodevk_memory_allocation_scope;
+            Surface.Destroy( );
+            Swapchain.Destroy( );
+            Node.Destroy( );
+            apemodevk::vector< uint32_t >( ).swap( PresentQueueFamilyIds );
+        }
 
-    DestroyGraphicsManager( );
+        DestroyGraphicsManager( );
+    }
 }
 
 bool apemodevk::AppSurface::Resize( const VkExtent2D extent ) {
