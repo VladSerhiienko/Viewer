@@ -48,6 +48,9 @@ std::vector< const char* > getProcessArguments( ) {
 }
 }
 
+#pragma mark -
+#pragma mark GameViewController
+
 @implementation GameViewController {
     CVDisplayLinkRef displayLink;
     App              app;
@@ -65,7 +68,6 @@ std::vector< const char* > getProcessArguments( ) {
     // Back the view with a layer created by the makeBackingLayer method.
     self.view.wantsLayer = YES;
 
-    app.surface.iOS.pViewIOS     = (__bridge void*) self.view;
     app.surface.macOS.pViewMacOS = (__bridge void*) self.view;
     app.surface.OverrideWidth    = 0; //(int) self.view.frame.size.width;
     app.surface.OverrideHeight   = 0; //(int) self.view.frame.size.height;

@@ -7,36 +7,76 @@
 //
 
 #import "GameViewController.h"
-//#import "Renderer.h"
 
-@implementation GameViewController
-{
-    MTKView *_view;
+#include "apemode/platform/AppInput.h"
+#include "apemode/platform/AppSurface.h"
+#include "viewer/ViewerAppShellFactory.h"
 
-//    Renderer *_renderer;
+#include <vector>
+
+struct App {
+    std::unique_ptr< apemode::platform::IAppShell > shell;
+    apemode::platform::AppSurface                   surface;
+    apemode::platform::AppInput                     input;
+};
+
+#pragma mark -
+#pragma mark GameViewController
+
+@implementation GameViewController {
+    CADisplayLink* displayLink;
+    App            app;
 }
 
-- (void)viewDidLoad
-{
+- (void)dealloc {
+    app.shell = nullptr;
+    // [displayLink release];
+    // [super dealloc];
+}
+
+- (void)renderLoop {
+    app.shell->Update( &app.surface, &app.input );
+}
+
+- (void)viewDidLoad {
     [super viewDidLoad];
 
-    _view = (MTKView *)self.view;
+    self.view.contentScaleFactor = UIScreen.mainScreen.nativeScale;
 
-    _view.device = MTLCreateSystemDefaultDevice();
-    _view.backgroundColor = UIColor.blackColor;
+    app.surface.iOS.pViewIOS   = (__bridge void*) self.view;
+    app.surface.OverrideWidth  = 0; //(int) self.view.frame.size.width;
+    app.surface.OverrideHeight = 0; //(int) self.view.frame.size.height;
 
-    if(!_view.device)
-    {
-        NSLog(@"Metal is not supported on this device");
-        self.view = [[UIView alloc] initWithFrame:self.view.frame];
-        return;
-    }
+    std::vector< const char* > ppszArgs;
+    // TODO: Custom IAssetManager implementation and specified args.
+    // ppszArgs.push_back("--assets");
+    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Viewer/assets/**");
+    // ppszArgs.push_back("--scene");
+    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/flare-gun.fbxp");
+    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/forest-house.fbxp");
+    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rainier-ak-3d.fbxp");
 
-//    _renderer = [[Renderer alloc] initWithMetalKitView:_view];
-//
-//    [_renderer mtkView:_view drawableSizeWillChange:_view.bounds.size];
-//
-//    _view.delegate = _renderer;
+    app.shell = apemode::viewer::vk::CreateViewer( (int) ppszArgs.size( ), ppszArgs.data( ) );
+    app.shell->Initialize( &app.surface );
+    app.shell->Update( &app.surface, &app.input );
+
+    const uint32_t preferredFramesPerSecond = 60;
+
+    displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector( renderLoop )];
+    [displayLink setPreferredFramesPerSecond:preferredFramesPerSecond];
+    [displayLink addToRunLoop:NSRunLoop.currentRunLoop forMode:NSDefaultRunLoopMode];
+}
+
+@end
+
+#pragma mark -
+#pragma mark GameView
+
+@implementation GameView
+
+/** Returns a Metal-compatible layer. */
++ (Class)layerClass {
+    return [CAMetalLayer class];
 }
 
 @end

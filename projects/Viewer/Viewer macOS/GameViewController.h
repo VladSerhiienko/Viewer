@@ -12,6 +12,9 @@
 //#import <MetalKit/MetalKit.h>
 //#import "Renderer.h"
 
+#pragma mark -
+#pragma mark GameViewController
+
 // Our macOS view controller.
 @interface GameViewController : NSViewController
 @end

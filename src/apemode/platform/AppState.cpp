@@ -120,7 +120,7 @@ std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, s
 apemode::ImplementedAppState::ImplementedAppState( int argc, const char** argv )
     : Logger( nullptr )
     , Cmdl( )
-    , TaskScheduler( 4 ) {
+    , TaskScheduler( ) {
     
     Logger = CreateLogger( spdlog::level::trace, ComposeLogFile( ) );
     Logger->info("Input argumets:");
