@@ -35,7 +35,7 @@ namespace apemodevk {
      * @tparam TPopulateCmdBufferFn The type of the functor, that has the signature 'bool( VkCommandBuffer )'.
      * @param pNode The graphics node.
      * @param queueFamilyId The queue family id. The command buffer and the queue will be allocated from the related pools.
-     * @param pAwaitQueue Indicates whether the implementation should wait for the completion of the populated command buffer.
+     * @param bAwaitQueue Indicates whether the implementation should wait for the completion of the populated command buffer.
      * @param populateCmdBufferFn The functor where the user populated the allocated command buffer.
      * @param pSignalSemaphores The semaphores that will be signaled when the command buffer is executed.
      * @param signalSemaphoreCount The number of semaphores that will be signaled.
@@ -79,10 +79,22 @@ namespace apemodevk {
                                      acquiredCmdBuffer.CmdBufferId,
                                      acquiredCmdBuffer.QueueFamilyId );
         */
+        
+        /* Reset command buffer */
+
+        // Created with the VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT flag.
+        const VkCommandBufferResetFlags cmdBufferResetFlags = VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT;
+        result.eResult = vkResetCommandBuffer(acquiredCmdBuffer.pCmdBuffer, cmdBufferResetFlags);
+        if ( VK_SUCCESS != CheckedResult( result.eResult ) ) {
+            // VK_ERROR_OUT_OF_HOST_MEMORY
+            // VK_ERROR_OUT_OF_DEVICE_MEMORY
+            return result;
+        }
 
         /* Reset command pool */
 
-        result.eResult = vkResetCommandPool( pNode->hLogicalDevice, acquiredCmdBuffer.pCmdPool, 0 );
+        const VkCommandPoolResetFlags cmdPoolResetFlags = VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT;
+        result.eResult = vkResetCommandPool( pNode->hLogicalDevice, acquiredCmdBuffer.pCmdPool, cmdPoolResetFlags );
         if ( VK_SUCCESS != CheckedResult( result.eResult ) ) {
             // VK_ERROR_OUT_OF_HOST_MEMORY
             // VK_ERROR_OUT_OF_DEVICE_MEMORY
@@ -142,9 +154,13 @@ namespace apemodevk {
                 switch ( acquiredQueue.eResult ) {
                     case VK_NOT_READY:
                         acquiredQueue = pQueueFamilyPool->Acquire( true );
+                        
+                        /*
                         apemodevk::platform::LogFmt( apemodevk::platform::LogLevel::Trace,
                                                      "TOneTimeCmdBufferSubmit: Awt Q @%p",
                                                      acquiredQueue.pQueue );
+                        */
+                        
                         break;
 
                     default:

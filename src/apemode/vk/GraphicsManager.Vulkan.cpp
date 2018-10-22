@@ -613,6 +613,8 @@ void* apemodevk::GraphicsManager::AllocationCallbacks::AllocationFunction( void*
                                                                            size_t                  size,
                                                                            size_t                  alignment,
                                                                            VkSystemAllocationScope allocationScope ) {
+    
+    platform::LogFmt( platform::LogLevel::Info, "AllocationFunction: + %u bytes", (uint32_t)size );
     return GetGraphicsManager( )->GetAllocator( )->Malloc( size, alignment, __FILE__, __LINE__, __FUNCTION__ );
 }
 
@@ -621,11 +623,15 @@ void* apemodevk::GraphicsManager::AllocationCallbacks::ReallocationFunction( voi
                                                                              size_t                  size,
                                                                              size_t                  alignment,
                                                                              VkSystemAllocationScope allocationScope ) {
+    
+    platform::LogFmt( platform::LogLevel::Info, "ReallocationFunction: + %u bytes", (uint32_t)size );
     return GetGraphicsManager( )->GetAllocator( )->Realloc( pOriginal, size, alignment, __FILE__, __LINE__, __FUNCTION__ );
 }
 
 void apemodevk::GraphicsManager::AllocationCallbacks::FreeFunction( void* pUserData,
                                                                     void* pMemory ) {
+    
+    platform::LogFmt( platform::LogLevel::Info, "FreeFunction: - bytes" );
     return GetGraphicsManager( )->GetAllocator( )->Free( pMemory, __FILE__, __LINE__, __FUNCTION__ );
 }
 

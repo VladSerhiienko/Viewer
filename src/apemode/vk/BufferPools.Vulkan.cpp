@@ -52,11 +52,8 @@ bool apemodevk::HostBufferPool::Page::Reset( ) {
 
     if ( false == HasFlagEq( eMemoryPropertyFlags, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) ) {
 #if _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges
-        if ( nullptr != pMapped && false == Ranges.empty( ) ) {
-            if ( VK_SUCCESS != vkInvalidateMappedMemoryRanges( pNode->hLogicalDevice, (uint32_t) Ranges.size( ), Ranges.data( ) ) ) {
-                apemodevk::platform::DebugBreak( );
-            }
-
+        if ( !Ranges.empty( ) ) {
+            CheckedResult( vkInvalidateMappedMemoryRanges( pNode->hLogicalDevice, (uint32_t) Ranges.size( ), Ranges.data( ) ) );
             Ranges.clear( );
         }
 #else
@@ -78,18 +75,12 @@ bool apemodevk::HostBufferPool::Page::Reset( ) {
         if ( hBuffer.Handle.AllocationInfo.pMappedData ) {
             pMapped = reinterpret_cast< uint8_t * >( hBuffer.Handle.AllocationInfo.pMappedData );
         } else if ( VK_SUCCESS != CheckedResult( vmaMapMemory( pNode->hAllocator, hBuffer.Handle.pAllocation, (void **) ( &pMapped ) ) ) ) {
-            apemodevk::platform::DebugBreak( );
-            return false;
-        }
-
-        // pMapped = hMemory.Map( 0, TotalSize, 0 );
-        if ( nullptr == pMapped ) {
-            apemodevk::platform::DebugBreak( );
             return false;
         }
     }
 
-    return true;
+    assert(pMapped);
+    return nullptr != pMapped;
 }
 
 bool apemodevk::HostBufferPool::Page::Flush( ) {
@@ -98,11 +89,9 @@ bool apemodevk::HostBufferPool::Page::Flush( ) {
     if ( nullptr != pMapped ) {
         if ( false == HasFlagEq( eMemoryPropertyFlags, VK_MEMORY_PROPERTY_HOST_COHERENT_BIT ) ) {
 #if _apemodevk_HostBufferPool_Page_InvalidateOrFlushAllRanges
-            if ( false == Ranges.empty( ) ) {
-                if ( VK_SUCCESS != vkFlushMappedMemoryRanges( pNode->hLogicalDevice, (uint32_t) Ranges.size( ), Ranges.data( ) ) ) {
-                    apemodevk::platform::DebugBreak( );
-                    return false;
-                }
+            if ( !Ranges.empty( ) ) {
+                CheckedResult( vkFlushMappedMemoryRanges( pNode->hLogicalDevice, (uint32_t) Ranges.size( ), Ranges.data( ) ) );
+                Ranges.clear();
             }
 #else
             if ( 0 != CurrentOffsetIndex ) {
@@ -144,7 +133,7 @@ void apemodevk::HostBufferPool::Recreate( GraphicsDevice *pInNode, VkBufferUsage
 
     /* Use defaults otherwise. */
     if ( HasFlagEq( eBufferUsageFlags, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT ) ) {
-        MaxPageRange = limits.maxUniformBufferRange;
+        MaxPageRange = eastl::min<uint32_t>( 65536, limits.maxUniformBufferRange );
         MinAlignment = (uint32_t) limits.minUniformBufferOffsetAlignment;
     } else if ( HasFlagEq( eBufferUsageFlags, VK_BUFFER_USAGE_STORAGE_TEXEL_BUFFER_BIT ) ) {
         MaxPageRange = limits.maxStorageBufferRange; /* TODO: There is a limit for the number of texel elements */

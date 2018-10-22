@@ -16,31 +16,33 @@
 		CA676D1C217A2E900098A888 /* GameViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CA676D1B217A2E900098A888 /* GameViewController.mm */; };
 		CA676D1F217A2E900098A888 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CA676D1D217A2E900098A888 /* Main.storyboard */; };
 		CA676D22217A2E900098A888 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = CA676D21217A2E900098A888 /* main.m */; };
-		CA676D25217A2E900098A888 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CA676CF9217A2E7B0098A888 /* Shaders.metal */; };
-		CA676D26217A2E900098A888 /* Shaders.metal in Sources */ = {isa = PBXBuildFile; fileRef = CA676CF9217A2E7B0098A888 /* Shaders.metal */; };
 		CA676D27217A2E900098A888 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA676CFA217A2E8F0098A888 /* Assets.xcassets */; };
 		CA676D28217A2E900098A888 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = CA676CFA217A2E8F0098A888 /* Assets.xcassets */; };
 		CA6AAA6F217B567D005A0CDF /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CA6AAA6E217B567D005A0CDF /* libc++.tbd */; };
 		CA6AAA71217B568B005A0CDF /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CA6AAA70217B568B005A0CDF /* libc++.tbd */; };
 		CA6AAA73217B580E005A0CDF /* libpthread.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CA6AAA72217B580E005A0CDF /* libpthread.tbd */; };
+		CA9A4ABD217DC752007E4D21 /* NuklearRendererBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4ABB217DC752007E4D21 /* NuklearRendererBase.cpp */; };
+		CA9A4ABE217DC752007E4D21 /* NuklearRendererBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4ABB217DC752007E4D21 /* NuklearRendererBase.cpp */; };
+		CA9A4ABF217DC752007E4D21 /* ViewerAppShellFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4ABC217DC752007E4D21 /* ViewerAppShellFactory.cpp */; };
+		CA9A4AC0217DC752007E4D21 /* ViewerAppShellFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4ABC217DC752007E4D21 /* ViewerAppShellFactory.cpp */; };
+		CA9A4AC8217DC8F2007E4D21 /* MTFiberContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC4217DC8F1007E4D21 /* MTFiberContext.cpp */; };
+		CA9A4AC9217DC8F2007E4D21 /* MTFiberContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC4217DC8F1007E4D21 /* MTFiberContext.cpp */; };
+		CA9A4ACA217DC8F2007E4D21 /* MTScheduler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC5217DC8F1007E4D21 /* MTScheduler.cpp */; };
+		CA9A4ACB217DC8F2007E4D21 /* MTScheduler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC5217DC8F1007E4D21 /* MTScheduler.cpp */; };
+		CA9A4ACC217DC8F2007E4D21 /* MTThreadContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC6217DC8F1007E4D21 /* MTThreadContext.cpp */; };
+		CA9A4ACD217DC8F2007E4D21 /* MTThreadContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC6217DC8F1007E4D21 /* MTThreadContext.cpp */; };
+		CA9A4ACE217DC8F2007E4D21 /* MTDefaultAppInterop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC7217DC8F1007E4D21 /* MTDefaultAppInterop.cpp */; };
+		CA9A4ACF217DC8F2007E4D21 /* MTDefaultAppInterop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC7217DC8F1007E4D21 /* MTDefaultAppInterop.cpp */; };
+		CA9A4AD1217DC94F007E4D21 /* QueuePools.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AD0217DC94F007E4D21 /* QueuePools.Vulkan.cpp */; };
+		CA9A4AD2217DC94F007E4D21 /* QueuePools.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AD0217DC94F007E4D21 /* QueuePools.Vulkan.cpp */; };
 		CABD23EA217B0BF20056A686 /* AppState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD23E6217B0BF20056A686 /* AppState.cpp */; };
 		CABD23EB217B0BF20056A686 /* AppState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD23E6217B0BF20056A686 /* AppState.cpp */; };
 		CABD23EC217B0BF20056A686 /* CityHash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD23E7217B0BF20056A686 /* CityHash.cpp */; };
 		CABD23ED217B0BF20056A686 /* CityHash.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD23E7217B0BF20056A686 /* CityHash.cpp */; };
 		CABD23EF217B0F180056A686 /* MemoryManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD23EE217B0F180056A686 /* MemoryManager.cpp */; };
 		CABD23F0217B0F180056A686 /* MemoryManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD23EE217B0F180056A686 /* MemoryManager.cpp */; };
-		CABD23F2217B0F2A0056A686 /* AssetManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD23F1217B0F2A0056A686 /* AssetManager.cpp */; };
-		CABD23F3217B0F2A0056A686 /* AssetManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD23F1217B0F2A0056A686 /* AssetManager.cpp */; };
 		CABD2407217B38290056A686 /* IOSurface.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CABD2405217B38290056A686 /* IOSurface.framework */; };
 		CABD2408217B38290056A686 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CABD2406217B38290056A686 /* Metal.framework */; };
-		CABD240E217B3AD60056A686 /* MTFiberContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD240A217B3AD60056A686 /* MTFiberContext.cpp */; };
-		CABD240F217B3AD60056A686 /* MTFiberContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD240A217B3AD60056A686 /* MTFiberContext.cpp */; };
-		CABD2410217B3AD60056A686 /* MTScheduler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD240B217B3AD60056A686 /* MTScheduler.cpp */; };
-		CABD2411217B3AD60056A686 /* MTScheduler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD240B217B3AD60056A686 /* MTScheduler.cpp */; };
-		CABD2412217B3AD60056A686 /* MTThreadContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD240C217B3AD60056A686 /* MTThreadContext.cpp */; };
-		CABD2413217B3AD60056A686 /* MTThreadContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD240C217B3AD60056A686 /* MTThreadContext.cpp */; };
-		CABD2414217B3AD60056A686 /* MTDefaultAppInterop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD240D217B3AD60056A686 /* MTDefaultAppInterop.cpp */; };
-		CABD2415217B3AD60056A686 /* MTDefaultAppInterop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD240D217B3AD60056A686 /* MTDefaultAppInterop.cpp */; };
 		CABD241C217B3B9A0056A686 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CABD241A217B3B9A0056A686 /* QuartzCore.framework */; };
 		CABD241D217B3B9A0056A686 /* Metal.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CABD241B217B3B9A0056A686 /* Metal.framework */; };
 		CABD2426217B3E030056A686 /* Swapchain.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD241F217B3E030056A686 /* Swapchain.Vulkan.cpp */; };
@@ -51,8 +53,8 @@
 		CABD242B217B3E030056A686 /* BufferPools.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2421217B3E030056A686 /* BufferPools.Vulkan.cpp */; };
 		CABD242C217B3E030056A686 /* GraphicsManager.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2422217B3E030056A686 /* GraphicsManager.Vulkan.cpp */; };
 		CABD242D217B3E030056A686 /* GraphicsManager.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2422217B3E030056A686 /* GraphicsManager.Vulkan.cpp */; };
-		CABD242E217B3E030056A686 /* QueuePools.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2423217B3E030056A686 /* QueuePools.Vulkan.cpp */; };
-		CABD242F217B3E030056A686 /* QueuePools.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2423217B3E030056A686 /* QueuePools.Vulkan.cpp */; };
+		CABD242E217B3E030056A686 /* AssetManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2423217B3E030056A686 /* AssetManager.cpp */; };
+		CABD242F217B3E030056A686 /* AssetManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2423217B3E030056A686 /* AssetManager.cpp */; };
 		CABD2430217B3E030056A686 /* CityHash.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2424217B3E030056A686 /* CityHash.Vulkan.cpp */; };
 		CABD2431217B3E030056A686 /* CityHash.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2424217B3E030056A686 /* CityHash.Vulkan.cpp */; };
 		CABD2432217B3E030056A686 /* GraphicsDevice.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2425217B3E030056A686 /* GraphicsDevice.Vulkan.cpp */; };
@@ -75,10 +77,6 @@
 		CABD244E217B43A60056A686 /* ViewerShellVk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2443217B43A60056A686 /* ViewerShellVk.cpp */; };
 		CABD244F217B43A60056A686 /* SkyboxRendererVk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2444217B43A60056A686 /* SkyboxRendererVk.cpp */; };
 		CABD2450217B43A60056A686 /* SkyboxRendererVk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2444217B43A60056A686 /* SkyboxRendererVk.cpp */; };
-		CABD2453217B43BF0056A686 /* NuklearRendererBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2451217B43BE0056A686 /* NuklearRendererBase.cpp */; };
-		CABD2454217B43BF0056A686 /* NuklearRendererBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2451217B43BE0056A686 /* NuklearRendererBase.cpp */; };
-		CABD2455217B43BF0056A686 /* ViewerAppShellFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2452217B43BF0056A686 /* ViewerAppShellFactory.cpp */; };
-		CABD2456217B43BF0056A686 /* ViewerAppShellFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2452217B43BF0056A686 /* ViewerAppShellFactory.cpp */; };
 		CABD2458217B43EB0056A686 /* Scene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2457217B43EB0056A686 /* Scene.cpp */; };
 		CABD2459217B43EB0056A686 /* Scene.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2457217B43EB0056A686 /* Scene.cpp */; };
 		CABD245B217B44BE0056A686 /* MoltenVK.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CABD245A217B44BE0056A686 /* MoltenVK.framework */; };
@@ -86,8 +84,6 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		CA676CF8217A2E7B0098A888 /* ShaderTypes.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = ShaderTypes.h; sourceTree = "<group>"; };
-		CA676CF9217A2E7B0098A888 /* Shaders.metal */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.metal; path = Shaders.metal; sourceTree = "<group>"; };
 		CA676CFA217A2E8F0098A888 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CA676CFF217A2E8F0098A888 /* Viewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Viewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA676D02217A2E8F0098A888 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -109,41 +105,41 @@
 		CA6AAA6E217B567D005A0CDF /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS11.4.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
 		CA6AAA70217B568B005A0CDF /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
 		CA6AAA72217B580E005A0CDF /* libpthread.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libpthread.tbd; path = usr/lib/libpthread.tbd; sourceTree = SDKROOT; };
-		CABD23E6217B0BF20056A686 /* AppState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppState.cpp; path = ../../../../src/apemode/platform/AppState.cpp; sourceTree = "<group>"; };
-		CABD23E7217B0BF20056A686 /* CityHash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CityHash.cpp; path = ../../../../src/apemode/platform/CityHash.cpp; sourceTree = "<group>"; };
-		CABD23EE217B0F180056A686 /* MemoryManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MemoryManager.cpp; path = ../../../../src/apemode/platform/memory/MemoryManager.cpp; sourceTree = "<group>"; };
-		CABD23F1217B0F2A0056A686 /* AssetManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AssetManager.cpp; path = ../../../../src/apemode/platform/shared/AssetManager.cpp; sourceTree = "<group>"; };
+		CA9A4ABB217DC752007E4D21 /* NuklearRendererBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NuklearRendererBase.cpp; path = ../../src/viewer/NuklearRendererBase.cpp; sourceTree = SOURCE_ROOT; };
+		CA9A4ABC217DC752007E4D21 /* ViewerAppShellFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ViewerAppShellFactory.cpp; path = ../../src/viewer/ViewerAppShellFactory.cpp; sourceTree = SOURCE_ROOT; };
+		CA9A4AC4217DC8F1007E4D21 /* MTFiberContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MTFiberContext.cpp; path = ../../dependencies/TaskScheduler/Scheduler/Source/MTFiberContext.cpp; sourceTree = SOURCE_ROOT; };
+		CA9A4AC5217DC8F1007E4D21 /* MTScheduler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MTScheduler.cpp; path = ../../dependencies/TaskScheduler/Scheduler/Source/MTScheduler.cpp; sourceTree = SOURCE_ROOT; };
+		CA9A4AC6217DC8F1007E4D21 /* MTThreadContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MTThreadContext.cpp; path = ../../dependencies/TaskScheduler/Scheduler/Source/MTThreadContext.cpp; sourceTree = SOURCE_ROOT; };
+		CA9A4AC7217DC8F1007E4D21 /* MTDefaultAppInterop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MTDefaultAppInterop.cpp; path = ../../dependencies/TaskScheduler/Scheduler/Source/MTDefaultAppInterop.cpp; sourceTree = SOURCE_ROOT; };
+		CA9A4AD0217DC94F007E4D21 /* QueuePools.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = QueuePools.Vulkan.cpp; path = ../../src/apemode/vk/QueuePools.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
+		CABD23E6217B0BF20056A686 /* AppState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppState.cpp; path = ../../src/apemode/platform/AppState.cpp; sourceTree = SOURCE_ROOT; };
+		CABD23E7217B0BF20056A686 /* CityHash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CityHash.cpp; path = ../../src/apemode/platform/CityHash.cpp; sourceTree = SOURCE_ROOT; };
+		CABD23EE217B0F180056A686 /* MemoryManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MemoryManager.cpp; path = ../../src/apemode/platform/memory/MemoryManager.cpp; sourceTree = SOURCE_ROOT; };
 		CABD2401217B38290056A686 /* MoltenVK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = MoltenVK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CABD2403217B38290056A686 /* MoltenVK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = MoltenVK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CABD2405217B38290056A686 /* IOSurface.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = IOSurface.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS11.4.sdk/System/Library/Frameworks/IOSurface.framework; sourceTree = DEVELOPER_DIR; };
 		CABD2406217B38290056A686 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS11.4.sdk/System/Library/Frameworks/Metal.framework; sourceTree = DEVELOPER_DIR; };
-		CABD240A217B3AD60056A686 /* MTFiberContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MTFiberContext.cpp; path = ../../../../../dependencies/TaskScheduler/Scheduler/Source/MTFiberContext.cpp; sourceTree = "<group>"; };
-		CABD240B217B3AD60056A686 /* MTScheduler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MTScheduler.cpp; path = ../../../../../dependencies/TaskScheduler/Scheduler/Source/MTScheduler.cpp; sourceTree = "<group>"; };
-		CABD240C217B3AD60056A686 /* MTThreadContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MTThreadContext.cpp; path = ../../../../../dependencies/TaskScheduler/Scheduler/Source/MTThreadContext.cpp; sourceTree = "<group>"; };
-		CABD240D217B3AD60056A686 /* MTDefaultAppInterop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MTDefaultAppInterop.cpp; path = ../../../../../dependencies/TaskScheduler/Scheduler/Source/MTDefaultAppInterop.cpp; sourceTree = "<group>"; };
 		CABD2416217B3B840056A686 /* MoltenVK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = MoltenVK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CABD2418217B3B840056A686 /* MoltenVK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = MoltenVK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		CABD241A217B3B9A0056A686 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		CABD241B217B3B9A0056A686 /* Metal.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Metal.framework; path = System/Library/Frameworks/Metal.framework; sourceTree = SDKROOT; };
-		CABD241F217B3E030056A686 /* Swapchain.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Swapchain.Vulkan.cpp; path = ../../../../src/apemode/vk/Swapchain.Vulkan.cpp; sourceTree = "<group>"; };
-		CABD2420217B3E030056A686 /* DescriptorPool.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DescriptorPool.Vulkan.cpp; path = ../../../../src/apemode/vk/DescriptorPool.Vulkan.cpp; sourceTree = "<group>"; };
-		CABD2421217B3E030056A686 /* BufferPools.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BufferPools.Vulkan.cpp; path = ../../../../src/apemode/vk/BufferPools.Vulkan.cpp; sourceTree = "<group>"; };
-		CABD2422217B3E030056A686 /* GraphicsManager.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GraphicsManager.Vulkan.cpp; path = ../../../../src/apemode/vk/GraphicsManager.Vulkan.cpp; sourceTree = "<group>"; };
-		CABD2423217B3E030056A686 /* QueuePools.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = QueuePools.Vulkan.cpp; path = ../../../../src/apemode/vk/QueuePools.Vulkan.cpp; sourceTree = "<group>"; };
-		CABD2424217B3E030056A686 /* CityHash.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CityHash.Vulkan.cpp; path = ../../../../src/apemode/vk/CityHash.Vulkan.cpp; sourceTree = "<group>"; };
-		CABD2425217B3E030056A686 /* GraphicsDevice.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GraphicsDevice.Vulkan.cpp; path = ../../../../src/apemode/vk/GraphicsDevice.Vulkan.cpp; sourceTree = "<group>"; };
-		CABD2434217B3F440056A686 /* AppSurface.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppSurface.Vulkan.cpp; path = ../../../../src/apemode/vk_ext/AppSurface.Vulkan.cpp; sourceTree = "<group>"; };
-		CABD2435217B3F440056A686 /* ImageUploader.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ImageUploader.Vulkan.cpp; path = ../../../../src/apemode/vk_ext/ImageUploader.Vulkan.cpp; sourceTree = "<group>"; };
-		CABD2436217B3F450056A686 /* SamplerManager.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SamplerManager.Vulkan.cpp; path = ../../../../src/apemode/vk_ext/SamplerManager.Vulkan.cpp; sourceTree = "<group>"; };
-		CABD243F217B43A60056A686 /* NuklearRendererVk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NuklearRendererVk.cpp; path = ../../../../../src/viewer/vk/NuklearRendererVk.cpp; sourceTree = "<group>"; };
-		CABD2440217B43A60056A686 /* DebugRendererVk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DebugRendererVk.cpp; path = ../../../../../src/viewer/vk/DebugRendererVk.cpp; sourceTree = "<group>"; };
-		CABD2441217B43A60056A686 /* SceneRendererVk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SceneRendererVk.cpp; path = ../../../../../src/viewer/vk/SceneRendererVk.cpp; sourceTree = "<group>"; };
-		CABD2442217B43A60056A686 /* SceneUploaderVk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SceneUploaderVk.cpp; path = ../../../../../src/viewer/vk/SceneUploaderVk.cpp; sourceTree = "<group>"; };
-		CABD2443217B43A60056A686 /* ViewerShellVk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ViewerShellVk.cpp; path = ../../../../../src/viewer/vk/ViewerShellVk.cpp; sourceTree = "<group>"; };
-		CABD2444217B43A60056A686 /* SkyboxRendererVk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SkyboxRendererVk.cpp; path = ../../../../../src/viewer/vk/SkyboxRendererVk.cpp; sourceTree = "<group>"; };
-		CABD2451217B43BE0056A686 /* NuklearRendererBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NuklearRendererBase.cpp; path = ../../../../src/viewer/NuklearRendererBase.cpp; sourceTree = "<group>"; };
-		CABD2452217B43BF0056A686 /* ViewerAppShellFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ViewerAppShellFactory.cpp; path = ../../../../src/viewer/ViewerAppShellFactory.cpp; sourceTree = "<group>"; };
-		CABD2457217B43EB0056A686 /* Scene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Scene.cpp; path = ../../../../src/viewer/Scene.cpp; sourceTree = "<group>"; };
+		CABD241F217B3E030056A686 /* Swapchain.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Swapchain.Vulkan.cpp; path = ../../src/apemode/vk/Swapchain.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2420217B3E030056A686 /* DescriptorPool.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DescriptorPool.Vulkan.cpp; path = ../../src/apemode/vk/DescriptorPool.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2421217B3E030056A686 /* BufferPools.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BufferPools.Vulkan.cpp; path = ../../src/apemode/vk/BufferPools.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2422217B3E030056A686 /* GraphicsManager.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GraphicsManager.Vulkan.cpp; path = ../../src/apemode/vk/GraphicsManager.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2423217B3E030056A686 /* AssetManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AssetManager.cpp; path = ../../src/apemode/platform/shared/AssetManager.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2424217B3E030056A686 /* CityHash.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CityHash.Vulkan.cpp; path = ../../src/apemode/vk/CityHash.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2425217B3E030056A686 /* GraphicsDevice.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GraphicsDevice.Vulkan.cpp; path = ../../src/apemode/vk/GraphicsDevice.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2434217B3F440056A686 /* AppSurface.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppSurface.Vulkan.cpp; path = ../../src/apemode/vk_ext/AppSurface.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2435217B3F440056A686 /* ImageUploader.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ImageUploader.Vulkan.cpp; path = ../../src/apemode/vk_ext/ImageUploader.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2436217B3F450056A686 /* SamplerManager.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SamplerManager.Vulkan.cpp; path = ../../src/apemode/vk_ext/SamplerManager.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
+		CABD243F217B43A60056A686 /* NuklearRendererVk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NuklearRendererVk.cpp; path = ../../src/viewer/vk/NuklearRendererVk.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2440217B43A60056A686 /* DebugRendererVk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DebugRendererVk.cpp; path = ../../src/viewer/vk/DebugRendererVk.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2441217B43A60056A686 /* SceneRendererVk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SceneRendererVk.cpp; path = ../../src/viewer/vk/SceneRendererVk.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2442217B43A60056A686 /* SceneUploaderVk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SceneUploaderVk.cpp; path = ../../src/viewer/vk/SceneUploaderVk.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2443217B43A60056A686 /* ViewerShellVk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ViewerShellVk.cpp; path = ../../src/viewer/vk/ViewerShellVk.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2444217B43A60056A686 /* SkyboxRendererVk.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = SkyboxRendererVk.cpp; path = ../../src/viewer/vk/SkyboxRendererVk.cpp; sourceTree = SOURCE_ROOT; };
+		CABD2457217B43EB0056A686 /* Scene.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Scene.cpp; path = ../../src/viewer/Scene.cpp; sourceTree = SOURCE_ROOT; };
 		CABD245A217B44BE0056A686 /* MoltenVK.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = MoltenVK.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -177,11 +173,11 @@
 		CA676CF0217A2E780098A888 = {
 			isa = PBXGroup;
 			children = (
-				CA676CF5217A2E7A0098A888 /* Viewer Shared */,
+				CABD23F7217B37BE0056A686 /* Frameworks */,
+				CA676D00217A2E8F0098A888 /* Products */,
 				CA676D01217A2E8F0098A888 /* Viewer iOS */,
 				CA676D16217A2E900098A888 /* Viewer macOS */,
-				CA676D00217A2E8F0098A888 /* Products */,
-				CABD23F7217B37BE0056A686 /* Frameworks */,
+				CA676CF5217A2E7A0098A888 /* Viewer Shared */,
 			);
 			sourceTree = "<group>";
 		};
@@ -191,12 +187,10 @@
 				CABD243D217B43830056A686 /* Viewer */,
 				CABD241E217B3DC50056A686 /* ApemodeVulkan */,
 				CABD23E4217B0B9F0056A686 /* ApemodePlatform */,
-				CA676CF8217A2E7B0098A888 /* ShaderTypes.h */,
-				CA676CF9217A2E7B0098A888 /* Shaders.metal */,
 				CA676CFA217A2E8F0098A888 /* Assets.xcassets */,
 			);
 			path = "Viewer Shared";
-			sourceTree = "<group>";
+			sourceTree = SOURCE_ROOT;
 		};
 		CA676D00217A2E8F0098A888 /* Products */ = {
 			isa = PBXGroup;
@@ -240,13 +234,13 @@
 			isa = PBXGroup;
 			children = (
 				CABD2409217B3AB70056A686 /* TaskScheduler */,
-				CABD23F1217B0F2A0056A686 /* AssetManager.cpp */,
 				CABD23EE217B0F180056A686 /* MemoryManager.cpp */,
 				CABD23E6217B0BF20056A686 /* AppState.cpp */,
 				CABD23E7217B0BF20056A686 /* CityHash.cpp */,
 			);
-			path = ApemodePlatform;
-			sourceTree = "<group>";
+			name = ApemodePlatform;
+			path = "Viewer Shared/ApemodePlatform";
+			sourceTree = SOURCE_ROOT;
 		};
 		CABD23F7217B37BE0056A686 /* Frameworks */ = {
 			isa = PBXGroup;
@@ -270,17 +264,18 @@
 		CABD2409217B3AB70056A686 /* TaskScheduler */ = {
 			isa = PBXGroup;
 			children = (
-				CABD240D217B3AD60056A686 /* MTDefaultAppInterop.cpp */,
-				CABD240A217B3AD60056A686 /* MTFiberContext.cpp */,
-				CABD240B217B3AD60056A686 /* MTScheduler.cpp */,
-				CABD240C217B3AD60056A686 /* MTThreadContext.cpp */,
+				CA9A4AC7217DC8F1007E4D21 /* MTDefaultAppInterop.cpp */,
+				CA9A4AC4217DC8F1007E4D21 /* MTFiberContext.cpp */,
+				CA9A4AC5217DC8F1007E4D21 /* MTScheduler.cpp */,
+				CA9A4AC6217DC8F1007E4D21 /* MTThreadContext.cpp */,
 			);
 			path = TaskScheduler;
-			sourceTree = "<group>";
+			sourceTree = SOURCE_ROOT;
 		};
 		CABD241E217B3DC50056A686 /* ApemodeVulkan */ = {
 			isa = PBXGroup;
 			children = (
+				CA9A4AD0217DC94F007E4D21 /* QueuePools.Vulkan.cpp */,
 				CABD2434217B3F440056A686 /* AppSurface.Vulkan.cpp */,
 				CABD2435217B3F440056A686 /* ImageUploader.Vulkan.cpp */,
 				CABD2436217B3F450056A686 /* SamplerManager.Vulkan.cpp */,
@@ -289,22 +284,24 @@
 				CABD2420217B3E030056A686 /* DescriptorPool.Vulkan.cpp */,
 				CABD2425217B3E030056A686 /* GraphicsDevice.Vulkan.cpp */,
 				CABD2422217B3E030056A686 /* GraphicsManager.Vulkan.cpp */,
-				CABD2423217B3E030056A686 /* QueuePools.Vulkan.cpp */,
+				CABD2423217B3E030056A686 /* AssetManager.cpp */,
 				CABD241F217B3E030056A686 /* Swapchain.Vulkan.cpp */,
 			);
-			path = ApemodeVulkan;
-			sourceTree = "<group>";
+			name = ApemodeVulkan;
+			path = "Viewer Shared/ApemodeVulkan";
+			sourceTree = SOURCE_ROOT;
 		};
 		CABD243D217B43830056A686 /* Viewer */ = {
 			isa = PBXGroup;
 			children = (
+				CA9A4ABB217DC752007E4D21 /* NuklearRendererBase.cpp */,
+				CA9A4ABC217DC752007E4D21 /* ViewerAppShellFactory.cpp */,
 				CABD2457217B43EB0056A686 /* Scene.cpp */,
-				CABD2451217B43BE0056A686 /* NuklearRendererBase.cpp */,
-				CABD2452217B43BF0056A686 /* ViewerAppShellFactory.cpp */,
 				CABD243E217B438B0056A686 /* vk */,
 			);
-			path = Viewer;
-			sourceTree = "<group>";
+			name = Viewer;
+			path = "Viewer Shared/Viewer";
+			sourceTree = SOURCE_ROOT;
 		};
 		CABD243E217B438B0056A686 /* vk */ = {
 			isa = PBXGroup;
@@ -317,7 +314,7 @@
 				CABD2443217B43A60056A686 /* ViewerShellVk.cpp */,
 			);
 			path = vk;
-			sourceTree = "<group>";
+			sourceTree = SOURCE_ROOT;
 		};
 /* End PBXGroup section */
 
@@ -419,36 +416,35 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CABD2453217B43BF0056A686 /* NuklearRendererBase.cpp in Sources */,
 				CABD2447217B43A60056A686 /* DebugRendererVk.cpp in Sources */,
+				CA9A4ACA217DC8F2007E4D21 /* MTScheduler.cpp in Sources */,
+				CA9A4AC8217DC8F2007E4D21 /* MTFiberContext.cpp in Sources */,
 				CABD244D217B43A60056A686 /* ViewerShellVk.cpp in Sources */,
 				CABD244B217B43A60056A686 /* SceneUploaderVk.cpp in Sources */,
 				CABD2439217B3F450056A686 /* ImageUploader.Vulkan.cpp in Sources */,
 				CA676D07217A2E8F0098A888 /* GameViewController.mm in Sources */,
 				CABD2430217B3E030056A686 /* CityHash.Vulkan.cpp in Sources */,
 				CABD2458217B43EB0056A686 /* Scene.cpp in Sources */,
+				CA9A4ACE217DC8F2007E4D21 /* MTDefaultAppInterop.cpp in Sources */,
 				CABD23EC217B0BF20056A686 /* CityHash.cpp in Sources */,
+				CA9A4ACC217DC8F2007E4D21 /* MTThreadContext.cpp in Sources */,
 				CABD243B217B3F450056A686 /* SamplerManager.Vulkan.cpp in Sources */,
+				CA9A4ABD217DC752007E4D21 /* NuklearRendererBase.cpp in Sources */,
 				CA676D10217A2E900098A888 /* main.m in Sources */,
 				CABD242C217B3E030056A686 /* GraphicsManager.Vulkan.cpp in Sources */,
 				CABD2445217B43A60056A686 /* NuklearRendererVk.cpp in Sources */,
 				CABD23EA217B0BF20056A686 /* AppState.cpp in Sources */,
 				CA676D04217A2E8F0098A888 /* AppDelegate.m in Sources */,
+				CA9A4ABF217DC752007E4D21 /* ViewerAppShellFactory.cpp in Sources */,
+				CA9A4AD1217DC94F007E4D21 /* QueuePools.Vulkan.cpp in Sources */,
 				CABD2428217B3E030056A686 /* DescriptorPool.Vulkan.cpp in Sources */,
 				CABD2426217B3E030056A686 /* Swapchain.Vulkan.cpp in Sources */,
-				CABD2414217B3AD60056A686 /* MTDefaultAppInterop.cpp in Sources */,
-				CABD23F2217B0F2A0056A686 /* AssetManager.cpp in Sources */,
 				CABD2449217B43A60056A686 /* SceneRendererVk.cpp in Sources */,
-				CABD242E217B3E030056A686 /* QueuePools.Vulkan.cpp in Sources */,
-				CABD2410217B3AD60056A686 /* MTScheduler.cpp in Sources */,
+				CABD242E217B3E030056A686 /* AssetManager.cpp in Sources */,
 				CABD2432217B3E030056A686 /* GraphicsDevice.Vulkan.cpp in Sources */,
-				CABD240E217B3AD60056A686 /* MTFiberContext.cpp in Sources */,
 				CABD23EF217B0F180056A686 /* MemoryManager.cpp in Sources */,
 				CABD242A217B3E030056A686 /* BufferPools.Vulkan.cpp in Sources */,
-				CABD2455217B43BF0056A686 /* ViewerAppShellFactory.cpp in Sources */,
 				CABD244F217B43A60056A686 /* SkyboxRendererVk.cpp in Sources */,
-				CABD2412217B3AD60056A686 /* MTThreadContext.cpp in Sources */,
-				CA676D25217A2E900098A888 /* Shaders.metal in Sources */,
 				CABD2437217B3F450056A686 /* AppSurface.Vulkan.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -457,36 +453,35 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				CABD2454217B43BF0056A686 /* NuklearRendererBase.cpp in Sources */,
 				CABD2448217B43A60056A686 /* DebugRendererVk.cpp in Sources */,
+				CA9A4ACB217DC8F2007E4D21 /* MTScheduler.cpp in Sources */,
+				CA9A4AC9217DC8F2007E4D21 /* MTFiberContext.cpp in Sources */,
 				CABD244E217B43A60056A686 /* ViewerShellVk.cpp in Sources */,
 				CABD244C217B43A60056A686 /* SceneUploaderVk.cpp in Sources */,
 				CABD243A217B3F450056A686 /* ImageUploader.Vulkan.cpp in Sources */,
 				CA676D1C217A2E900098A888 /* GameViewController.mm in Sources */,
 				CABD2431217B3E030056A686 /* CityHash.Vulkan.cpp in Sources */,
 				CABD2459217B43EB0056A686 /* Scene.cpp in Sources */,
+				CA9A4ACF217DC8F2007E4D21 /* MTDefaultAppInterop.cpp in Sources */,
 				CABD23ED217B0BF20056A686 /* CityHash.cpp in Sources */,
+				CA9A4ACD217DC8F2007E4D21 /* MTThreadContext.cpp in Sources */,
 				CABD243C217B3F450056A686 /* SamplerManager.Vulkan.cpp in Sources */,
+				CA9A4ABE217DC752007E4D21 /* NuklearRendererBase.cpp in Sources */,
 				CA676D22217A2E900098A888 /* main.m in Sources */,
 				CABD242D217B3E030056A686 /* GraphicsManager.Vulkan.cpp in Sources */,
 				CABD2446217B43A60056A686 /* NuklearRendererVk.cpp in Sources */,
 				CABD23EB217B0BF20056A686 /* AppState.cpp in Sources */,
 				CA676D19217A2E900098A888 /* AppDelegate.m in Sources */,
+				CA9A4AC0217DC752007E4D21 /* ViewerAppShellFactory.cpp in Sources */,
+				CA9A4AD2217DC94F007E4D21 /* QueuePools.Vulkan.cpp in Sources */,
 				CABD2429217B3E030056A686 /* DescriptorPool.Vulkan.cpp in Sources */,
 				CABD2427217B3E030056A686 /* Swapchain.Vulkan.cpp in Sources */,
-				CABD2415217B3AD60056A686 /* MTDefaultAppInterop.cpp in Sources */,
-				CABD23F3217B0F2A0056A686 /* AssetManager.cpp in Sources */,
 				CABD244A217B43A60056A686 /* SceneRendererVk.cpp in Sources */,
-				CABD242F217B3E030056A686 /* QueuePools.Vulkan.cpp in Sources */,
-				CABD2411217B3AD60056A686 /* MTScheduler.cpp in Sources */,
+				CABD242F217B3E030056A686 /* AssetManager.cpp in Sources */,
 				CABD2433217B3E030056A686 /* GraphicsDevice.Vulkan.cpp in Sources */,
-				CABD240F217B3AD60056A686 /* MTFiberContext.cpp in Sources */,
 				CABD23F0217B0F180056A686 /* MemoryManager.cpp in Sources */,
 				CABD242B217B3E030056A686 /* BufferPools.Vulkan.cpp in Sources */,
-				CABD2456217B43BF0056A686 /* ViewerAppShellFactory.cpp in Sources */,
 				CABD2450217B43A60056A686 /* SkyboxRendererVk.cpp in Sources */,
-				CABD2413217B3AD60056A686 /* MTThreadContext.cpp in Sources */,
-				CA676D26217A2E900098A888 /* Shaders.metal in Sources */,
 				CABD2438217B3F450056A686 /* AppSurface.Vulkan.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
