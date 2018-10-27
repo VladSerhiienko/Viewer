@@ -19,13 +19,13 @@ namespace apemodevk
         ~DescriptorPool( );
 
         struct InitializeParameters {
-            GraphicsDevice* pNode                                                   = nullptr;
-            uint32_t        MaxDescriptorSetCount                                   = 0;
-            uint32_t        MaxDescriptorPoolSizes[ VK_DESCRIPTOR_TYPE_RANGE_SIZE ] = {0};
+            GraphicsDevice*                                     pNode                 = nullptr;
+            uint32_t                                            MaxDescriptorSetCount = 0;
+            apemodevk::vector_map< VkDescriptorType, uint32_t > MaxDescriptorPoolSizes;
         };
 
         bool
-        Initialize( InitializeParameters const& initializeParameters );
+        Initialize( InitializeParameters && initializeParameters );
 
     public:
         uint32_t GetAvailableDescriptorSetCount( ) const;
@@ -33,10 +33,10 @@ namespace apemodevk
         operator VkDescriptorPool( ) const;
 
     public:
-        GraphicsDevice*                        pNode                                                   = nullptr;
-        uint32_t                               MaxDescriptorSetCount                                   = 0;
-        VkDescriptorPoolSize                   MaxDescriptorPoolSizes[ VK_DESCRIPTOR_TYPE_RANGE_SIZE ] = {};
-        apemodevk::THandle< VkDescriptorPool > hDescriptorPool;
+        GraphicsDevice*                                     pNode                 = nullptr;
+        uint32_t                                            MaxDescriptorSetCount = 0;
+        apemodevk::vector_map< VkDescriptorType, uint32_t > MaxDescriptorPoolSizes;
+        apemodevk::THandle< VkDescriptorPool >              hDescriptorPool;
     };
 
     struct APEMODEVK_API DescriptorSetBindingsBase {

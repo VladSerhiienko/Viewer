@@ -277,7 +277,7 @@ apemodevk::unique_ptr< apemodevk::UploadedImage > apemodevk::ImageUploader::Uplo
         writeImageMemoryBarrier.subresourceRange.levelCount = srcImg.GetMipLevels( );
         writeImageMemoryBarrier.subresourceRange.layerCount = srcImg.GetFaces( );
         writeImageMemoryBarrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
-        writeImageMemoryBarrier.dstQueueFamilyIndex         = loadOptions.QueueFamilyId;
+        writeImageMemoryBarrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
 
         vkCmdPipelineBarrier( pCmdBuffer,
                               VK_PIPELINE_STAGE_HOST_BIT,
@@ -378,7 +378,7 @@ apemodevk::unique_ptr< apemodevk::UploadedImage > apemodevk::ImageUploader::Uplo
         readImgMemoryBarrier.subresourceRange.aspectMask = loadOptions.eImgAspect;
         readImgMemoryBarrier.subresourceRange.levelCount = srcImg.GetMipLevels( );
         readImgMemoryBarrier.subresourceRange.layerCount = srcImg.GetFaces( );
-        readImgMemoryBarrier.srcQueueFamilyIndex         = loadOptions.QueueFamilyId;
+        readImgMemoryBarrier.srcQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
         readImgMemoryBarrier.dstQueueFamilyIndex         = VK_QUEUE_FAMILY_IGNORED;
 
         loadedImage->eImgLayout = readImgMemoryBarrier.newLayout;

@@ -58,7 +58,7 @@ bool apemodevk::HostBufferPool::Page::Reset( ) {
         }
 #else
         if ( nullptr != pMapped && 0 != CurrentOffsetIndex ) {
-            Range.memory = hBuffer.Handle.allocInfo.deviceMemory;
+            Range.memory = hBuffer.Handle.AllocationInfo.deviceMemory;
             Range.size   = CurrentOffsetIndex * Alignment;
 
             if ( VK_SUCCESS != vkInvalidateMappedMemoryRanges( pNode->hLogicalDevice, 1, &Range ) ) {
@@ -95,13 +95,10 @@ bool apemodevk::HostBufferPool::Page::Flush( ) {
             }
 #else
             if ( 0 != CurrentOffsetIndex ) {
-                Range.memory = hBuffer.Handle.allocInfo.deviceMemory;
+                Range.memory = hBuffer.Handle.AllocationInfo.deviceMemory;
                 Range.size   = CurrentOffsetIndex * Alignment;
 
-                if ( VK_SUCCESS != vkFlushMappedMemoryRanges( pNode->hLogicalDevice, 1, &Range ) ) {
-                    apemodevk::platform::DebugBreak( );
-                    return false;
-                }
+                CheckedResult( vkFlushMappedMemoryRanges( pNode->hLogicalDevice, 1, &Range ) );
             }
 #endif
         }

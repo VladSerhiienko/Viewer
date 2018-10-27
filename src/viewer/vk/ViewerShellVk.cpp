@@ -88,7 +88,7 @@ ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     pFreeLookCameraController->PositionDst.y = 50;
     pFreeLookCameraController->PositionDst.z = 50;
     */
-    
+
     //*
     pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new ModelViewCameraController( ) );
     auto pModelViewCameraController = (ModelViewCameraController*)pCamController.get();
@@ -164,14 +164,29 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
             }
         }
 
+        /*
+        VK_DESCRIPTOR_TYPE_SAMPLER = 0,
+        VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER = 1,
+        VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE = 2,
+        VK_DESCRIPTOR_TYPE_STORAGE_IMAGE = 3,
+        VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER = 4,
+        VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER = 5,
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER = 6,
+        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER = 7,
+        VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC = 8,
+        VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC = 9,
+        VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT = 10,
+        */
+
         apemodevk::DescriptorPool::InitializeParameters descPoolInitParameters;
         descPoolInitParameters.pNode                                                               = &Surface.Node;
         descPoolInitParameters.MaxDescriptorSetCount                                               = 1024;
         descPoolInitParameters.MaxDescriptorPoolSizes[ VK_DESCRIPTOR_TYPE_SAMPLER ]                = 64;
         descPoolInitParameters.MaxDescriptorPoolSizes[ VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC ] = 1024;
+        descPoolInitParameters.MaxDescriptorPoolSizes[ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE ]          = 512;
         descPoolInitParameters.MaxDescriptorPoolSizes[ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER ] = 512;
 
-        if ( false == DescriptorPool.Initialize( descPoolInitParameters ) ) {
+        if ( false == DescriptorPool.Initialize( eastl::move( descPoolInitParameters ) ) ) {
             return false;
         }
 
@@ -749,6 +764,7 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
 
     if ( pAppInput->bIsQuitRequested || pAppInput->IsFirstPressed( apemode::platform::kDigitalInput_BackButton ) ||
          pAppInput->IsFirstPressed( apemode::platform::kDigitalInput_KeyEscape ) ) {
+        Surface.Node.Await( );
         return false;
     }
 

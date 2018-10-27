@@ -13,8 +13,10 @@ namespace apemodevk {
         apemodevk::GraphicsDevice*                       pNode;
         apemodevk::vector_map< uint64_t, StoredSampler > StoredSamplers;
 
+        ~SamplerManager( );
         bool      Recreate( apemodevk::GraphicsDevice* pNode );
-        void      Release( apemodevk::GraphicsDevice* pNode );
+        void      Release( );
         VkSampler GetSampler( const VkSamplerCreateInfo& SamplerCreateInfo );
+
     };
 }
