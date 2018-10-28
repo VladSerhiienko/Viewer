@@ -152,6 +152,7 @@ namespace apemodevk {
 #define apemodevk_delete( pObj )   apemodevk::platform::CallDestructor( pObj ), operator delete( pObj, apemodevk::eAllocationTag, __FILE__, __LINE__, __FUNCTION__ ), pObj = nullptr
 
 #include <EASTL/unique_ptr.h>
+#include <EASTL/array.h>
 #include <EASTL/vector.h>
 #include <EASTL/vector_map.h>
 #include <EASTL/vector_multimap.h>
@@ -205,6 +206,9 @@ namespace apemodevk {
 
     template < typename T >
     using unique_ptr = eastl::unique_ptr< T, platform::TDelete< T > >;
+
+    template < typename T, size_t TSize >
+    using array = eastl::array< T, TSize >;
 
     template < typename T >
     using slist = eastl::slist< T, platform::StandardAllocator >;

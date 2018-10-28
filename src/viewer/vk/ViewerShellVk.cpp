@@ -158,8 +158,8 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         for ( uint32_t i = 0; i < Frames.size( ); ++i ) {
             VkSemaphoreCreateInfo semaphoreCreateInfo;
             InitializeStruct( semaphoreCreateInfo );
-            if ( false == Frames[ i ].hPresentCompleteSemaphore.Recreate( Surface.Node, semaphoreCreateInfo ) ||
-                 false == Frames[ i ].hRenderCompleteSemaphore.Recreate( Surface.Node, semaphoreCreateInfo ) ) {
+            if ( ! Frames[ i ].hPresentCompleteSemaphore.Recreate( Surface.Node, semaphoreCreateInfo ) ||
+                 ! Frames[ i ].hRenderCompleteSemaphore.Recreate( Surface.Node, semaphoreCreateInfo ) ) {
                 return false;
             }
         }
@@ -186,12 +186,12 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         descPoolInitParameters.MaxDescriptorPoolSizes[ VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE ]          = 512;
         descPoolInitParameters.MaxDescriptorPoolSizes[ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER ] = 512;
 
-        if ( false == DescriptorPool.Initialize( eastl::move( descPoolInitParameters ) ) ) {
+        if ( ! DescriptorPool.Initialize( eastl::move( descPoolInitParameters ) ) ) {
             return false;
         }
 
         pSamplerManager = apemode::make_unique< apemodevk::SamplerManager >( );
-        if ( false == pSamplerManager->Recreate( &Surface.Node ) ) {
+        if ( ! pSamplerManager->Recreate( &Surface.Node ) ) {
             return false;
         }
 
@@ -342,7 +342,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/mech-m-6k.fbxp"
         */
 
-        if ( false == pSceneRendererBase->Recreate( &recreateParams ) ) {
+        if ( ! pSceneRendererBase->Recreate( &recreateParams ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
@@ -357,7 +357,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         uploadParams.pNode           = &Surface.Node;
 
         apemode::vk::SceneUploader sceneUploader;
-        if ( false == sceneUploader.UploadScene( mLoadedScene.pScene.get( ), &uploadParams ) ) {
+        if ( ! sceneUploader.UploadScene( mLoadedScene.pScene.get( ), &uploadParams ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
@@ -370,7 +370,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         skyboxRendererRecreateParams.FrameCount    = uint32_t( Frames.size( ) );
 
         pSkyboxRenderer = apemode::make_unique< apemode::vk::SkyboxRenderer >( );
-        if ( false == pSkyboxRenderer->Recreate( &skyboxRendererRecreateParams ) ) {
+        if ( ! pSkyboxRenderer->Recreate( &skyboxRendererRecreateParams ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
@@ -424,14 +424,14 @@ bool apemode::viewer::vk::ViewerShell::OnResized( ) {
     allocationCreateInfo.flags                   = 0;
 
     for ( uint32_t i = 0; i < Frames.size( ); ++i ) {
-        if ( false == Frames[ i ].hDepthImg.Recreate( Surface.Node.hAllocator, depthImgCreateInfo, allocationCreateInfo ) ) {
+        if ( ! Frames[ i ].hDepthImg.Recreate( Surface.Node.hAllocator, depthImgCreateInfo, allocationCreateInfo ) ) {
             return false;
         }
     }
 
     for ( uint32_t i = 0; i < Frames.size( ); ++i ) {
         depthImgViewCreateInfo.image = Frames[ i ].hDepthImg;
-        if ( false == Frames[ i ].hDepthImgView.Recreate( Surface.Node, depthImgViewCreateInfo ) ) {
+        if ( ! Frames[ i ].hDepthImgView.Recreate( Surface.Node, depthImgViewCreateInfo ) ) {
             return false;
         }
     }
@@ -494,12 +494,12 @@ bool apemode::viewer::vk::ViewerShell::OnResized( ) {
     renderPassCreateInfoDbg.subpassCount    = 1;
     renderPassCreateInfoDbg.pSubpasses      = &subpassDbg;
 
-    if ( false == hNkRenderPass.Recreate( Surface.Node, renderPassCreateInfoNk ) ) {
+    if ( ! hNkRenderPass.Recreate( Surface.Node, renderPassCreateInfoNk ) ) {
         apemode::platform::DebugBreak( );
         return false;
     }
 
-    if ( false == hDbgRenderPass.Recreate( Surface.Node, renderPassCreateInfoDbg ) ) {
+    if ( ! hDbgRenderPass.Recreate( Surface.Node, renderPassCreateInfoDbg ) ) {
         apemode::platform::DebugBreak( );
         return false;
     }
@@ -524,7 +524,7 @@ bool apemode::viewer::vk::ViewerShell::OnResized( ) {
         VkImageView attachments[ 1 ]         = {Surface.Swapchain.Buffers[ i ].hImgView};
         framebufferCreateInfoNk.pAttachments = attachments;
 
-        if ( false == Frames[ i ].hNkFramebuffer.Recreate( Surface.Node, framebufferCreateInfoNk ) ) {
+        if ( ! Frames[ i ].hNkFramebuffer.Recreate( Surface.Node, framebufferCreateInfoNk ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
@@ -534,8 +534,7 @@ bool apemode::viewer::vk::ViewerShell::OnResized( ) {
         VkImageView attachments[ 2 ]          = {Surface.Swapchain.Buffers[ i ].hImgView, Frames[ i ].hDepthImgView};
         framebufferCreateInfoDbg.pAttachments = attachments;
 
-        if ( false == Frames[ i ].hDbgFramebuffer.Recreate( Surface.Node, framebufferCreateInfoDbg ) ) {
-            apemode::platform::DebugBreak( );
+        if ( ! Frames[ i ].hDbgFramebuffer.Recreate( Surface.Node, framebufferCreateInfoDbg ) ) {
             return false;
         }
     }
@@ -618,6 +617,10 @@ void ViewerShell::UpdateTime( ) {
     TotalSecs += DeltaSecs;
 }
 
+void ViewerShell::UpdateScene( ) {
+    mLoadedScene.pScene->UpdateTransformProperties( TotalSecs, bLookAnimation, kAnimStackId, kAnimLayerId );
+}
+
 void ViewerShell::UpdateCamera( const apemode::platform::AppInput* pAppInput ) {
     XMFLOAT2 extentF{float( Surface.Swapchain.ImgExtent.width ), float( Surface.Swapchain.ImgExtent.height )};
     pCamInput->Update( DeltaSecs, *pAppInput, extentF );
@@ -628,7 +631,10 @@ void ViewerShell::UpdateCamera( const apemode::platform::AppInput* pAppInput ) {
     pCamController->Update( DeltaSecs );
 }
 
-void ViewerShell::Populate( Frame* pCurrentFrame, Frame* pSwapchainFrame, VkCommandBuffer pCmdBuffer ) {
+void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFrame,
+                            ViewerShell::Frame*                     pCurrentFrame,
+                            ViewerShell::Frame*                     pSwapchainFrame,
+                            VkCommandBuffer                         pCmdBuffer ) {
     float clearColor[ 4 ] = {0.5f, 0.5f, 1.0f, 1.0f};
 
     VkClearValue clearValue[ 2 ];
@@ -650,7 +656,7 @@ void ViewerShell::Populate( Frame* pCurrentFrame, Frame* pSwapchainFrame, VkComm
 
     vkCmdBeginRenderPass( pCmdBuffer, &renderPassBeginInfo, VK_SUBPASS_CONTENTS_INLINE );
 
-    XMFLOAT2 extentF{float( Surface.Swapchain.ImgExtent.width ), float( Surface.Swapchain.ImgExtent.height )};
+    const XMFLOAT2 extentF{float( Surface.Swapchain.ImgExtent.width ), float( Surface.Swapchain.ImgExtent.height )};
 
     auto viewMatrix     = pCamController->ViewMatrix( );
     auto invViewMatrix  = XMMatrixInverse( nullptr, viewMatrix );
@@ -730,6 +736,7 @@ void ViewerShell::Populate( Frame* pCurrentFrame, Frame* pSwapchainFrame, VkComm
     sceneRenderParameters.IrradianceMap.MipLevels  = IrradianceImg->ImgCreateInfo.mipLevels;
     sceneRenderParameters.LightColor               = LightColor;
     sceneRenderParameters.LightDirection           = LightDirection;
+    sceneRenderParameters.pTransformFrame          = pTransformFrame;
     XMStoreFloat4x4( &sceneRenderParameters.ProjMatrix, projMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.ViewMatrix, viewMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );
@@ -775,6 +782,7 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
     UpdateTime( );
     UpdateUI( currentExtent, pAppInput );
     UpdateCamera( pAppInput );
+    UpdateScene( );
 
     Frame& currentFrame = Frames[ FrameIndex ];
 
@@ -787,6 +795,9 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
 
     Frame& swapchainFrame = Frames[ currentFrame.BackbufferIndex ];
 
+    const SceneNodeTransformFrame* pTrasformFrame =
+        mLoadedScene.pScene->GetAnimatedTransformFrame( kAnimStackId, kAnimLayerId );
+
     const uint32_t       queueFamilyId               = 0;
     VkPipelineStageFlags eColorAttachmentOutputStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 
@@ -795,7 +806,7 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
                                             queueFamilyId,
                                             false,
                                             [&]( VkCommandBuffer pCmdBuffer ) {
-                                                Populate( &currentFrame, &swapchainFrame, pCmdBuffer );
+                                                Populate( pTrasformFrame, &currentFrame, &swapchainFrame, pCmdBuffer );
                                                 return true;
                                             },
                                             apemodevk::kDefaultQueueAwaitTimeoutNanos,

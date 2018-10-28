@@ -90,7 +90,59 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
         return false;
     }
 
-    vkCmdBindPipeline( pParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipeline );
+    const apemode::SceneNodeTransformFrame* pTransformFrame =
+        pParams->pTransformFrame ? pParams->pTransformFrame : &pScene->GetBindPoseTransformFrame( );
+
+    SortedNodeIds.clear( );
+    SortedNodeIds.reserve( pScene->Nodes.size( ) );
+
+    for ( const SceneNode& node : pScene->Nodes ) {
+        const SceneMesh& mesh = pScene->Meshes[ node.MeshId ];
+
+        switch ( mesh.eVertexType ) {
+            case apemode::detail::eVertexType_Default:
+                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >( PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled, node.Id ) );
+                break;
+            case apemode::detail::eVertexType_Skinned:
+                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >( PipelineComposite::kFlag_VertexType_StaticSkinned | PipelineComposite::kFlag_BlendType_Disabled, node.Id ) );
+                break;
+            case apemode::detail::eVertexType_Packed:
+                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >( PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled, node.Id ) );
+                break;
+            case apemode::detail::eVertexType_PackedSkinned:
+                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >( PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled, node.Id ) );
+                break;
+            default:
+                break;
+        }
+    }
+
+    for ( PipelineComposite::Flags ePipelineFlags :
+          {PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_StaticSkinned | PipelineComposite::kFlag_BlendType_Disabled} ) {
+        PipelineComposite& pipelineComposite = PipelineComposites[ ePipelineFlags ];
+        if ( !RenderScene( pScene, pParams, pipelineComposite, pTransformFrame, pSceneAsset ) )
+            return false;
+    }
+
+    return true;
+}
+
+bool apemode::vk::SceneRenderer::RenderScene( const Scene*                            pScene,
+                                              const RenderParameters*                 pParams,
+                                              PipelineComposite&                      pipeline,
+                                              const apemode::SceneNodeTransformFrame* pTransformFrame,
+                                              const vk::SceneUploader::DeviceAsset*   pSceneAsset ) {
+    using namespace apemodevk;
+
+    auto nodeRange = SortedNodeIds.equal_range( pipeline.eFlags );
+    size_t nodeCount = size_t( eastl::distance( nodeRange.first, nodeRange.second ) );
+    if ( !nodeCount )
+        return true;
+
+    vkCmdBindPipeline( pParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.hPipeline );
 
     VkViewport viewport;
     InitializeStruct( viewport );
@@ -115,8 +167,19 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
     const uint32_t frameIndex = pParams->FrameIndex;
     auto& frame = Frames[ frameIndex ];
 
-    VkDescriptorSet ppDescriptorSets[ 2 ] = {nullptr};
-    uint32_t        pDynamicOffsets[ 4 ]  = {0};
+    enum DynamicOffset {
+        kDynamicOffset_CameraUBO = 0,
+        kDynamicOffset_LightUBO,
+        kDynamicOffset_ObjectUBO,
+        kDynamicOffset_MaterialUBO,
+        kDynamicOffset_SkinnedObjectUBO,
+        kDynamicOffsetStaticCount = 4,
+        kDynamicOffsetSkinnedCount,
+        kDynamicOffsetCount = kDynamicOffsetSkinnedCount,
+    };
+
+    VkDescriptorSet ppDescriptorSets[ kDescriptorSetCount ] = {nullptr};
+    uint32_t        pDynamicOffsets[ kDynamicOffsetCount ]  = {0};
 
     CameraUBO cameraData;
     cameraData.ViewMatrix    = pParams->ViewMatrix;
@@ -157,13 +220,11 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
     ppDescriptorSets[ kDescriptorSetForPass ] =
         frame.DescriptorSetPools[ kDescriptorSetForPass ].GetDescriptorSet( &descriptorSetForPass );
 
-    pDynamicOffsets[ 0 ] = cameraDataUploadBufferRange.DynamicOffset;
-    pDynamicOffsets[ 1 ] = lightDataUploadBufferRange.DynamicOffset;
+    pDynamicOffsets[ kDynamicOffset_CameraUBO ] = cameraDataUploadBufferRange.DynamicOffset;
+    pDynamicOffsets[ kDynamicOffset_LightUBO ]  = lightDataUploadBufferRange.DynamicOffset;
 
-    for ( auto& node : pScene->Nodes ) {
-        if ( node.MeshId >= pScene->Meshes.size( ) )
-            continue;
-
+    for ( auto nodeIt = nodeRange.first; nodeIt != nodeRange.second; ++nodeIt ) {
+        auto& node = pScene->Nodes[ nodeIt->second ];
         auto& mesh = pScene->Meshes[ node.MeshId ];
 
         auto pMeshAsset = (const vk::SceneUploader::MeshDeviceAsset*) mesh.pDeviceAsset.get( );
@@ -182,7 +243,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
         objectData.TexcoordOffsetScale.w = mesh.TexcoordScale.y;
 
         const XMMATRIX rootMatrix   = XMLoadFloat4x4( &pParams->RootMatrix );
-        const XMMATRIX worldMatrix  = pScene->BindPoseFrame.Transforms[ node.Id ].WorldMatrix * rootMatrix;
+        const XMMATRIX worldMatrix  = pTransformFrame->Transforms[ node.Id ].WorldMatrix * rootMatrix;
         const XMMATRIX normalMatrix = XMMatrixTranspose( XMMatrixInverse( nullptr, worldMatrix ) );
 
         XMStoreFloat4x4( &objectData.WorldMatrix, worldMatrix );
@@ -299,17 +360,17 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
             ppDescriptorSets[ kDescriptorSetForObj ] =
                 frame.DescriptorSetPools[ kDescriptorSetForObj ].GetDescriptorSet( &descriptorSetForObject );
 
-            pDynamicOffsets[ 2 ] = objectDataUploadBufferRange.DynamicOffset;
-            pDynamicOffsets[ 3 ] = materialDataUploadBufferRange.DynamicOffset;
+            pDynamicOffsets[ kDynamicOffset_ObjectUBO ]   = objectDataUploadBufferRange.DynamicOffset;
+            pDynamicOffsets[ kDynamicOffset_MaterialUBO ] = materialDataUploadBufferRange.DynamicOffset;
 
-            vkCmdBindDescriptorSets( pParams->pCmdBuffer,              /* Cmd */
-                                     VK_PIPELINE_BIND_POINT_GRAPHICS,  /* BindPoint */
-                                     hPipelineLayout,                  /* PipelineLayout */
-                                     0,                                /* FirstSet */
-                                     GetArraySize( ppDescriptorSets ), /* SetCount */
-                                     ppDescriptorSets,                 /* Sets */
-                                     GetArraySize( pDynamicOffsets ),  /* DymamicOffsetCount */
-                                     pDynamicOffsets );                /* DymamicOffsets */
+            vkCmdBindDescriptorSets( pParams->pCmdBuffer,             /* Cmd */
+                                     VK_PIPELINE_BIND_POINT_GRAPHICS, /* BindPoint */
+                                     pipeline.pPipelineLayout,        /* PipelineLayout */
+                                     0,                               /* FirstSet */
+                                     kDescriptorSetCountForStatic,    /* SetCount */
+                                     ppDescriptorSets,                /* Sets */
+                                     kDynamicOffsetStaticCount,       /* DymamicOffsetCount */
+                                     pDynamicOffsets );               /* DymamicOffsets */
 
             VkBuffer     ppVertexBuffers[ 1 ] = {pMeshAsset->hVertexBuffer.Handle.pBuffer};
             VkDeviceSize pVertexOffsets[ 1 ]  = {0};
@@ -337,49 +398,253 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
     return true;
 }
 
-template < uint32_t TShaderStageCount >
+template < uint32_t TMaxShaderStages                      = 5,
+           uint32_t TMaxPipelineColorBlendAttachmentState = 16,
+           uint32_t TMaxDynamicStates                     = 16,
+           uint32_t TMaxVertexInputAttributeDescriptions  = 16,
+           uint32_t TMaxVertexInputBindingDescriptions    = 16 >
 struct TGraphicsPipelineCreateInfoComposite {
-
-    VkPipelineShaderStageCreateInfo        Stages[ TShaderStageCount ];
-    VkPipelineVertexInputStateCreateInfo   PipelineVertexInputStateCreateInfo;
-    VkPipelineInputAssemblyStateCreateInfo PipelineInputAssemblyStateCreateInfo;
-    VkPipelineTessellationStateCreateInfo  PipelineTessellationStateCreateInfo;
-    VkPipelineViewportStateCreateInfo      PipelineViewportStateCreateInfo;
-    VkPipelineRasterizationStateCreateInfo PipelineRasterizationStateCreateInfo;
-    VkPipelineMultisampleStateCreateInfo   PipelineMultisampleStateCreateInfo;
-    VkPipelineDepthStencilStateCreateInfo  PipelineDepthStencilStateCreateInfo;
-    VkPipelineColorBlendStateCreateInfo    PipelineColorBlendStateCreateInfo;
-    VkPipelineDynamicStateCreateInfo       PipelineDynamicStateCreateInfo;
-    VkGraphicsPipelineCreateInfo           GraphicsPipelineCreateInfo;
+    VkGraphicsPipelineCreateInfo           Pipeline;
+    VkPipelineShaderStageCreateInfo        PipelineShaderStages[ TMaxShaderStages ];
+    VkPipelineVertexInputStateCreateInfo   PipelineVertexInputState;
+    VkPipelineInputAssemblyStateCreateInfo PipelineInputAssemblyState;
+    VkPipelineTessellationStateCreateInfo  PipelineTessellationState;
+    VkPipelineViewportStateCreateInfo      PipelineViewportState;
+    VkPipelineRasterizationStateCreateInfo PipelineRasterizationState;
+    VkPipelineMultisampleStateCreateInfo   PipelineMultisampleState;
+    VkPipelineDepthStencilStateCreateInfo  PipelineDepthStencilState;
+    VkPipelineColorBlendAttachmentState    PipelineColorBlendAttachmentStates[ TMaxPipelineColorBlendAttachmentState ];
+    VkPipelineColorBlendStateCreateInfo    PipelineColorBlendState;
+    VkPipelineDynamicStateCreateInfo       PipelineDynamicState;
+    VkDynamicState                         eEnableDynamicStates[ TMaxDynamicStates ];
+    VkVertexInputAttributeDescription      VertexInputAttributeDescriptions[ TMaxVertexInputAttributeDescriptions ];
+    VkVertexInputBindingDescription        VertexInputBindingDescriptions[ TMaxVertexInputBindingDescriptions ];
 
     TGraphicsPipelineCreateInfoComposite( ) {
         using namespace apemodevk;
 
-        InitializeStruct( Stages );
-        InitializeStruct( PipelineVertexInputStateCreateInfo );
-        InitializeStruct( PipelineInputAssemblyStateCreateInfo );
-        InitializeStruct( PipelineTessellationStateCreateInfo );
-        InitializeStruct( PipelineViewportStateCreateInfo );
-        InitializeStruct( PipelineRasterizationStateCreateInfo );
-        InitializeStruct( PipelineMultisampleStateCreateInfo );
-        InitializeStruct( PipelineDepthStencilStateCreateInfo );
-        InitializeStruct( PipelineColorBlendStateCreateInfo );
-        InitializeStruct( PipelineDynamicStateCreateInfo );
-        InitializeStruct( GraphicsPipelineCreateInfo );
+        InitializeStruct( PipelineShaderStages );
+        InitializeStruct( PipelineVertexInputState);
+        InitializeStruct( PipelineInputAssemblyState);
+        InitializeStruct( PipelineTessellationState);
+        InitializeStruct( PipelineViewportState);
+        InitializeStruct( PipelineRasterizationState);
+        InitializeStruct( PipelineMultisampleState);
+        InitializeStruct( PipelineDepthStencilState);
+        InitializeStruct( PipelineColorBlendState);
+        InitializeStruct( PipelineDynamicState);
+        InitializeStruct( Pipeline);
 
-        GraphicsPipelineCreateInfo.stageCount          = utils::GetArraySizeU( Stages );
-        GraphicsPipelineCreateInfo.pStages             = &Stages[ 0 ];
-        GraphicsPipelineCreateInfo.pVertexInputState   = &PipelineVertexInputStateCreateInfo;
-        GraphicsPipelineCreateInfo.pInputAssemblyState = &PipelineInputAssemblyStateCreateInfo;
-        GraphicsPipelineCreateInfo.pTessellationState  = &PipelineTessellationStateCreateInfo;
-        GraphicsPipelineCreateInfo.pViewportState      = &PipelineViewportStateCreateInfo;
-        GraphicsPipelineCreateInfo.pRasterizationState = &PipelineRasterizationStateCreateInfo;
-        GraphicsPipelineCreateInfo.pMultisampleState   = &PipelineMultisampleStateCreateInfo;
-        GraphicsPipelineCreateInfo.pDepthStencilState  = &PipelineDepthStencilStateCreateInfo;
-        GraphicsPipelineCreateInfo.pColorBlendState    = &PipelineColorBlendStateCreateInfo;
-        GraphicsPipelineCreateInfo.pDynamicState       = &PipelineDynamicStateCreateInfo;
+        InitializeStruct( PipelineColorBlendAttachmentStates);
+        InitializeStruct( VertexInputAttributeDescriptions);
+        InitializeStruct( VertexInputBindingDescriptions);
+
+        Pipeline.pVertexInputState   = &PipelineVertexInputState;
+        Pipeline.pInputAssemblyState = &PipelineInputAssemblyState;
+        Pipeline.pTessellationState  = &PipelineTessellationState;
+        Pipeline.pViewportState      = &PipelineViewportState;
+        Pipeline.pRasterizationState = &PipelineRasterizationState;
+        Pipeline.pMultisampleState   = &PipelineMultisampleState;
+        Pipeline.pDepthStencilState  = &PipelineDepthStencilState;
+        Pipeline.pColorBlendState    = &PipelineColorBlendState;
+        Pipeline.pDynamicState       = &PipelineDynamicState;
+
+        Pipeline.pStages    = PipelineShaderStages;
+        Pipeline.stageCount = 0;
+
+        PipelineVertexInputState.pVertexBindingDescriptions      = VertexInputBindingDescriptions;
+        PipelineVertexInputState.pVertexAttributeDescriptions    = VertexInputAttributeDescriptions;
+        PipelineVertexInputState.vertexBindingDescriptionCount   = 0;
+        PipelineVertexInputState.vertexAttributeDescriptionCount = 0;
+
+        PipelineDynamicState.pDynamicStates    = eEnableDynamicStates;
+        PipelineDynamicState.dynamicStateCount = 0;
+
+        PipelineColorBlendState.pAttachments    = PipelineColorBlendAttachmentStates;
+        PipelineColorBlendState.attachmentCount = 0;
     }
 };
+
+namespace {
+
+template < typename TVertex >
+void TSetPipelineVertexInputStateCreateInfo( VkPipelineVertexInputStateCreateInfo* pPipelineVertexInputState,
+                                             VkVertexInputBindingDescription*      pVertexBindingDescriptions,
+                                             uint32_t                              maxVertexBindingDescriptions,
+                                             VkVertexInputAttributeDescription*    pVertexInputAttributeDescriptions,
+                                             uint32_t                              maxVertexInputAttributeDescriptions ) {
+    static_assert( false, "Unknown vertex type." );
+}
+
+template <>
+void TSetPipelineVertexInputStateCreateInfo< apemode::detail::DefaultVertex >(
+    VkPipelineVertexInputStateCreateInfo* pPipelineVertexInputState,
+    VkVertexInputBindingDescription*      pVertexBindingDescriptions,
+    uint32_t                              maxVertexBindingDescriptions,
+    VkVertexInputAttributeDescription*    pVertexInputAttributeDescriptions,
+    uint32_t                              maxVertexInputAttributeDescriptions ) {
+    using V = apemode::detail::DefaultVertex;
+
+    pVertexBindingDescriptions[ 0 ].binding   = 0;
+    pVertexBindingDescriptions[ 0 ].stride    = sizeof( V );
+    pVertexBindingDescriptions[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    pVertexInputAttributeDescriptions[ 0 ].location = 0;
+    pVertexInputAttributeDescriptions[ 0 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 0 ].offset   = ( size_t )( &( (V*) 0 )->position );
+
+    pVertexInputAttributeDescriptions[ 1 ].location = 1;
+    pVertexInputAttributeDescriptions[ 1 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 1 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 1 ].offset   = ( size_t )( &( (V*) 0 )->normal );
+
+    pVertexInputAttributeDescriptions[ 2 ].location = 2;
+    pVertexInputAttributeDescriptions[ 2 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 2 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 2 ].offset   = ( size_t )( &( (V*) 0 )->tangent );
+
+    pVertexInputAttributeDescriptions[ 3 ].location = 3;
+    pVertexInputAttributeDescriptions[ 3 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 3 ].format   = VK_FORMAT_R32G32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 3 ].offset   = ( size_t )( &( (V*) 0 )->texcoords );
+
+    pPipelineVertexInputState->vertexBindingDescriptionCount   = 1;
+    pPipelineVertexInputState->vertexAttributeDescriptionCount = 4;
+}
+
+template <>
+void TSetPipelineVertexInputStateCreateInfo< apemode::detail::SkinnedVertex >(
+    VkPipelineVertexInputStateCreateInfo* pPipelineVertexInputState,
+    VkVertexInputBindingDescription*      pVertexBindingDescriptions,
+    uint32_t                              maxVertexBindingDescriptions,
+    VkVertexInputAttributeDescription*    pVertexInputAttributeDescriptions,
+    uint32_t                              maxVertexInputAttributeDescriptions ) {
+    using V = apemode::detail::SkinnedVertex;
+
+    pVertexBindingDescriptions[ 0 ].binding   = 0;
+    pVertexBindingDescriptions[ 0 ].stride    = sizeof( V );
+    pVertexBindingDescriptions[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    pVertexInputAttributeDescriptions[ 0 ].location = 0;
+    pVertexInputAttributeDescriptions[ 0 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 0 ].offset   = ( size_t )( &( (V*) 0 )->position );
+
+    pVertexInputAttributeDescriptions[ 1 ].location = 1;
+    pVertexInputAttributeDescriptions[ 1 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 1 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 1 ].offset   = ( size_t )( &( (V*) 0 )->normal );
+
+    pVertexInputAttributeDescriptions[ 2 ].location = 2;
+    pVertexInputAttributeDescriptions[ 2 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 2 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 2 ].offset   = ( size_t )( &( (V*) 0 )->tangent );
+
+    pVertexInputAttributeDescriptions[ 3 ].location = 3;
+    pVertexInputAttributeDescriptions[ 3 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 3 ].format   = VK_FORMAT_R32G32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 3 ].offset   = ( size_t )( &( (V*) 0 )->texcoords );
+
+    pVertexInputAttributeDescriptions[ 4 ].location = 4;
+    pVertexInputAttributeDescriptions[ 4 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 4 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 4 ].offset   = ( size_t )( &( (V*) 0 )->weights );
+
+    pVertexInputAttributeDescriptions[ 5 ].location = 5;
+    pVertexInputAttributeDescriptions[ 5 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 5 ].format   = VK_FORMAT_R32G32B32A32_UINT;
+    pVertexInputAttributeDescriptions[ 5 ].offset   = ( size_t )( &( (V*) 0 )->indices );
+
+    pPipelineVertexInputState->vertexBindingDescriptionCount   = 1;
+    pPipelineVertexInputState->vertexAttributeDescriptionCount = 6;
+}
+
+template <>
+void TSetPipelineVertexInputStateCreateInfo< apemode::detail::PackedVertex >(
+    VkPipelineVertexInputStateCreateInfo* pPipelineVertexInputState,
+    VkVertexInputBindingDescription*      pVertexBindingDescriptions,
+    uint32_t                              maxVertexBindingDescriptions,
+    VkVertexInputAttributeDescription*    pVertexInputAttributeDescriptions,
+    uint32_t                              maxVertexInputAttributeDescriptions ) {
+    using V = apemode::detail::PackedVertex;
+
+    pVertexBindingDescriptions[ 0 ].binding   = 0;
+    pVertexBindingDescriptions[ 0 ].stride    = sizeof( V );
+    pVertexBindingDescriptions[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    pVertexInputAttributeDescriptions[ 0 ].location = 0;
+    pVertexInputAttributeDescriptions[ 0 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 0 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
+    pVertexInputAttributeDescriptions[ 0 ].offset   = ( size_t )( &( (V*) 0 )->position );
+
+    pVertexInputAttributeDescriptions[ 1 ].location = 1;
+    pVertexInputAttributeDescriptions[ 1 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 1 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
+    pVertexInputAttributeDescriptions[ 1 ].offset   = ( size_t )( &( (V*) 0 )->normal );
+
+    pVertexInputAttributeDescriptions[ 2 ].location = 2;
+    pVertexInputAttributeDescriptions[ 2 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 2 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
+    pVertexInputAttributeDescriptions[ 2 ].offset   = ( size_t )( &( (V*) 0 )->tangent );
+
+    pVertexInputAttributeDescriptions[ 3 ].location = 3;
+    pVertexInputAttributeDescriptions[ 3 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 3 ].format   = VK_FORMAT_R16G16_UNORM;
+    pVertexInputAttributeDescriptions[ 3 ].offset   = ( size_t )( &( (V*) 0 )->texcoords );
+
+    pPipelineVertexInputState->vertexBindingDescriptionCount   = 1;
+    pPipelineVertexInputState->vertexAttributeDescriptionCount = 4;
+}
+
+template <>
+void TSetPipelineVertexInputStateCreateInfo< apemode::detail::PackedSkinnedVertex >(
+    VkPipelineVertexInputStateCreateInfo* pPipelineVertexInputState,
+    VkVertexInputBindingDescription*      pVertexBindingDescriptions,
+    uint32_t                              maxVertexBindingDescriptions,
+    VkVertexInputAttributeDescription*    pVertexInputAttributeDescriptions,
+    uint32_t                              maxVertexInputAttributeDescriptions ) {
+    using V = apemode::detail::PackedSkinnedVertex;
+
+    pVertexBindingDescriptions[ 0 ].binding   = 0;
+    pVertexBindingDescriptions[ 0 ].stride    = sizeof( V );
+    pVertexBindingDescriptions[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    pVertexInputAttributeDescriptions[ 0 ].location = 0;
+    pVertexInputAttributeDescriptions[ 0 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 0 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
+    pVertexInputAttributeDescriptions[ 0 ].offset   = ( size_t )( &( (V*) 0 )->position );
+
+    pVertexInputAttributeDescriptions[ 1 ].location = 1;
+    pVertexInputAttributeDescriptions[ 1 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 1 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
+    pVertexInputAttributeDescriptions[ 1 ].offset   = ( size_t )( &( (V*) 0 )->normal );
+
+    pVertexInputAttributeDescriptions[ 2 ].location = 2;
+    pVertexInputAttributeDescriptions[ 2 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 2 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
+    pVertexInputAttributeDescriptions[ 2 ].offset   = ( size_t )( &( (V*) 0 )->tangent );
+
+    pVertexInputAttributeDescriptions[ 3 ].location = 3;
+    pVertexInputAttributeDescriptions[ 3 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 3 ].format   = VK_FORMAT_R16G16_UNORM;
+    pVertexInputAttributeDescriptions[ 3 ].offset   = ( size_t )( &( (V*) 0 )->texcoords );
+
+    pVertexInputAttributeDescriptions[ 4 ].location = 4;
+    pVertexInputAttributeDescriptions[ 4 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 4 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
+    pVertexInputAttributeDescriptions[ 4 ].offset   = ( size_t )( &( (V*) 0 )->weights );
+
+    pVertexInputAttributeDescriptions[ 5 ].location = 5;
+    pVertexInputAttributeDescriptions[ 5 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 5 ].format   = VK_FORMAT_R8G8B8A8_UNORM;
+    pVertexInputAttributeDescriptions[ 5 ].offset   = ( size_t )( &( (V*) 0 )->indices );
+
+    pPipelineVertexInputState->vertexBindingDescriptionCount   = 1;
+    pPipelineVertexInputState->vertexAttributeDescriptionCount = 6;
+}
+
+} // namespace
 
 bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParamsBase ) {
     using namespace apemodevk;
@@ -394,21 +659,70 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
 
     pNode = pParams->pNode;
 
+    //
+    // Initialize all the configurations that are supported.
+    // TODO: Add blending configurations.
+    //
+
+    PipelineComposites.reserve( 4 );
+    for ( PipelineComposite::Flags ePipelineFlags :
+          {PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_StaticSkinned | PipelineComposite::kFlag_BlendType_Disabled} ) {
+        PipelineComposites[ ePipelineFlags ].eFlags = ePipelineFlags;
+    }
+
+    //
+    // Initialize all the shaders that are needed for these configurations.
+    // TODO: Remove skinning shader if it is not needed.
+    //
+
     THandle< VkShaderModule > hVertexShaderModule;
+    THandle< VkShaderModule > hSkinnedVertexShaderModule;
     THandle< VkShaderModule > hFragmentShaderModule;
     {
         auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/Scene.vert.spv" );
+        assert( compiledVertexShaderAsset );
+        if ( !compiledVertexShaderAsset ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
         auto compiledVertexShader = compiledVertexShaderAsset->GetContentAsBinaryBuffer( );
+        assert( compiledVertexShader.size( ) );
         pParams->pAssetManager->Release( compiledVertexShaderAsset );
         if ( compiledVertexShader.empty( ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
         }
 
+        auto compiledSkinnedVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/SceneSkinned.vert.spv" );
+        assert( compiledSkinnedVertexShaderAsset );
+        if ( !compiledSkinnedVertexShaderAsset ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        auto compiledSkinnedVertexShader = compiledVertexShaderAsset->GetContentAsBinaryBuffer( );
+        assert( compiledSkinnedVertexShader.size( ) );
+        pParams->pAssetManager->Release( compiledSkinnedVertexShaderAsset );
+        if ( compiledVertexShader.empty( ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
         auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/Scene.frag.spv" );
+        assert( compiledFragmentShaderAsset );
+        if ( !compiledFragmentShaderAsset ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
         auto compiledFragmentShader = compiledFragmentShaderAsset->GetContentAsBinaryBuffer( );
+        assert( compiledFragmentShader.size( ) );
         pParams->pAssetManager->Release( compiledFragmentShaderAsset );
-        if ( compiledFragmentShader.empty() ) {
+        if ( compiledFragmentShader.empty( ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
         }
@@ -418,12 +732,18 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
         vertexShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledVertexShader.data( ) );
         vertexShaderCreateInfo.codeSize = compiledVertexShader.size( );
 
+        VkShaderModuleCreateInfo skinnedVertexShaderCreateInfo;
+        InitializeStruct( skinnedVertexShaderCreateInfo );
+        skinnedVertexShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledSkinnedVertexShader.data( ) );
+        skinnedVertexShaderCreateInfo.codeSize = compiledVertexShader.size( );
+
         VkShaderModuleCreateInfo fragmentShaderCreateInfo;
         InitializeStruct( fragmentShaderCreateInfo );
         fragmentShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledFragmentShader.data( ) );
         fragmentShaderCreateInfo.codeSize = compiledFragmentShader.size( );
 
         if ( !hVertexShaderModule.Recreate( pNode->hLogicalDevice, vertexShaderCreateInfo ) ||
+             !hSkinnedVertexShaderModule.Recreate( pNode->hLogicalDevice, skinnedVertexShaderCreateInfo ) ||
              !hFragmentShaderModule.Recreate( pNode->hLogicalDevice, fragmentShaderCreateInfo ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
@@ -493,17 +813,34 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
         descriptorSetLayoutBindingsForObj[ i ].stageFlags      = VK_SHADER_STAGE_FRAGMENT_BIT;
     }
 
+    //
+    // Set 3 (SkinnedObject)
+    //
+    // layout( std140, set = 3, binding = 0 ) uniform SkinnedObjectUBO;
+
+    VkDescriptorSetLayoutBinding descriptorSetLayoutBindingsForSkinnedObj[ 1 ];
+    InitializeStruct( descriptorSetLayoutBindingsForSkinnedObj );
+
+    descriptorSetLayoutBindingsForSkinnedObj[ 0 ].binding         = 0;
+    descriptorSetLayoutBindingsForSkinnedObj[ 0 ].descriptorCount = 1;
+    descriptorSetLayoutBindingsForSkinnedObj[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    descriptorSetLayoutBindingsForSkinnedObj[ 0 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT;
+
+    //
+    // DescriptorSetLayouts
+    //
+
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfos[ kDescriptorSetCount ];
     InitializeStruct( descriptorSetLayoutCreateInfos );
 
-    VkDescriptorSetLayout ppDescriptorSetLayouts[ kDescriptorSetCount ] = {nullptr};
-
     descriptorSetLayoutCreateInfos[ 0 ].bindingCount = apemode::GetArraySize( descriptorSetLayoutBindingsForPass );
     descriptorSetLayoutCreateInfos[ 0 ].pBindings    = descriptorSetLayoutBindingsForPass;
-
     descriptorSetLayoutCreateInfos[ 1 ].bindingCount = apemode::GetArraySize( descriptorSetLayoutBindingsForObj );
     descriptorSetLayoutCreateInfos[ 1 ].pBindings    = descriptorSetLayoutBindingsForObj;
+    descriptorSetLayoutCreateInfos[ 2 ].bindingCount = apemode::GetArraySize( descriptorSetLayoutBindingsForSkinnedObj );
+    descriptorSetLayoutCreateInfos[ 2 ].pBindings    = descriptorSetLayoutBindingsForSkinnedObj;
 
+    VkDescriptorSetLayout ppDescriptorSetLayouts[ kDescriptorSetCount ] = {nullptr};
     for ( uint32_t i = 0; i < kDescriptorSetCount; ++i ) {
         THandle< VkDescriptorSetLayout >& hDescriptorSetLayout = hDescriptorSetLayouts[ i ];
         if ( !hDescriptorSetLayout.Recreate( *pNode, descriptorSetLayoutCreateInfos[ i ] ) ) {
@@ -513,203 +850,198 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
         // []
         // kDescriptorSetForPass
         // kDescriptorSetForObj
+        // kDescriptorSetForSkinnedObj
         ppDescriptorSetLayouts[ i ] = hDescriptorSetLayout;
     }
 
-    VkPipelineLayoutCreateInfo pipelineLayoutCreateInfo;
-    InitializeStruct( pipelineLayoutCreateInfo );
-    pipelineLayoutCreateInfo.setLayoutCount = GetArraySize( ppDescriptorSetLayouts );
-    pipelineLayoutCreateInfo.pSetLayouts    = ppDescriptorSetLayouts;
+    //
+    // PipelineLayouts
+    //
 
-    if ( false == hPipelineLayout.Recreate( *pNode, pipelineLayoutCreateInfo ) ) {
+    VkPipelineLayoutCreateInfo staticPipelineLayoutCreateInfo;
+    InitializeStruct( staticPipelineLayoutCreateInfo );
+    staticPipelineLayoutCreateInfo.setLayoutCount = kDescriptorSetCountForStatic;
+    staticPipelineLayoutCreateInfo.pSetLayouts    = ppDescriptorSetLayouts;
+
+    VkPipelineLayoutCreateInfo skinnedPipelineLayoutCreateInfo;
+    InitializeStruct( skinnedPipelineLayoutCreateInfo );
+    skinnedPipelineLayoutCreateInfo.setLayoutCount = kDescriptorSetCountForSkinned;
+    skinnedPipelineLayoutCreateInfo.pSetLayouts    = ppDescriptorSetLayouts;
+
+    if ( !hPipelineLayouts[ kPipelineLayoutForStatic ].Recreate( *pNode, staticPipelineLayoutCreateInfo ) ||
+         !hPipelineLayouts[ kPipelineLayoutForSkinned ].Recreate( *pNode, skinnedPipelineLayoutCreateInfo ) ) {
         return false;
     }
 
-    VkGraphicsPipelineCreateInfo           graphicsPipelineCreateInfo;
-    VkPipelineCacheCreateInfo              pipelineCacheCreateInfo;
-    VkPipelineVertexInputStateCreateInfo   vertexInputStateCreateInfo;
-    VkVertexInputAttributeDescription      vertexInputAttributeDescription[ 4 ];
-    VkVertexInputBindingDescription        vertexInputBindingDescription[ 1 ];
-    VkPipelineInputAssemblyStateCreateInfo inputAssemblyStateCreateInfo;
-    VkPipelineRasterizationStateCreateInfo rasterizationStateCreateInfo;
-    VkPipelineColorBlendStateCreateInfo    colorBlendStateCreateInfo;
-    VkPipelineColorBlendAttachmentState    colorBlendAttachmentState[ 1 ];
-    VkPipelineDepthStencilStateCreateInfo  depthStencilStateCreateInfo;
-    VkPipelineViewportStateCreateInfo      viewportStateCreateInfo;
-    VkPipelineMultisampleStateCreateInfo   multisampleStateCreateInfo;
-    VkDynamicState                         dynamicStateEnables[ 2 ];
-    VkPipelineDynamicStateCreateInfo       dynamicStateCreateInfo;
-    VkPipelineShaderStageCreateInfo        shaderStageCreateInfo[ 2 ];
+    for ( auto& pipeline : PipelineComposites ) {
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Static ) ||
+             HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Packed ) ) {
+            assert( !pipeline.second.pPipelineLayout );
+            pipeline.second.pPipelineLayout = hPipelineLayouts[ kPipelineLayoutForStatic ];
+        }
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned ) ||
+             HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_PackedSkinned ) ) {
+            assert( !pipeline.second.pPipelineLayout );
+            pipeline.second.pPipelineLayout = hPipelineLayouts[ kPipelineLayoutForStatic ];
+        }
+    }
 
-    InitializeStruct( graphicsPipelineCreateInfo );
+    //
+    // PipelineCaches
+    //
+
+    VkPipelineCacheCreateInfo pipelineCacheCreateInfo;
     InitializeStruct( pipelineCacheCreateInfo );
-    InitializeStruct( vertexInputStateCreateInfo );
-    InitializeStruct( vertexInputAttributeDescription );
-    InitializeStruct( vertexInputBindingDescription );
-    InitializeStruct( inputAssemblyStateCreateInfo );
-    InitializeStruct( rasterizationStateCreateInfo );
-    InitializeStruct( colorBlendStateCreateInfo );
-    InitializeStruct( colorBlendAttachmentState );
-    InitializeStruct( depthStencilStateCreateInfo );
-    InitializeStruct( viewportStateCreateInfo );
-    InitializeStruct( multisampleStateCreateInfo );
-    InitializeStruct( dynamicStateCreateInfo );
-    InitializeStruct( shaderStageCreateInfo );
 
-    //
-
-    graphicsPipelineCreateInfo.layout     = hPipelineLayout;
-    graphicsPipelineCreateInfo.renderPass = pParams->pRenderPass;
-
-    //
-
-    shaderStageCreateInfo[ 0 ].stage  = VK_SHADER_STAGE_VERTEX_BIT;
-    shaderStageCreateInfo[ 0 ].module = hVertexShaderModule;
-    shaderStageCreateInfo[ 0 ].pName  = "main";
-
-    shaderStageCreateInfo[ 1 ].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
-    shaderStageCreateInfo[ 1 ].module = hFragmentShaderModule;
-    shaderStageCreateInfo[ 1 ].pName  = "main";
-
-    graphicsPipelineCreateInfo.stageCount = GetArraySize( shaderStageCreateInfo );
-    graphicsPipelineCreateInfo.pStages    = shaderStageCreateInfo;
-
-    //
-#if 0
-
-    vertexInputBindingDescription[ 0 ].stride    = sizeof( PackedVertex );
-    vertexInputBindingDescription[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    vertexInputAttributeDescription[ 0 ].location = 0;
-    vertexInputAttributeDescription[ 0 ].binding  = vertexInputBindingDescription[ 0 ].binding;
-    vertexInputAttributeDescription[ 0 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    vertexInputAttributeDescription[ 0 ].offset   = ( size_t )( &( (PackedVertex*) 0 )->position );
-
-    vertexInputAttributeDescription[ 1 ].location = 1;
-    vertexInputAttributeDescription[ 1 ].binding  = vertexInputBindingDescription[ 0 ].binding;
-    vertexInputAttributeDescription[ 1 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    vertexInputAttributeDescription[ 1 ].offset   = ( size_t )( &( (PackedVertex*) 0 )->normal );
-
-    vertexInputAttributeDescription[ 2 ].location = 2;
-    vertexInputAttributeDescription[ 2 ].binding  = vertexInputBindingDescription[ 0 ].binding;
-    vertexInputAttributeDescription[ 2 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    vertexInputAttributeDescription[ 2 ].offset   = ( size_t )( &( (PackedVertex*) 0 )->tangent );
-
-    vertexInputAttributeDescription[ 3 ].location = 3;
-    vertexInputAttributeDescription[ 3 ].binding  = vertexInputBindingDescription[ 0 ].binding;
-    vertexInputAttributeDescription[ 3 ].format   = VK_FORMAT_R16G16_UNORM;
-    vertexInputAttributeDescription[ 3 ].offset   = ( size_t )( &( (PackedVertex*) 0 )->texcoords );
-
-#else
-
-    vertexInputBindingDescription[ 0 ].stride    = sizeof( detail::DefaultVertex );
-    vertexInputBindingDescription[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    vertexInputAttributeDescription[ 0 ].location = 0;
-    vertexInputAttributeDescription[ 0 ].binding  = vertexInputBindingDescription[ 0 ].binding;
-    vertexInputAttributeDescription[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    vertexInputAttributeDescription[ 0 ].offset   = ( size_t )( &( (detail::DefaultVertex*) 0 )->position );
-
-    vertexInputAttributeDescription[ 1 ].location = 1;
-    vertexInputAttributeDescription[ 1 ].binding  = vertexInputBindingDescription[ 0 ].binding;
-    vertexInputAttributeDescription[ 1 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    vertexInputAttributeDescription[ 1 ].offset   = ( size_t )( &( (detail::DefaultVertex*) 0 )->normal );
-
-    vertexInputAttributeDescription[ 2 ].location = 2;
-    vertexInputAttributeDescription[ 2 ].binding  = vertexInputBindingDescription[ 0 ].binding;
-    vertexInputAttributeDescription[ 2 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    vertexInputAttributeDescription[ 2 ].offset   = ( size_t )( &( (detail::DefaultVertex*) 0 )->tangent );
-
-    vertexInputAttributeDescription[ 3 ].location = 3;
-    vertexInputAttributeDescription[ 3 ].binding  = vertexInputBindingDescription[ 0 ].binding;
-    vertexInputAttributeDescription[ 3 ].format   = VK_FORMAT_R32G32_SFLOAT;
-    vertexInputAttributeDescription[ 3 ].offset   = ( size_t )( &( (detail::DefaultVertex*) 0 )->texcoords );
-
-#endif
-
-    vertexInputStateCreateInfo.vertexBindingDescriptionCount   = GetArraySize( vertexInputBindingDescription );
-    vertexInputStateCreateInfo.pVertexBindingDescriptions      = vertexInputBindingDescription;
-    vertexInputStateCreateInfo.vertexAttributeDescriptionCount = GetArraySize( vertexInputAttributeDescription );
-    vertexInputStateCreateInfo.pVertexAttributeDescriptions    = vertexInputAttributeDescription;
-    graphicsPipelineCreateInfo.pVertexInputState               = &vertexInputStateCreateInfo;
-
-    //
-
-    inputAssemblyStateCreateInfo.topology          = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-    graphicsPipelineCreateInfo.pInputAssemblyState = &inputAssemblyStateCreateInfo;
-
-    //
-
-    dynamicStateEnables[ 0 ]                 = VK_DYNAMIC_STATE_SCISSOR;
-    dynamicStateEnables[ 1 ]                 = VK_DYNAMIC_STATE_VIEWPORT;
-    dynamicStateCreateInfo.pDynamicStates    = dynamicStateEnables;
-    dynamicStateCreateInfo.dynamicStateCount = GetArraySize( dynamicStateEnables );
-    graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
-
-    //
-
-    // rasterizationStateCreateInfo.cullMode = VK_CULL_MODE_BACK_BIT;
-    // rasterizationStateCreateInfo.frontFace = VK_FRONT_FACE_CLOCKWISE; /* CW */
-    rasterizationStateCreateInfo.cullMode                = VK_CULL_MODE_BACK_BIT;
-    rasterizationStateCreateInfo.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE; /* CCW */
-    rasterizationStateCreateInfo.polygonMode             = VK_POLYGON_MODE_FILL;
-    rasterizationStateCreateInfo.depthClampEnable        = VK_FALSE;
-    rasterizationStateCreateInfo.rasterizerDiscardEnable = VK_FALSE;
-    rasterizationStateCreateInfo.depthBiasEnable         = VK_FALSE;
-    rasterizationStateCreateInfo.lineWidth               = 1.0f;
-    graphicsPipelineCreateInfo.pRasterizationState       = &rasterizationStateCreateInfo;
-
-    //
-
-    colorBlendAttachmentState[ 0 ].colorWriteMask = 0xf;
-    colorBlendAttachmentState[ 0 ].blendEnable    = VK_FALSE;
-    colorBlendStateCreateInfo.attachmentCount     = GetArraySize( colorBlendAttachmentState );
-    colorBlendStateCreateInfo.pAttachments        = colorBlendAttachmentState;
-    graphicsPipelineCreateInfo.pColorBlendState   = &colorBlendStateCreateInfo;
-
-    //
-
-    depthStencilStateCreateInfo.depthTestEnable       = VK_TRUE;
-    depthStencilStateCreateInfo.depthWriteEnable      = VK_TRUE;
-    depthStencilStateCreateInfo.depthCompareOp        = VK_COMPARE_OP_LESS_OR_EQUAL;
-    depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
-    depthStencilStateCreateInfo.stencilTestEnable     = VK_FALSE;
-    depthStencilStateCreateInfo.back.failOp           = VK_STENCIL_OP_KEEP;
-    depthStencilStateCreateInfo.back.passOp           = VK_STENCIL_OP_KEEP;
-    depthStencilStateCreateInfo.back.compareOp        = VK_COMPARE_OP_ALWAYS;
-    depthStencilStateCreateInfo.front                 = depthStencilStateCreateInfo.back;
-    graphicsPipelineCreateInfo.pDepthStencilState     = &depthStencilStateCreateInfo;
-
-    //
-
-    viewportStateCreateInfo.scissorCount      = 1;
-    viewportStateCreateInfo.viewportCount     = 1;
-    graphicsPipelineCreateInfo.pViewportState = &viewportStateCreateInfo;
-
-    //
-
-    multisampleStateCreateInfo.pSampleMask          = NULL;
-    multisampleStateCreateInfo.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
-    graphicsPipelineCreateInfo.pMultisampleState    = &multisampleStateCreateInfo;
-
-    //
-
-    if ( false == hPipelineCache.Recreate( *pNode, pipelineCacheCreateInfo ) ) {
-        return false;
+    for ( auto& pipeline : PipelineComposites ) {
+        assert( pipeline.second.hPipelineCache.IsNull( ) );
+        if ( false == pipeline.second.hPipelineCache.Recreate( *pNode, pipelineCacheCreateInfo ) ) {
+            return false;
+        }
     }
 
-    if ( false == hPipeline.Recreate( *pNode, hPipelineCache, graphicsPipelineCreateInfo ) ) {
-        return false;
+    //
+    // Pipelines
+    //
+
+    TGraphicsPipelineCreateInfoComposite< 2 > composite;
+
+    composite.Pipeline.renderPass                                = pParams->pRenderPass;
+    composite.PipelineInputAssemblyState.topology                = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    composite.PipelineRasterizationState.cullMode                = VK_CULL_MODE_BACK_BIT;
+    composite.PipelineRasterizationState.frontFace               = VK_FRONT_FACE_COUNTER_CLOCKWISE; /* CCW */
+    composite.PipelineRasterizationState.polygonMode             = VK_POLYGON_MODE_FILL;
+    composite.PipelineRasterizationState.depthClampEnable        = VK_FALSE;
+    composite.PipelineRasterizationState.rasterizerDiscardEnable = VK_FALSE;
+    composite.PipelineRasterizationState.depthBiasEnable         = VK_FALSE;
+    composite.PipelineRasterizationState.lineWidth               = 1.0f;
+    composite.PipelineDepthStencilState.depthTestEnable          = VK_TRUE;
+    composite.PipelineDepthStencilState.depthWriteEnable         = VK_TRUE;
+    composite.PipelineDepthStencilState.depthCompareOp           = VK_COMPARE_OP_LESS_OR_EQUAL;
+    composite.PipelineDepthStencilState.depthBoundsTestEnable    = VK_FALSE;
+    composite.PipelineDepthStencilState.stencilTestEnable        = VK_FALSE;
+    composite.PipelineDepthStencilState.back.failOp              = VK_STENCIL_OP_KEEP;
+    composite.PipelineDepthStencilState.back.passOp              = VK_STENCIL_OP_KEEP;
+    composite.PipelineDepthStencilState.back.compareOp           = VK_COMPARE_OP_ALWAYS;
+    composite.PipelineDepthStencilState.front.failOp             = VK_STENCIL_OP_KEEP;
+    composite.PipelineDepthStencilState.front.passOp             = VK_STENCIL_OP_KEEP;
+    composite.PipelineDepthStencilState.front.compareOp          = VK_COMPARE_OP_ALWAYS;
+    composite.PipelineMultisampleState.pSampleMask               = NULL;
+    composite.PipelineMultisampleState.rasterizationSamples      = VK_SAMPLE_COUNT_1_BIT;
+    composite.PipelineViewportState.viewportCount                = 1;
+    composite.PipelineViewportState.scissorCount                 = 1;
+
+    composite.PipelineShaderStages[ 0 ].stage  = VK_SHADER_STAGE_VERTEX_BIT;
+    composite.PipelineShaderStages[ 0 ].pName  = "main";
+    composite.PipelineShaderStages[ 1 ].stage  = VK_SHADER_STAGE_FRAGMENT_BIT;
+    composite.PipelineShaderStages[ 1 ].module = hFragmentShaderModule;
+    composite.PipelineShaderStages[ 1 ].pName  = "main";
+    composite.Pipeline.stageCount              = 2;
+
+    const VkColorComponentFlags eColorComponentFlags  = VK_COLOR_COMPONENT_R_BIT
+                                                      | VK_COLOR_COMPONENT_G_BIT
+                                                      | VK_COLOR_COMPONENT_B_BIT
+                                                      | VK_COLOR_COMPONENT_A_BIT;
+
+    composite.PipelineColorBlendAttachmentStates[ 0 ].colorWriteMask = eColorComponentFlags;
+    composite.PipelineColorBlendAttachmentStates[ 0 ].blendEnable    = VK_FALSE;
+    composite.PipelineColorBlendState.attachmentCount                = 1;
+
+    composite.eEnableDynamicStates[ 0 ]              = VK_DYNAMIC_STATE_SCISSOR;
+    composite.eEnableDynamicStates[ 1 ]              = VK_DYNAMIC_STATE_VIEWPORT;
+    composite.PipelineDynamicState.dynamicStateCount = 2;
+
+    //
+    for ( auto& pipeline : PipelineComposites ) {
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Packed ) ) {
+            composite.PipelineShaderStages[ 0 ].module = hVertexShaderModule;
+            composite.Pipeline.layout                  = pipeline.second.pPipelineLayout;
+
+            TSetPipelineVertexInputStateCreateInfo< apemode::detail::PackedVertex >(
+                &composite.PipelineVertexInputState,
+                composite.VertexInputBindingDescriptions,
+                GetArraySize( composite.VertexInputBindingDescriptions ),
+                composite.VertexInputAttributeDescriptions,
+                GetArraySize( composite.VertexInputAttributeDescriptions ) );
+
+            assert( pipeline.second.hPipeline.IsNull( ) );
+            if ( !pipeline.second.hPipeline.Recreate( *pNode, pipeline.second.hPipelineCache, composite.Pipeline ) ) {
+                return false;
+            }
+        }
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Static ) ) {
+            composite.PipelineShaderStages[ 0 ].module = hVertexShaderModule;
+            composite.Pipeline.layout                  = pipeline.second.pPipelineLayout;
+
+            TSetPipelineVertexInputStateCreateInfo< apemode::detail::DefaultVertex >(
+                &composite.PipelineVertexInputState,
+                composite.VertexInputBindingDescriptions,
+                GetArraySize( composite.VertexInputBindingDescriptions ),
+                composite.VertexInputAttributeDescriptions,
+                GetArraySize( composite.VertexInputAttributeDescriptions ) );
+
+            assert( pipeline.second.hPipeline.IsNull( ) );
+            if ( !pipeline.second.hPipeline.Recreate( *pNode, pipeline.second.hPipelineCache, composite.Pipeline ) ) {
+                return false;
+            }
+        }
+
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_PackedSkinned ) ) {
+            composite.PipelineShaderStages[ 0 ].module = hSkinnedVertexShaderModule;
+            composite.Pipeline.layout                  = hPipelineLayouts[ kPipelineLayoutForSkinned ];
+
+            TSetPipelineVertexInputStateCreateInfo< apemode::detail::PackedSkinnedVertex >(
+                &composite.PipelineVertexInputState,
+                composite.VertexInputBindingDescriptions,
+                GetArraySize( composite.VertexInputBindingDescriptions ),
+                composite.VertexInputAttributeDescriptions,
+                GetArraySize( composite.VertexInputAttributeDescriptions ) );
+
+            assert( pipeline.second.hPipeline.IsNull( ) );
+            if ( !pipeline.second.hPipeline.Recreate( *pNode, pipeline.second.hPipelineCache, composite.Pipeline ) ) {
+                return false;
+            }
+        }
+
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned ) ) {
+            composite.PipelineShaderStages[ 0 ].module = hSkinnedVertexShaderModule;
+            composite.Pipeline.layout                  = hPipelineLayouts[ kPipelineLayoutForSkinned ];
+
+            TSetPipelineVertexInputStateCreateInfo< apemode::detail::SkinnedVertex >(
+                &composite.PipelineVertexInputState,
+                composite.VertexInputBindingDescriptions,
+                GetArraySize( composite.VertexInputBindingDescriptions ),
+                composite.VertexInputAttributeDescriptions,
+                GetArraySize( composite.VertexInputAttributeDescriptions ) );
+
+            assert( pipeline.second.hPipeline.IsNull( ) );
+            if ( !pipeline.second.hPipeline.Recreate( *pNode, pipeline.second.hPipelineCache, composite.Pipeline ) ) {
+                return false;
+            }
+        }
     }
 
     Frames.resize( pParams->FrameCount );
-
-    for ( uint32_t i = 0; i < pParams->FrameCount; ++i ) {
-        auto& frame = Frames[ i ];
-
+    for ( auto & frame : Frames ) {
         frame.BufferPool.Recreate( pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
-        frame.DescriptorSetPools[ kDescriptorSetForPass ].Recreate( *pNode, pParams->pDescPool, hDescriptorSetLayouts[ kDescriptorSetForPass ] );
-        frame.DescriptorSetPools[ kDescriptorSetForObj ].Recreate( *pNode, pParams->pDescPool, hDescriptorSetLayouts[ kDescriptorSetForObj ] );
+
+        if ( !frame.DescriptorSetPools[ kDescriptorSetForPass ].Recreate(
+                 *pNode, pParams->pDescPool, hDescriptorSetLayouts[ kDescriptorSetForPass ] ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        if ( !frame.DescriptorSetPools[ kDescriptorSetForObj ].Recreate(
+                 *pNode, pParams->pDescPool, hDescriptorSetLayouts[ kDescriptorSetForObj ] ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
+
+        if ( !frame.DescriptorSetPools[ kDescriptorSetForSkinnedObj ].Recreate(
+                 *pNode, pParams->pDescPool, hDescriptorSetLayouts[ kDescriptorSetForSkinnedObj ] ) ) {
+            apemodevk::platform::DebugBreak( );
+            return false;
+        }
     }
 
     return true;
@@ -723,4 +1055,28 @@ bool apemode::vk::SceneRenderer::Reset( const Scene* pScene, uint32_t frameIndex
 bool apemode::vk::SceneRenderer::Flush( const Scene* pScene, uint32_t frameIndex ) {
     Frames[ frameIndex ].BufferPool.Flush( );
     return true;
+}
+
+apemode::vk::SceneRenderer::PipelineComposite::PipelineComposite( )
+    : eFlags( 0 ), hPipelineCache( ), hPipeline( ), pPipelineLayout( nullptr ) {
+}
+
+apemode::vk::SceneRenderer::PipelineComposite::PipelineComposite( PipelineComposite&& o )
+    //, hDescriptorSetLayouts( eastl::move( o.hDescriptorSetLayouts ) )
+    //, hPipelineLayout( eastl::move( o.hPipelineLayout ) )
+    : eFlags( o.eFlags )
+    , hPipelineCache( eastl::move( o.hPipelineCache ) )
+    , hPipeline( eastl::move( o.hPipeline ) )
+    , pPipelineLayout( o.pPipelineLayout ) {
+}
+
+apemode::vk::SceneRenderer::PipelineComposite&
+apemode::vk::SceneRenderer::PipelineComposite::operator=( PipelineComposite&& o ) {
+    // hDescriptorSetLayouts = ( eastl::move( other.hDescriptorSetLayouts ) );
+    // hPipelineLayout = ( eastl::move( o.hPipelineLayout ) );
+    eFlags          = o.eFlags;
+    hPipelineCache  = eastl::move( o.hPipelineCache );
+    hPipeline       = eastl::move( o.hPipeline );
+    pPipelineLayout = o.pPipelineLayout;
+    return *this;
 }

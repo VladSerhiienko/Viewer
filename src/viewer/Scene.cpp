@@ -19,8 +19,8 @@ using namespace apemode;
 struct SceneAnimLayerId {
     union {
         struct {
-            uint16_t AnimStackId;
-            uint16_t AnimLayerId;
+            uint16_t AnimStackIndex;
+            uint16_t AnimLayerIndex;
         };
 
         uint32_t AnimLayerCompositeId;
@@ -95,17 +95,25 @@ void apemode::Scene::InitializeTransformFrame( SceneNodeTransformFrame &t ) cons
     t.Transforms.resize( Nodes.size( ) );
 }
 
-const apemode::SceneNodeAnimCurveIds &apemode::Scene::GetAnimCurveIds( const uint32_t nodeId,
+const apemode::SceneNodeAnimCurveIds *apemode::Scene::GetAnimCurveIds( const uint32_t nodeId,
                                                                        const uint16_t animStackId,
                                                                        const uint16_t animLayerId ) const {
-    SceneAnimNodeId animNodeCompositeId;
-    animNodeCompositeId.NodeId = nodeId;
-    animNodeCompositeId.AnimLayerId.AnimStackId = animStackId;
-    animNodeCompositeId.AnimLayerId.AnimLayerId = animLayerId;
 
-    const auto animCurveIdsIt = AnimNodeIdToAnimCurveIds.find( animNodeCompositeId.AnimNodeCompositeId );
-    assert( AnimNodeIdToAnimCurveIds.end( ) != animCurveIdsIt );
-    return animCurveIdsIt->second;
+    if ( ! AnimNodeIdToAnimCurveIds.empty( ) ) {
+
+        SceneAnimNodeId animNodeCompositeId;
+        animNodeCompositeId.NodeId                  = nodeId;
+        animNodeCompositeId.AnimLayerId.AnimStackIndex = animStackId;
+        animNodeCompositeId.AnimLayerId.AnimLayerIndex = animLayerId;
+
+        const auto animCurveIdsIt = AnimNodeIdToAnimCurveIds.find( animNodeCompositeId.AnimNodeCompositeId );
+        if ( animCurveIdsIt != AnimNodeIdToAnimCurveIds.end( ) ) {
+            assert( AnimNodeIdToAnimCurveIds.end( ) != animCurveIdsIt );
+            return &animCurveIdsIt->second;
+        }
+    }
+
+    return nullptr;
 }
 
 void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
@@ -126,39 +134,41 @@ XMFLOAT3 *MapProperty( apemode::SceneAnimCurve::EProperty eProperty, apemode::Sc
     return reinterpret_cast< XMFLOAT3 * >( pProperties ) + ( eProperty / 3 );
 }
 
-SceneNodeTransformFrame &apemode::Scene::UpdateTransformProperties( const float    time,
+SceneNodeTransformFrame *apemode::Scene::UpdateTransformProperties( const float    time,
                                                                     const bool     bLoop,
                                                                     const uint16_t animStackId,
                                                                     const uint16_t animLayerId ) {
-    SceneNodeTransformFrame &animTransformFrame = GetAnimatedTransformFrame( animStackId, animLayerId );
+    if ( SceneNodeTransformFrame *pAnimTransformFrame = GetAnimatedTransformFrame( animStackId, animLayerId ) ) {
+        assert( pAnimTransformFrame->Transforms.size( ) == BindPoseFrame.Transforms.size( ) );
+        const size_t transformFrameByteSize = sizeof( SceneNodeTransformComposite ) * pAnimTransformFrame->Transforms.size( );
+        memcpy( pAnimTransformFrame->Transforms.data( ), BindPoseFrame.Transforms.data( ), transformFrameByteSize );
 
-    assert( animTransformFrame.Transforms.size( ) == BindPoseFrame.Transforms.size( ) );
-    const size_t transformFrameByteSize = sizeof( SceneNodeTransformComposite ) * animTransformFrame.Transforms.size( );
-    memcpy( animTransformFrame.Transforms.data( ), BindPoseFrame.Transforms.data( ), transformFrameByteSize );
+        for ( const SceneNode &node : Nodes ) {
+            if ( const SceneNodeAnimCurveIds *animCurveIds = GetAnimCurveIds( node.Id, animStackId, animLayerId ) ) {
+                auto &animTransformComposite = pAnimTransformFrame->Transforms[ node.Id ];
 
-    for ( const auto &node : Nodes ) {
+                for ( uint32_t propertyIndex = 0; propertyIndex < SceneAnimCurve::ePropertyCount; propertyIndex += SceneAnimCurve::eChannelCount ) {
+                    XMFLOAT3 *pProperty = MapProperty( SceneAnimCurve::EProperty( propertyIndex ), &animTransformComposite.Properties );
 
-        const SceneNodeAnimCurveIds &animCurveIds = GetAnimCurveIds( node.Id, animStackId, animLayerId );
-        auto & animTransformComposite = animTransformFrame.Transforms[ node.Id ];
+                    const uint32_t animCurveIdX = animCurveIds->AnimCurveIds[ propertyIndex + SceneAnimCurve::eChannel_X ];
+                    const uint32_t animCurveIdY = animCurveIds->AnimCurveIds[ propertyIndex + SceneAnimCurve::eChannel_Y ];
+                    const uint32_t animCurveIdZ = animCurveIds->AnimCurveIds[ propertyIndex + SceneAnimCurve::eChannel_Z ];
 
-        for ( uint32_t propertyIndex = 0; propertyIndex < SceneAnimCurve::ePropertyCount; propertyIndex += SceneAnimCurve::eChannelCount ) {
-            XMFLOAT3 *pProperty = MapProperty( SceneAnimCurve::EProperty( propertyIndex ), &animTransformComposite.Properties );
+                    const SceneAnimCurve *pAnimCurveX = ( animCurveIdX != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdX ] ) : nullptr;
+                    const SceneAnimCurve *pAnimCurveY = ( animCurveIdY != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdY ] ) : nullptr;
+                    const SceneAnimCurve *pAnimCurveZ = ( animCurveIdZ != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdZ ] ) : nullptr;
 
-            const uint32_t animCurveIdX = animCurveIds.AnimCurveIds[ propertyIndex + SceneAnimCurve::eChannel_X ];
-            const uint32_t animCurveIdY = animCurveIds.AnimCurveIds[ propertyIndex + SceneAnimCurve::eChannel_Y ];
-            const uint32_t animCurveIdZ = animCurveIds.AnimCurveIds[ propertyIndex + SceneAnimCurve::eChannel_Z ];
-
-            const SceneAnimCurve *pAnimCurveX = ( animCurveIdX != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdX ] ) : nullptr;
-            const SceneAnimCurve *pAnimCurveY = ( animCurveIdY != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdY ] ) : nullptr;
-            const SceneAnimCurve *pAnimCurveZ = ( animCurveIdZ != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdZ ] ) : nullptr;
-
-            pProperty->x = pAnimCurveX ? pAnimCurveX->Calculate( time, bLoop ) : pProperty->x;
-            pProperty->y = pAnimCurveY ? pAnimCurveY->Calculate( time, bLoop ) : pProperty->y;
-            pProperty->z = pAnimCurveZ ? pAnimCurveZ->Calculate( time, bLoop ) : pProperty->z;
+                    pProperty->x = pAnimCurveX ? pAnimCurveX->Calculate( time, bLoop ) : pProperty->x;
+                    pProperty->y = pAnimCurveY ? pAnimCurveY->Calculate( time, bLoop ) : pProperty->y;
+                    pProperty->z = pAnimCurveZ ? pAnimCurveZ->Calculate( time, bLoop ) : pProperty->z;
+                }
+            }
         }
+
+        return pAnimTransformFrame;
     }
 
-    return animTransformFrame;
+    return nullptr;
 }
 
 SceneNodeTransformFrame &apemode::Scene::GetBindPoseTransformFrame( ) {
@@ -169,42 +179,49 @@ const SceneNodeTransformFrame &apemode::Scene::GetBindPoseTransformFrame( ) cons
     return BindPoseFrame;
 }
 
-apemode::SceneNodeTransformFrame &apemode::Scene::GetAnimatedTransformFrame( const uint16_t animStackId,
-                                                                     const uint16_t animLayerId ) {
-    SceneAnimLayerId animLayerCompositeId;
-    animLayerCompositeId.AnimStackId = animStackId;
-    animLayerCompositeId.AnimLayerId = animLayerId;
+apemode::SceneNodeTransformFrame *apemode::Scene::GetAnimatedTransformFrame( const uint16_t animStackId,
+                                                                             const uint16_t animLayerId ) {
+    if ( ! AnimLayerIdToTransformFrames.empty( ) ) {
+        SceneAnimLayerId animLayerCompositeId;
+        animLayerCompositeId.AnimStackIndex = animStackId;
+        animLayerCompositeId.AnimLayerIndex = animLayerId;
 
-    auto animTransformFrame = AnimLayerIdToTransformFrames.find( animLayerCompositeId.AnimLayerCompositeId );
-    assert( AnimLayerIdToTransformFrames.end( ) != animTransformFrame );
-    return animTransformFrame->second;
+        auto animTransformFrameIt = AnimLayerIdToTransformFrames.find( animLayerCompositeId.AnimLayerCompositeId );
+        if ( animTransformFrameIt != AnimLayerIdToTransformFrames.end( ) ) {
+            return &animTransformFrameIt->second;
+        }
+    }
+
+    return nullptr;
 }
 
-const apemode::SceneNodeTransformFrame &apemode::Scene::GetAnimatedTransformFrame( const uint16_t animStackId,
+const apemode::SceneNodeTransformFrame *apemode::Scene::GetAnimatedTransformFrame( const uint16_t animStackId,
                                                                            const uint16_t animLayerId ) const {
-    SceneAnimLayerId animLayerCompositeId;
-    animLayerCompositeId.AnimStackId = animStackId;
-    animLayerCompositeId.AnimLayerId = animLayerId;
+    if ( ! AnimLayerIdToTransformFrames.empty( ) ) {
+        SceneAnimLayerId animLayerCompositeId;
+        animLayerCompositeId.AnimStackIndex = animStackId;
+        animLayerCompositeId.AnimLayerIndex = animLayerId;
 
-    auto animTransformFrame = AnimLayerIdToTransformFrames.find( animLayerCompositeId.AnimLayerCompositeId );
-    assert( AnimLayerIdToTransformFrames.end( ) != animTransformFrame );
-    return animTransformFrame->second;
+        auto animTransformFrameIt = AnimLayerIdToTransformFrames.find( animLayerCompositeId.AnimLayerCompositeId );
+        if ( animTransformFrameIt != AnimLayerIdToTransformFrames.end( ) ) {
+            return &animTransformFrameIt->second;
+        }
+    }
+
+    return nullptr;
 }
 
-void apemode::Scene::UpdateTransformMatrices( const uint32_t nodeId, SceneNodeTransformFrame &t ) const {
+void apemode::Scene::UpdateTransformMatrices( const uint32_t parentNodeId, SceneNodeTransformFrame &t ) const {
+    assert( parentNodeId == Nodes[ parentNodeId ].Id );
+    const SceneNodeTransformComposite &transformComposite = t.Transforms[ parentNodeId ];
 
-    const SceneNode & parentNode = Nodes[ nodeId ];
-    const SceneNodeTransformComposite &transformComposite = t.Transforms[ nodeId ];
-    assert( nodeId == parentNode.Id );
-
-    const auto childIdRange = NodeToChildIds.equal_range( nodeId );
+    const auto childIdRange = NodeToChildIds.equal_range( parentNodeId );
     for ( auto childIdIt = childIdRange.first; childIdIt != childIdRange.second; ++childIdIt ) {
-
         const uint32_t childId = childIdIt->second;
         const SceneNode & childNode = Nodes[ childId ];
         SceneNodeTransformComposite &childTransformComposite = t.Transforms[ childId ];
 
-        assert( nodeId == childNode.ParentId );
+        assert( parentNodeId == childNode.ParentId );
 
         childTransformComposite.LocalMatrix        = childTransformComposite.Properties.CalculateLocalMatrix( );
         childTransformComposite.GeometricalMatrix  = childTransformComposite.Properties.CalculateGeometricMatrix( );
@@ -274,6 +291,9 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
 
         pScene->NodeToChildIds.reserve( nodeIdCount );
         pScene->NodeIdToAnimCurveIds.reserve( animCurveIdCount );
+
+        LogInfo( "Node IDs: {}", nodeIdCount );
+        LogInfo( "Curve IDs: {}", animCurveIdCount );
     }
 
     if ( IsNotNullAndNotEmpty( pNodesFb ) ) {
@@ -382,8 +402,8 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             assert( pAnimCurveFb->anim_layer_id( ) < 0xFFFFU );
             assert( pAnimCurveFb->anim_stack_id( ) < 0xFFFFU );
 
-            animCurve.AnimLayerId = static_cast< uint16_t >( pAnimCurveFb->anim_layer_id( ) );
-            animCurve.AnimStackId = static_cast< uint16_t >( pAnimCurveFb->anim_stack_id( ) );
+            animCurve.AnimLayerIndex = static_cast< uint16_t >( pAnimCurveFb->anim_layer_id( ) );
+            animCurve.AnimStackIndex = static_cast< uint16_t >( pAnimCurveFb->anim_stack_id( ) );
             animCurve.eChannel    = SceneAnimCurve::EChannel( pAnimCurveFb->channel( ) );
             animCurve.eProperty   = SceneAnimCurve::EProperty( pAnimCurveFb->property( ) * SceneAnimCurve::eChannelCount );
 
@@ -407,6 +427,11 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             animCurve.TimeMinMaxTotal.x = animCurve.Keys.cbegin( )->second.Time;
             animCurve.TimeMinMaxTotal.y = animCurve.Keys.crbegin( )->second.Time;
             animCurve.TimeMinMaxTotal.z = animCurve.TimeMinMaxTotal.y - animCurve.TimeMinMaxTotal.x;
+
+            LogInfo( "\tStart: {} -> End: {} (Duration: {})",
+                     animCurve.TimeMinMaxTotal.x,
+                     animCurve.TimeMinMaxTotal.y,
+                     animCurve.TimeMinMaxTotal.z );
         }
 
         pScene->AnimNodeIdToAnimCurveIds.reserve( pAnimCurvesFb->size( ) );
@@ -420,8 +445,8 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
 
                 SceneAnimNodeId animNodeId;
                 animNodeId.NodeId = node.Id;
-                animNodeId.AnimLayerId.AnimLayerId = pAnimCurve->AnimLayerId;
-                animNodeId.AnimLayerId.AnimStackId = pAnimCurve->AnimStackId;
+                animNodeId.AnimLayerId.AnimLayerIndex = pAnimCurve->AnimLayerIndex;
+                animNodeId.AnimLayerId.AnimStackIndex = pAnimCurve->AnimStackIndex;
 
                 SceneNodeAnimCurveIds &animCurves = pScene->AnimNodeIdToAnimCurveIds[ animNodeId.AnimNodeCompositeId ];
                 const uint32_t animCurveIndex = uint32_t( pAnimCurve->eProperty ) + uint32_t( pAnimCurve->eChannel );
@@ -440,8 +465,8 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                      GetCStringProperty( pSrcScene, pAnimStackFb->name_id( ) ) );
 
             SceneAnimLayerId animLayerId;
-            animLayerId.AnimLayerId = pAnimLayerFb->id( );
-            animLayerId.AnimStackId = pAnimLayerFb->anim_stack_id( );
+            animLayerId.AnimLayerIndex = pAnimLayerFb->id( );
+            animLayerId.AnimStackIndex = pAnimLayerFb->anim_stack_id( );
 
             auto &animTransformFrame = pScene->AnimLayerIdToTransformFrames[ animLayerId.AnimLayerCompositeId ];
             pScene->InitializeTransformFrame( animTransformFrame );
@@ -490,6 +515,20 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
 
             mesh.SubsetCount = static_cast< uint32_t >( pMeshFb->subsets( )->size( ) );
             mesh.BaseSubset  = static_cast< uint32_t >( pScene->Subsets.size( ) );
+
+            switch ( pSubmeshFb->vertex_format( ) ) {
+                case apemodefb::EVertexFormatFb_Packed:
+                    mesh.eVertexType = detail::eVertexType_Packed;
+                case apemodefb::EVertexFormatFb_PackedSkinned:
+                    mesh.eVertexType = detail::eVertexType_PackedSkinned;
+                case apemodefb::EVertexFormatFb_Static:
+                    mesh.eVertexType = detail::eVertexType_Default;
+                case apemodefb::EVertexFormatFb_StaticSkinned:
+                    mesh.eVertexType = detail::eVertexType_Skinned;
+                default:
+                    mesh.eVertexType = detail::eVertexType_Custom;
+                    break;
+            }
 
             std::transform( pMeshFb->subsets( )->begin( ),
                             pMeshFb->subsets( )->end( ),

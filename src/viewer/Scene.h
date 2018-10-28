@@ -71,6 +71,7 @@ struct PackedSkinnedVertex {
     uint32_t position;
     uint32_t normal;
     uint32_t tangent;
+    uint32_t texcoords;
     uint32_t weights;
     uint32_t indices;
 };
@@ -121,6 +122,8 @@ struct SceneMesh {
     XMFLOAT3 PositionScale  = XMFLOAT3{1, 1, 1};
     XMFLOAT2 TexcoordOffset = XMFLOAT2{0, 0};
     XMFLOAT2 TexcoordScale  = XMFLOAT2{1, 1};
+
+    detail::EVertexType eVertexType = detail::eVertexType_Custom;
 };
 
 /* Transfrom class that stores main FBX SDK transform properties
@@ -213,8 +216,8 @@ struct SceneAnimCurve {
     detail::SceneDeviceAssetPtr pDeviceAsset;
 
     uint32_t  Id              = detail::kInvalidId;
-    uint16_t  AnimStackId     = detail::kInvalidId16;
-    uint16_t  AnimLayerId     = detail::kInvalidId16;
+    uint16_t  AnimStackIndex     = detail::kInvalidId16;
+    uint16_t  AnimLayerIndex     = detail::kInvalidId16;
     EProperty eProperty       = ePropertyCount;
     EChannel  eChannel        = eChannelCount;
     XMFLOAT3  TimeMinMaxTotal = XMFLOAT3{0, 0, 0};
@@ -237,10 +240,12 @@ struct SceneAnimCurve {
  */
 struct SceneNodeAnimCurveIds {
     uint32_t AnimCurveIds[ SceneAnimCurve::ePropertyCount ] = {
-        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
-        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
-        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
-        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
     };
 };
 
@@ -319,7 +324,7 @@ struct Scene {
 
     /* Animates transform frame, returns it.
      */
-    SceneNodeTransformFrame &UpdateTransformProperties( float time, bool bLoop, uint16_t animStackId, uint16_t animLayerId );
+    SceneNodeTransformFrame *UpdateTransformProperties( float time, bool bLoop, uint16_t animStackId, uint16_t animLayerId );
 
     /* Returns animated transform frame.
      */
@@ -331,15 +336,15 @@ struct Scene {
 
     /* Returns animated transform frame.
      */
-    SceneNodeTransformFrame &GetAnimatedTransformFrame( uint16_t animStackId, uint16_t animLayerId );
+    SceneNodeTransformFrame *GetAnimatedTransformFrame( uint16_t animStackId, uint16_t animLayerId );
 
     /* Returns animated transform frame.
      */
-    const SceneNodeTransformFrame &GetAnimatedTransformFrame( uint16_t animStackId, uint16_t animLayerId ) const;
+    const SceneNodeTransformFrame *GetAnimatedTransformFrame( uint16_t animStackId, uint16_t animLayerId ) const;
 
     /* Returns animation curves for the node.
      */
-    const SceneNodeAnimCurveIds &GetAnimCurveIds( uint32_t nodeId, uint16_t animStackId, uint16_t animLayerId ) const;
+    const SceneNodeAnimCurveIds *GetAnimCurveIds( uint32_t nodeId, uint16_t animStackId, uint16_t animLayerId ) const;
 
     /* Calculates skin matrix palette.
      */
