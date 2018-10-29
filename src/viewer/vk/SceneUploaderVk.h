@@ -1,6 +1,6 @@
 #pragma once
 
-#include <Scene.h>
+#include <viewer/Scene.h>
 
 #include <BufferPools.Vulkan.h>
 #include <DescriptorPool.Vulkan.h>
