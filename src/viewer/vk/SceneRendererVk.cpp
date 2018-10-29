@@ -97,20 +97,32 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
     SortedNodeIds.reserve( pScene->Nodes.size( ) );
 
     for ( const SceneNode& node : pScene->Nodes ) {
+        if ( node.MeshId == uint32_t( -1 ) ) {
+            continue;
+        }
+
         const SceneMesh& mesh = pScene->Meshes[ node.MeshId ];
 
         switch ( mesh.eVertexType ) {
             case apemode::detail::eVertexType_Default:
-                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >( PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled, node.Id ) );
+                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >(
+                    uint32_t( PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled ),
+                    uint32_t( node.Id ) ) );
                 break;
             case apemode::detail::eVertexType_Skinned:
-                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >( PipelineComposite::kFlag_VertexType_StaticSkinned | PipelineComposite::kFlag_BlendType_Disabled, node.Id ) );
+                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >(
+                    uint32_t( PipelineComposite::kFlag_VertexType_StaticSkinned | PipelineComposite::kFlag_BlendType_Disabled ),
+                    uint32_t( node.Id ) ) );
                 break;
             case apemode::detail::eVertexType_Packed:
-                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >( PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled, node.Id ) );
+                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >(
+                    uint32_t( PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled ),
+                    uint32_t( node.Id ) ) );
                 break;
             case apemode::detail::eVertexType_PackedSkinned:
-                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >( PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled, node.Id ) );
+                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >(
+                    uint32_t( PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled ),
+                    uint32_t( node.Id ) ) );
                 break;
             default:
                 break;
@@ -122,9 +134,11 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
            PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
            PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
            PipelineComposite::kFlag_VertexType_StaticSkinned | PipelineComposite::kFlag_BlendType_Disabled} ) {
-        PipelineComposite& pipelineComposite = PipelineComposites[ ePipelineFlags ];
-        if ( !RenderScene( pScene, pParams, pipelineComposite, pTransformFrame, pSceneAsset ) )
-            return false;
+        auto pipelineCompositeIt = PipelineComposites.find( ePipelineFlags );
+        if ( pipelineCompositeIt != PipelineComposites.end( ) ) {
+            if ( !RenderScene( pScene, pParams, pipelineCompositeIt->second, pTransformFrame, pSceneAsset ) )
+                return false;
+        }
     }
 
     return true;
@@ -169,13 +183,13 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
 
     enum DynamicOffset {
         kDynamicOffset_CameraUBO = 0,
-        kDynamicOffset_LightUBO,
-        kDynamicOffset_ObjectUBO,
-        kDynamicOffset_MaterialUBO,
-        kDynamicOffset_SkinnedObjectUBO,
+        kDynamicOffset_LightUBO = 1,
+        kDynamicOffset_ObjectUBO = 2,
+        kDynamicOffset_MaterialUBO = 3,
+        kDynamicOffset_SkinnedObjectUBO = 4,
         kDynamicOffsetStaticCount = 4,
-        kDynamicOffsetSkinnedCount,
-        kDynamicOffsetCount = kDynamicOffsetSkinnedCount,
+        kDynamicOffsetSkinnedCount = 5,
+        kDynamicOffsetCount = 5,
     };
 
     VkDescriptorSet ppDescriptorSets[ kDescriptorSetCount ] = {nullptr};
@@ -199,6 +213,13 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
     assert( VK_NULL_HANDLE != lightDataUploadBufferRange.DescriptorBufferInfo.buffer );
     lightDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( LightUBO );
 
+    pDynamicOffsets[ kDynamicOffset_CameraUBO ] = cameraDataUploadBufferRange.DynamicOffset;
+    pDynamicOffsets[ kDynamicOffset_LightUBO ]  = lightDataUploadBufferRange.DynamicOffset;
+    
+    //
+    // DescriptorSet Pass
+    //
+
     TDescriptorSetBindings< 4 > descriptorSetForPass;
 
     descriptorSetForPass.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 0 */
@@ -220,15 +241,20 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
     ppDescriptorSets[ kDescriptorSetForPass ] =
         frame.DescriptorSetPools[ kDescriptorSetForPass ].GetDescriptorSet( &descriptorSetForPass );
 
-    pDynamicOffsets[ kDynamicOffset_CameraUBO ] = cameraDataUploadBufferRange.DynamicOffset;
-    pDynamicOffsets[ kDynamicOffset_LightUBO ]  = lightDataUploadBufferRange.DynamicOffset;
-
     for ( auto nodeIt = nodeRange.first; nodeIt != nodeRange.second; ++nodeIt ) {
         auto& node = pScene->Nodes[ nodeIt->second ];
+        assert( node.MeshId != uint32_t( -1 ) );
         auto& mesh = pScene->Meshes[ node.MeshId ];
+
+        if ( mesh.SkinId != uint32_t( -1 ) ) {
+        }
 
         auto pMeshAsset = (const vk::SceneUploader::MeshDeviceAsset*) mesh.pDeviceAsset.get( );
         assert( pMeshAsset );
+        
+        //
+        // Calculate Object (Spatial)
+        //
 
         ObjectUBO objectData;
         objectData.PositionOffset.x      = mesh.PositionOffset.x;
@@ -248,6 +274,53 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
 
         XMStoreFloat4x4( &objectData.WorldMatrix, worldMatrix );
         XMStoreFloat4x4( &objectData.NormalMatrix, normalMatrix );
+        
+        //
+        // Upload Object (Spatial)
+        //
+
+        auto objectDataUploadBufferRange = frame.BufferPool.TSuballocate( objectData );
+        assert( VK_NULL_HANDLE != objectDataUploadBufferRange.DescriptorBufferInfo.buffer );
+        objectDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( ObjectUBO );
+        
+        pDynamicOffsets[ kDynamicOffset_ObjectUBO ] = objectDataUploadBufferRange.DynamicOffset;
+
+        apemodevk::HostBufferPool::SuballocResult skinningDataUploadBufferRange;
+        TDescriptorSetBindings< 1 > descriptorSetForSkinnedObj;
+        if ( mesh.SkinId != uint32_t( -1 ) ) {
+        
+            //
+            // Calculate SkinnedObject
+            //
+            
+            assert( HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned ) ||
+                    HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_PackedSkinned ) );
+
+            auto& skin = pScene->Skins[ mesh.SkinId ];
+            assert( skin.Links.size( ) <= kBoneCount );
+            pScene->UpdateSkinMatrices( skin, *pTransformFrame, BoneMatrices.data( ), kBoneCount );
+            
+            //
+            // Upload SkinnedObject
+            //
+            
+            const size_t boneMatricesSize = sizeof( XMFLOAT4X4[ kBoneCount ] );
+            skinningDataUploadBufferRange = frame.BufferPool.Suballocate( &BoneMatrices.front( ), boneMatricesSize );
+            assert( VK_NULL_HANDLE != skinningDataUploadBufferRange.DescriptorBufferInfo.buffer );
+            skinningDataUploadBufferRange.DescriptorBufferInfo.range = boneMatricesSize;
+
+            pDynamicOffsets[ kDynamicOffset_SkinnedObjectUBO ] = skinningDataUploadBufferRange.DynamicOffset;
+            
+            //
+            // DescriptorSet SkinnedObject
+            //
+            
+            descriptorSetForSkinnedObj.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 0 */
+            descriptorSetForSkinnedObj.pBinding[ 0 ].BufferInfo      = skinningDataUploadBufferRange.DescriptorBufferInfo;
+
+            ppDescriptorSets[ kDescriptorSetForSkinnedObj ] =
+                frame.DescriptorSetPools[ kDescriptorSetForSkinnedObj ].GetDescriptorSet( &descriptorSetForSkinnedObj );
+        }
 
         auto pSubsetIt    = pScene->Subsets.data( ) + mesh.BaseSubset;
         auto pSubsetItEnd = pSubsetIt + mesh.SubsetCount;
@@ -264,14 +337,18 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
                 pMaterial      = &pSceneAsset->MissingMaterial;
                 pMaterialAsset = &pSceneAsset->MissingMaterialAsset;
             }
+        
+            //
+            // MaterialUBO
+            //
 
             uint32_t flags = 0;
-            flags |= pMaterialAsset->hBaseColorImgView ? 1 << 0 : 0;
-            flags |= pMaterialAsset->hNormalImgView ? 1 << 1 : 0;
-            flags |= pMaterialAsset->hEmissiveImgView ? 1 << 2 : 0;
-            flags |= pMaterialAsset->hMetallicImgView ? 1 << 3 : 0;
-            flags |= pMaterialAsset->hRoughnessImgView ? 1 << 4 : 0;
-            flags |= pMaterialAsset->hOcclusionImgView ? 1 << 5 : 0;
+            flags |= pMaterialAsset->hBaseColorImgView  ? 1 << 0 : 0;
+            flags |= pMaterialAsset->hNormalImgView     ? 1 << 1 : 0;
+            flags |= pMaterialAsset->hEmissiveImgView   ? 1 << 2 : 0;
+            flags |= pMaterialAsset->hMetallicImgView   ? 1 << 3 : 0;
+            flags |= pMaterialAsset->hRoughnessImgView  ? 1 << 4 : 0;
+            flags |= pMaterialAsset->hOcclusionImgView  ? 1 << 5 : 0;
 
             MaterialUBO materialData;
             materialData.BaseColorFactor.x         = pMaterial->BaseColorFactor.x;
@@ -286,14 +363,20 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             materialData.MetallicRoughnessFactor.z = 1;
             materialData.MetallicRoughnessFactor.w = static_cast< float >( pParams->RadianceMap.MipLevels );
             materialData.Flags.x                   = flags;
-
-            auto objectDataUploadBufferRange = frame.BufferPool.TSuballocate( objectData );
-            assert( VK_NULL_HANDLE != objectDataUploadBufferRange.DescriptorBufferInfo.buffer );
-            objectDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( ObjectUBO );
+        
+            //
+            // Upload Object (Material)
+            //
 
             auto materialDataUploadBufferRange = frame.BufferPool.TSuballocate( materialData );
             assert( VK_NULL_HANDLE != materialDataUploadBufferRange.DescriptorBufferInfo.buffer );
             materialDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( MaterialUBO );
+
+            pDynamicOffsets[ kDynamicOffset_MaterialUBO ] = materialDataUploadBufferRange.DynamicOffset;
+            
+            //
+            // DescriptorSet Object
+            //
 
             TDescriptorSetBindings< 8 > descriptorSetForObject( eTDescriptorSetNoInit );
 
@@ -360,17 +443,15 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             ppDescriptorSets[ kDescriptorSetForObj ] =
                 frame.DescriptorSetPools[ kDescriptorSetForObj ].GetDescriptorSet( &descriptorSetForObject );
 
-            pDynamicOffsets[ kDynamicOffset_ObjectUBO ]   = objectDataUploadBufferRange.DynamicOffset;
-            pDynamicOffsets[ kDynamicOffset_MaterialUBO ] = materialDataUploadBufferRange.DynamicOffset;
-
-            vkCmdBindDescriptorSets( pParams->pCmdBuffer,             /* Cmd */
-                                     VK_PIPELINE_BIND_POINT_GRAPHICS, /* BindPoint */
-                                     pipeline.pPipelineLayout,        /* PipelineLayout */
-                                     0,                               /* FirstSet */
-                                     kDescriptorSetCountForStatic,    /* SetCount */
-                                     ppDescriptorSets,                /* Sets */
-                                     kDynamicOffsetStaticCount,       /* DymamicOffsetCount */
-                                     pDynamicOffsets );               /* DymamicOffsets */
+            vkCmdBindDescriptorSets(
+                pParams->pCmdBuffer,             /* Cmd */
+                VK_PIPELINE_BIND_POINT_GRAPHICS, /* BindPoint */
+                pipeline.pPipelineLayout,        /* PipelineLayout */
+                0,                               /* FirstSet */
+                mesh.SkinId != uint32_t( -1 ) ? kDescriptorSetCountForSkinned : kDescriptorSetCountForStatic, /* SetCount */
+                ppDescriptorSets,                                                                             /* Sets */
+                mesh.SkinId != uint32_t( -1 ) ? kDynamicOffsetSkinnedCount : kDynamicOffsetStaticCount, /* DymamicOffsetCount */
+                pDynamicOffsets );                                                                      /* DymamicOffsets */
 
             VkBuffer     ppVertexBuffers[ 1 ] = {pMeshAsset->hVertexBuffer.Handle.pBuffer};
             VkDeviceSize pVertexOffsets[ 1 ]  = {0};
@@ -473,7 +554,8 @@ void TSetPipelineVertexInputStateCreateInfo( VkPipelineVertexInputStateCreateInf
                                              uint32_t                              maxVertexBindingDescriptions,
                                              VkVertexInputAttributeDescription*    pVertexInputAttributeDescriptions,
                                              uint32_t                              maxVertexInputAttributeDescriptions ) {
-    static_assert( false, "Unknown vertex type." );
+    // static_assert( false, "Unknown vertex type." );
+    assert( false );
 }
 
 template <>
@@ -553,7 +635,7 @@ void TSetPipelineVertexInputStateCreateInfo< apemode::detail::SkinnedVertex >(
 
     pVertexInputAttributeDescriptions[ 5 ].location = 5;
     pVertexInputAttributeDescriptions[ 5 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 5 ].format   = VK_FORMAT_R32G32B32A32_UINT;
+    pVertexInputAttributeDescriptions[ 5 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
     pVertexInputAttributeDescriptions[ 5 ].offset   = ( size_t )( &( (V*) 0 )->indices );
 
     pPipelineVertexInputState->vertexBindingDescriptionCount   = 1;
@@ -666,8 +748,9 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
 
     PipelineComposites.reserve( 4 );
     for ( PipelineComposite::Flags ePipelineFlags :
-          {PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
+          {// TODO: MoltenVK struggles to use packed format.
+           // PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled,
+           // PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
            PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
            PipelineComposite::kFlag_VertexType_StaticSkinned | PipelineComposite::kFlag_BlendType_Disabled} ) {
         PipelineComposites[ ePipelineFlags ].eFlags = ePipelineFlags;
@@ -833,12 +916,12 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
     VkDescriptorSetLayoutCreateInfo descriptorSetLayoutCreateInfos[ kDescriptorSetCount ];
     InitializeStruct( descriptorSetLayoutCreateInfos );
 
-    descriptorSetLayoutCreateInfos[ 0 ].bindingCount = apemode::GetArraySize( descriptorSetLayoutBindingsForPass );
-    descriptorSetLayoutCreateInfos[ 0 ].pBindings    = descriptorSetLayoutBindingsForPass;
-    descriptorSetLayoutCreateInfos[ 1 ].bindingCount = apemode::GetArraySize( descriptorSetLayoutBindingsForObj );
-    descriptorSetLayoutCreateInfos[ 1 ].pBindings    = descriptorSetLayoutBindingsForObj;
-    descriptorSetLayoutCreateInfos[ 2 ].bindingCount = apemode::GetArraySize( descriptorSetLayoutBindingsForSkinnedObj );
-    descriptorSetLayoutCreateInfos[ 2 ].pBindings    = descriptorSetLayoutBindingsForSkinnedObj;
+    descriptorSetLayoutCreateInfos[ kDescriptorSetForPass ].bindingCount = apemode::GetArraySize( descriptorSetLayoutBindingsForPass );
+    descriptorSetLayoutCreateInfos[ kDescriptorSetForPass ].pBindings    = descriptorSetLayoutBindingsForPass;
+    descriptorSetLayoutCreateInfos[ kDescriptorSetForObj ].bindingCount = apemode::GetArraySize( descriptorSetLayoutBindingsForObj );
+    descriptorSetLayoutCreateInfos[ kDescriptorSetForObj ].pBindings    = descriptorSetLayoutBindingsForObj;
+    descriptorSetLayoutCreateInfos[ kDescriptorSetForSkinnedObj ].bindingCount = apemode::GetArraySize( descriptorSetLayoutBindingsForSkinnedObj );
+    descriptorSetLayoutCreateInfos[ kDescriptorSetForSkinnedObj ].pBindings    = descriptorSetLayoutBindingsForSkinnedObj;
 
     VkDescriptorSetLayout ppDescriptorSetLayouts[ kDescriptorSetCount ] = {nullptr};
     for ( uint32_t i = 0; i < kDescriptorSetCount; ++i ) {

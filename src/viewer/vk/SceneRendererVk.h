@@ -75,6 +75,9 @@ public:
     static constexpr uint32_t kPipelineLayoutCount      = 2; // = skinned + static
     static constexpr uint32_t kPipelineLayoutForStatic  = 0;
     static constexpr uint32_t kPipelineLayoutForSkinned = 1;
+    
+    // TODO: Set as pecialization constant.
+    static constexpr uint32_t kBoneCount = 64;
 
     struct Frame {
         apemodevk::HostBufferPool    BufferPool;
@@ -87,8 +90,8 @@ public:
             kFlag_VertexType_StaticSkinned = 1 << 1,
             kFlag_VertexType_Packed        = 1 << 2,
             kFlag_VertexType_PackedSkinned = 1 << 3,
-            kFlag_BlendType_Disabled       = 1 << 4,
-            kFlag_BlendType_Add            = 1 << 5,
+            kFlag_BlendType_Disabled       = 0,
+            kFlag_BlendType_Add            = 1 << 4,
         };
 
         using Flags = eastl::underlying_type< FlagBits >::type;
@@ -110,13 +113,13 @@ public:
                       const apemode::SceneNodeTransformFrame* pTransformFrame,
                       const vk::SceneUploader::DeviceAsset*   pSceneAsset );
 
-    apemodevk::GraphicsDevice*                     pNode = nullptr;
-    apemodevk::vector< Frame >                     Frames;
-    PipelineComposite::Map                         PipelineComposites;
-    apemodevk::THandle< VkPipelineLayout >         hPipelineLayouts[ kPipelineLayoutCount ];
-    apemodevk::THandle< VkDescriptorSetLayout >    hDescriptorSetLayouts[ kDescriptorSetCount ];
-    apemode::vector_multimap< uint32_t, uint32_t > SortedNodeIds;
-    ;
+    apemodevk::GraphicsDevice*                       pNode = nullptr;
+    apemodevk::vector< Frame >                       Frames;
+    PipelineComposite::Map                           PipelineComposites;
+    apemodevk::THandle< VkPipelineLayout >           hPipelineLayouts[ kPipelineLayoutCount ];
+    apemodevk::THandle< VkDescriptorSetLayout >      hDescriptorSetLayouts[ kDescriptorSetCount ];
+    apemodevk::vector_multimap< uint32_t, uint32_t > SortedNodeIds;
+    apemodevk::array< XMFLOAT4X4, kBoneCount >       BoneMatrices;
 };
 
 } // namespace vk

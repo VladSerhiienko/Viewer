@@ -350,7 +350,12 @@ struct Scene {
      */
     void UpdateSkinMatrices( const SceneSkin &              skin,
                              const SceneNodeTransformFrame &animatedFrame,
-                             apemode::vector< XMMATRIX > &  skinMatrices );
+                             XMMATRIX *                     pSkinMatrices,
+                             size_t                         skinMatrixCount ) const;
+    void UpdateSkinMatrices( const SceneSkin &              skin,
+                             const SceneNodeTransformFrame &animatedFrame,
+                             XMFLOAT4X4 *                   pSkinMatrices,
+                             size_t                         skinMatrixCount ) const;
 };
 
 /* Represents the loaded scene.

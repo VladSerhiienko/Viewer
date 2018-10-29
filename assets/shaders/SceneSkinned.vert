@@ -41,9 +41,9 @@ layout( std140, set = 1, binding = 0 ) uniform ObjectUBO {
 //
 // Set 3 (SkinnedObject)
 //
-// layout( std140, set = 3, binding = 0 ) uniform SkinnedObjectUBO;
+// layout( std140, set = 2, binding = 0 ) uniform SkinnedObjectUBO;
 
-layout( std140, set = 3, binding = 0 ) uniform SkinnedObjectUBO {
+layout( std140, set = 2, binding = 0 ) uniform SkinnedObjectUBO {
     mat4 BoneMatrices[ kBoneCount ];
 };
 
@@ -52,7 +52,7 @@ layout( location = 1 ) in vec3 inNormal;
 layout( location = 2 ) in vec4 inTangent;
 layout( location = 3 ) in vec2 inTexcoords;
 layout( location = 4 ) in vec4 inBoneWeights;
-layout( location = 5 ) in ivec4 inBoneIndices;
+layout( location = 5 ) in vec4 inBoneIndices;
 
 layout( location = 0 ) out vec3 outWorldPosition;
 layout( location = 1 ) out vec3 outWorldNormal;
@@ -66,10 +66,11 @@ vec3 GetCameraWorldPosition( ) {
 }
 
 mat4 CalculateAccumulatedBoneTransform( ) {
-    mat4 boneTransform = BoneMatrices[ inBoneIndices[ 0 ] ] * inBoneWeights[ 0 ];
-    boneTransform += BoneMatrices[ inBoneIndices[ 1 ] ] * inBoneWeights[ 1 ];
-    boneTransform += BoneMatrices[ inBoneIndices[ 2 ] ] * inBoneWeights[ 2 ];
-    boneTransform += BoneMatrices[ inBoneIndices[ 3 ] ] * inBoneWeights[ 3 ];
+    mat4 boneTransform;
+    boneTransform  = BoneMatrices[ int( inBoneIndices[ 0 ] ) ] * inBoneWeights[ 0 ];
+    boneTransform += BoneMatrices[ int( inBoneIndices[ 1 ] ) ] * inBoneWeights[ 1 ];
+    boneTransform += BoneMatrices[ int( inBoneIndices[ 2 ] ) ] * inBoneWeights[ 2 ];
+    boneTransform += BoneMatrices[ int( inBoneIndices[ 3 ] ) ] * inBoneWeights[ 3 ];
     return boneTransform;
 }
 

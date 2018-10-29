@@ -118,13 +118,28 @@ const apemode::SceneNodeAnimCurveIds *apemode::Scene::GetAnimCurveIds( const uin
 
 void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
                                          const SceneNodeTransformFrame &animatedFrame,
-                                         apemode::vector< XMMATRIX > &  skinMatrices ) {
-
-    skinMatrices.resize( skin.Links.size( ) );
+                                         XMMATRIX *                     pSkinMatrices,
+                                         size_t                         skinMatrixCount ) const {
+    // skinMatrices.resize( skin.Links.size( ) );
+    assert(skinMatrixCount >= skin.Links.size( ));
     for ( size_t i = 0; i < skin.Links.size( ); ++i ) {
         const SceneSkinLink & skinLink = skin.Links[ i ];
         const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
-        skinMatrices[ skinLink.LinkId ] = skinLink.InvBindPoseMatrix * skinLinkTransform.WorldMatrix;
+        pSkinMatrices[ i ] = skinLink.InvBindPoseMatrix * skinLinkTransform.WorldMatrix;
+    }
+}
+
+void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
+                                         const SceneNodeTransformFrame &animatedFrame,
+                                         XMFLOAT4X4 *                   pSkinMatrices,
+                                         size_t                         skinMatrixCount ) const {
+
+    assert( skinMatrixCount >= skin.Links.size( ) );
+    for ( size_t i = 0; i < skin.Links.size( ); ++i ) {
+        const SceneSkinLink & skinLink = skin.Links[ i ];
+        const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
+        const XMMATRIX skinMatrix = skinLink.InvBindPoseMatrix * skinLinkTransform.WorldMatrix;
+        XMStoreFloat4x4( &pSkinMatrices[ i ], skinMatrix );
     }
 }
 
@@ -496,6 +511,9 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             assert( IsNotNullAndNotEmpty( pMeshFb->indices( ) ) );
             assert( IsNotNullAndNotEmpty( pMeshFb->subsets( ) ) );
             assert( IsNotNullAndNotEmpty( pMeshFb->submeshes( ) ) );
+            
+            // std::array<apemode::detail::SkinnedVertex, 128> sv;
+            // memcpy(sv.data(), pMeshFb->vertices(), std::min<size_t>(sizeof(sv), pMeshFb->vertices()->size()));
 
             pScene->Meshes.emplace_back( );
             auto &mesh = pScene->Meshes.back( );
@@ -519,12 +537,16 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             switch ( pSubmeshFb->vertex_format( ) ) {
                 case apemodefb::EVertexFormatFb_Packed:
                     mesh.eVertexType = detail::eVertexType_Packed;
+                    break;
                 case apemodefb::EVertexFormatFb_PackedSkinned:
                     mesh.eVertexType = detail::eVertexType_PackedSkinned;
+                    break;
                 case apemodefb::EVertexFormatFb_Static:
                     mesh.eVertexType = detail::eVertexType_Default;
+                    break;
                 case apemodefb::EVertexFormatFb_StaticSkinned:
                     mesh.eVertexType = detail::eVertexType_Skinned;
+                    break;
                 default:
                     mesh.eVertexType = detail::eVertexType_Custom;
                     break;
@@ -700,20 +722,20 @@ void apemode::SceneAnimCurve::GetKeyIndices( float & time, const bool bLoop, uin
     } else {
         // Case: inside the curve's timeline.
         auto matchOrUpperBoundIt = Keys.lower_bound( time );
-        assert(matchOrUpperBoundIt == Keys.end());
+        assert( matchOrUpperBoundIt != Keys.end( ) );
 
         if ( NearlyEqual( matchOrUpperBoundIt->second.Time, time ) ) {
             // Case: exactly on curve's key.
-            i = static_cast< uint32_t >( Keys.size( ) ) - 1;
+            i = static_cast< uint32_t >( eastl::distance( Keys.cbegin( ), matchOrUpperBoundIt ) );
             j = i;
         } else {
-            const auto lowerBoundIt = eastl::prev(matchOrUpperBoundIt);
+            const auto lowerBoundIt = eastl::prev( matchOrUpperBoundIt );
             const auto upperBoundIt = matchOrUpperBoundIt;
-            assert(lowerBoundIt == Keys.end());
+            assert( lowerBoundIt != Keys.end( ) );
 
             // Case: inside the curve's segment.
-            i = static_cast< uint32_t >( eastl::distance( Keys.cbegin( ), lowerBoundIt ) ) - 1;
-            j = static_cast< uint32_t >( eastl::distance( Keys.cbegin( ), upperBoundIt ) ) - 1;
+            i = static_cast< uint32_t >( eastl::distance( Keys.cbegin( ), lowerBoundIt ) );
+            j = static_cast< uint32_t >( eastl::distance( Keys.cbegin( ), upperBoundIt ) );
         }
     }
 }

@@ -10,11 +10,11 @@
 #include <apemode/vk_ext/ImageUploader.Vulkan.h>
 #include <apemode/vk_ext/SamplerManager.Vulkan.h>
 
-#include <NuklearRendererVk.h>
-#include <DebugRendererVk.h>
-#include <SceneRendererVk.h>
-#include <SceneUploaderVk.h>
-#include <SkyboxRendererVk.h>
+#include <viewer/vk/NuklearRendererVk.h>
+#include <viewer/vk/DebugRendererVk.h>
+#include <viewer/vk/SceneRendererVk.h>
+#include <viewer/vk/SceneUploaderVk.h>
+#include <viewer/vk/SkyboxRendererVk.h>
 
 #include <viewer/Scene.h>
 #include <viewer/Camera.h>

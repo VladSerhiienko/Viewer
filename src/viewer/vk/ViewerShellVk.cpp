@@ -92,12 +92,12 @@ ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     //*
     pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new ModelViewCameraController( ) );
     auto pModelViewCameraController = (ModelViewCameraController*)pCamController.get();
-    pModelViewCameraController->Position.x = 50;
-    pModelViewCameraController->Position.y = 50;
-    pModelViewCameraController->Position.z = 50;
-    pModelViewCameraController->PositionDst.x = 50;
-    pModelViewCameraController->PositionDst.y = 50;
-    pModelViewCameraController->PositionDst.z = 50;
+    pModelViewCameraController->Position.x = 350;
+    pModelViewCameraController->Position.y = 350;
+    pModelViewCameraController->Position.z = 350;
+    pModelViewCameraController->PositionDst.x = 500;
+    pModelViewCameraController->PositionDst.y = 500;
+    pModelViewCameraController->PositionDst.z = 500;
     //*/
 }
 
@@ -618,7 +618,12 @@ void ViewerShell::UpdateTime( ) {
 }
 
 void ViewerShell::UpdateScene( ) {
-    mLoadedScene.pScene->UpdateTransformProperties( TotalSecs, bLookAnimation, kAnimStackId, kAnimLayerId );
+    if ( mLoadedScene.pScene ) {
+        mLoadedScene.pScene->UpdateTransformProperties( TotalSecs, bLookAnimation, kAnimStackId, kAnimLayerId );
+        if (auto pAnimFrame = mLoadedScene.pScene->GetAnimatedTransformFrame(kAnimStackId, kAnimLayerId)) {
+            mLoadedScene.pScene->UpdateTransformMatrices(*pAnimFrame);
+        }
+    }
 }
 
 void ViewerShell::UpdateCamera( const apemode::platform::AppInput* pAppInput ) {

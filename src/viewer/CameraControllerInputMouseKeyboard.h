@@ -1,6 +1,6 @@
 #pragma once
 
-#include <CameraControllerInputBase.h>
+#include <viewer/CameraControllerInputBase.h>
 
 namespace apemode {
 
