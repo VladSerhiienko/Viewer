@@ -280,7 +280,8 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
 
         pNkRenderer = apemode::unique_ptr< NuklearRendererBase >( apemode_new apemode::vk::NuklearRenderer( ) );
 
-        auto pFontAsset = FileAssetManager.Acquire( "fonts/iosevka-ss07-medium.ttf" );
+        auto pFontAsset = FileAssetManager.Acquire( "fonts/Mecha.ttf" );
+        // auto pFontAsset = FileAssetManager.Acquire( "fonts/iosevka-ss07-medium.ttf" );
 
         apemode::vk::NuklearRenderer::InitParameters initParamsNk;
         initParamsNk.pNode           = &Surface.Node;
@@ -553,63 +554,67 @@ void ViewerShell::UpdateUI( const VkExtent2D currentExtent, const apemode::platf
     if ( nk_begin( pNkContext, "Viewer", nk_rect( 10, 10, 180, 500 ), windowFlags ) ) {
         auto invViewMatrix = GetMatrix( XMMatrixInverse( nullptr, pCamController->ViewMatrix( ) ) );
 
-        nk_layout_row_dynamic( pNkContext, 10, 1 );
-        nk_labelf( pNkContext,
-                   NK_TEXT_LEFT,
-                   "View: %2.2f %2.2f %2.2f %2.2f ",
-                   invViewMatrix._11,
-                   invViewMatrix._12,
-                   invViewMatrix._13,
-                   invViewMatrix._14 );
-        nk_labelf( pNkContext,
-                   NK_TEXT_LEFT,
-                   "    : %2.2f %2.2f %2.2f %2.2f ",
-                   invViewMatrix._21,
-                   invViewMatrix._22,
-                   invViewMatrix._23,
-                   invViewMatrix._24 );
-        nk_labelf( pNkContext,
-                   NK_TEXT_LEFT,
-                   "    : %2.2f %2.2f %2.2f %2.2f ",
-                   invViewMatrix._31,
-                   invViewMatrix._32,
-                   invViewMatrix._33,
-                   invViewMatrix._34 );
-        nk_labelf( pNkContext,
-                   NK_TEXT_LEFT,
-                   "    : %2.2f %2.2f %2.2f %2.2f ",
-                   invViewMatrix._41,
-                   invViewMatrix._42,
-                   invViewMatrix._43,
-                   invViewMatrix._44 );
+        if ( nk_tree_push( pNkContext, NK_TREE_NODE, "View Matrix", NK_MINIMIZED ) ) {
+            nk_layout_row_dynamic( pNkContext, 10, 1 );
+            nk_labelf( pNkContext,
+                       NK_TEXT_LEFT,
+                       "View: %2.2f %2.2f %2.2f %2.2f ",
+                       invViewMatrix._11,
+                       invViewMatrix._12,
+                       invViewMatrix._13,
+                       invViewMatrix._14 );
+            nk_labelf( pNkContext,
+                       NK_TEXT_LEFT,
+                       "    : %2.2f %2.2f %2.2f %2.2f ",
+                       invViewMatrix._21,
+                       invViewMatrix._22,
+                       invViewMatrix._23,
+                       invViewMatrix._24 );
+            nk_labelf( pNkContext,
+                       NK_TEXT_LEFT,
+                       "    : %2.2f %2.2f %2.2f %2.2f ",
+                       invViewMatrix._31,
+                       invViewMatrix._32,
+                       invViewMatrix._33,
+                       invViewMatrix._34 );
+            nk_labelf( pNkContext,
+                       NK_TEXT_LEFT,
+                       "    : %2.2f %2.2f %2.2f %2.2f ",
+                       invViewMatrix._41,
+                       invViewMatrix._42,
+                       invViewMatrix._43,
+                       invViewMatrix._44 );
 
-        nk_labelf( pNkContext, NK_TEXT_LEFT, "WorldRotationY" );
-        nk_slider_float( pNkContext, 0, &WorldRotationY, apemodexm::XM_2PI, 0.1f );
+            nk_labelf( pNkContext, NK_TEXT_LEFT, "WorldRotationY" );
+            nk_slider_float( pNkContext, 0, &WorldRotationY, apemodexm::XM_2PI, 0.1f );
 
-        nk_labelf( pNkContext, NK_TEXT_LEFT, "LightColorR" );
-        nk_slider_float( pNkContext, 0, &LightColor.x, 1, 0.1f );
+            nk_labelf( pNkContext, NK_TEXT_LEFT, "LightColorR" );
+            nk_slider_float( pNkContext, 0, &LightColor.x, 1, 0.1f );
 
-        nk_labelf( pNkContext, NK_TEXT_LEFT, "LightColorG" );
-        nk_slider_float( pNkContext, 0, &LightColor.y, 1, 0.1f );
+            nk_labelf( pNkContext, NK_TEXT_LEFT, "LightColorG" );
+            nk_slider_float( pNkContext, 0, &LightColor.y, 1, 0.1f );
 
-        nk_labelf( pNkContext, NK_TEXT_LEFT, "LightColorB" );
-        nk_slider_float( pNkContext, 0, &LightColor.z, 1, 0.1f );
+            nk_labelf( pNkContext, NK_TEXT_LEFT, "LightColorB" );
+            nk_slider_float( pNkContext, 0, &LightColor.z, 1, 0.1f );
 
-        nk_labelf( pNkContext, NK_TEXT_LEFT, "LightDirectionX" );
-        nk_slider_float( pNkContext, -1, &LightDirection.x, 1, 0.1f );
+            nk_labelf( pNkContext, NK_TEXT_LEFT, "LightDirectionX" );
+            nk_slider_float( pNkContext, -1, &LightDirection.x, 1, 0.1f );
 
-        nk_labelf( pNkContext, NK_TEXT_LEFT, "LightDirectionY" );
-        nk_slider_float( pNkContext, -1, &LightDirection.y, 1, 0.1f );
+            nk_labelf( pNkContext, NK_TEXT_LEFT, "LightDirectionY" );
+            nk_slider_float( pNkContext, -1, &LightDirection.y, 1, 0.1f );
 
-        nk_labelf( pNkContext, NK_TEXT_LEFT, "LightDirectionZ" );
-        nk_slider_float( pNkContext, -1, &LightDirection.z, 1, 0.1f );
+            nk_labelf( pNkContext, NK_TEXT_LEFT, "LightDirectionZ" );
+            nk_slider_float( pNkContext, -1, &LightDirection.z, 1, 0.1f );
+
+            nk_tree_pop( pNkContext );
+        }
     }
     nk_end( pNkContext );
 }
 
 void ViewerShell::UpdateTime( ) {
-    DeltaSecs = (float) Stopwatch.GetElapsedSeconds( );
-    Stopwatch.Start( );
+    DeltaSecs = 0.00001f; //(float) Stopwatch.GetElapsedSeconds( );
+    // Stopwatch.Start( );
 
     // LogInfo("IncFrame: dt={}", DeltaSecs);
 
@@ -620,8 +625,8 @@ void ViewerShell::UpdateTime( ) {
 void ViewerShell::UpdateScene( ) {
     if ( mLoadedScene.pScene ) {
         mLoadedScene.pScene->UpdateTransformProperties( TotalSecs, bLookAnimation, kAnimStackId, kAnimLayerId );
-        if (auto pAnimFrame = mLoadedScene.pScene->GetAnimatedTransformFrame(kAnimStackId, kAnimLayerId)) {
-            mLoadedScene.pScene->UpdateTransformMatrices(*pAnimFrame);
+        if ( auto pAnimFrame = mLoadedScene.pScene->GetAnimatedTransformFrame( kAnimStackId, kAnimLayerId ) ) {
+            mLoadedScene.pScene->UpdateTransformMatrices( *pAnimFrame );
         }
     }
 }

@@ -68,7 +68,7 @@ bool EnumerateLayersAndExtensions( uint32_t                          eFlags,
     err = vkEnumerateInstanceLayerProperties( &instanceLayeCount, NULL );
     if ( err )
         return false;
-    
+
     if ( instanceLayeCount > 0 ) {
 
         allInstanceLayers.resize( instanceLayeCount );
@@ -90,7 +90,7 @@ bool EnumerateLayersAndExtensions( uint32_t                          eFlags,
             }
         }
     }
-    
+
     const bool bValidate = HasFlagEq( eFlags, apemodevk::GraphicsManager::kEnableValidation );
     if ( bValidate ) {
         /* Look for validation layers */
@@ -613,7 +613,7 @@ void* apemodevk::GraphicsManager::AllocationCallbacks::AllocationFunction( void*
                                                                            size_t                  size,
                                                                            size_t                  alignment,
                                                                            VkSystemAllocationScope allocationScope ) {
-    
+
     platform::LogFmt( platform::LogLevel::Info, "AllocationFunction: + %u bytes", (uint32_t)size );
     return GetGraphicsManager( )->GetAllocator( )->Malloc( size, alignment, __FILE__, __LINE__, __FUNCTION__ );
 }
@@ -623,14 +623,14 @@ void* apemodevk::GraphicsManager::AllocationCallbacks::ReallocationFunction( voi
                                                                              size_t                  size,
                                                                              size_t                  alignment,
                                                                              VkSystemAllocationScope allocationScope ) {
-    
+
     platform::LogFmt( platform::LogLevel::Info, "ReallocationFunction: + %u bytes", (uint32_t)size );
     return GetGraphicsManager( )->GetAllocator( )->Realloc( pOriginal, size, alignment, __FILE__, __LINE__, __FUNCTION__ );
 }
 
 void apemodevk::GraphicsManager::AllocationCallbacks::FreeFunction( void* pUserData,
                                                                     void* pMemory ) {
-    
+
     platform::LogFmt( platform::LogLevel::Info, "FreeFunction: - bytes" );
     return GetGraphicsManager( )->GetAllocator( )->Free( pMemory, __FILE__, __LINE__, __FUNCTION__ );
 }

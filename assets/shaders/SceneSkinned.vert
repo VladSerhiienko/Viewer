@@ -75,9 +75,9 @@ mat4 CalculateAccumulatedBoneTransform( ) {
 }
 
 void main( ) {
-    vec3 modelPosition    = inPosition.xyz * PositionScale.xyz + PositionOffset.xyz;
-    vec4 bindPosePosition = WorldMatrix * vec4( modelPosition, 1.0 );
-    vec4 worldPosition    = CalculateAccumulatedBoneTransform( ) * bindPosePosition;
+    vec3 modelPosition = inPosition.xyz * PositionScale.xyz + PositionOffset.xyz;
+    // vec4 worldPosition = CalculateAccumulatedBoneTransform( ) * WorldMatrix * vec4( modelPosition, 1.0 );
+    vec4 worldPosition = WorldMatrix * CalculateAccumulatedBoneTransform( ) * vec4( modelPosition, 1.0 );
 
     outWorldPosition  = worldPosition.xyz;
     outViewDirection  = normalize( GetCameraWorldPosition( ).xyz - worldPosition.xyz );

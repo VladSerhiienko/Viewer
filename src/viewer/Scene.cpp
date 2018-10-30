@@ -116,29 +116,27 @@ const apemode::SceneNodeAnimCurveIds *apemode::Scene::GetAnimCurveIds( const uin
     return nullptr;
 }
 
-void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
-                                         const SceneNodeTransformFrame &animatedFrame,
-                                         XMMATRIX *                     pSkinMatrices,
-                                         size_t                         skinMatrixCount ) const {
-    // skinMatrices.resize( skin.Links.size( ) );
-    assert(skinMatrixCount >= skin.Links.size( ));
-    for ( size_t i = 0; i < skin.Links.size( ); ++i ) {
-        const SceneSkinLink & skinLink = skin.Links[ i ];
-        const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
-        pSkinMatrices[ i ] = skinLink.InvBindPoseMatrix * skinLinkTransform.WorldMatrix;
-    }
-}
+//void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
+//                                         const SceneNodeTransformFrame &animatedFrame,
+//                                         XMMATRIX *                     pSkinMatrices,
+//                                         size_t                         skinMatrixCount ) const {
+//    assert( skinMatrixCount >= skin.Links.size( ) );
+//    for ( size_t i = 0; i < skin.Links.size( ); ++i ) {
+//        const SceneSkinLink & skinLink = skin.Links[ i ];
+//        const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
+//        pSkinMatrices[ i ] = skinLink.InvBindPoseMatrix * skinLinkTransform.WorldMatrix;
+//    }
+//}
 
 void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
                                          const SceneNodeTransformFrame &animatedFrame,
                                          XMFLOAT4X4 *                   pSkinMatrices,
                                          size_t                         skinMatrixCount ) const {
-
     assert( skinMatrixCount >= skin.Links.size( ) );
     for ( size_t i = 0; i < skin.Links.size( ); ++i ) {
         const SceneSkinLink & skinLink = skin.Links[ i ];
         const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
-        const XMMATRIX skinMatrix = skinLink.InvBindPoseMatrix * skinLinkTransform.WorldMatrix;
+        XMMATRIX skinMatrix = skinLinkTransform.WorldMatrix * skinLink.InvBindPoseMatrix;
         XMStoreFloat4x4( &pSkinMatrices[ i ], skinMatrix );
     }
 }
@@ -511,7 +509,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             assert( IsNotNullAndNotEmpty( pMeshFb->indices( ) ) );
             assert( IsNotNullAndNotEmpty( pMeshFb->subsets( ) ) );
             assert( IsNotNullAndNotEmpty( pMeshFb->submeshes( ) ) );
-            
+
             // std::array<apemode::detail::SkinnedVertex, 128> sv;
             // memcpy(sv.data(), pMeshFb->vertices(), std::min<size_t>(sizeof(sv), pMeshFb->vertices()->size()));
 

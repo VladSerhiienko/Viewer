@@ -348,10 +348,10 @@ struct Scene {
 
     /* Calculates skin matrix palette.
      */
-    void UpdateSkinMatrices( const SceneSkin &              skin,
+    /*void UpdateSkinMatrices( const SceneSkin &              skin,
                              const SceneNodeTransformFrame &animatedFrame,
                              XMMATRIX *                     pSkinMatrices,
-                             size_t                         skinMatrixCount ) const;
+                             size_t                         skinMatrixCount ) const;*/
     void UpdateSkinMatrices( const SceneSkin &              skin,
                              const SceneNodeTransformFrame &animatedFrame,
                              XMFLOAT4X4 *                   pSkinMatrices,

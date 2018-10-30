@@ -215,7 +215,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
 
     pDynamicOffsets[ kDynamicOffset_CameraUBO ] = cameraDataUploadBufferRange.DynamicOffset;
     pDynamicOffsets[ kDynamicOffset_LightUBO ]  = lightDataUploadBufferRange.DynamicOffset;
-    
+
     //
     // DescriptorSet Pass
     //
@@ -246,12 +246,9 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
         assert( node.MeshId != uint32_t( -1 ) );
         auto& mesh = pScene->Meshes[ node.MeshId ];
 
-        if ( mesh.SkinId != uint32_t( -1 ) ) {
-        }
-
         auto pMeshAsset = (const vk::SceneUploader::MeshDeviceAsset*) mesh.pDeviceAsset.get( );
         assert( pMeshAsset );
-        
+
         //
         // Calculate Object (Spatial)
         //
@@ -274,7 +271,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
 
         XMStoreFloat4x4( &objectData.WorldMatrix, worldMatrix );
         XMStoreFloat4x4( &objectData.NormalMatrix, normalMatrix );
-        
+
         //
         // Upload Object (Spatial)
         //
@@ -282,39 +279,40 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
         auto objectDataUploadBufferRange = frame.BufferPool.TSuballocate( objectData );
         assert( VK_NULL_HANDLE != objectDataUploadBufferRange.DescriptorBufferInfo.buffer );
         objectDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( ObjectUBO );
-        
+
         pDynamicOffsets[ kDynamicOffset_ObjectUBO ] = objectDataUploadBufferRange.DynamicOffset;
 
-        apemodevk::HostBufferPool::SuballocResult skinningDataUploadBufferRange;
-        TDescriptorSetBindings< 1 > descriptorSetForSkinnedObj;
         if ( mesh.SkinId != uint32_t( -1 ) ) {
-        
+
             //
             // Calculate SkinnedObject
             //
-            
+
             assert( HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned ) ||
                     HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_PackedSkinned ) );
 
             auto& skin = pScene->Skins[ mesh.SkinId ];
             assert( skin.Links.size( ) <= kBoneCount );
             pScene->UpdateSkinMatrices( skin, *pTransformFrame, BoneMatrices.data( ), kBoneCount );
-            
+
             //
             // Upload SkinnedObject
             //
-            
+
             const size_t boneMatricesSize = sizeof( XMFLOAT4X4[ kBoneCount ] );
+
+            apemodevk::HostBufferPool::SuballocResult skinningDataUploadBufferRange;
             skinningDataUploadBufferRange = frame.BufferPool.Suballocate( &BoneMatrices.front( ), boneMatricesSize );
             assert( VK_NULL_HANDLE != skinningDataUploadBufferRange.DescriptorBufferInfo.buffer );
             skinningDataUploadBufferRange.DescriptorBufferInfo.range = boneMatricesSize;
 
             pDynamicOffsets[ kDynamicOffset_SkinnedObjectUBO ] = skinningDataUploadBufferRange.DynamicOffset;
-            
+
             //
             // DescriptorSet SkinnedObject
             //
-            
+
+            TDescriptorSetBindings< 1 > descriptorSetForSkinnedObj;
             descriptorSetForSkinnedObj.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 0 */
             descriptorSetForSkinnedObj.pBinding[ 0 ].BufferInfo      = skinningDataUploadBufferRange.DescriptorBufferInfo;
 
@@ -337,7 +335,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
                 pMaterial      = &pSceneAsset->MissingMaterial;
                 pMaterialAsset = &pSceneAsset->MissingMaterialAsset;
             }
-        
+
             //
             // MaterialUBO
             //
@@ -363,7 +361,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             materialData.MetallicRoughnessFactor.z = 1;
             materialData.MetallicRoughnessFactor.w = static_cast< float >( pParams->RadianceMap.MipLevels );
             materialData.Flags.x                   = flags;
-        
+
             //
             // Upload Object (Material)
             //
@@ -373,7 +371,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             materialDataUploadBufferRange.DescriptorBufferInfo.range = sizeof( MaterialUBO );
 
             pDynamicOffsets[ kDynamicOffset_MaterialUBO ] = materialDataUploadBufferRange.DynamicOffset;
-            
+
             //
             // DescriptorSet Object
             //
@@ -787,7 +785,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
             return false;
         }
 
-        auto compiledSkinnedVertexShader = compiledVertexShaderAsset->GetContentAsBinaryBuffer( );
+        auto compiledSkinnedVertexShader = compiledSkinnedVertexShaderAsset->GetContentAsBinaryBuffer( );
         assert( compiledSkinnedVertexShader.size( ) );
         pParams->pAssetManager->Release( compiledSkinnedVertexShaderAsset );
         if ( compiledVertexShader.empty( ) ) {
@@ -818,7 +816,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
         VkShaderModuleCreateInfo skinnedVertexShaderCreateInfo;
         InitializeStruct( skinnedVertexShaderCreateInfo );
         skinnedVertexShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledSkinnedVertexShader.data( ) );
-        skinnedVertexShaderCreateInfo.codeSize = compiledVertexShader.size( );
+        skinnedVertexShaderCreateInfo.codeSize = compiledSkinnedVertexShader.size( );
 
         VkShaderModuleCreateInfo fragmentShaderCreateInfo;
         InitializeStruct( fragmentShaderCreateInfo );
@@ -925,8 +923,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
 
     VkDescriptorSetLayout ppDescriptorSetLayouts[ kDescriptorSetCount ] = {nullptr};
     for ( uint32_t i = 0; i < kDescriptorSetCount; ++i ) {
-        THandle< VkDescriptorSetLayout >& hDescriptorSetLayout = hDescriptorSetLayouts[ i ];
-        if ( !hDescriptorSetLayout.Recreate( *pNode, descriptorSetLayoutCreateInfos[ i ] ) ) {
+        if ( !hDescriptorSetLayouts[ i ].Recreate( *pNode, descriptorSetLayoutCreateInfos[ i ] ) ) {
             return false;
         }
 
@@ -934,7 +931,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
         // kDescriptorSetForPass
         // kDescriptorSetForObj
         // kDescriptorSetForSkinnedObj
-        ppDescriptorSetLayouts[ i ] = hDescriptorSetLayout;
+        ppDescriptorSetLayouts[ i ] = hDescriptorSetLayouts[ i ];
     }
 
     //
@@ -965,7 +962,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
         if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned ) ||
              HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_PackedSkinned ) ) {
             assert( !pipeline.second.pPipelineLayout );
-            pipeline.second.pPipelineLayout = hPipelineLayouts[ kPipelineLayoutForStatic ];
+            pipeline.second.pPipelineLayout = hPipelineLayouts[ kPipelineLayoutForSkinned ];
         }
     }
 
@@ -1110,19 +1107,16 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
 
         if ( !frame.DescriptorSetPools[ kDescriptorSetForPass ].Recreate(
                  *pNode, pParams->pDescPool, hDescriptorSetLayouts[ kDescriptorSetForPass ] ) ) {
-            apemodevk::platform::DebugBreak( );
             return false;
         }
 
         if ( !frame.DescriptorSetPools[ kDescriptorSetForObj ].Recreate(
                  *pNode, pParams->pDescPool, hDescriptorSetLayouts[ kDescriptorSetForObj ] ) ) {
-            apemodevk::platform::DebugBreak( );
             return false;
         }
 
         if ( !frame.DescriptorSetPools[ kDescriptorSetForSkinnedObj ].Recreate(
                  *pNode, pParams->pDescPool, hDescriptorSetLayouts[ kDescriptorSetForSkinnedObj ] ) ) {
-            apemodevk::platform::DebugBreak( );
             return false;
         }
     }
