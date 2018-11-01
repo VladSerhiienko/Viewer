@@ -76,11 +76,16 @@ std::vector< const char* > getProcessArguments( ) {
     ppszArgs.push_back("--assets");
     ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Viewer/assets/**");
     ppszArgs.push_back("--scene");
-    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/subzero.fbxp");
-    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/bristleback.fbxp");
+    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/arex-rex-zero1x.fbxp");
+    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/arex-rex-zero1x.fbxp");
+    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/stesla.fbxp");
+    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/littlest-tokyo.fbxp");
+    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/ice-cream-truck.fbxp");
+    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/bristleback.fbxp");
     // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/flare-gun.fbxp");
     // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/forest-house.fbxp");
     // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rainier-ak-3d.fbxp");
+    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/subzero.fbxp");
 
     app.shell = apemode::viewer::vk::CreateViewer( (int) ppszArgs.size( ), ppszArgs.data( ) );
     app.shell->Initialize( &app.surface );

@@ -335,6 +335,10 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
                 pMaterial      = &pSceneAsset->MissingMaterial;
                 pMaterialAsset = &pSceneAsset->MissingMaterialAsset;
             }
+            
+            if ( !pMaterialAsset ) {
+                continue;
+            }
 
             //
             // MaterialUBO
@@ -347,7 +351,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             flags |= pMaterialAsset->hMetallicImgView   ? 1 << 3 : 0;
             flags |= pMaterialAsset->hRoughnessImgView  ? 1 << 4 : 0;
             flags |= pMaterialAsset->hOcclusionImgView  ? 1 << 5 : 0;
-
+            
             MaterialUBO materialData;
             materialData.BaseColorFactor.x         = pMaterial->BaseColorFactor.x;
             materialData.BaseColorFactor.y         = pMaterial->BaseColorFactor.y;

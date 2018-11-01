@@ -138,10 +138,10 @@ struct SceneNodeTransform {
     XMFLOAT3 Rotation             = XMFLOAT3{0, 0, 0};
     XMFLOAT3 ScalingOffset        = XMFLOAT3{0, 0, 0};
     XMFLOAT3 ScalingPivot         = XMFLOAT3{0, 0, 0};
-    XMFLOAT3 Scaling              = XMFLOAT3{0, 0, 0};
+    XMFLOAT3 Scaling              = XMFLOAT3{1, 1, 1};
     XMFLOAT3 GeometricTranslation = XMFLOAT3{0, 0, 0};
     XMFLOAT3 GeometricRotation    = XMFLOAT3{0, 0, 0};
-    XMFLOAT3 GeometricScaling     = XMFLOAT3{0, 0, 0};
+    XMFLOAT3 GeometricScaling     = XMFLOAT3{1, 1, 1};
 
     /* Checks for nans and zero scales.
      * @return True if valid, false otherwise.
@@ -348,10 +348,10 @@ struct Scene {
 
     /* Calculates skin matrix palette.
      */
-    /*void UpdateSkinMatrices( const SceneSkin &              skin,
+    void UpdateSkinMatrices( const SceneSkin &              skin,
                              const SceneNodeTransformFrame &animatedFrame,
                              XMMATRIX *                     pSkinMatrices,
-                             size_t                         skinMatrixCount ) const;*/
+                             size_t                         skinMatrixCount ) const;
     void UpdateSkinMatrices( const SceneSkin &              skin,
                              const SceneNodeTransformFrame &animatedFrame,
                              XMFLOAT4X4 *                   pSkinMatrices,

@@ -613,10 +613,8 @@ void ViewerShell::UpdateUI( const VkExtent2D currentExtent, const apemode::platf
 }
 
 void ViewerShell::UpdateTime( ) {
-    DeltaSecs = 0.00001f; //(float) Stopwatch.GetElapsedSeconds( );
-    // Stopwatch.Start( );
-
-    // LogInfo("IncFrame: dt={}", DeltaSecs);
+    DeltaSecs = (float) Stopwatch.GetElapsedSeconds( );
+    Stopwatch.Start( );
 
     FrameIndex = uint32_t( FrameId % Frames.size( ) );
     TotalSecs += DeltaSecs;
@@ -624,7 +622,7 @@ void ViewerShell::UpdateTime( ) {
 
 void ViewerShell::UpdateScene( ) {
     if ( mLoadedScene.pScene ) {
-        mLoadedScene.pScene->UpdateTransformProperties( TotalSecs, bLookAnimation, kAnimStackId, kAnimLayerId );
+        mLoadedScene.pScene->UpdateTransformProperties( TotalSecs, true, kAnimStackId, kAnimLayerId );
         if ( auto pAnimFrame = mLoadedScene.pScene->GetAnimatedTransformFrame( kAnimStackId, kAnimLayerId ) ) {
             mLoadedScene.pScene->UpdateTransformMatrices( *pAnimFrame );
         }
