@@ -92,12 +92,17 @@ ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     //*
     pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new ModelViewCameraController( ) );
     auto pModelViewCameraController = (ModelViewCameraController*)pCamController.get();
-    pModelViewCameraController->Position.x = 350;
-    pModelViewCameraController->Position.y = 350;
-    pModelViewCameraController->Position.z = 350;
-    pModelViewCameraController->PositionDst.x = 500;
-    pModelViewCameraController->PositionDst.y = 500;
-    pModelViewCameraController->PositionDst.z = 500;
+    
+    float position = 350;
+    float destPosition = 300;
+    
+    pModelViewCameraController->Position.x = position;
+    pModelViewCameraController->Position.y = position;
+    pModelViewCameraController->Position.z = position;
+    pModelViewCameraController->PositionDst.x = destPosition;
+    pModelViewCameraController->PositionDst.y = destPosition;
+    pModelViewCameraController->PositionDst.z = destPosition;
+    
     //*/
 }
 
@@ -712,17 +717,17 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
     worldMatrix = XMMatrixScaling( scale, scale * 2, scale ) * XMMatrixTranslation( 0, scale * 3, 0 );
     XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
     frameData.Color = {0, 1, 0, 1};
-    pDebugRenderer->Render( &renderParamsDbg );
+//    pDebugRenderer->Render( &renderParamsDbg );
 
     worldMatrix = XMMatrixScaling( scale, scale, scale * 2 ) * XMMatrixTranslation( 0, 0, scale * 3 );
     XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
     frameData.Color = {0, 0, 1, 1};
-    pDebugRenderer->Render( &renderParamsDbg );
+//    pDebugRenderer->Render( &renderParamsDbg );
 
     worldMatrix = XMMatrixScaling( scale * 2, scale, scale ) * XMMatrixTranslation( scale * 3, 0, 0 );
     XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
     frameData.Color = {1, 0, 0, 1};
-    pDebugRenderer->Render( &renderParamsDbg );
+//    pDebugRenderer->Render( &renderParamsDbg );
 
     XMMATRIX rootMatrix = XMMatrixRotationY( WorldRotationY );
 

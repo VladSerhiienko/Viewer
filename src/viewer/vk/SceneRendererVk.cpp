@@ -336,8 +336,11 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
                 pMaterialAsset = &pSceneAsset->MissingMaterialAsset;
             }
             
+            // TODO: Fix the bug with missing material assets.
             if ( !pMaterialAsset ) {
-                continue;
+                pMaterialAsset = &pSceneAsset->MissingMaterialAsset;
+                // apemodevk::platform::LogFmt(apemodevk::platform::Err, "Skipping subset with missing material asset.");
+                // continue;
             }
 
             //

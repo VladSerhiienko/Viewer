@@ -76,16 +76,30 @@ std::vector< const char* > getProcessArguments( ) {
     ppszArgs.push_back("--assets");
     ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Viewer/assets/**");
     ppszArgs.push_back("--scene");
-    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/arex-rex-zero1x.fbxp");
-    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/arex-rex-zero1x.fbxp");
-    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/stesla.fbxp");
-    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/littlest-tokyo.fbxp");
-    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/ice-cream-truck.fbxp");
-    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/bristleback.fbxp");
-    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/flare-gun.fbxp");
-    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/forest-house.fbxp");
-    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rainier-ak-3d.fbxp");
-    // ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/subzero.fbxp");
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/sci-fi-girl.fbxp"); // -
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/crystal-stone.fbxp"); // +-
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/integrated-thermostatic-valve-slim-head.fbxp"); // -
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/run-hedgehog-run.fbxp"); // -
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/3000-followers-milestone.fbxp"); // M
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/anak-the-lizardman.fbxp"); // -
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/gecko.fbxp"); // -
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/sphere-bot.fbxp"); // -
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/opel-gt-retopo.fbxp"); // +
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/vanille-flirty-animation.fbxp"); // +
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/awesome-mix-guardians-of-the-galaxy.fbxp"); // +
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/ice-cream-truck.fbxp"); // A+
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rainier-ak-3d.fbxp"); // +
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/flare-gun.fbxp"); // +
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/izzy.fbxp"); // -
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rusty-mecha.fbxp"); // M/A
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/futuristic-safe.fbxp"); // M/A
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/stesla.fbxp"); // M/A
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/littlest-tokyo.fbxp"); // M/A
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/k07-drone.fbxp"); // M+
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/arex-rex-zero1.fbxp"); // M
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/bristleback.fbxp"); // A
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/forest-house.fbxp");
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/subzero.fbxp"); // -
 
     app.shell = apemode::viewer::vk::CreateViewer( (int) ppszArgs.size( ), ppszArgs.data( ) );
     app.shell->Initialize( &app.surface );
