@@ -15,7 +15,7 @@
 namespace apemode {
 class NuklearRendererBase {
 public:
-    enum Theme { Black, White, Red, Blue, Dark };
+    enum Theme { Black, White, WhiteInactive, Red, Blue, Dark };
     enum Impl { kImpl_Unknown, kImpl_GL, kImpl_Vk };
 
     struct Vertex {

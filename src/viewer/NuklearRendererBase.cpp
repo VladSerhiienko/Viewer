@@ -52,12 +52,13 @@ bool apemode::NuklearRendererBase::Init( InitParametersBase *pInitParamsBase ) {
 
     nk_font_atlas *atlas = nullptr;
     FontStashBegin( &atlas );
-    pDefaultFont = nk_font_atlas_add_from_memory( atlas, fontAssetBin.data(), fontAssetBin.size(), 14, 0 );
+    pDefaultFont = nk_font_atlas_add_from_memory( atlas, fontAssetBin.data(), fontAssetBin.size(), 18, 0 );
 
     /* Calls overrided DeviceUploadAtlas(). */
     FontStashEnd( pInitParamsBase );
 
-    SetStyle( Dark );
+    SetStyle( WhiteInactive );
+
     Context.style.font = &pDefaultFont->handle;
     Atlas.default_font = pDefaultFont;
     nk_style_set_font( &Context, &pDefaultFont->handle );
@@ -157,6 +158,36 @@ void apemode::NuklearRendererBase::SetStyle( Theme eTheme ) {
         table[ NK_COLOR_SCROLLBAR_CURSOR_ACTIVE ] = nk_rgba( 160, 160, 160, 255 );
         table[ NK_COLOR_TAB_HEADER ]              = nk_rgba( 180, 180, 180, 255 );
         nk_style_from_table( ctx, table );
+    } else if ( eTheme == WhiteInactive ) {
+        table[ NK_COLOR_TEXT ]                    = nk_rgba( 70, 70, 70, 100 );
+        table[ NK_COLOR_WINDOW ]                  = nk_rgba( 175, 175, 175, 100 );
+        table[ NK_COLOR_HEADER ]                  = nk_rgba( 175, 175, 175, 100 );
+        table[ NK_COLOR_BORDER ]                  = nk_rgba( 0, 0, 0, 100 );
+        table[ NK_COLOR_BUTTON ]                  = nk_rgba( 185, 185, 185, 100 );
+        table[ NK_COLOR_BUTTON_HOVER ]            = nk_rgba( 170, 170, 170, 100 );
+        table[ NK_COLOR_BUTTON_ACTIVE ]           = nk_rgba( 160, 160, 160, 100 );
+        table[ NK_COLOR_TOGGLE ]                  = nk_rgba( 150, 150, 150, 100 );
+        table[ NK_COLOR_TOGGLE_HOVER ]            = nk_rgba( 120, 120, 120, 100 );
+        table[ NK_COLOR_TOGGLE_CURSOR ]           = nk_rgba( 175, 175, 175, 100 );
+        table[ NK_COLOR_SELECT ]                  = nk_rgba( 190, 190, 190, 100 );
+        table[ NK_COLOR_SELECT_ACTIVE ]           = nk_rgba( 175, 175, 175, 100 );
+        table[ NK_COLOR_SLIDER ]                  = nk_rgba( 190, 190, 190, 100 );
+        table[ NK_COLOR_SLIDER_CURSOR ]           = nk_rgba( 80, 80, 80, 100 );
+        table[ NK_COLOR_SLIDER_CURSOR_HOVER ]     = nk_rgba( 70, 70, 70, 100 );
+        table[ NK_COLOR_SLIDER_CURSOR_ACTIVE ]    = nk_rgba( 60, 60, 60, 100 );
+        table[ NK_COLOR_PROPERTY ]                = nk_rgba( 175, 175, 175, 100 );
+        table[ NK_COLOR_EDIT ]                    = nk_rgba( 150, 150, 150, 100 );
+        table[ NK_COLOR_EDIT_CURSOR ]             = nk_rgba( 0, 0, 0, 100 );
+        table[ NK_COLOR_COMBO ]                   = nk_rgba( 175, 175, 175, 100 );
+        table[ NK_COLOR_CHART ]                   = nk_rgba( 160, 160, 160, 100 );
+        table[ NK_COLOR_CHART_COLOR ]             = nk_rgba( 45, 45, 45, 100 );
+        table[ NK_COLOR_CHART_COLOR_HIGHLIGHT ]   = nk_rgba( 255, 0, 0, 100 );
+        table[ NK_COLOR_SCROLLBAR ]               = nk_rgba( 180, 180, 180, 100 );
+        table[ NK_COLOR_SCROLLBAR_CURSOR ]        = nk_rgba( 140, 140, 140, 100 );
+        table[ NK_COLOR_SCROLLBAR_CURSOR_HOVER ]  = nk_rgba( 150, 150, 150, 100 );
+        table[ NK_COLOR_SCROLLBAR_CURSOR_ACTIVE ] = nk_rgba( 160, 160, 160, 100 );
+        table[ NK_COLOR_TAB_HEADER ]              = nk_rgba( 180, 180, 180, 100 );
+        nk_style_from_table( ctx, table );
     } else if ( eTheme == Red ) {
         table[ NK_COLOR_TEXT ]                    = nk_rgba( 190, 190, 190, 255 );
         table[ NK_COLOR_WINDOW ]                  = nk_rgba( 30, 33, 40, 215 );
@@ -253,7 +284,72 @@ void apemode::NuklearRendererBase::SetStyle( Theme eTheme ) {
 }
 
 int apemode::NuklearRendererBase::HandleInput( const apemode::platform::AppInput *pAppInput ) {
-    return 0;
+    struct nk_context *pNkCtx = &Context;
+
+    if ( !pAppInput )
+        return 0;
+
+    if ( pNkCtx->begin && pNkCtx->begin->layout ) {
+        struct nk_rect bounds = pNkCtx->begin->layout->bounds;
+
+        float mx = pAppInput->GetAnalogInput( apemode::platform::kAnalogInput_MouseX ),
+              my = pAppInput->GetAnalogInput( apemode::platform::kAnalogInput_MouseY );
+
+        if ( mx > ( bounds.x + bounds.w ) || mx < ( bounds.x ) || my > ( bounds.y + bounds.h ) || my < ( bounds.y ) ) {
+            SetStyle( WhiteInactive );
+            return 0;
+        }
+    }
+
+    SetStyle( White );
+
+    if ( pAppInput->IsFirstPressed( apemode::platform::kDigitalInput_Mouse0 ) )
+        nk_input_button( pNkCtx,
+                         NK_BUTTON_LEFT,
+                         pAppInput->GetAnalogInput( apemode::platform::kAnalogInput_MouseX ),
+                         pAppInput->GetAnalogInput( apemode::platform::kAnalogInput_MouseY ),
+                         1 );
+    else if ( pAppInput->IsFirstReleased( apemode::platform::kDigitalInput_Mouse0 ) )
+        nk_input_button( pNkCtx,
+                         NK_BUTTON_LEFT,
+                         pAppInput->GetAnalogInput( apemode::platform::kAnalogInput_MouseX ),
+                         pAppInput->GetAnalogInput( apemode::platform::kAnalogInput_MouseY ),
+                         0 );
+
+    if ( pAppInput->IsFirstPressed( apemode::platform::kDigitalInput_Mouse1 ) )
+        nk_input_button( pNkCtx,
+                         NK_BUTTON_RIGHT,
+                         pAppInput->GetAnalogInput( apemode::platform::kAnalogInput_MouseX ),
+                         pAppInput->GetAnalogInput( apemode::platform::kAnalogInput_MouseY ),
+                         1 );
+    else if ( pAppInput->IsFirstReleased( apemode::platform::kDigitalInput_Mouse1 ) )
+        nk_input_button( pNkCtx,
+                         NK_BUTTON_RIGHT,
+                         pAppInput->GetAnalogInput( apemode::platform::kAnalogInput_MouseX ),
+                         pAppInput->GetAnalogInput( apemode::platform::kAnalogInput_MouseY ),
+                         0 );
+
+    nk_input_motion( pNkCtx,
+                     pAppInput->GetAnalogInput( apemode::platform::kAnalogInput_MouseX ),
+                     pAppInput->GetAnalogInput( apemode::platform::kAnalogInput_MouseY ) );
+
+   /*
+   struct KeyMap {
+        nk_keys                         NkKey;
+        apemode::platform::DigitalInput Key;
+    };
+
+    for ( KeyMap kk : {KeyMap{NK_KEY_SHIFT, apemode::platform::kDigitalInput_KeyLeftShift},
+                       KeyMap{NK_KEY_SHIFT, apemode::platform::kDigitalInput_KeyRightShift}} ) {
+
+        if ( pAppInput->IsFirstPressed( kk.Key ) )
+            nk_input_key( pNkCtx, kk.NkKey, 1 );
+        else if ( pAppInput->IsFirstReleased( kk.Key ) )
+            nk_input_key( pNkCtx, kk.NkKey, 0 );
+    }
+    */
+
+    return 1;
 }
 
 // int apemode::NuklearRendererBase::HandleEvent( SDL_Event *pSdlEvent ) {

@@ -172,7 +172,7 @@ SceneNodeTransformFrame *apemode::Scene::UpdateTransformProperties( const float 
                                                                     const bool     bLoop,
                                                                     const uint16_t animStackId,
                                                                     const uint16_t animLayerId ) {
-    
+
     if ( SceneNodeTransformFrame *pAnimTransformFrame = GetAnimatedTransformFrame( animStackId, animLayerId ) ) {
         *pAnimTransformFrame = BindPoseFrame;
         // assert( pAnimTransformFrame->Transforms.size( ) == BindPoseFrame.Transforms.size( ) );
@@ -186,7 +186,7 @@ SceneNodeTransformFrame *apemode::Scene::UpdateTransformProperties( const float 
                 for ( uint32_t propertyIndex = 0; propertyIndex < SceneAnimCurve::ePropertyCount; propertyIndex += SceneAnimCurve::eChannelCount ) {
                     const SceneAnimCurve::EProperty eProperty = SceneAnimCurve::EProperty( propertyIndex );
                     const float convertionFactor = IsRotationProperty( eProperty ) ? toRadsFactor : 1.0f;
-                    
+
                     XMFLOAT3 *pProperty = MapProperty( eProperty, &animTransformComposite.Properties );
 
                     const uint32_t animCurveIdX = animCurveIds->AnimCurveIds[ propertyIndex + SceneAnimCurve::eChannel_X ];
@@ -196,15 +196,15 @@ SceneNodeTransformFrame *apemode::Scene::UpdateTransformProperties( const float 
                     const SceneAnimCurve *pAnimCurveX = ( animCurveIdX != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdX ] ) : nullptr;
                     const SceneAnimCurve *pAnimCurveY = ( animCurveIdY != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdY ] ) : nullptr;
                     const SceneAnimCurve *pAnimCurveZ = ( animCurveIdZ != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdZ ] ) : nullptr;
-                    
+
                     assert( !pAnimCurveX || pAnimCurveX->eProperty == eProperty && pAnimCurveX->eChannel == SceneAnimCurve::eChannel_X );
                     assert( !pAnimCurveY || pAnimCurveY->eProperty == eProperty && pAnimCurveY->eChannel == SceneAnimCurve::eChannel_Y );
                     assert( !pAnimCurveZ || pAnimCurveZ->eProperty == eProperty && pAnimCurveZ->eChannel == SceneAnimCurve::eChannel_Z );
-                    
+
                     pProperty->x = pAnimCurveX ? ( pAnimCurveX->Calculate( time, bLoop ) * convertionFactor ) : pProperty->x;
                     pProperty->y = pAnimCurveY ? ( pAnimCurveY->Calculate( time, bLoop ) * convertionFactor ) : pProperty->y;
                     pProperty->z = pAnimCurveZ ? ( pAnimCurveZ->Calculate( time, bLoop ) * convertionFactor ) : pProperty->z;
-                    
+
                     assert( animTransformComposite.Properties.Validate( ) );
                 }
             }
@@ -513,7 +513,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
 
             auto &animTransformFrame = pScene->AnimLayerIdToTransformFrames[ animLayerId.AnimLayerCompositeId ];
             pScene->InitializeTransformFrame( animTransformFrame );
-            
+
             const SceneNodeTransformFrame &bindPoseFrame = pScene->BindPoseFrame;
             animTransformFrame = bindPoseFrame;
         }
@@ -604,7 +604,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             mesh.SkinId = pMeshFb->skin_id( );
         }
     }
-    
+
     if ( IsNotNullAndNotEmpty( pSkinsFb ) ) {
         pScene->Skins.resize( pSkinsFb->size() );
 
@@ -629,11 +629,11 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                                         std::back_inserter( skin.Links ),
                                         [&]( const uint32_t linkNodeId ) {
                                             // LogInfo( " + link {}", linkNodeId);
-                                            
+
                                             auto &bindPoseFrame = pScene->BindPoseFrame;
                                             assert( linkNodeId < bindPoseFrame.Transforms.size( ) );
                                             const auto bindPoseMatrix = bindPoseFrame.Transforms[ linkNodeId ].WorldMatrix;
-                                            
+
                                             SceneSkinLink skinLink;
                                             skinLink.LinkId = linkNodeId;
                                             skinLink.InvBindPoseMatrix = XMMatrixInverse( nullptr, bindPoseMatrix );
@@ -791,7 +791,7 @@ float InterpolateValue( float time, const SceneAnimCurveKey &a, const SceneAnimC
     switch ( a.eInterpMode ) {
         case apemode::SceneAnimCurveKey::eInterpolationMode_Const:
             return a.Value;
-            
+
         case apemode::SceneAnimCurveKey::eInterpolationMode_Linear: {
             const float l = ( time - a.Time ) / ( b.Time - a.Time );
             const float t = ( b.Value - a.Value ) * l + a.Value;
@@ -809,14 +809,14 @@ float apemode::SceneAnimCurve::Calculate( float time, const bool bLoop ) const {
 
     uint32_t i, j;
     GetKeyIndices( time, bLoop, i, j );
-    
+
     if ( i == j ) {
         const SceneAnimCurveKey a = Keys.at( i ).second;
         return a.Value;
     } else {
         const SceneAnimCurveKey a = Keys.at( i ).second;
         const SceneAnimCurveKey b = Keys.at( j ).second;
-        
+
         const float interpolatedValue = InterpolateValue( time, a, b );
         assert( !isnan( interpolatedValue) );
         return interpolatedValue;

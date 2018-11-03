@@ -92,17 +92,17 @@ ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     //*
     pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new ModelViewCameraController( ) );
     auto pModelViewCameraController = (ModelViewCameraController*)pCamController.get();
-    
+
     float position = 350;
     float destPosition = 10;
-    
+
     pModelViewCameraController->Position.x = position;
     pModelViewCameraController->Position.y = position;
     pModelViewCameraController->Position.z = position;
     pModelViewCameraController->PositionDst.x = destPosition;
     pModelViewCameraController->PositionDst.y = destPosition;
     pModelViewCameraController->PositionDst.z = destPosition;
-    
+
     //*/
 }
 
@@ -323,6 +323,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         /*
         --assets "/Users/vlad.serhiienko/Projects/Home/Viewer/assets" --scene
         "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rainier-ak-3d.fbxp"
+        --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/sphere-bot.fbxp"
         --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/bristleback-dota-fan-art.fbxp"
         --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/wild-west-motorcycle.fbxp"
         --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/wild-west-sniper-rifle.fbxp"
@@ -550,8 +551,6 @@ bool apemode::viewer::vk::ViewerShell::OnResized( ) {
 
 void ViewerShell::UpdateUI( const VkExtent2D currentExtent, const apemode::platform::AppInput* pAppInput ) {
 
-    pNkRenderer->HandleInput( pAppInput );
-
     auto pNkContext = &pNkRenderer->Context;
 
     constexpr uint32_t windowFlags = NK_WINDOW_BORDER | NK_WINDOW_NO_SCROLLBAR | NK_WINDOW_MOVABLE;
@@ -615,6 +614,8 @@ void ViewerShell::UpdateUI( const VkExtent2D currentExtent, const apemode::platf
         }
     }
     nk_end( pNkContext );
+
+    bIsUsingUI = 1 == pNkRenderer->HandleInput( pAppInput );
 }
 
 void ViewerShell::UpdateTime( ) {
@@ -638,9 +639,12 @@ void ViewerShell::UpdateCamera( const apemode::platform::AppInput* pAppInput ) {
     XMFLOAT2 extentF{float( Surface.Swapchain.ImgExtent.width ), float( Surface.Swapchain.ImgExtent.height )};
     pCamInput->Update( DeltaSecs, *pAppInput, extentF );
 
+    if ( !bIsUsingUI ) {
+        pCamController->Orbit( pCamInput->OrbitDelta );
+        pCamController->Dolly( pCamInput->DollyDelta );
+    }
+
     pCamController->Orbit( {0.01f * DeltaSecs, 0} );
-    pCamController->Orbit( pCamInput->OrbitDelta );
-    pCamController->Dolly( pCamInput->DollyDelta );
     pCamController->Update( DeltaSecs );
 }
 

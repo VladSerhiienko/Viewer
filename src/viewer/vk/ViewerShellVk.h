@@ -108,6 +108,7 @@ namespace vk {
         const uint16_t kAnimStackId   = 2;
         const bool     bLookAnimation = true;
         LoadedScene    mLoadedScene;
+        bool           bIsUsingUI = false;
     };
 
 } // namespace vk
