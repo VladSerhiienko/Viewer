@@ -77,7 +77,8 @@ public:
     static constexpr uint32_t kPipelineLayoutForSkinned = 1;
     
     // TODO: Set as pecialization constant.
-    static constexpr uint32_t kBoneCount = 64;
+    // static constexpr uint32_t kBoneCount = 64;
+    static const uint32_t kMaxBoneCount = 128;
 
     struct Frame {
         apemodevk::HostBufferPool    BufferPool;
@@ -86,12 +87,15 @@ public:
 
     struct PipelineComposite {
         enum FlagBits {
-            kFlag_VertexType_Static        = 1 << 0,
-            kFlag_VertexType_StaticSkinned = 1 << 1,
-            kFlag_VertexType_Packed        = 1 << 2,
-            kFlag_VertexType_PackedSkinned = 1 << 3,
-            kFlag_BlendType_Disabled       = 0,
-            kFlag_BlendType_Add            = 1 << 4,
+            /* Vertex */
+            kFlag_VertexType_Static         = 1 << 0,
+            kFlag_VertexType_StaticSkinned4 = 1 << 1,
+            kFlag_VertexType_StaticSkinned8 = 1 << 2,
+            kFlag_VertexType_Packed         = 1 << 3,
+            kFlag_VertexType_PackedSkinned  = 1 << 4,
+            /* Blend */
+            kFlag_BlendType_Disabled = 0,
+            kFlag_BlendType_Add      = 1 << 5,
         };
 
         using Flags = eastl::underlying_type< FlagBits >::type;
@@ -119,7 +123,8 @@ public:
     apemodevk::THandle< VkPipelineLayout >           hPipelineLayouts[ kPipelineLayoutCount ];
     apemodevk::THandle< VkDescriptorSetLayout >      hDescriptorSetLayouts[ kDescriptorSetCount ];
     apemodevk::vector_multimap< uint32_t, uint32_t > SortedNodeIds;
-    apemodevk::array< XMFLOAT4X4, kBoneCount >       BoneMatrices;
+    apemodevk::vector< XMFLOAT4X4 >                  BoneOffsetMatrices;
+    apemodevk::vector< XMFLOAT4X4 >                  BoneNormalMatrices;
 };
 
 } // namespace vk

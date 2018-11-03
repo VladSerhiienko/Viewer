@@ -111,7 +111,12 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
                 break;
             case apemode::detail::eVertexType_Skinned:
                 SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >(
-                    uint32_t( PipelineComposite::kFlag_VertexType_StaticSkinned | PipelineComposite::kFlag_BlendType_Disabled ),
+                    uint32_t( PipelineComposite::kFlag_VertexType_StaticSkinned4 | PipelineComposite::kFlag_BlendType_Disabled ),
+                    uint32_t( node.Id ) ) );
+                break;
+            case apemode::detail::eVertexType_Skinned8:
+                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >(
+                    uint32_t( PipelineComposite::kFlag_VertexType_StaticSkinned8 | PipelineComposite::kFlag_BlendType_Disabled ),
                     uint32_t( node.Id ) ) );
                 break;
             case apemode::detail::eVertexType_Packed:
@@ -130,10 +135,12 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
     }
 
     for ( PipelineComposite::Flags ePipelineFlags :
-          {PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_StaticSkinned | PipelineComposite::kFlag_BlendType_Disabled} ) {
+          {//PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled,
+           //PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
+           //PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_StaticSkinned4 | PipelineComposite::kFlag_BlendType_Disabled,
+           //PipelineComposite::kFlag_VertexType_StaticSkinned8 | PipelineComposite::kFlag_BlendType_Disabled
+          } ) {
         auto pipelineCompositeIt = PipelineComposites.find( ePipelineFlags );
         if ( pipelineCompositeIt != PipelineComposites.end( ) ) {
             if ( !RenderScene( pScene, pParams, pipelineCompositeIt->second, pTransformFrame, pSceneAsset ) )
@@ -150,8 +157,10 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
                                               const apemode::SceneNodeTransformFrame* pTransformFrame,
                                               const vk::SceneUploader::DeviceAsset*   pSceneAsset ) {
     using namespace apemodevk;
+    
+    const PipelineComposite::FlagBits eBits = PipelineComposite::FlagBits(pipeline.eFlags);
 
-    auto nodeRange = SortedNodeIds.equal_range( pipeline.eFlags );
+    auto nodeRange = SortedNodeIds.equal_range( eBits );
     size_t nodeCount = size_t( eastl::distance( nodeRange.first, nodeRange.second ) );
     if ( !nodeCount )
         return true;
@@ -186,10 +195,11 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
         kDynamicOffset_LightUBO = 1,
         kDynamicOffset_ObjectUBO = 2,
         kDynamicOffset_MaterialUBO = 3,
-        kDynamicOffset_SkinnedObjectUBO = 4,
+        kDynamicOffset_BoneOffsetsUBO = 4,
+        kDynamicOffset_BoneNormalsUBO = 5,
         kDynamicOffsetStaticCount = 4,
-        kDynamicOffsetSkinnedCount = 5,
-        kDynamicOffsetCount = 5,
+        kDynamicOffsetSkinnedCount = 6,
+        kDynamicOffsetCount = 6,
     };
 
     VkDescriptorSet ppDescriptorSets[ kDescriptorSetCount ] = {nullptr};
@@ -246,6 +256,17 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
         assert( node.MeshId != uint32_t( -1 ) );
         auto& mesh = pScene->Meshes[ node.MeshId ];
 
+        if ( mesh.SkinId != uint32_t( -1 ) ) {
+            auto& skin = pScene->Skins[ mesh.SkinId ];
+            if ( skin.Links.size( ) > kMaxBoneCount ) {
+                apemodevk::platform::LogFmt( apemodevk::platform::Err,
+                                             "The skin is too big, supported skeleton = %u, received = %u",
+                                             uint32_t( kMaxBoneCount ),
+                                             uint32_t( skin.Links.size( ) ) );
+                continue;
+            }
+        }
+
         auto pMeshAsset = (const vk::SceneUploader::MeshDeviceAsset*) mesh.pDeviceAsset.get( );
         assert( pMeshAsset );
 
@@ -271,6 +292,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
 
         XMStoreFloat4x4( &objectData.WorldMatrix, worldMatrix );
         XMStoreFloat4x4( &objectData.NormalMatrix, normalMatrix );
+        // XMStoreFloat3x3( &objectData.NormalMatrix, normalMatrix );
 
         //
         // Upload Object (Spatial)
@@ -288,33 +310,48 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             // Calculate SkinnedObject
             //
 
-            assert( HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned ) ||
+            assert( HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned8 ) ||
+                    HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned4 ) ||
                     HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_PackedSkinned ) );
 
             auto& skin = pScene->Skins[ mesh.SkinId ];
-            assert( skin.Links.size( ) <= kBoneCount );
-            pScene->UpdateSkinMatrices( skin, *pTransformFrame, BoneMatrices.data( ), kBoneCount );
+            assert( skin.Links.size( ) <= BoneOffsetMatrices.size( ) );
+            assert( skin.Links.size( ) <= BoneNormalMatrices.size( ) );
+
+            pScene->UpdateSkinMatrices( skin, *pTransformFrame, BoneOffsetMatrices.data( ),
+                                                                BoneNormalMatrices.data( ),
+                                                                kMaxBoneCount );
 
             //
             // Upload SkinnedObject
             //
 
-            const size_t boneMatricesSize = sizeof( XMFLOAT4X4[ kBoneCount ] );
+            const uint32_t boneOffsetsRange = uint32_t( sizeof( XMFLOAT4X4 ) * kMaxBoneCount );
+            const uint32_t boneNormalsRange = uint32_t( sizeof( XMFLOAT4X4 ) * kMaxBoneCount );
 
-            apemodevk::HostBufferPool::SuballocResult skinningDataUploadBufferRange;
-            skinningDataUploadBufferRange = frame.BufferPool.Suballocate( &BoneMatrices.front( ), boneMatricesSize );
-            assert( VK_NULL_HANDLE != skinningDataUploadBufferRange.DescriptorBufferInfo.buffer );
-            skinningDataUploadBufferRange.DescriptorBufferInfo.range = boneMatricesSize;
+            apemodevk::HostBufferPool::SuballocResult boneOffsetsUploadBufferRange;
+            boneOffsetsUploadBufferRange = frame.BufferPool.Suballocate( BoneOffsetMatrices.data( ), boneOffsetsRange );
+            assert( VK_NULL_HANDLE != boneOffsetsUploadBufferRange.DescriptorBufferInfo.buffer );
+            boneOffsetsUploadBufferRange.DescriptorBufferInfo.range = boneOffsetsRange;
 
-            pDynamicOffsets[ kDynamicOffset_SkinnedObjectUBO ] = skinningDataUploadBufferRange.DynamicOffset;
+            apemodevk::HostBufferPool::SuballocResult boneNormalsUploadBufferRange;
+            boneNormalsUploadBufferRange = frame.BufferPool.Suballocate( BoneNormalMatrices.data( ), boneNormalsRange );
+            assert( VK_NULL_HANDLE != boneNormalsUploadBufferRange.DescriptorBufferInfo.buffer );
+            boneNormalsUploadBufferRange.DescriptorBufferInfo.range = boneNormalsRange;
+
+            pDynamicOffsets[ kDynamicOffset_BoneOffsetsUBO ] = boneOffsetsUploadBufferRange.DynamicOffset;
+            pDynamicOffsets[ kDynamicOffset_BoneNormalsUBO ] = boneNormalsUploadBufferRange.DynamicOffset;
 
             //
             // DescriptorSet SkinnedObject
             //
 
-            TDescriptorSetBindings< 1 > descriptorSetForSkinnedObj;
+            TDescriptorSetBindings< 2 > descriptorSetForSkinnedObj;
             descriptorSetForSkinnedObj.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 0 */
-            descriptorSetForSkinnedObj.pBinding[ 0 ].BufferInfo      = skinningDataUploadBufferRange.DescriptorBufferInfo;
+            descriptorSetForSkinnedObj.pBinding[ 0 ].BufferInfo      = boneOffsetsUploadBufferRange.DescriptorBufferInfo;
+            
+            descriptorSetForSkinnedObj.pBinding[ 1 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 1 */
+            descriptorSetForSkinnedObj.pBinding[ 1 ].BufferInfo      = boneNormalsUploadBufferRange.DescriptorBufferInfo;
 
             ppDescriptorSets[ kDescriptorSetForSkinnedObj ] =
                 frame.DescriptorSetPools[ kDescriptorSetForSkinnedObj ].GetDescriptorSet( &descriptorSetForSkinnedObj );
@@ -648,6 +685,63 @@ void TSetPipelineVertexInputStateCreateInfo< apemode::detail::SkinnedVertex >(
 }
 
 template <>
+void TSetPipelineVertexInputStateCreateInfo< apemode::detail::SkinnedVertex8 >(
+    VkPipelineVertexInputStateCreateInfo* pPipelineVertexInputState,
+    VkVertexInputBindingDescription*      pVertexBindingDescriptions,
+    uint32_t                              maxVertexBindingDescriptions,
+    VkVertexInputAttributeDescription*    pVertexInputAttributeDescriptions,
+    uint32_t                              maxVertexInputAttributeDescriptions ) {
+    using V = apemode::detail::SkinnedVertex8;
+
+    pVertexBindingDescriptions[ 0 ].binding   = 0;
+    pVertexBindingDescriptions[ 0 ].stride    = sizeof( V );
+    pVertexBindingDescriptions[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    pVertexInputAttributeDescriptions[ 0 ].location = 0;
+    pVertexInputAttributeDescriptions[ 0 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 0 ].offset   = ( size_t )( &( (V*) 0 )->position );
+
+    pVertexInputAttributeDescriptions[ 1 ].location = 1;
+    pVertexInputAttributeDescriptions[ 1 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 1 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 1 ].offset   = ( size_t )( &( (V*) 0 )->normal );
+
+    pVertexInputAttributeDescriptions[ 2 ].location = 2;
+    pVertexInputAttributeDescriptions[ 2 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 2 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 2 ].offset   = ( size_t )( &( (V*) 0 )->tangent );
+
+    pVertexInputAttributeDescriptions[ 3 ].location = 3;
+    pVertexInputAttributeDescriptions[ 3 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 3 ].format   = VK_FORMAT_R32G32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 3 ].offset   = ( size_t )( &( (V*) 0 )->texcoords );
+
+    pVertexInputAttributeDescriptions[ 4 ].location = 4;
+    pVertexInputAttributeDescriptions[ 4 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 4 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 4 ].offset   = ( size_t )( &( (V*) 0 )->weights0 );
+
+    pVertexInputAttributeDescriptions[ 5 ].location = 5;
+    pVertexInputAttributeDescriptions[ 5 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 5 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 5 ].offset   = ( size_t )( &( (V*) 0 )->weights1 );
+
+    pVertexInputAttributeDescriptions[ 6 ].location = 6;
+    pVertexInputAttributeDescriptions[ 6 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 6 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 6 ].offset   = ( size_t )( &( (V*) 0 )->indices0 );
+
+    pVertexInputAttributeDescriptions[ 7 ].location = 7;
+    pVertexInputAttributeDescriptions[ 7 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
+    pVertexInputAttributeDescriptions[ 7 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+    pVertexInputAttributeDescriptions[ 7 ].offset   = ( size_t )( &( (V*) 0 )->indices1 );
+
+    pPipelineVertexInputState->vertexBindingDescriptionCount   = 1;
+    pPipelineVertexInputState->vertexAttributeDescriptionCount = 8;
+}
+
+template <>
 void TSetPipelineVertexInputStateCreateInfo< apemode::detail::PackedVertex >(
     VkPipelineVertexInputStateCreateInfo* pPipelineVertexInputState,
     VkVertexInputBindingDescription*      pVertexBindingDescriptions,
@@ -731,6 +825,43 @@ void TSetPipelineVertexInputStateCreateInfo< apemode::detail::PackedSkinnedVerte
     pPipelineVertexInputState->vertexAttributeDescriptionCount = 6;
 }
 
+apemode::vector< uint8_t > GetPrecompiledShader( const apemode::platform::IAssetManager* pAssetManager,
+                                                 const char*                             pszPrecompiledShaderAsset ) {
+    auto compiledVertexShaderAsset = pAssetManager->Acquire( pszPrecompiledShaderAsset );
+    assert( compiledVertexShaderAsset );
+    if ( !compiledVertexShaderAsset ) {
+        apemodevk::platform::DebugBreak( );
+        return {};
+    }
+
+    auto compiledVertexShader = compiledVertexShaderAsset->GetContentAsBinaryBuffer( );
+    assert( compiledVertexShader.size( ) );
+    pAssetManager->Release( compiledVertexShaderAsset );
+    if ( compiledVertexShader.empty( ) ) {
+        apemodevk::platform::DebugBreak( );
+        return {};
+    }
+
+    return eastl::move( compiledVertexShader );
+}
+
+apemodevk::THandle< VkShaderModule > CompileShader( apemodevk::GraphicsDevice*              pNode,
+                                                    const apemode::platform::IAssetManager* pAssetManager,
+                                                    const char*                             pszPrecompiledShaderAsset ) {
+    apemodevk::THandle< VkShaderModule > shaderModule;
+
+    auto precompiledShader = GetPrecompiledShader( pAssetManager, pszPrecompiledShaderAsset );
+    if ( !precompiledShader.empty( ) ) {
+        VkShaderModuleCreateInfo shaderModuleCreateInfo;
+        apemodevk::InitializeStruct( shaderModuleCreateInfo );
+        shaderModuleCreateInfo.pCode = reinterpret_cast< const uint32_t* >( precompiledShader.data( ) );
+        shaderModuleCreateInfo.codeSize = precompiledShader.size( );
+        shaderModule.Recreate( pNode->hLogicalDevice, shaderModuleCreateInfo );
+    }
+
+    return eastl::move( shaderModule );
+}
+
 } // namespace
 
 bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParamsBase ) {
@@ -746,6 +877,9 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
 
     pNode = pParams->pNode;
 
+    BoneOffsetMatrices.resize( kMaxBoneCount );
+    BoneNormalMatrices.resize( kMaxBoneCount );
+
     //
     // Initialize all the configurations that are supported.
     // TODO: Add blending configurations.
@@ -757,7 +891,8 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
            // PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled,
            // PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
            PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_StaticSkinned | PipelineComposite::kFlag_BlendType_Disabled} ) {
+           PipelineComposite::kFlag_VertexType_StaticSkinned4 | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_StaticSkinned8 | PipelineComposite::kFlag_BlendType_Disabled} ) {
         PipelineComposites[ ePipelineFlags ].eFlags = ePipelineFlags;
     }
 
@@ -766,77 +901,33 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
     // TODO: Remove skinning shader if it is not needed.
     //
 
-    THandle< VkShaderModule > hVertexShaderModule;
-    THandle< VkShaderModule > hSkinnedVertexShaderModule;
-    THandle< VkShaderModule > hFragmentShaderModule;
-    {
-        auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/Scene.vert.spv" );
-        assert( compiledVertexShaderAsset );
-        if ( !compiledVertexShaderAsset ) {
-            apemodevk::platform::DebugBreak( );
-            return false;
-        }
+    THandle< VkShaderModule > hVertexShaderModule = CompileShader( pNode, pParams->pAssetManager, "shaders/spv/Scene.vert.spv" );
+    THandle< VkShaderModule > hSkinnedVertexShaderModule = CompileShader( pNode, pParams->pAssetManager, "shaders/spv/SceneSkinned.vert.spv" );
+    THandle< VkShaderModule > hSkinned8VertexShaderModule = CompileShader( pNode, pParams->pAssetManager, "shaders/spv/SceneSkinned8.vert.spv" );
+    THandle< VkShaderModule > hFragmentShaderModule = CompileShader( pNode, pParams->pAssetManager, "shaders/spv/Scene.frag.spv" );
 
-        auto compiledVertexShader = compiledVertexShaderAsset->GetContentAsBinaryBuffer( );
-        assert( compiledVertexShader.size( ) );
-        pParams->pAssetManager->Release( compiledVertexShaderAsset );
-        if ( compiledVertexShader.empty( ) ) {
-            apemodevk::platform::DebugBreak( );
-            return false;
-        }
-
-        auto compiledSkinnedVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/SceneSkinned.vert.spv" );
-        assert( compiledSkinnedVertexShaderAsset );
-        if ( !compiledSkinnedVertexShaderAsset ) {
-            apemodevk::platform::DebugBreak( );
-            return false;
-        }
-
-        auto compiledSkinnedVertexShader = compiledSkinnedVertexShaderAsset->GetContentAsBinaryBuffer( );
-        assert( compiledSkinnedVertexShader.size( ) );
-        pParams->pAssetManager->Release( compiledSkinnedVertexShaderAsset );
-        if ( compiledVertexShader.empty( ) ) {
-            apemodevk::platform::DebugBreak( );
-            return false;
-        }
-
-        auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/Scene.frag.spv" );
-        assert( compiledFragmentShaderAsset );
-        if ( !compiledFragmentShaderAsset ) {
-            apemodevk::platform::DebugBreak( );
-            return false;
-        }
-
-        auto compiledFragmentShader = compiledFragmentShaderAsset->GetContentAsBinaryBuffer( );
-        assert( compiledFragmentShader.size( ) );
-        pParams->pAssetManager->Release( compiledFragmentShaderAsset );
-        if ( compiledFragmentShader.empty( ) ) {
-            apemodevk::platform::DebugBreak( );
-            return false;
-        }
-
-        VkShaderModuleCreateInfo vertexShaderCreateInfo;
-        InitializeStruct( vertexShaderCreateInfo );
-        vertexShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledVertexShader.data( ) );
-        vertexShaderCreateInfo.codeSize = compiledVertexShader.size( );
-
-        VkShaderModuleCreateInfo skinnedVertexShaderCreateInfo;
-        InitializeStruct( skinnedVertexShaderCreateInfo );
-        skinnedVertexShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledSkinnedVertexShader.data( ) );
-        skinnedVertexShaderCreateInfo.codeSize = compiledSkinnedVertexShader.size( );
-
-        VkShaderModuleCreateInfo fragmentShaderCreateInfo;
-        InitializeStruct( fragmentShaderCreateInfo );
-        fragmentShaderCreateInfo.pCode    = reinterpret_cast< const uint32_t* >( compiledFragmentShader.data( ) );
-        fragmentShaderCreateInfo.codeSize = compiledFragmentShader.size( );
-
-        if ( !hVertexShaderModule.Recreate( pNode->hLogicalDevice, vertexShaderCreateInfo ) ||
-             !hSkinnedVertexShaderModule.Recreate( pNode->hLogicalDevice, skinnedVertexShaderCreateInfo ) ||
-             !hFragmentShaderModule.Recreate( pNode->hLogicalDevice, fragmentShaderCreateInfo ) ) {
-            apemodevk::platform::DebugBreak( );
-            return false;
-        }
+    if ( hVertexShaderModule.IsNull( ) ||
+         hSkinnedVertexShaderModule.IsNull( ) ||
+         hSkinned8VertexShaderModule.IsNull( ) ||
+         hFragmentShaderModule.IsNull( ) ) {
+        return false;
     }
+
+    VkSpecializationInfo specializationInfo;
+    InitializeStruct( specializationInfo );
+
+    VkSpecializationMapEntry boneCountEntry;
+    InitializeStruct( boneCountEntry );
+    boneCountEntry.constantID = 0;
+    boneCountEntry.offset     = 0;
+    boneCountEntry.size       = sizeof( int );
+
+    const int maxBoneCount = int( kMaxBoneCount );
+
+    specializationInfo.pMapEntries   = &boneCountEntry;
+    specializationInfo.mapEntryCount = 1;
+    specializationInfo.pData         = &maxBoneCount;
+    specializationInfo.dataSize      = sizeof( maxBoneCount );
 
     //
     // Set 0 (Pass)
@@ -906,13 +997,18 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
     //
     // layout( std140, set = 3, binding = 0 ) uniform SkinnedObjectUBO;
 
-    VkDescriptorSetLayoutBinding descriptorSetLayoutBindingsForSkinnedObj[ 1 ];
+    VkDescriptorSetLayoutBinding descriptorSetLayoutBindingsForSkinnedObj[ 2 ];
     InitializeStruct( descriptorSetLayoutBindingsForSkinnedObj );
 
     descriptorSetLayoutBindingsForSkinnedObj[ 0 ].binding         = 0;
     descriptorSetLayoutBindingsForSkinnedObj[ 0 ].descriptorCount = 1;
     descriptorSetLayoutBindingsForSkinnedObj[ 0 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
     descriptorSetLayoutBindingsForSkinnedObj[ 0 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT;
+
+    descriptorSetLayoutBindingsForSkinnedObj[ 1 ].binding         = 1;
+    descriptorSetLayoutBindingsForSkinnedObj[ 1 ].descriptorCount = 1;
+    descriptorSetLayoutBindingsForSkinnedObj[ 1 ].descriptorType  = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    descriptorSetLayoutBindingsForSkinnedObj[ 1 ].stageFlags      = VK_SHADER_STAGE_VERTEX_BIT;
 
     //
     // DescriptorSetLayouts
@@ -966,7 +1062,8 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
             assert( !pipeline.second.pPipelineLayout );
             pipeline.second.pPipelineLayout = hPipelineLayouts[ kPipelineLayoutForStatic ];
         }
-        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned ) ||
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned4 ) ||
+             HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned8 ) ||
              HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_PackedSkinned ) ) {
             assert( !pipeline.second.pPipelineLayout );
             pipeline.second.pPipelineLayout = hPipelineLayouts[ kPipelineLayoutForSkinned ];
@@ -1041,8 +1138,9 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
     //
     for ( auto& pipeline : PipelineComposites ) {
         if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Packed ) ) {
-            composite.PipelineShaderStages[ 0 ].module = hVertexShaderModule;
-            composite.Pipeline.layout                  = pipeline.second.pPipelineLayout;
+            composite.PipelineShaderStages[ 0 ].module              = hVertexShaderModule;
+            composite.PipelineShaderStages[ 0 ].pSpecializationInfo = nullptr;
+            composite.Pipeline.layout                               = pipeline.second.pPipelineLayout;
 
             TSetPipelineVertexInputStateCreateInfo< apemode::detail::PackedVertex >(
                 &composite.PipelineVertexInputState,
@@ -1057,8 +1155,9 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
             }
         }
         if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Static ) ) {
-            composite.PipelineShaderStages[ 0 ].module = hVertexShaderModule;
-            composite.Pipeline.layout                  = pipeline.second.pPipelineLayout;
+            composite.PipelineShaderStages[ 0 ].module              = hVertexShaderModule;
+            composite.PipelineShaderStages[ 0 ].pSpecializationInfo = nullptr;
+            composite.Pipeline.layout                               = pipeline.second.pPipelineLayout;
 
             TSetPipelineVertexInputStateCreateInfo< apemode::detail::DefaultVertex >(
                 &composite.PipelineVertexInputState,
@@ -1074,8 +1173,9 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
         }
 
         if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_PackedSkinned ) ) {
-            composite.PipelineShaderStages[ 0 ].module = hSkinnedVertexShaderModule;
-            composite.Pipeline.layout                  = hPipelineLayouts[ kPipelineLayoutForSkinned ];
+            composite.PipelineShaderStages[ 0 ].module              = hSkinnedVertexShaderModule;
+            composite.PipelineShaderStages[ 0 ].pSpecializationInfo = nullptr;
+            composite.Pipeline.layout                               = hPipelineLayouts[ kPipelineLayoutForSkinned ];
 
             TSetPipelineVertexInputStateCreateInfo< apemode::detail::PackedSkinnedVertex >(
                 &composite.PipelineVertexInputState,
@@ -1090,11 +1190,30 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
             }
         }
 
-        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned ) ) {
-            composite.PipelineShaderStages[ 0 ].module = hSkinnedVertexShaderModule;
-            composite.Pipeline.layout                  = hPipelineLayouts[ kPipelineLayoutForSkinned ];
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned4 ) ) {
+            composite.PipelineShaderStages[ 0 ].module              = hSkinnedVertexShaderModule;
+            composite.PipelineShaderStages[ 0 ].pSpecializationInfo = &specializationInfo;
+            composite.Pipeline.layout                               = hPipelineLayouts[ kPipelineLayoutForSkinned ];
 
             TSetPipelineVertexInputStateCreateInfo< apemode::detail::SkinnedVertex >(
+                &composite.PipelineVertexInputState,
+                composite.VertexInputBindingDescriptions,
+                GetArraySize( composite.VertexInputBindingDescriptions ),
+                composite.VertexInputAttributeDescriptions,
+                GetArraySize( composite.VertexInputAttributeDescriptions ) );
+
+            assert( pipeline.second.hPipeline.IsNull( ) );
+            if ( !pipeline.second.hPipeline.Recreate( *pNode, pipeline.second.hPipelineCache, composite.Pipeline ) ) {
+                return false;
+            }
+        }
+
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned8 ) ) {
+            composite.PipelineShaderStages[ 0 ].module              = hSkinned8VertexShaderModule;
+            composite.PipelineShaderStages[ 0 ].pSpecializationInfo = &specializationInfo;
+            composite.Pipeline.layout                               = hPipelineLayouts[ kPipelineLayoutForSkinned ];
+
+            TSetPipelineVertexInputStateCreateInfo< apemode::detail::SkinnedVertex8 >(
                 &composite.PipelineVertexInputState,
                 composite.VertexInputBindingDescriptions,
                 GetArraySize( composite.VertexInputBindingDescriptions ),

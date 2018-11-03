@@ -55,6 +55,8 @@ public:
         MaterialDeviceAsset                               MissingMaterialAsset;
         VkSampler                                         pMissingSampler = VK_NULL_HANDLE;
         apemode::vector< LoadedImagePtr >                 LoadedImgs;
+
+        size_t MaxBoneCount = 0;
     };
 
     /* Updates device resources. */

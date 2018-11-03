@@ -31,6 +31,7 @@ enum EVertexType {
     eVertexType_Custom  = 0,
     eVertexType_Default = 1,
     eVertexType_Skinned,
+    eVertexType_Skinned8,
     eVertexType_Packed,
     eVertexType_PackedSkinned,
     eVertexTypeCount,
@@ -55,6 +56,22 @@ struct SkinnedVertex {
     XMFLOAT4 weights;
     XMFLOAT4 indices;
 };
+
+/* Skinned vertex structure.
+ */
+struct SkinnedVertex8 {
+    XMFLOAT3 position;
+    XMFLOAT3 normal;
+    XMFLOAT4 tangent;
+    XMFLOAT2 texcoords;
+    XMFLOAT4 weights0;
+    XMFLOAT4 weights1;
+    XMFLOAT4 indices0;
+    XMFLOAT4 indices1;
+};
+
+static_assert(sizeof(SkinnedVertex) == sizeof(apemodefb::StaticSkinnedVertexFb), "Must match.");
+static_assert(sizeof(SkinnedVertex8) == sizeof(apemodefb::StaticSkinned8VertexFb), "Must match.");
 
 /* Default vertex structure with packing.
  */
@@ -354,8 +371,9 @@ struct Scene {
                              size_t                         skinMatrixCount ) const;
     void UpdateSkinMatrices( const SceneSkin &              skin,
                              const SceneNodeTransformFrame &animatedFrame,
-                             XMFLOAT4X4 *                   pSkinMatrices,
-                             size_t                         skinMatrixCount ) const;
+                             XMFLOAT4X4 *                   pOffsetMatrices,
+                             XMFLOAT4X4 *                   pNormalMatrices,
+                             size_t                         matrixCount ) const;
 };
 
 /* Represents the loaded scene.

@@ -94,7 +94,7 @@ ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     auto pModelViewCameraController = (ModelViewCameraController*)pCamController.get();
     
     float position = 350;
-    float destPosition = 300;
+    float destPosition = 10;
     
     pModelViewCameraController->Position.x = position;
     pModelViewCameraController->Position.y = position;

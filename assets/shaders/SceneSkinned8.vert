@@ -56,8 +56,10 @@ layout( location = 0 ) in vec3 inPosition;
 layout( location = 1 ) in vec3 inNormal;
 layout( location = 2 ) in vec4 inTangent;
 layout( location = 3 ) in vec2 inTexcoords;
-layout( location = 4 ) in vec4 inBoneWeights;
-layout( location = 5 ) in vec4 inBoneIndices;
+layout( location = 4 ) in vec4 inBoneWeights0;
+layout( location = 5 ) in vec4 inBoneWeights1;
+layout( location = 6 ) in vec4 inBoneIndices0;
+layout( location = 7 ) in vec4 inBoneIndices1;
 
 layout( location = 0 ) out vec3 outWorldPosition;
 layout( location = 1 ) out vec3 outWorldNormal;
@@ -90,16 +92,21 @@ mat3 AccumulatedBoneNormalTransform( vec4 weights, vec4 indices ) {
 
 void main( ) {
     vec3 modelPosition = inPosition.xyz * PositionScale.xyz + PositionOffset.xyz;
-    vec4 worldPosition = AccumulatedBoneOffsetTransform( inBoneWeights, inBoneIndices ) * WorldMatrix * vec4( modelPosition, 1 );
-    gl_Position        = ProjMatrix * ViewMatrix * worldPosition;
+    vec4 worldPosition = ( AccumulatedBoneOffsetTransform( inBoneWeights1, inBoneIndices1 ) +
+                           AccumulatedBoneOffsetTransform( inBoneWeights0, inBoneIndices0 ) ) *
+                         WorldMatrix * vec4( modelPosition, 1 );
+
+    gl_Position = ProjMatrix * ViewMatrix * worldPosition;
 
     outWorldPosition = worldPosition.xyz;
     outViewDirection = normalize( GetCameraWorldPosition( ).xyz - worldPosition.xyz );
     outTexcoords     = inTexcoords * TexcoordOffsetScale.zw + TexcoordOffsetScale.xy;
 
-    mat3 accumBoneNormalMatrix = AccumulatedBoneNormalTransform( inBoneWeights, inBoneIndices );
-    vec3 worldNormal           = normalize( accumBoneNormalMatrix * mat3( NormalMatrix ) * inNormal );
-    vec3 worldTangent          = normalize( accumBoneNormalMatrix * mat3( NormalMatrix ) * inTangent.xyz );
+    mat3 accumBoneNormalMatrix = AccumulatedBoneNormalTransform( inBoneWeights1, inBoneIndices1 ) +
+                                 AccumulatedBoneNormalTransform( inBoneWeights0, inBoneIndices0 );
+                                 
+    vec3 worldNormal  = normalize( accumBoneNormalMatrix * mat3( NormalMatrix ) * inNormal );
+    vec3 worldTangent = normalize( accumBoneNormalMatrix * mat3( NormalMatrix ) * inTangent.xyz );
 
     outWorldNormal    = worldNormal;
     outWorldTangent   = worldTangent;

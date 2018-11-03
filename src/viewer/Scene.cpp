@@ -118,6 +118,10 @@ const apemode::SceneNodeAnimCurveIds *apemode::Scene::GetAnimCurveIds( const uin
     return nullptr;
 }
 
+inline XMMATRIX CalculateOffsetMatrix( const SceneSkinLink & skinLink, const SceneNodeTransformComposite &skinLinkTransform ) {
+    return skinLink.InvBindPoseMatrix * skinLinkTransform.WorldMatrix;
+}
+
 void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
                                          const SceneNodeTransformFrame &animatedFrame,
                                          XMMATRIX *                     pSkinMatrices,
@@ -126,20 +130,22 @@ void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
     for ( size_t i = 0; i < skin.Links.size( ); ++i ) {
         const SceneSkinLink & skinLink = skin.Links[ i ];
         const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
-        pSkinMatrices[ i ] = skinLink.InvBindPoseMatrix * skinLinkTransform.WorldMatrix;
+        pSkinMatrices[ i ] = CalculateOffsetMatrix( skinLink, skinLinkTransform );
     }
 }
 
 void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
                                          const SceneNodeTransformFrame &animatedFrame,
-                                         XMFLOAT4X4 *                   pSkinMatrices,
-                                         size_t                         skinMatrixCount ) const {
-    assert( skinMatrixCount >= skin.Links.size( ) );
+                                         XMFLOAT4X4 *                   pOffsetMatrices,
+                                         XMFLOAT4X4 *                   pNormalMatrices,
+                                         size_t                         matrixCount ) const {
+    assert( matrixCount >= skin.Links.size( ) );
     for ( size_t i = 0; i < skin.Links.size( ); ++i ) {
         const SceneSkinLink & skinLink = skin.Links[ i ];
         const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
-        XMMATRIX skinMatrix = skinLink.InvBindPoseMatrix * skinLinkTransform.WorldMatrix;
-        XMStoreFloat4x4( &pSkinMatrices[ i ], skinMatrix );
+        const XMMATRIX offsetMatrix = CalculateOffsetMatrix( skinLink, skinLinkTransform );
+        XMStoreFloat4x4( &pOffsetMatrices[ i ], offsetMatrix );
+        XMStoreFloat4x4( &pNormalMatrices[ i ], XMMatrixTranspose( XMMatrixInverse( 0, offsetMatrix ) ) );
     }
 }
 
@@ -572,6 +578,9 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                 case apemodefb::EVertexFormatFb_StaticSkinned:
                     mesh.eVertexType = detail::eVertexType_Skinned;
                     break;
+                case apemodefb::EVertexFormatFb_StaticSkinned8:
+                    mesh.eVertexType = detail::eVertexType_Skinned8;
+                    break;
                 default:
                     mesh.eVertexType = detail::eVertexType_Custom;
                     break;
@@ -619,12 +628,12 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                                         pLinkIdsFb->end( ),
                                         std::back_inserter( skin.Links ),
                                         [&]( const uint32_t linkNodeId ) {
+                                            // LogInfo( " + link {}", linkNodeId);
+                                            
                                             auto &bindPoseFrame = pScene->BindPoseFrame;
                                             assert( linkNodeId < bindPoseFrame.Transforms.size( ) );
                                             const auto bindPoseMatrix = bindPoseFrame.Transforms[ linkNodeId ].WorldMatrix;
                                             
-                                            LogInfo( " + link {}", linkNodeId);
-
                                             SceneSkinLink skinLink;
                                             skinLink.LinkId = linkNodeId;
                                             skinLink.InvBindPoseMatrix = XMMatrixInverse( nullptr, bindPoseMatrix );

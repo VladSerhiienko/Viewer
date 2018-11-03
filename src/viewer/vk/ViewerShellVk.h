@@ -104,8 +104,8 @@ namespace vk {
         apemode::unique_ptr< apemode::vk::SkyboxRenderer >        pSkyboxRenderer;
         apemode::unique_ptr< apemode::vk::DebugRenderer >         pDebugRenderer;
 
-        const uint16_t kAnimLayerId   = 0;
-        const uint16_t kAnimStackId   = 0;
+        const uint16_t kAnimLayerId   = 2;
+        const uint16_t kAnimStackId   = 2;
         const bool     bLookAnimation = true;
         LoadedScene    mLoadedScene;
     };
