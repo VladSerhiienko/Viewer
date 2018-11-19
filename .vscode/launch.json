@@ -8,8 +8,10 @@
             "program": "${workspaceRoot}/build_linux_x86_64_clang/Viewer",
             "cwd": "${workspaceRoot}/build_linux_x86_64_clang",
             "args": [
-                "--assets", "../assets/**",
-                "--scene", "/home/user/vserhiienko/models/FbxPipeline/rainier-ak-3ds.fbxp",
+                "--assets",
+                "../assets/**",
+                "--scene",
+                "/home/user/vserhiienko/models/FbxPipeline/rainier-ak-3ds.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/warmonger_sword.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/dreamsong.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/zis-101a-sport-1938.fbxp",
@@ -23,9 +25,39 @@
             "program": "${workspaceRoot}/build_darwin_x86_64_appleclang/Viewer",
             "cwd": "${workspaceRoot}/build_darwin_x86_64_appleclang",
             "args": [
-                // --assets ../../assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rainier-ak-3d.fbxp
-                "--assets", "../assets/**",
-                "--scene", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rainier-ak-3d.fbxp",
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/run-hedgehog-run.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/littlest-tokyo.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/k07-drone.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/futuristic-safe.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/colt-rebel-357.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/sphere-bot.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/lovecraftian.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/dji.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/gecko.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/sci-fi-girl.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/opel-gt-retopo.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/stesla.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/bristleback-dota-fan-art.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/forest-house.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/3000-followers-milestone.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/flare-gun.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/integrated-thermostatic-valve-slim-head.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/ice-cream-truck.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/arex-rex-zero1.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/vanille-flirty-animation.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/awesome-mix-guardians-of-the-galaxy.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/anak-the-lizardman.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rusty-mecha.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rainier-ak-3d.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/bristleback-dota-fan-art.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/crystal-stone.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/mountain-king.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/izzy.fbxp
+                // --assets /Users/vlad.serhiienko/Projects/Home/Viewer/assets/** --scene /Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/subzero.fbxp
+                "--assets",
+                "../assets/**",
+                "--scene",
+                "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rainier-ak-3d.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/warmonger_sword.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/dreamsong.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/zis-101a-sport-1938.fbxp",
@@ -42,9 +74,11 @@
             "request": "launch",
             "program": "${workspaceRoot}/build_linux_x86_64_gnu/Viewer",
             "args": [
-                "--assets", "\"../assets/**\"",
+                "--assets",
+                "\"../assets/**\"",
                 // "--scene", "/home/user/vserhiienko/models/rainier-ak-3d.fbxp",
-                "--scene", "/home/user/vserhiienko/models/FbxPipeline/rainier-ak-3ds.fbxp",
+                "--scene",
+                "/home/user/vserhiienko/models/FbxPipeline/rainier-ak-3ds.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/warmonger_sword.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/dreamsong.fbxp",
                 // "--scene", "/home/user/vserhiienko/models/zis-101a-sport-1938.fbxp",

@@ -933,6 +933,8 @@ set(
     ${shader_directory}/Skybox.vert
     ${shader_directory}/Skybox.frag
     ${shader_directory}/Scene.vert
+    ${shader_directory}/SceneSkinned.vert
+    ${shader_directory}/SceneSkinned8.vert
     ${shader_directory}/Scene.frag
 )
 

@@ -52,11 +52,11 @@ void UploadImage( ImageUploadInfo* pUploadInfo ) {
     decodeOptions.bGenerateMipMaps = pUploadInfo->bGenerateMipMaps;
 
     apemodevk::ImageDecoder imgDecoder;
-    auto srcImg = imgDecoder.DecodeSourceImageFromData( pUploadInfo->pFileContents, pUploadInfo->fileContentsSize, decodeOptions );
-
-    apemodevk::ImageUploader::UploadOptions uploadOptions;
-    apemodevk::ImageUploader imgUploader;
-    pUploadInfo->UploadedImg = imgUploader.UploadImage( pUploadInfo->pNode, *srcImg, uploadOptions );
+    if ( auto srcImg = imgDecoder.DecodeSourceImageFromData( pUploadInfo->pFileContents, pUploadInfo->fileContentsSize, decodeOptions ) ) {
+        apemodevk::ImageUploader::UploadOptions uploadOptions;
+        apemodevk::ImageUploader imgUploader;
+        pUploadInfo->UploadedImg = imgUploader.UploadImage( pUploadInfo->pNode, *srcImg, uploadOptions );
+    }
 }
 
 struct ImageUploadTask {
@@ -428,7 +428,7 @@ bool InitializeMaterials( apemode::Scene* pScene, const apemode::vk::SceneUpload
 
     apemodevk::ImageUploader::UploadOptions  loadOptions;
     apemodevk::ImageDecoder::DecodeOptions decodeOptions;
-    
+
     loadOptions.bImgView = true;
     decodeOptions.bGenerateMipMaps = false;
 
@@ -731,6 +731,11 @@ bool apemode::vk::SceneUploader::UploadScene( apemode::Scene* pScene, const apem
         if ( !UploadMaterials( pScene, pParams ) ) {
             return false;
         }
+    }
+
+    for ( apemode::SceneSkin& skin : pScene->Skins ) {
+        DeviceAsset* deviceAsset  = static_cast< DeviceAsset* >( pScene->pDeviceAsset.get( ) );
+        deviceAsset->MaxBoneCount = eastl::max( deviceAsset->MaxBoneCount, skin.Links.size( ) );
     }
 
     return true;

@@ -24,7 +24,7 @@ struct THandleBase : public NoCopyAssignPolicy {
     typedef TNativeHandle_                         TNativeHandle;
     typedef THandleBase< TNativeHandle, TDeleter > SelfType;
 
-    TNativeHandle Handle;
+    TNativeHandle Handle = VK_NULL_HANDLE;
     TDeleter      Deleter;
 
     void Swap( SelfType &Other ) {
@@ -32,8 +32,7 @@ struct THandleBase : public NoCopyAssignPolicy {
         eastl::swap( Deleter, Other.Deleter );
     }
 
-    inline THandleBase( ) : Handle( VK_NULL_HANDLE ) {
-    }
+    inline THandleBase( ) = default;
 
     inline THandleBase( SelfType &&Other ) {
         Swap( Other );
@@ -63,7 +62,7 @@ struct THandleBase : public NoCopyAssignPolicy {
         return nullptr != Handle;
     }
 
-    inline TNativeHandle const *GetAddressOf( ) const {
+    inline const TNativeHandle *GetAddressOf( ) const {
         return &Handle;
     }
 

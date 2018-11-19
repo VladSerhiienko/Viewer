@@ -12,27 +12,33 @@ uint32_t apemodevk::DescriptorPool::GetAvailableDescriptorSetCount( ) const {
 }
 
 uint32_t apemodevk::DescriptorPool::GetAvailableDescriptorPoolSize( VkDescriptorType descriptorType ) const {
-    apemode_assert( MaxDescriptorPoolSizes[ descriptorType ].type == DescType, "Desc type mismatch." );
-    return MaxDescriptorPoolSizes[ descriptorType ].descriptorCount;
+    auto descPoolSizeIt = MaxDescriptorPoolSizes.find( descriptorType );
+    assert( descPoolSizeIt != MaxDescriptorPoolSizes.end( ) );
+    return descPoolSizeIt->second;
 }
 
-bool apemodevk::DescriptorPool::Initialize( InitializeParameters const& initializeParameters ) {
+bool apemodevk::DescriptorPool::Initialize( InitializeParameters && initializeParameters ) {
     apemodevk_memory_allocation_scope;
 
-    pNode                 = initializeParameters.pNode;
-    MaxDescriptorSetCount = initializeParameters.MaxDescriptorSetCount;
+    pNode                  = initializeParameters.pNode;
+    MaxDescriptorSetCount  = initializeParameters.MaxDescriptorSetCount;
+    MaxDescriptorPoolSizes = eastl::move( initializeParameters.MaxDescriptorPoolSizes );
 
-    for ( uint32_t typeIndex = 0; typeIndex < VK_DESCRIPTOR_TYPE_RANGE_SIZE; ++typeIndex ) {
-        MaxDescriptorPoolSizes[ typeIndex ].type            = static_cast< VkDescriptorType >( typeIndex );
-        MaxDescriptorPoolSizes[ typeIndex ].descriptorCount = initializeParameters.MaxDescriptorPoolSizes[ typeIndex ];
-    }
+    apemodevk::vector< VkDescriptorPoolSize > descriptorPoolSizes;
+    descriptorPoolSizes.reserve( initializeParameters.MaxDescriptorPoolSizes.size( ) );
+    eastl::transform( MaxDescriptorPoolSizes.begin( ),
+                      MaxDescriptorPoolSizes.end( ),
+                      eastl::back_inserter( descriptorPoolSizes ),
+                      []( const eastl::pair< VkDescriptorType, uint32_t >& descriptorPoolSize ) {
+                          return VkDescriptorPoolSize{descriptorPoolSize.first, descriptorPoolSize.second};
+                      } );
 
     VkDescriptorPoolCreateInfo descriptorPoolCreateInfo;
     InitializeStruct( descriptorPoolCreateInfo );
 
     descriptorPoolCreateInfo.maxSets       = MaxDescriptorSetCount;
-    descriptorPoolCreateInfo.pPoolSizes    = MaxDescriptorPoolSizes;
-    descriptorPoolCreateInfo.poolSizeCount = VK_DESCRIPTOR_TYPE_RANGE_SIZE;
+    descriptorPoolCreateInfo.pPoolSizes    = descriptorPoolSizes.data( );
+    descriptorPoolCreateInfo.poolSizeCount = uint32_t( descriptorPoolSizes.size( ) );
 
     return hDescriptorPool.Recreate( *pNode, descriptorPoolCreateInfo );
 }

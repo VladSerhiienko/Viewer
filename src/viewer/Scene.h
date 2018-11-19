@@ -31,6 +31,7 @@ enum EVertexType {
     eVertexType_Custom  = 0,
     eVertexType_Default = 1,
     eVertexType_Skinned,
+    eVertexType_Skinned8,
     eVertexType_Packed,
     eVertexType_PackedSkinned,
     eVertexTypeCount,
@@ -56,6 +57,22 @@ struct SkinnedVertex {
     XMFLOAT4 indices;
 };
 
+/* Skinned vertex structure.
+ */
+struct SkinnedVertex8 {
+    XMFLOAT3 position;
+    XMFLOAT3 normal;
+    XMFLOAT4 tangent;
+    XMFLOAT2 texcoords;
+    XMFLOAT4 weights0;
+    XMFLOAT4 weights1;
+    XMFLOAT4 indices0;
+    XMFLOAT4 indices1;
+};
+
+static_assert(sizeof(SkinnedVertex) == sizeof(apemodefb::StaticSkinnedVertexFb), "Must match.");
+static_assert(sizeof(SkinnedVertex8) == sizeof(apemodefb::StaticSkinned8VertexFb), "Must match.");
+
 /* Default vertex structure with packing.
  */
 struct PackedVertex {
@@ -71,6 +88,7 @@ struct PackedSkinnedVertex {
     uint32_t position;
     uint32_t normal;
     uint32_t tangent;
+    uint32_t texcoords;
     uint32_t weights;
     uint32_t indices;
 };
@@ -121,6 +139,8 @@ struct SceneMesh {
     XMFLOAT3 PositionScale  = XMFLOAT3{1, 1, 1};
     XMFLOAT2 TexcoordOffset = XMFLOAT2{0, 0};
     XMFLOAT2 TexcoordScale  = XMFLOAT2{1, 1};
+
+    detail::EVertexType eVertexType = detail::eVertexType_Custom;
 };
 
 /* Transfrom class that stores main FBX SDK transform properties
@@ -135,10 +155,10 @@ struct SceneNodeTransform {
     XMFLOAT3 Rotation             = XMFLOAT3{0, 0, 0};
     XMFLOAT3 ScalingOffset        = XMFLOAT3{0, 0, 0};
     XMFLOAT3 ScalingPivot         = XMFLOAT3{0, 0, 0};
-    XMFLOAT3 Scaling              = XMFLOAT3{0, 0, 0};
+    XMFLOAT3 Scaling              = XMFLOAT3{1, 1, 1};
     XMFLOAT3 GeometricTranslation = XMFLOAT3{0, 0, 0};
     XMFLOAT3 GeometricRotation    = XMFLOAT3{0, 0, 0};
-    XMFLOAT3 GeometricScaling     = XMFLOAT3{0, 0, 0};
+    XMFLOAT3 GeometricScaling     = XMFLOAT3{1, 1, 1};
 
     /* Checks for nans and zero scales.
      * @return True if valid, false otherwise.
@@ -213,8 +233,8 @@ struct SceneAnimCurve {
     detail::SceneDeviceAssetPtr pDeviceAsset;
 
     uint32_t  Id              = detail::kInvalidId;
-    uint16_t  AnimStackId     = detail::kInvalidId16;
-    uint16_t  AnimLayerId     = detail::kInvalidId16;
+    uint16_t  AnimStackIndex     = detail::kInvalidId16;
+    uint16_t  AnimLayerIndex     = detail::kInvalidId16;
     EProperty eProperty       = ePropertyCount;
     EChannel  eChannel        = eChannelCount;
     XMFLOAT3  TimeMinMaxTotal = XMFLOAT3{0, 0, 0};
@@ -237,10 +257,12 @@ struct SceneAnimCurve {
  */
 struct SceneNodeAnimCurveIds {
     uint32_t AnimCurveIds[ SceneAnimCurve::ePropertyCount ] = {
-        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
-        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
-        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
-        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
+        detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId, detail::kInvalidId,
     };
 };
 
@@ -319,7 +341,7 @@ struct Scene {
 
     /* Animates transform frame, returns it.
      */
-    SceneNodeTransformFrame &UpdateTransformProperties( float time, bool bLoop, uint16_t animStackId, uint16_t animLayerId );
+    SceneNodeTransformFrame *UpdateTransformProperties( float time, bool bLoop, uint16_t animStackId, uint16_t animLayerId );
 
     /* Returns animated transform frame.
      */
@@ -331,21 +353,27 @@ struct Scene {
 
     /* Returns animated transform frame.
      */
-    SceneNodeTransformFrame &GetAnimatedTransformFrame( uint16_t animStackId, uint16_t animLayerId );
+    SceneNodeTransformFrame *GetAnimatedTransformFrame( uint16_t animStackId, uint16_t animLayerId );
 
     /* Returns animated transform frame.
      */
-    const SceneNodeTransformFrame &GetAnimatedTransformFrame( uint16_t animStackId, uint16_t animLayerId ) const;
+    const SceneNodeTransformFrame *GetAnimatedTransformFrame( uint16_t animStackId, uint16_t animLayerId ) const;
 
     /* Returns animation curves for the node.
      */
-    const SceneNodeAnimCurveIds &GetAnimCurveIds( uint32_t nodeId, uint16_t animStackId, uint16_t animLayerId ) const;
+    const SceneNodeAnimCurveIds *GetAnimCurveIds( uint32_t nodeId, uint16_t animStackId, uint16_t animLayerId ) const;
 
     /* Calculates skin matrix palette.
      */
     void UpdateSkinMatrices( const SceneSkin &              skin,
                              const SceneNodeTransformFrame &animatedFrame,
-                             apemode::vector< XMMATRIX > &  skinMatrices );
+                             XMMATRIX *                     pSkinMatrices,
+                             size_t                         skinMatrixCount ) const;
+    void UpdateSkinMatrices( const SceneSkin &              skin,
+                             const SceneNodeTransformFrame &animatedFrame,
+                             XMFLOAT4X4 *                   pOffsetMatrices,
+                             XMFLOAT4X4 *                   pNormalMatrices,
+                             size_t                         matrixCount ) const;
 };
 
 /* Represents the loaded scene.

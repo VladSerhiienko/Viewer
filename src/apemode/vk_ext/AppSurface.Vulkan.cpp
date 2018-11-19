@@ -115,8 +115,8 @@ void apemodevk::AppSurface::Finalize( ) {
     if ( GetGraphicsManager( ) ) {
         {
             apemodevk_memory_allocation_scope;
-            Surface.Destroy( );
             Swapchain.Destroy( );
+            Surface.Destroy( );
             Node.Destroy( );
             apemodevk::vector< uint32_t >( ).swap( PresentQueueFamilyIds );
         }

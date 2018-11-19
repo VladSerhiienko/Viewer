@@ -1,22 +1,29 @@
 #include <CityHash.Vulkan.h>
 #include <SamplerManager.Vulkan.h>
 
+apemodevk::SamplerManager::~SamplerManager( ) {
+    Release( );
+}
+
 bool apemodevk::SamplerManager::Recreate( apemodevk::GraphicsDevice* pInNode ) {
     pNode = pInNode;
     return ( nullptr != pNode );
 }
 
-void apemodevk::SamplerManager::Release( apemodevk::GraphicsDevice* pNode ) {
+void apemodevk::SamplerManager::Release( ) {
     apemodevk_memory_allocation_scope;
 
-    THandle< VkSampler > hSampler;
-    for ( auto& storedSampler : StoredSamplers ) {
-        hSampler.Handle = storedSampler.second.pSampler;
-        hSampler.Deleter.hLogicalDevice = pNode->hLogicalDevice;
-        hSampler.Destroy( );
-    }
+    if ( pNode ) {
+        THandle< VkSampler > hSampler;
+        for ( auto& storedSampler : StoredSamplers ) {
+            hSampler.Handle                 = storedSampler.second.pSampler;
+            hSampler.Deleter.hLogicalDevice = pNode->hLogicalDevice;
+            hSampler.Destroy( );
+        }
 
-    StoredSamplers.clear( );
+        StoredSamplers.clear( );
+        pNode = nullptr;
+    }
 }
 
 VkSampler apemodevk::SamplerManager::GetSampler( const VkSamplerCreateInfo& samplerCreateInfo ) {

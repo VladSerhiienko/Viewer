@@ -58,10 +58,15 @@ namespace vk {
 
         bool OnResized( );
 
-        void UpdateTime();
-        void UpdateCamera(const apemode::platform::AppInput* inputState);
-        void UpdateUI(const VkExtent2D currentExtent, const apemode::platform::AppInput* pAppInput);
-        void Populate(Frame * pCurrentFrame, Frame * pSwapchainFrame, VkCommandBuffer pCmdBuffer);
+        void UpdateTime( );
+        void UpdateScene( );
+        void UpdateCamera( const apemode::platform::AppInput* inputState );
+        void UpdateUI( const VkExtent2D currentExtent, const apemode::platform::AppInput* pAppInput );
+
+        void Populate( const SceneNodeTransformFrame* pTransformFrame,
+                       Frame*                         pCurrentFrame,
+                       Frame*                         pSwapchainFrame,
+                       VkCommandBuffer                pCmdBuffer );
 
     private:
         friend AppState;
@@ -98,7 +103,12 @@ namespace vk {
         apemode::unique_ptr< apemode::vk::Skybox >                pSkybox;
         apemode::unique_ptr< apemode::vk::SkyboxRenderer >        pSkyboxRenderer;
         apemode::unique_ptr< apemode::vk::DebugRenderer >         pDebugRenderer;
-        LoadedScene                                               mLoadedScene;
+
+        const uint16_t kAnimLayerId   = 2;
+        const uint16_t kAnimStackId   = 2;
+        const bool     bLookAnimation = true;
+        LoadedScene    mLoadedScene;
+        bool           bIsUsingUI = false;
     };
 
 } // namespace vk
