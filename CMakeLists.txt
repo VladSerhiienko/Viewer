@@ -644,6 +644,7 @@ add_dependencies(
 
 set(
     Viewer_source_files
+    ${CMAKE_SOURCE_DIR}/src/viewer/ScenePrintPretty.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/Scene.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/Scene.h
     ${CMAKE_SOURCE_DIR}/src/viewer/NuklearRendererBase.cpp

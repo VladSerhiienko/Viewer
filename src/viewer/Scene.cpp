@@ -14,6 +14,10 @@ template < typename T >
 inline bool IsNotNullAndNotEmpty( const flatbuffers::Vector< T > *pVector ) {
     return pVector && pVector->size( );
 }
+template < typename T, typename U >
+bool NearlyEqual(const T a, const U b, const T eps = std::numeric_limits<T>::epsilon()) {
+    return std::abs(a - T(b)) < eps;
+}
 } // namespace
 
 using namespace apemode;
@@ -67,29 +71,95 @@ bool apemode::SceneNodeTransform::Validate( ) const {
              GeometricScaling.x == 0 || GeometricScaling.y == 0 || GeometricScaling.z == 0 );
 }
 
+XMMATRIX XMMatrixRotationOrdered( const XMFLOAT3 v, detail::ERotationOrder eRotOrder ) {
+    switch ( eRotOrder ) {
+        case detail::eRotationOrder_EulerXYZ:
+            return XMMatrixRotationX( v.x ) * XMMatrixRotationY( v.y ) * XMMatrixRotationZ( v.z ); //
+        case detail::eRotationOrder_EulerXZY:
+            return XMMatrixRotationX( v.x ) * XMMatrixRotationZ( v.z ) * XMMatrixRotationY( v.y ); //
+        case detail::eRotationOrder_EulerYZX:
+            return XMMatrixRotationY( v.y ) * XMMatrixRotationZ( v.z ) * XMMatrixRotationX( v.x ); //
+        case detail::eRotationOrder_EulerYXZ:
+            return XMMatrixRotationY( v.y ) * XMMatrixRotationX( v.x ) * XMMatrixRotationZ( v.z ); //
+        case detail::eRotationOrder_EulerZXY:
+            return XMMatrixRotationZ( v.z ) * XMMatrixRotationX( v.x ) * XMMatrixRotationY( v.y ); //
+        case detail::eRotationOrder_EulerZYX:
+            return XMMatrixRotationZ( v.z ) * XMMatrixRotationY( v.y ) * XMMatrixRotationX( v.x );
+        case detail::eRotationOrder_EulerSphericXYZ:
+            return XMMatrixRotationX( v.x ) * XMMatrixRotationY( v.y ) * XMMatrixRotationZ( v.z );
+    }
+
+    assert( false && "Unhandled rotation orders." );
+    return XMMatrixRotationX( v.x ) * XMMatrixRotationY( v.y ) * XMMatrixRotationZ( v.z );
+}
+
+XMMATRIX XMMatrixRotationOrderedInversed( XMFLOAT3 v, const detail::ERotationOrder eRotOrder ) {
+    v.x = -v.x;
+    v.y = -v.y;
+    v.z = -v.z;
+    return XMMatrixRotationOrdered( v, eRotOrder );
+}
+
 XMMATRIX XMMatrixRotationZYX( const XMFLOAT3 *v ) {
     return XMMatrixRotationX( v->x ) *
            XMMatrixRotationY( v->y ) *
            XMMatrixRotationZ( v->z );
 }
 
-XMMATRIX apemode::SceneNodeTransform::CalculateLocalMatrix( ) const {
+void apemode::SceneNodeTransform::ApplyLimits( const SceneNodeTransformLimits &limits ) {
+#define CLAMP_PROPERTY_COMPONENT( P )           \
+    if ( limits.Is##P##MaxActive.x ) {          \
+        P.x = std::min( P.x, limits.P##Max.x ); \
+    }                                           \
+    if ( limits.Is##P##MinActive.x ) {          \
+        P.x = std::max( P.x, limits.P##Min.x ); \
+    }                                           \
+    if ( limits.Is##P##MaxActive.x ) {          \
+        P.y = std::min( P.y, limits.P##Max.y ); \
+    }                                           \
+    if ( limits.Is##P##MinActive.x ) {          \
+        P.y = std::max( P.y, limits.P##Min.y ); \
+    }                                           \
+    if ( limits.Is##P##MaxActive.x ) {          \
+        P.z = std::min( P.z, limits.P##Max.z ); \
+    }                                           \
+    if ( limits.Is##P##MinActive.x ) {          \
+        P.z = std::max( P.z, limits.P##Min.z ); \
+    }
+
+    CLAMP_PROPERTY_COMPONENT( Translation );
+    CLAMP_PROPERTY_COMPONENT( Rotation );
+    CLAMP_PROPERTY_COMPONENT( Scaling );
+
+#undef CLAMP_PROPERTY_COMPONENT
+}
+
+XMMATRIX apemode::SceneNodeTransform::CalculateLocalMatrix( const detail::ERotationOrder eOrder ) const {
+//    return XMMatrixTranslationFromVector( XMLoadFloat3( &Translation ) ) *
+//           XMMatrixRotationOrdered( Rotation, eOrder ) *
+//           XMMatrixScalingFromVector( XMLoadFloat3( &Scaling ) );
+    
+//    return XMMatrixScalingFromVector( XMLoadFloat3( &Scaling ) ) *
+//           XMMatrixRotationOrdered( Rotation, eOrder ) *
+//           XMMatrixTranslationFromVector( XMLoadFloat3( &Translation ) );
+    
     return XMMatrixTranslationFromVector( XMVectorNegate( XMLoadFloat3( &ScalingPivot ) ) ) *
            XMMatrixScalingFromVector( XMLoadFloat3( &Scaling ) ) *
            XMMatrixTranslationFromVector( XMLoadFloat3( &ScalingPivot ) ) *
            XMMatrixTranslationFromVector( XMLoadFloat3( &ScalingOffset ) ) *
            XMMatrixTranslationFromVector( XMVectorNegate( XMLoadFloat3( &RotationPivot ) ) ) *
-           XMMatrixRotationZYX( &PostRotation ) *
-           XMMatrixRotationZYX( &Rotation ) *
-           XMMatrixRotationZYX( &PreRotation ) *
+           XMMatrixRotationOrderedInversed( PostRotation, eOrder ) *
+           XMMatrixRotationOrdered( Rotation, eOrder ) *
+           XMMatrixRotationOrdered( PreRotation, eOrder ) *
            XMMatrixTranslationFromVector( XMLoadFloat3( &RotationPivot ) ) *
            XMMatrixTranslationFromVector( XMLoadFloat3( &RotationOffset ) ) *
            XMMatrixTranslationFromVector( XMLoadFloat3( &Translation ) );
+
 }
 
-XMMATRIX apemode::SceneNodeTransform::CalculateGeometricMatrix( ) const {
+XMMATRIX apemode::SceneNodeTransform::CalculateGeometricMatrix( const detail::ERotationOrder eOrder ) const {
     return XMMatrixScalingFromVector( XMLoadFloat3( &GeometricScaling ) ) *
-           XMMatrixRotationZYX( &GeometricRotation ) *
+           XMMatrixRotationOrdered( GeometricRotation, eOrder ) *
            XMMatrixTranslationFromVector( XMLoadFloat3( &GeometricTranslation ) );
 }
 
@@ -118,19 +188,54 @@ const apemode::SceneNodeAnimCurveIds *apemode::Scene::GetAnimCurveIds( const uin
     return nullptr;
 }
 
-inline XMMATRIX CalculateOffsetMatrix( const SceneSkinLink & skinLink, const SceneNodeTransformComposite &skinLinkTransform ) {
-    return skinLink.InvBindPoseMatrix * skinLinkTransform.WorldMatrix;
+inline XMMATRIX CalculateOffsetMatrix( const SceneSkinLink &skinLink,
+                                       const XMMATRIX       skinLinkWorldMatrix,
+                                       const XMMATRIX       skinWorldInvMatrix ) {
+    // return skinLink.InvBindPoseMatrix * skinWorldInvMatrix * skinLinkWorldMatrix;
+    return skinLink.InvBindPoseMatrix * skinLinkWorldMatrix;
+    // return skinLinkWorldMatrix * skinLink.InvBindPoseMatrix * skinWorldInvMatrix;
+    // return skinWorldInvMatrix * skinLink.InvBindPoseMatrix * skinLinkWorldMatrix;
+    // return skinWorldInvMatrix * skinLink.InvBindPoseMatrix * skinLinkWorldMatrix;
+}
+
+XMMATRIX CalculateSkinGlobalInverse( const Scene *                  pScene,
+                                     const SceneSkin &              skin,
+                                     const SceneNodeTransformFrame &animatedFrame ) {
+    const uint32_t skinRootLinkId = skin.Links.front( ).LinkId;
+
+    XMMATRIX skinGlobalInverseMatrix = XMMatrixIdentity( );
+#if 1
+    skinGlobalInverseMatrix = animatedFrame.Transforms[ skinRootLinkId ].WorldMatrix;
+    skinGlobalInverseMatrix = XMMatrixInverse( nullptr, skinGlobalInverseMatrix );
+    skinGlobalInverseMatrix = skinGlobalInverseMatrix * animatedFrame.Transforms[ skinRootLinkId ].LocalMatrix;
+#elif 0
+    skinGlobalInverseMatrix = animatedFrame.Transforms[ skinRootLinkId ].WorldMatrix;
+    skinGlobalInverseMatrix = XMMatrixInverse( nullptr, skinGlobalInverseMatrix );
+#else
+    const SceneNode &skinRootNode = pScene->Nodes[ skinRootLinkId ];
+    assert( skinRootNode.Id == skinRootLinkId );
+    if ( skinRootNode.ParentId != uint32_t( -1 ) ) {
+        assert( pScene->Nodes[ skinRootNode.ParentId ].Id == skinRootNode.ParentId );
+        skinGlobalInverseMatrix = animatedFrame.Transforms[ skinRootNode.ParentId ].HierarchicalMatrix;
+        skinGlobalInverseMatrix = XMMatrixInverse( nullptr, skinGlobalInverseMatrix );
+    }
+#endif
+
+    return skinGlobalInverseMatrix;
 }
 
 void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
                                          const SceneNodeTransformFrame &animatedFrame,
                                          XMMATRIX *                     pSkinMatrices,
                                          size_t                         skinMatrixCount ) const {
+    
+    const XMMATRIX skinGlobalInverseMatrix = CalculateSkinGlobalInverse(this, skin, animatedFrame);
+    
     assert( skinMatrixCount >= skin.Links.size( ) );
     for ( size_t i = 0; i < skin.Links.size( ); ++i ) {
         const SceneSkinLink & skinLink = skin.Links[ i ];
         const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
-        pSkinMatrices[ i ] = CalculateOffsetMatrix( skinLink, skinLinkTransform );
+        pSkinMatrices[ i ] = CalculateOffsetMatrix( skinLink, skinLinkTransform.HierarchicalMatrix, skinGlobalInverseMatrix );
     }
 }
 
@@ -139,11 +244,14 @@ void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
                                          XMFLOAT4X4 *                   pOffsetMatrices,
                                          XMFLOAT4X4 *                   pNormalMatrices,
                                          size_t                         matrixCount ) const {
+    
+    const XMMATRIX skinGlobalInverseMatrix = CalculateSkinGlobalInverse(this, skin, animatedFrame);
+    
     assert( matrixCount >= skin.Links.size( ) );
     for ( size_t i = 0; i < skin.Links.size( ); ++i ) {
         const SceneSkinLink & skinLink = skin.Links[ i ];
         const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
-        const XMMATRIX offsetMatrix = CalculateOffsetMatrix( skinLink, skinLinkTransform );
+        const XMMATRIX offsetMatrix = CalculateOffsetMatrix( skinLink, skinLinkTransform.HierarchicalMatrix, skinGlobalInverseMatrix );
         XMStoreFloat4x4( &pOffsetMatrices[ i ], offsetMatrix );
         XMStoreFloat4x4( &pNormalMatrices[ i ], XMMatrixTranspose( XMMatrixInverse( 0, offsetMatrix ) ) );
     }
@@ -168,10 +276,34 @@ XMFLOAT3 *MapProperty( apemode::SceneAnimCurve::EProperty eProperty, apemode::Sc
     return reinterpret_cast< XMFLOAT3 * >( pProperties ) + ( eProperty / 3 );
 }
 
-SceneNodeTransformFrame *apemode::Scene::UpdateTransformProperties( const float    time,
+SceneNodeTransformFrame *apemode::Scene::UpdateTransformProperties( float    time,
                                                                     const bool     bLoop,
                                                                     const uint16_t animStackId,
                                                                     const uint16_t animLayerId ) {
+    
+    const float debugTimeSpan = 15;
+    
+    XMFLOAT3 TimeMinMaxTotal;
+    TimeMinMaxTotal.x = 0;
+    TimeMinMaxTotal.y = debugTimeSpan;
+    TimeMinMaxTotal.z = debugTimeSpan;
+    
+    if ( bLoop ) {
+        // Loop the given time value.
+        #define SCENEANIMCURVE_USE_MODF
+        #ifdef SCENEANIMCURVE_USE_MODF
+        float relativeTime, fractionalPart, integerPart;
+        relativeTime = ( time - TimeMinMaxTotal.x ) / TimeMinMaxTotal.z;
+        fractionalPart = modf( relativeTime, &integerPart );
+        time = TimeMinMaxTotal.x + TimeMinMaxTotal.z * fractionalPart;
+        (void) integerPart;
+        #else
+        float relativeTime, fractionalPart;
+        relativeTime = ( time - TimeMinMaxTotal.x ) / TimeMinMaxTotal.z;
+        fractionalPart = relativeTime - (float)(long)relativeTime;
+        time = TimeMinMaxTotal.x + TimeMinMaxTotal.z * fractionalPart;
+        #endif
+    }
 
     if ( SceneNodeTransformFrame *pAnimTransformFrame = GetAnimatedTransformFrame( animStackId, animLayerId ) ) {
         *pAnimTransformFrame = BindPoseFrame;
@@ -196,14 +328,34 @@ SceneNodeTransformFrame *apemode::Scene::UpdateTransformProperties( const float 
                     const SceneAnimCurve *pAnimCurveX = ( animCurveIdX != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdX ] ) : nullptr;
                     const SceneAnimCurve *pAnimCurveY = ( animCurveIdY != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdY ] ) : nullptr;
                     const SceneAnimCurve *pAnimCurveZ = ( animCurveIdZ != detail::kInvalidId ) ? ( &AnimCurves[ animCurveIdZ ] ) : nullptr;
+                    
+                    if ( pAnimCurveX || pAnimCurveY || pAnimCurveZ ) {
+                        switch ( eProperty ) {
+                            case SceneAnimCurve::eProperty_PreRotation:
+                            case SceneAnimCurve::eProperty_PostRotation:
+                            case SceneAnimCurve::eProperty_ScalingPivot:
+                            case SceneAnimCurve::eProperty_ScalingOffset:
+                            case SceneAnimCurve::eProperty_RotationPivot:
+                            case SceneAnimCurve::eProperty_RotationOffset:
+                            case SceneAnimCurve::eProperty_GeometricScaling:
+                            case SceneAnimCurve::eProperty_GeometricRotation:
+                            case SceneAnimCurve::eProperty_GeometricTranslation: {
+                                LogWarn("Animating an object-offset property: {}",
+                                        apemodefb::EnumNameEAnimCurvePropertyFb(
+                                        apemodefb::EAnimCurvePropertyFb(eProperty)));
+                            } break;
+                            default:
+                                break;
+                        }
+                    }
 
                     assert( !pAnimCurveX || pAnimCurveX->eProperty == eProperty && pAnimCurveX->eChannel == SceneAnimCurve::eChannel_X );
                     assert( !pAnimCurveY || pAnimCurveY->eProperty == eProperty && pAnimCurveY->eChannel == SceneAnimCurve::eChannel_Y );
                     assert( !pAnimCurveZ || pAnimCurveZ->eProperty == eProperty && pAnimCurveZ->eChannel == SceneAnimCurve::eChannel_Z );
 
-                    pProperty->x = pAnimCurveX ? ( pAnimCurveX->Calculate( time, bLoop ) * convertionFactor ) : pProperty->x;
-                    pProperty->y = pAnimCurveY ? ( pAnimCurveY->Calculate( time, bLoop ) * convertionFactor ) : pProperty->y;
-                    pProperty->z = pAnimCurveZ ? ( pAnimCurveZ->Calculate( time, bLoop ) * convertionFactor ) : pProperty->z;
+                    pProperty->x = pAnimCurveX ? ( pAnimCurveX->Calculate( time ) * convertionFactor ) : pProperty->x;
+                    pProperty->y = pAnimCurveY ? ( pAnimCurveY->Calculate( time ) * convertionFactor ) : pProperty->y;
+                    pProperty->z = pAnimCurveZ ? ( pAnimCurveZ->Calculate( time ) * convertionFactor ) : pProperty->z;
 
                     assert( animTransformComposite.Properties.Validate( ) );
                 }
@@ -241,7 +393,7 @@ apemode::SceneNodeTransformFrame *apemode::Scene::GetAnimatedTransformFrame( con
 }
 
 const apemode::SceneNodeTransformFrame *apemode::Scene::GetAnimatedTransformFrame( const uint16_t animStackId,
-                                                                           const uint16_t animLayerId ) const {
+                                                                                   const uint16_t animLayerId ) const {
     if ( ! AnimLayerIdToTransformFrames.empty( ) ) {
         SceneAnimLayerId animLayerCompositeId;
         animLayerCompositeId.AnimStackIndex = animStackId;
@@ -268,8 +420,12 @@ void apemode::Scene::UpdateTransformMatrices( const uint32_t parentNodeId, Scene
 
         assert( parentNodeId == childNode.ParentId );
 
-        childTransformComposite.LocalMatrix        = childTransformComposite.Properties.CalculateLocalMatrix( );
-        childTransformComposite.GeometricalMatrix  = childTransformComposite.Properties.CalculateGeometricMatrix( );
+        if (childNode.LimitsId != uint32_t(-1)) {
+            childTransformComposite.Properties.ApplyLimits(Limits[childNode.LimitsId]);
+        }
+        
+        childTransformComposite.LocalMatrix        = childTransformComposite.Properties.CalculateLocalMatrix( childNode.eOrder );
+        childTransformComposite.GeometricalMatrix  = childTransformComposite.Properties.CalculateGeometricMatrix( childNode.eOrder );
         childTransformComposite.HierarchicalMatrix = childTransformComposite.LocalMatrix * transformComposite.HierarchicalMatrix;
         childTransformComposite.WorldMatrix        = childTransformComposite.GeometricalMatrix * childTransformComposite.HierarchicalMatrix;
 
@@ -287,9 +443,10 @@ void apemode::Scene::UpdateTransformMatrices( SceneNodeTransformFrame &t ) const
     //
 
     SceneNodeTransformComposite &rootTransformComposite = t.Transforms[ 0 ];
+    const detail::ERotationOrder eRootOrder = Nodes.front( ).eOrder;
 
-    rootTransformComposite.LocalMatrix        = rootTransformComposite.Properties.CalculateLocalMatrix( );
-    rootTransformComposite.GeometricalMatrix  = rootTransformComposite.Properties.CalculateGeometricMatrix( );
+    rootTransformComposite.LocalMatrix        = rootTransformComposite.Properties.CalculateLocalMatrix( eRootOrder );
+    rootTransformComposite.GeometricalMatrix  = rootTransformComposite.Properties.CalculateGeometricMatrix( eRootOrder );
     rootTransformComposite.HierarchicalMatrix = rootTransformComposite.LocalMatrix;
     rootTransformComposite.WorldMatrix        = rootTransformComposite.GeometricalMatrix * rootTransformComposite.LocalMatrix;
 
@@ -351,7 +508,11 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             assert( pNodeFb );
 
             auto &node = pScene->Nodes[ pNodeFb->id( ) ];
-            node.Id = pNodeFb->id( );
+
+            node.Id       = pNodeFb->id( );
+            node.eOrder   = detail::ERotationOrder( pNodeFb->rotation_order( ) );
+            node.eInhType = detail::EInheritType( pNodeFb->inherit_type( ) );
+            node.pszName  = GetCStringProperty( pSrcScene, pNodeFb->name_id( ) );
 
             if ( pNodeFb->mesh_id( ) != detail::kInvalidId ) {
                 node.MeshId = pNodeFb->mesh_id( );
@@ -370,46 +531,88 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             auto &transformComposite = bindPoseFrame.Transforms[ pNodeFb->id( ) ];
             auto transformFb = pSrcScene->transforms( )->Get( pNodeFb->id( ) );
 
-            transformComposite.Properties.Translation.x          = transformFb->translation( ).x( );
-            transformComposite.Properties.Translation.y          = transformFb->translation( ).y( );
-            transformComposite.Properties.Translation.z          = transformFb->translation( ).z( );
-            transformComposite.Properties.RotationOffset.x       = transformFb->rotation_offset( ).x( );
-            transformComposite.Properties.RotationOffset.y       = transformFb->rotation_offset( ).y( );
-            transformComposite.Properties.RotationOffset.z       = transformFb->rotation_offset( ).z( );
-            transformComposite.Properties.RotationPivot.x        = transformFb->rotation_pivot( ).x( );
-            transformComposite.Properties.RotationPivot.y        = transformFb->rotation_pivot( ).y( );
-            transformComposite.Properties.RotationPivot.z        = transformFb->rotation_pivot( ).z( );
-            transformComposite.Properties.PreRotation.x          = transformFb->pre_rotation( ).x( ) * toRadsFactor;
-            transformComposite.Properties.PreRotation.y          = transformFb->pre_rotation( ).y( ) * toRadsFactor;
-            transformComposite.Properties.PreRotation.z          = transformFb->pre_rotation( ).z( ) * toRadsFactor;
-            transformComposite.Properties.Rotation.x             = transformFb->rotation( ).x( ) * toRadsFactor;
-            transformComposite.Properties.Rotation.y             = transformFb->rotation( ).y( ) * toRadsFactor;
-            transformComposite.Properties.Rotation.z             = transformFb->rotation( ).z( ) * toRadsFactor;
-            transformComposite.Properties.PostRotation.x         = transformFb->post_rotation( ).x( ) * toRadsFactor;
-            transformComposite.Properties.PostRotation.y         = transformFb->post_rotation( ).y( ) * toRadsFactor;
-            transformComposite.Properties.PostRotation.z         = transformFb->post_rotation( ).z( ) * toRadsFactor;
-            transformComposite.Properties.ScalingOffset.x        = transformFb->scaling_offset( ).x( );
-            transformComposite.Properties.ScalingOffset.y        = transformFb->scaling_offset( ).y( );
-            transformComposite.Properties.ScalingOffset.z        = transformFb->scaling_offset( ).z( );
-            transformComposite.Properties.ScalingPivot.x         = transformFb->scaling_pivot( ).x( );
-            transformComposite.Properties.ScalingPivot.y         = transformFb->scaling_pivot( ).y( );
-            transformComposite.Properties.ScalingPivot.z         = transformFb->scaling_pivot( ).z( );
-            transformComposite.Properties.Scaling.x              = transformFb->scaling( ).x( );
-            transformComposite.Properties.Scaling.y              = transformFb->scaling( ).y( );
-            transformComposite.Properties.Scaling.z              = transformFb->scaling( ).z( );
-            transformComposite.Properties.GeometricTranslation.x = transformFb->geometric_translation( ).x( );
-            transformComposite.Properties.GeometricTranslation.y = transformFb->geometric_translation( ).y( );
-            transformComposite.Properties.GeometricTranslation.z = transformFb->geometric_translation( ).z( );
-            transformComposite.Properties.GeometricRotation.x    = transformFb->geometric_rotation( ).x( ) * toRadsFactor;
-            transformComposite.Properties.GeometricRotation.y    = transformFb->geometric_rotation( ).y( ) * toRadsFactor;
-            transformComposite.Properties.GeometricRotation.z    = transformFb->geometric_rotation( ).z( ) * toRadsFactor;
-            transformComposite.Properties.GeometricScaling.x     = transformFb->geometric_scaling( ).x( );
-            transformComposite.Properties.GeometricScaling.y     = transformFb->geometric_scaling( ).y( );
-            transformComposite.Properties.GeometricScaling.z     = transformFb->geometric_scaling( ).z( );
+#define MATCH_VECTOR_TYPE( v, V ) \
+    {                             \
+        v.x = V.x( );             \
+        v.y = V.y( );             \
+        v.z = V.z( );             \
+    }
+
+            MATCH_VECTOR_TYPE( transformComposite.Properties.Translation, transformFb->translation( ) );
+            MATCH_VECTOR_TYPE( transformComposite.Properties.RotationOffset, transformFb->rotation_offset( ) );
+            MATCH_VECTOR_TYPE( transformComposite.Properties.RotationPivot, transformFb->rotation_pivot( ) );
+            MATCH_VECTOR_TYPE( transformComposite.Properties.PreRotation, transformFb->pre_rotation( ) );
+            MATCH_VECTOR_TYPE( transformComposite.Properties.Rotation, transformFb->rotation( ) );
+            MATCH_VECTOR_TYPE( transformComposite.Properties.PostRotation, transformFb->post_rotation( ) );
+            MATCH_VECTOR_TYPE( transformComposite.Properties.ScalingOffset, transformFb->scaling_offset( ) );
+            MATCH_VECTOR_TYPE( transformComposite.Properties.ScalingPivot, transformFb->scaling_pivot( ) );
+            MATCH_VECTOR_TYPE( transformComposite.Properties.Scaling, transformFb->scaling( ) );
+            MATCH_VECTOR_TYPE( transformComposite.Properties.GeometricTranslation, transformFb->geometric_translation( ) );
+            MATCH_VECTOR_TYPE( transformComposite.Properties.GeometricRotation, transformFb->geometric_rotation( ) );
+            MATCH_VECTOR_TYPE( transformComposite.Properties.GeometricScaling, transformFb->geometric_scaling( ) );
+
+            transformComposite.Properties.PreRotation.x *= toRadsFactor;
+            transformComposite.Properties.PreRotation.y *= toRadsFactor;
+            transformComposite.Properties.PreRotation.z *= toRadsFactor;
+            transformComposite.Properties.Rotation.x *= toRadsFactor;
+            transformComposite.Properties.Rotation.y *= toRadsFactor;
+            transformComposite.Properties.Rotation.z *= toRadsFactor;
+            transformComposite.Properties.PostRotation.x *= toRadsFactor;
+            transformComposite.Properties.PostRotation.y *= toRadsFactor;
+            transformComposite.Properties.PostRotation.z *= toRadsFactor;
+            transformComposite.Properties.GeometricRotation.x *= toRadsFactor;
+            transformComposite.Properties.GeometricRotation.y *= toRadsFactor;
+            transformComposite.Properties.GeometricRotation.z *= toRadsFactor;
+
+#define REPORT_USED_PROPERTY( P, d )                                                    \
+    if ( !NearlyEqual( P.x, d ) || !NearlyEqual( P.y, d ) || !NearlyEqual( P.z, d ) ) { \
+        LogWarn( "Node \"{}\" uses property \"{}\".", GetCStringProperty( pSrcScene, pNodeFb->name_id( ) ), #P );                                          \
+    }
+
+            REPORT_USED_PROPERTY( transformComposite.Properties.ScalingOffset, 0 );
+            REPORT_USED_PROPERTY( transformComposite.Properties.ScalingPivot, 0 );
+            REPORT_USED_PROPERTY( transformComposite.Properties.RotationOffset, 0 );
+            REPORT_USED_PROPERTY( transformComposite.Properties.RotationPivot, 0 );
+            REPORT_USED_PROPERTY( transformComposite.Properties.PreRotation, 0 );
+            REPORT_USED_PROPERTY( transformComposite.Properties.PostRotation, 0 );
+            REPORT_USED_PROPERTY( transformComposite.Properties.GeometricRotation, 0 );
+            REPORT_USED_PROPERTY( transformComposite.Properties.GeometricTranslation, 0 );
+            REPORT_USED_PROPERTY( transformComposite.Properties.GeometricScaling, 1 );
+
+#undef REPORT_USED_PROPERTY
 
             if ( !transformComposite.Properties.Validate( ) ) {
                 LogError( "Found invalid transform, node id {}", pNodeFb->id( ) );
+                assert( false );
             }
+
+            if ( pNodeFb->transform_limits_id( ) != uint32_t( -1 ) ) {
+                auto pTransformLimitsFb = pSrcScene->transforms_limits( )->Get( pNodeFb->transform_limits_id( ) );
+                node.LimitsId = uint32_t(pScene->Limits.size());
+
+                auto &limits = pScene->Limits.emplace_back( );
+                MATCH_VECTOR_TYPE( limits.IsTranslationMaxActive, pTransformLimitsFb->translation_max_active( ) );
+                MATCH_VECTOR_TYPE( limits.IsTranslationMinActive, pTransformLimitsFb->translation_min_active( ) );
+                MATCH_VECTOR_TYPE( limits.IsRotationMaxActive, pTransformLimitsFb->rotation_max_active( ) );
+                MATCH_VECTOR_TYPE( limits.IsRotationMinActive, pTransformLimitsFb->rotation_min_active( ) );
+                MATCH_VECTOR_TYPE( limits.IsScalingMaxActive, pTransformLimitsFb->scaling_max_active( ) );
+                MATCH_VECTOR_TYPE( limits.IsScalingMinActive, pTransformLimitsFb->scaling_min_active( ) );
+                MATCH_VECTOR_TYPE( limits.TranslationMax, pTransformLimitsFb->translation_max( ) );
+                MATCH_VECTOR_TYPE( limits.TranslationMin, pTransformLimitsFb->translation_min( ) );
+                MATCH_VECTOR_TYPE( limits.RotationMax, pTransformLimitsFb->rotation_max( ) );
+                MATCH_VECTOR_TYPE( limits.RotationMin, pTransformLimitsFb->rotation_min( ) );
+                MATCH_VECTOR_TYPE( limits.ScalingMax, pTransformLimitsFb->scaling_max( ) );
+                MATCH_VECTOR_TYPE( limits.ScalingMin, pTransformLimitsFb->scaling_min( ) );
+                
+                limits.RotationMax.x *= toRadsFactor;
+                limits.RotationMax.y *= toRadsFactor;
+                limits.RotationMax.z *= toRadsFactor;
+                limits.RotationMin.x *= toRadsFactor;
+                limits.RotationMin.y *= toRadsFactor;
+                limits.RotationMin.z *= toRadsFactor;
+            }
+
+#undef MATCH_VECTOR_TYPE
 
             auto pAnimCurveIdsFb = pNodeFb->anim_curve_ids( );
             if ( IsNotNullAndNotEmpty( pAnimCurveIdsFb ) ) {
@@ -444,8 +647,12 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             assert( pAnimCurveFb->anim_stack_id( ) < pAnimStacksFb->size( ) );
             assert( pAnimCurveFb->anim_layer_id( ) < 0xFFFFU );
             assert( pAnimCurveFb->anim_stack_id( ) < 0xFFFFU );
+            
+            auto pAnimLayerFbIt = eastl::find_if(pAnimLayersFb->begin(), pAnimLayersFb->end(), [pAnimCurveFb](const apemodefb::AnimLayerFb * pAnimLayerFb) {
+                return pAnimLayerFb->id() == pAnimCurveFb->anim_layer_id();
+            });
 
-            animCurve.AnimLayerIndex = static_cast< uint16_t >( pAnimCurveFb->anim_layer_id( ) );
+            animCurve.AnimLayerIndex = static_cast< uint16_t >( pAnimLayerFbIt->anim_stack_idx( ) );
             animCurve.AnimStackIndex = static_cast< uint16_t >( pAnimCurveFb->anim_stack_id( ) );
             animCurve.eChannel    = SceneAnimCurve::EChannel( pAnimCurveFb->channel( ) );
             animCurve.eProperty   = SceneAnimCurve::EProperty( pAnimCurveFb->property( ) * SceneAnimCurve::eChannelCount );
@@ -459,11 +666,11 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                               []( const apemodefb::AnimCurveKeyFb *pKeyFb ) {
                                   return eastl::make_pair< float, SceneAnimCurveKey >( pKeyFb->time( ),
                                                                                        SceneAnimCurveKey{
-                                                                                           SceneAnimCurveKey::EInterpolationMode(pKeyFb->interpolationMode()),
+                                                                                           SceneAnimCurveKey::EInterpolationMode(pKeyFb->interpolation_mode()),
                                                                                            pKeyFb->time( ),
-                                                                                           pKeyFb->value( ),
-                                                                                           pKeyFb->arrive_tangent( ),
-                                                                                           pKeyFb->leave_tangent( ),
+                                                                                           pKeyFb->value_bez0_bez3( ),
+                                                                                           pKeyFb->bez1( ),
+                                                                                           pKeyFb->bez2( ),
                                                                                        } );
                               } );
 
@@ -501,14 +708,14 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
         for ( auto pAnimLayerFb : *pAnimLayersFb ) {
             auto pAnimStackFb = pAnimStacksFb->Get( pAnimLayerFb->anim_stack_id( ) );
 
-            LogInfo( "Processing anim set: layer=#{} \"{}\", stack=#{} \"{}\"",
-                     pAnimLayerFb->id( ),
-                     GetCStringProperty( pSrcScene, pAnimLayerFb->name_id( ) ),
+            LogInfo( "Processing anim set: stack=#{} \"{}\", layer=#{} \"{}\"",
                      pAnimStackFb->id( ),
-                     GetCStringProperty( pSrcScene, pAnimStackFb->name_id( ) ) );
+                     GetCStringProperty( pSrcScene, pAnimStackFb->name_id( ) ),
+                     pAnimLayerFb->anim_stack_idx( ),
+                     GetCStringProperty( pSrcScene, pAnimLayerFb->name_id( ) ) );
 
             SceneAnimLayerId animLayerId;
-            animLayerId.AnimLayerIndex = pAnimLayerFb->id( );
+            animLayerId.AnimLayerIndex = pAnimLayerFb->anim_stack_idx( );
             animLayerId.AnimStackIndex = pAnimLayerFb->anim_stack_id( );
 
             auto &animTransformFrame = pScene->AnimLayerIdToTransformFrames[ animLayerId.AnimLayerCompositeId ];
@@ -612,7 +819,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             if ( mesh.SkinId != detail::kInvalidId ) {
 
                 auto &skin = pScene->Skins[ mesh.SkinId ];
-                auto  pSkinFb = pSkinsFb->Get( mesh.SkinId );
+                auto pSkinFb = pSkinsFb->Get( mesh.SkinId );
 
                 if ( skin.Links.empty( ) ) {
 
@@ -622,23 +829,108 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                         LogInfo( "Processing skin: \"{}\", links={}",
                                  GetCStringProperty( pSrcScene, pSkinFb->name_id( ) ),
                                  pLinkIdsFb->size( ) );
+                        
+                        const uint32_t skinRootLinkId = *pLinkIdsFb->begin( );
+                        const SceneNode & skinRootNode = pScene->Nodes[skinRootLinkId];
+                        assert(skinRootNode.Id == skinRootLinkId);
+                        LogInfo( "\tRoot: {} -> \"{}\"", skinRootLinkId, skinRootNode.pszName );
+                        
+                        #if 1
+                        XMMATRIX skinGlobalInverseMatrix = XMMatrixIdentity( );
+                        skinGlobalInverseMatrix = pScene->BindPoseFrame.Transforms[ skinRootLinkId ].HierarchicalMatrix;
+                        skinGlobalInverseMatrix = XMMatrixInverse( nullptr, skinGlobalInverseMatrix );
+                        skinGlobalInverseMatrix = skinGlobalInverseMatrix * pScene->BindPoseFrame.Transforms[ skinRootLinkId ].LocalMatrix;
+                        #elif 0
+                        XMMATRIX skinGlobalInverseMatrix = XMMatrixIdentity( );
+                        skinGlobalInverseMatrix = pScene->BindPoseFrame.Transforms[ skinRootLinkId ].HierarchicalMatrix;
+                        skinGlobalInverseMatrix = XMMatrixInverse( nullptr, skinGlobalInverseMatrix );
+                        #else
+                        XMMATRIX skinGlobalInverseMatrix = XMMatrixIdentity();
+                        if (skinRootNode.ParentId != uint32_t(-1)) {
+                            const SceneNode & skinRootParentNode = pScene->Nodes[skinRootNode.ParentId];
+                            assert(skinRootParentNode.Id == skinRootNode.ParentId);
+                            LogInfo( "\tRoot parent: {} -> \"{}\"", skinRootParentNode.Id, skinRootParentNode.pszName );
+                            skinGlobalInverseMatrix = pScene->BindPoseFrame.Transforms[ skinRootNode.ParentId ].HierarchicalMatrix;
+                            skinGlobalInverseMatrix = XMMatrixInverse( nullptr, skinGlobalInverseMatrix );
+                        }
+                        #endif
 
                         skin.Links.reserve( pLinkIdsFb->size( ) );
-                        std::transform( pLinkIdsFb->begin( ),
-                                        pLinkIdsFb->end( ),
-                                        std::back_inserter( skin.Links ),
-                                        [&]( const uint32_t linkNodeId ) {
-                                            // LogInfo( " + link {}", linkNodeId);
 
-                                            auto &bindPoseFrame = pScene->BindPoseFrame;
-                                            assert( linkNodeId < bindPoseFrame.Transforms.size( ) );
-                                            const auto bindPoseMatrix = bindPoseFrame.Transforms[ linkNodeId ].WorldMatrix;
+                        eastl::transform( pLinkIdsFb->begin( ),
+                                          pLinkIdsFb->end( ),
+                                          std::back_inserter( skin.Links ),
+                                          [&]( const uint32_t linkNodeId ) {
+                                              LogInfo( " + link {}", linkNodeId );
 
-                                            SceneSkinLink skinLink;
-                                            skinLink.LinkId = linkNodeId;
-                                            skinLink.InvBindPoseMatrix = XMMatrixInverse( nullptr, bindPoseMatrix );
-                                            return skinLink;
-                                        } );
+                                              auto &bindPoseFrame = pScene->BindPoseFrame;
+                                              assert( linkNodeId < bindPoseFrame.Transforms.size( ) );
+
+                                              auto & linkTransform = bindPoseFrame.Transforms[ linkNodeId ];
+                                              XMMATRIX bindPoseMatrix    = linkTransform.WorldMatrix;
+                                              XMMATRIX invBindPoseMatrix = XMMatrixInverse( nullptr, bindPoseMatrix );
+
+                                               LogInfo( " -+ transform link: {} {} {} {}",
+                                                        bindPoseMatrix._11,
+                                                        bindPoseMatrix._12,
+                                                        bindPoseMatrix._13,
+                                                        bindPoseMatrix._14 );
+                                               LogInfo( " -+               : {} {} {} {}",
+                                                        bindPoseMatrix._21,
+                                                        bindPoseMatrix._22,
+                                                        bindPoseMatrix._23,
+                                                        bindPoseMatrix._24 );
+                                               LogInfo( " -+               : {} {} {} {}",
+                                                        bindPoseMatrix._31,
+                                                        bindPoseMatrix._32,
+                                                        bindPoseMatrix._33,
+                                                        bindPoseMatrix._34 );
+                                               LogInfo( " -+               : {} {} {} {}",
+                                                        bindPoseMatrix._41,
+                                                        bindPoseMatrix._42,
+                                                        bindPoseMatrix._43,
+                                                        bindPoseMatrix._44 );
+                                              
+                                               // bindPoseMatrix = bindPoseMatrix * skinGlobalInverseMatrix;
+                                               // bindPoseMatrix = skinGlobalInverseMatrix * bindPoseMatrix;
+                                               // bindPoseMatrix = XMMatrixMultiply( bindPoseMatrix, skinTransformInv );
+
+                                               auto nodeIt = eastl::find_if(
+                                                   pScene->Nodes.begin( ),
+                                                   pScene->Nodes.end( ),
+                                                   [&]( const apemode::SceneNode &node ) { return node.MeshId == mesh.Id; } );
+                                               auto &   nodeTransform   = pScene->BindPoseFrame.Transforms[ nodeIt->Id ];
+                                               XMMATRIX transformMatrix = nodeTransform.WorldMatrix;
+                                               LogInfo( " -+ transform     : {} {} {} {}",
+                                                        transformMatrix._11,
+                                                        transformMatrix._12,
+                                                        transformMatrix._13,
+                                                        transformMatrix._14 );
+                                               LogInfo( " -+               : {} {} {} {}",
+                                                        transformMatrix._21,
+                                                        transformMatrix._22,
+                                                        transformMatrix._23,
+                                                        transformMatrix._24 );
+                                               LogInfo( " -+               : {} {} {} {}",
+                                                        transformMatrix._31,
+                                                        transformMatrix._32,
+                                                        transformMatrix._33,
+                                                        transformMatrix._34 );
+                                               LogInfo( " -+               : {} {} {} {}",
+                                                        transformMatrix._41,
+                                                        transformMatrix._42,
+                                                        transformMatrix._43,
+                                                        transformMatrix._44 );
+                                              
+                                              invBindPoseMatrix = transformMatrix * invBindPoseMatrix;
+                                              // invBindPoseMatrix = invBindPoseMatrix * transformMatrix * linkTransform.GeometricalMatrix;
+                                              // invBindPoseMatrix = invBindPoseMatrix * linkTransform.GeometricalMatrix;
+
+                                              SceneSkinLink skinLink;
+                                              skinLink.LinkId            = linkNodeId;
+                                              skinLink.InvBindPoseMatrix = invBindPoseMatrix;
+                                              return skinLink;
+                                          } );
                     }
                 }
             }
@@ -717,6 +1009,8 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
         }         /* pMaterialFb */
     }             /* pMaterialsFb */
 
+    detail::ScenePrintPretty prettyPrint;
+    prettyPrint.PrintPretty(pScene.get());
     return LoadedScene{std::move( fileContents ), pSrcScene, std::move( pScene )};
 }
 
@@ -732,23 +1026,7 @@ inline bool NearlyEqualOrGreater( const float a, const float b ) {
 }
 } // namespace
 
-void apemode::SceneAnimCurve::GetKeyIndices( float & time, const bool bLoop, uint32_t &i, uint32_t &j ) const {
-    if ( bLoop ) {
-        // Loop the given time value.
-        #define SCENEANIMCURVE_USE_MODF
-        #ifdef SCENEANIMCURVE_USE_MODF
-        float relativeTime, fractionalPart, integerPart;
-        relativeTime = ( time - TimeMinMaxTotal.x ) / TimeMinMaxTotal.z;
-        fractionalPart = modf( relativeTime, &integerPart );
-        time = TimeMinMaxTotal.x + TimeMinMaxTotal.z * fractionalPart;
-        (void) integerPart;
-        #else
-        float relativeTime, fractionalPart;
-        relativeTime = ( time - TimeMinMaxTotal.x ) / TimeMinMaxTotal.z;
-        fractionalPart = relativeTime - (float)(long)relativeTime;
-        time = TimeMinMaxTotal.x + TimeMinMaxTotal.z * fractionalPart;
-        #endif
-    }
+void apemode::SceneAnimCurve::GetKeyIndices( float & time, uint32_t &i, uint32_t &j ) const {
 
     if ( NearlyEqualOrLess( time, TimeMinMaxTotal.x ) ) {
         // Case: before the curve's first key, or on it.
@@ -779,15 +1057,15 @@ void apemode::SceneAnimCurve::GetKeyIndices( float & time, const bool bLoop, uin
     }
 }
 
-float CubicInterp( const float &P0, const float &T0, const float &P1, const float &T1, const float &A ) {
-    const float A2 = A * A;
-    const float A3 = A2 * A;
-
-    return ( ( ( 2 * A3 ) - ( 3 * A2 ) + 1 ) * P0 ) + ( ( A3 - ( 2 * A2 ) + A ) * T0 ) + ( ( A3 - A2 ) * T1 ) +
-           ( ( ( -2 * A3 ) + ( 3 * A2 ) ) * P1 );
+float CubicInterp( const float P0, const float P1, const float P2, const float P3, const float t ) {
+#define SQUARED( x ) ( ( x ) * ( x ) )
+#define CUBED( x ) ( ( x ) * ( x ) * ( x ) )
+    return CUBED( 1 - t ) * P0 + 3 * SQUARED( 1 - t ) * t * P1 + 3 * ( 1 - t ) * SQUARED( t ) * P2 + CUBED( t ) * P3;
+#undef SQUARED
+#undef CUBED
 }
 
-float InterpolateValue( float time, const SceneAnimCurveKey &a, const SceneAnimCurveKey &b ) {
+float InterpolateValue( const float time, const SceneAnimCurveKey& a, const SceneAnimCurveKey& b ) {
     switch ( a.eInterpMode ) {
         case apemode::SceneAnimCurveKey::eInterpolationMode_Const:
             return a.Value;
@@ -800,15 +1078,16 @@ float InterpolateValue( float time, const SceneAnimCurveKey &a, const SceneAnimC
 
         default: {
             const float l = ( time - a.Time ) / ( b.Time - a.Time );
-            return CubicInterp( a.Value, a.LeaveTangent, b.Value, b.ArriveTangent, l );
+            const float t = CubicInterp( a.Bez0( ), a.Bez1, a.Bez2, b.PrevBez3( ), l );
+            return t;
         }
     }
 }
 
-float apemode::SceneAnimCurve::Calculate( float time, const bool bLoop ) const {
+float apemode::SceneAnimCurve::Calculate( float time ) const {
 
     uint32_t i, j;
-    GetKeyIndices( time, bLoop, i, j );
+    GetKeyIndices( time, i, j );
 
     if ( i == j ) {
         const SceneAnimCurveKey a = Keys.at( i ).second;

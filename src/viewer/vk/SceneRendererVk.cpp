@@ -137,9 +137,9 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
     for ( PipelineComposite::Flags ePipelineFlags :
           {//PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled,
            //PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
-           //PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
            PipelineComposite::kFlag_VertexType_StaticSkinned4 | PipelineComposite::kFlag_BlendType_Disabled,
-           //PipelineComposite::kFlag_VertexType_StaticSkinned8 | PipelineComposite::kFlag_BlendType_Disabled
+           PipelineComposite::kFlag_VertexType_StaticSkinned8 | PipelineComposite::kFlag_BlendType_Disabled
           } ) {
         auto pipelineCompositeIt = PipelineComposites.find( ePipelineFlags );
         if ( pipelineCompositeIt != PipelineComposites.end( ) ) {

@@ -74,6 +74,9 @@ public:
 const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 // const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
+const uint16_t kAnimLayerId   = 0;
+const uint16_t kAnimStackId   = 0;
+
 ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     apemode_memory_allocation_scope;
     pCamInput      = apemode::unique_ptr< CameraControllerInputBase >( apemode_new MouseKeyboardCameraControllerInput( ) );
@@ -94,7 +97,7 @@ ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     auto pModelViewCameraController = (ModelViewCameraController*)pCamController.get();
 
     float position = 350;
-    float destPosition = 10;
+    float destPosition = 500;
 
     pModelViewCameraController->Position.x = position;
     pModelViewCameraController->Position.y = position;

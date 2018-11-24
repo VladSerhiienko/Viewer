@@ -8,6 +8,7 @@
 #include <apemode/platform/memory/MemoryManager.h>
 
 namespace apemode {
+struct Scene;
 
 /* Additional types for Scene classes.
  */
@@ -18,6 +19,12 @@ namespace detail {
  */
 struct SceneDeviceAsset {
     virtual ~SceneDeviceAsset( ) = default;
+};
+
+struct ScenePrintPretty {
+    // virtual ~ScenePrintPretty( ) = default;
+    // virtual void PrintLine( const char *pszLine ) = 0;
+    void PrintPretty( const Scene *pScene );
 };
 
 /* Shortcut for the device asset pointer.
@@ -35,6 +42,18 @@ enum EVertexType {
     eVertexType_Packed,
     eVertexType_PackedSkinned,
     eVertexTypeCount,
+};
+
+enum EInheritType { eInheritType_RrSs = 0, eInheritType_RSrs, eInheritType_Rrs };
+
+enum ERotationOrder {
+    eRotationOrder_EulerXYZ = 0,
+    eRotationOrder_EulerXZY,
+    eRotationOrder_EulerYZX,
+    eRotationOrder_EulerYXZ,
+    eRotationOrder_EulerZXY,
+    eRotationOrder_EulerZYX,
+    eRotationOrder_EulerSphericXYZ
 };
 
 /* Default vertex structure.
@@ -143,6 +162,21 @@ struct SceneMesh {
     detail::EVertexType eVertexType = detail::eVertexType_Custom;
 };
 
+struct SceneNodeTransformLimits {
+    XMINT3   IsTranslationMinActive = XMINT3{0, 0, 0};
+    XMINT3   IsTranslationMaxActive = XMINT3{0, 0, 0};
+    XMINT3   IsRotationMinActive    = XMINT3{0, 0, 0};
+    XMINT3   IsRotationMaxActive    = XMINT3{0, 0, 0};
+    XMINT3   IsScalingMinActive     = XMINT3{0, 0, 0};
+    XMINT3   IsScalingMaxActive     = XMINT3{0, 0, 0};
+    XMFLOAT3 TranslationMin         = XMFLOAT3{0, 0, 0};
+    XMFLOAT3 TranslationMax         = XMFLOAT3{0, 0, 0};
+    XMFLOAT3 RotationMin            = XMFLOAT3{0, 0, 0};
+    XMFLOAT3 RotationMax            = XMFLOAT3{0, 0, 0};
+    XMFLOAT3 ScalingMin             = XMFLOAT3{0, 0, 0};
+    XMFLOAT3 ScalingMax             = XMFLOAT3{0, 0, 0};
+};
+
 /* Transfrom class that stores main FBX SDK transform properties
  * and calculates local and geometric matrices.
  */
@@ -159,6 +193,8 @@ struct SceneNodeTransform {
     XMFLOAT3 GeometricTranslation = XMFLOAT3{0, 0, 0};
     XMFLOAT3 GeometricRotation    = XMFLOAT3{0, 0, 0};
     XMFLOAT3 GeometricScaling     = XMFLOAT3{1, 1, 1};
+    
+    void ApplyLimits( const SceneNodeTransformLimits& limits );
 
     /* Checks for nans and zero scales.
      * @return True if valid, false otherwise.
@@ -169,7 +205,7 @@ struct SceneNodeTransform {
      * @note Contributes node world matrix.
      * @return Node local matrix.
      */
-    XMMATRIX CalculateLocalMatrix( ) const;
+    XMMATRIX CalculateLocalMatrix( const detail::ERotationOrder eOrder ) const;
 
     /* Calculate geometric transform.
      * @note That is an object-offset 3ds Max concept,
@@ -177,10 +213,10 @@ struct SceneNodeTransform {
      *       it contributes to node world transform.
      * @return Node geometric transform.
      */
-    XMMATRIX CalculateGeometricMatrix( ) const;
+    XMMATRIX CalculateGeometricMatrix( const detail::ERotationOrder eOrder ) const;
 };
 
-/* SceneAnimCurvKey class stores time, value, arrive and leave tangents (tangents are only for cubic keys).
+/* SceneAnimCurvKey class stores time, value, and cubic tangents (cu).
  */
 struct SceneAnimCurveKey {
     enum EInterpolationMode {
@@ -190,11 +226,19 @@ struct SceneAnimCurveKey {
         eInterpolationModeCount,
     };
 
-    EInterpolationMode eInterpMode   = eInterpolationMode_Linear;
-    float              Time          = 0.0f;
-    float              Value         = 0.0f;
-    float              ArriveTangent = 0.0f;
-    float              LeaveTangent  = 0.0f;
+    EInterpolationMode eInterpMode = eInterpolationMode_Linear;
+    float              Time        = 0.0f;
+    float              Value       = 0.0f;
+    float              Bez1        = 0.0f;
+    float              Bez2        = 0.0f;
+
+    inline float Bez0( ) const {
+        return Value;
+    }
+
+    inline float PrevBez3( ) const {
+        return Value;
+    }
 };
 
 /* SceneAnimCurve class stores curve parameters and time-value keys.
@@ -246,11 +290,11 @@ struct SceneAnimCurve {
     /* Assigns two indices of the keys for the given time value, loops the time value.
      * The two key indices can be used for accessing actual animation keys' values and interpolating between them.
      */
-    void GetKeyIndices( float &time, bool bLoop, uint32_t &i, uint32_t &j ) const;
+    void GetKeyIndices( float &time, uint32_t &i, uint32_t &j ) const;
 
     /* Returns interpolated curve's value for the given time value.
      */
-    float Calculate( float time, bool bLoop ) const;
+    float Calculate( float time ) const;
 };
 
 /* SceneNodeAnimCurveIds class contains animation curve IDs (for each channel of each property).
@@ -278,11 +322,15 @@ struct SceneSkin {
 };
 
 struct SceneNode {
+    const char * pszName = nullptr;
     detail::SceneDeviceAssetPtr pDeviceAsset;
 
-    uint32_t Id       = detail::kInvalidId;
-    uint32_t ParentId = detail::kInvalidId;
-    uint32_t MeshId   = detail::kInvalidId;
+    uint32_t               Id       = detail::kInvalidId;
+    uint32_t               ParentId = detail::kInvalidId;
+    uint32_t               MeshId   = detail::kInvalidId;
+    uint32_t               LimitsId = detail::kInvalidId;
+    detail::ERotationOrder eOrder   = detail::eRotationOrder_EulerXYZ;
+    detail::EInheritType   eInhType = detail::eInheritType_RSrs;
 };
 
 /* SceneNodeTransformComposite class contains node transformation properties and calculated matrices.
@@ -311,6 +359,7 @@ struct Scene {
     //
 
     apemode::vector< SceneNode >                   Nodes;
+    apemode::vector< SceneNodeTransformLimits >    Limits;
     apemode::vector< SceneMesh >                   Meshes;
     apemode::vector< SceneMeshSubset >             Subsets;
     apemode::vector< SceneMaterial >               Materials;

@@ -21,6 +21,8 @@
 		CA6AAA6F217B567D005A0CDF /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CA6AAA6E217B567D005A0CDF /* libc++.tbd */; };
 		CA6AAA71217B568B005A0CDF /* libc++.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CA6AAA70217B568B005A0CDF /* libc++.tbd */; };
 		CA6AAA73217B580E005A0CDF /* libpthread.tbd in Frameworks */ = {isa = PBXBuildFile; fileRef = CA6AAA72217B580E005A0CDF /* libpthread.tbd */; };
+		CA9A2CAB21A811DE005FE302 /* ScenePrintPretty.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A2CAA21A811DD005FE302 /* ScenePrintPretty.cpp */; };
+		CA9A2CAC21A812F0005FE302 /* ScenePrintPretty.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A2CAA21A811DD005FE302 /* ScenePrintPretty.cpp */; };
 		CA9A4ABD217DC752007E4D21 /* NuklearRendererBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4ABB217DC752007E4D21 /* NuklearRendererBase.cpp */; };
 		CA9A4ABE217DC752007E4D21 /* NuklearRendererBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4ABB217DC752007E4D21 /* NuklearRendererBase.cpp */; };
 		CA9A4ABF217DC752007E4D21 /* ViewerAppShellFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4ABC217DC752007E4D21 /* ViewerAppShellFactory.cpp */; };
@@ -105,6 +107,7 @@
 		CA6AAA6E217B567D005A0CDF /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS11.4.sdk/usr/lib/libc++.tbd"; sourceTree = DEVELOPER_DIR; };
 		CA6AAA70217B568B005A0CDF /* libc++.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = "libc++.tbd"; path = "usr/lib/libc++.tbd"; sourceTree = SDKROOT; };
 		CA6AAA72217B580E005A0CDF /* libpthread.tbd */ = {isa = PBXFileReference; lastKnownFileType = "sourcecode.text-based-dylib-definition"; name = libpthread.tbd; path = usr/lib/libpthread.tbd; sourceTree = SDKROOT; };
+		CA9A2CAA21A811DD005FE302 /* ScenePrintPretty.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ScenePrintPretty.cpp; path = ../../src/viewer/ScenePrintPretty.cpp; sourceTree = SOURCE_ROOT; };
 		CA9A4ABB217DC752007E4D21 /* NuklearRendererBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NuklearRendererBase.cpp; path = ../../src/viewer/NuklearRendererBase.cpp; sourceTree = SOURCE_ROOT; };
 		CA9A4ABC217DC752007E4D21 /* ViewerAppShellFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ViewerAppShellFactory.cpp; path = ../../src/viewer/ViewerAppShellFactory.cpp; sourceTree = SOURCE_ROOT; };
 		CA9A4AC4217DC8F1007E4D21 /* MTFiberContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MTFiberContext.cpp; path = ../../dependencies/TaskScheduler/Scheduler/Source/MTFiberContext.cpp; sourceTree = SOURCE_ROOT; };
@@ -294,6 +297,7 @@
 		CABD243D217B43830056A686 /* Viewer */ = {
 			isa = PBXGroup;
 			children = (
+				CA9A2CAA21A811DD005FE302 /* ScenePrintPretty.cpp */,
 				CA9A4ABB217DC752007E4D21 /* NuklearRendererBase.cpp */,
 				CA9A4ABC217DC752007E4D21 /* ViewerAppShellFactory.cpp */,
 				CABD2457217B43EB0056A686 /* Scene.cpp */,
@@ -430,6 +434,7 @@
 				CA9A4ACC217DC8F2007E4D21 /* MTThreadContext.cpp in Sources */,
 				CABD243B217B3F450056A686 /* SamplerManager.Vulkan.cpp in Sources */,
 				CA9A4ABD217DC752007E4D21 /* NuklearRendererBase.cpp in Sources */,
+				CA9A2CAB21A811DE005FE302 /* ScenePrintPretty.cpp in Sources */,
 				CA676D10217A2E900098A888 /* main.m in Sources */,
 				CABD242C217B3E030056A686 /* GraphicsManager.Vulkan.cpp in Sources */,
 				CABD2445217B43A60056A686 /* NuklearRendererVk.cpp in Sources */,
@@ -467,6 +472,7 @@
 				CA9A4ACD217DC8F2007E4D21 /* MTThreadContext.cpp in Sources */,
 				CABD243C217B3F450056A686 /* SamplerManager.Vulkan.cpp in Sources */,
 				CA9A4ABE217DC752007E4D21 /* NuklearRendererBase.cpp in Sources */,
+				CA9A2CAC21A812F0005FE302 /* ScenePrintPretty.cpp in Sources */,
 				CA676D22217A2E900098A888 /* main.m in Sources */,
 				CABD242D217B3E030056A686 /* GraphicsManager.Vulkan.cpp in Sources */,
 				CABD2446217B43A60056A686 /* NuklearRendererVk.cpp in Sources */,
