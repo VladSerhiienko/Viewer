@@ -77,7 +77,8 @@ namespace vk {
         uint32_t FrameIndex = 0;
         uint64_t FrameId    = 0;
 
-        float    WorldRotationY = 0;
+        int      bEnableAnimations = true;
+        float    WorldRotationY      = 0;
         XMFLOAT4 LightDirection;
         XMFLOAT4 LightColor;
 

@@ -75,7 +75,7 @@ public:
     static constexpr uint32_t kPipelineLayoutCount      = 2; // = skinned + static
     static constexpr uint32_t kPipelineLayoutForStatic  = 0;
     static constexpr uint32_t kPipelineLayoutForSkinned = 1;
-    
+
     // TODO: Set as pecialization constant.
     // static constexpr uint32_t kBoneCount = 64;
     static const uint32_t kMaxBoneCount = 128;

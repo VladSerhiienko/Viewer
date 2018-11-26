@@ -92,10 +92,10 @@ mat3 AccumulatedBoneNormalTransform( vec4 weights, vec4 indices ) {
 
 void main( ) {
     vec3 modelPosition = inPosition.xyz * PositionScale.xyz + PositionOffset.xyz;
-    vec4 worldPosition = WorldMatrix *
-                         ( AccumulatedBoneOffsetTransform( inBoneWeights1, inBoneIndices1 ) +
-                           AccumulatedBoneOffsetTransform( inBoneWeights0, inBoneIndices0 ) ) *
-                         vec4( modelPosition, 1 );
+    mat4 accumBoneMatrix = AccumulatedBoneOffsetTransform( inBoneWeights1, inBoneIndices1 ) +
+                           AccumulatedBoneOffsetTransform( inBoneWeights0, inBoneIndices0 );
+    // vec4 worldPosition = WorldMatrix * accumBoneMatrix * vec4( modelPosition, 1 );
+    vec4 worldPosition = accumBoneMatrix * WorldMatrix * vec4( modelPosition, 1 );
 
     gl_Position = ProjMatrix * ViewMatrix * worldPosition;
 
@@ -105,7 +105,7 @@ void main( ) {
 
     mat3 accumBoneNormalMatrix = AccumulatedBoneNormalTransform( inBoneWeights1, inBoneIndices1 ) +
                                  AccumulatedBoneNormalTransform( inBoneWeights0, inBoneIndices0 );
-                                 
+
     vec3 worldNormal  = normalize( accumBoneNormalMatrix * mat3( NormalMatrix ) * inNormal );
     vec3 worldTangent = normalize( accumBoneNormalMatrix * mat3( NormalMatrix ) * inTangent.xyz );
 

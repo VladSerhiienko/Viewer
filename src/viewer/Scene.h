@@ -193,7 +193,7 @@ struct SceneNodeTransform {
     XMFLOAT3 GeometricTranslation = XMFLOAT3{0, 0, 0};
     XMFLOAT3 GeometricRotation    = XMFLOAT3{0, 0, 0};
     XMFLOAT3 GeometricScaling     = XMFLOAT3{1, 1, 1};
-    
+
     void ApplyLimits( const SceneNodeTransformLimits& limits );
 
     /* Checks for nans and zero scales.

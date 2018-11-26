@@ -135,12 +135,11 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
     }
 
     for ( PipelineComposite::Flags ePipelineFlags :
-          {//PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled,
-           //PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
+          {// PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled,
+           // PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
+           // PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
            PipelineComposite::kFlag_VertexType_StaticSkinned4 | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_StaticSkinned8 | PipelineComposite::kFlag_BlendType_Disabled
-          } ) {
+           PipelineComposite::kFlag_VertexType_StaticSkinned8 | PipelineComposite::kFlag_BlendType_Disabled} ) {
         auto pipelineCompositeIt = PipelineComposites.find( ePipelineFlags );
         if ( pipelineCompositeIt != PipelineComposites.end( ) ) {
             if ( !RenderScene( pScene, pParams, pipelineCompositeIt->second, pTransformFrame, pSceneAsset ) )
@@ -157,7 +156,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
                                               const apemode::SceneNodeTransformFrame* pTransformFrame,
                                               const vk::SceneUploader::DeviceAsset*   pSceneAsset ) {
     using namespace apemodevk;
-    
+
     const PipelineComposite::FlagBits eBits = PipelineComposite::FlagBits(pipeline.eFlags);
 
     auto nodeRange = SortedNodeIds.equal_range( eBits );
@@ -349,7 +348,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             TDescriptorSetBindings< 2 > descriptorSetForSkinnedObj;
             descriptorSetForSkinnedObj.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 0 */
             descriptorSetForSkinnedObj.pBinding[ 0 ].BufferInfo      = boneOffsetsUploadBufferRange.DescriptorBufferInfo;
-            
+
             descriptorSetForSkinnedObj.pBinding[ 1 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC; /* 1 */
             descriptorSetForSkinnedObj.pBinding[ 1 ].BufferInfo      = boneNormalsUploadBufferRange.DescriptorBufferInfo;
 
@@ -372,7 +371,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
                 pMaterial      = &pSceneAsset->MissingMaterial;
                 pMaterialAsset = &pSceneAsset->MissingMaterialAsset;
             }
-            
+
             // TODO: Fix the bug with missing material assets.
             if ( !pMaterialAsset ) {
                 pMaterialAsset = &pSceneAsset->MissingMaterialAsset;
@@ -385,17 +384,20 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             //
 
             uint32_t flags = 0;
-            flags |= pMaterialAsset->hBaseColorImgView  ? 1 << 0 : 0;
-            flags |= pMaterialAsset->hNormalImgView     ? 1 << 1 : 0;
-            flags |= pMaterialAsset->hEmissiveImgView   ? 1 << 2 : 0;
-            flags |= pMaterialAsset->hMetallicImgView   ? 1 << 3 : 0;
-            flags |= pMaterialAsset->hRoughnessImgView  ? 1 << 4 : 0;
-            flags |= pMaterialAsset->hOcclusionImgView  ? 1 << 5 : 0;
-            
+            flags |= pMaterialAsset->hBaseColorImgView ? 1 << 0 : 0;
+            flags |= pMaterialAsset->hNormalImgView ? 1 << 1 : 0;
+            flags |= pMaterialAsset->hEmissiveImgView ? 1 << 2 : 0;
+            flags |= pMaterialAsset->hMetallicImgView ? 1 << 3 : 0;
+            flags |= pMaterialAsset->hRoughnessImgView ? 1 << 4 : 0;
+            flags |= pMaterialAsset->hOcclusionImgView ? 1 << 5 : 0;
+
             MaterialUBO materialData;
-            materialData.BaseColorFactor.x         = pMaterial->BaseColorFactor.x;
-            materialData.BaseColorFactor.y         = pMaterial->BaseColorFactor.y;
-            materialData.BaseColorFactor.z         = pMaterial->BaseColorFactor.z;
+            materialData.BaseColorFactor.x = 1;
+            materialData.BaseColorFactor.y = 1;
+            materialData.BaseColorFactor.z = 1;
+            /*materialData.BaseColorFactor.x         = pMaterial->BaseColorFactor.x;
+              materialData.BaseColorFactor.y         = pMaterial->BaseColorFactor.y;
+              materialData.BaseColorFactor.z         = pMaterial->BaseColorFactor.z; */
             materialData.BaseColorFactor.w         = pMaterial->BaseColorFactor.w;
             materialData.EmissiveFactor.x          = pMaterial->EmissiveFactor.x;
             materialData.EmissiveFactor.y          = pMaterial->EmissiveFactor.y;
@@ -434,7 +436,8 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
 
             descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 2;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
-                                                                    pMaterialAsset->hBaseColorImgView,
+                                                                    pSceneAsset->MissingTextureOnes->hImgView,
+                                                                    // pMaterialAsset->hBaseColorImgView,
                                                                     pMaterialAsset->pBaseColorSampler,
                                                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                                                     pSceneAsset->MissingTextureZeros->hImgView,
@@ -1265,8 +1268,6 @@ apemode::vk::SceneRenderer::PipelineComposite::PipelineComposite( )
 }
 
 apemode::vk::SceneRenderer::PipelineComposite::PipelineComposite( PipelineComposite&& o )
-    //, hDescriptorSetLayouts( eastl::move( o.hDescriptorSetLayouts ) )
-    //, hPipelineLayout( eastl::move( o.hPipelineLayout ) )
     : eFlags( o.eFlags )
     , hPipelineCache( eastl::move( o.hPipelineCache ) )
     , hPipeline( eastl::move( o.hPipeline ) )
@@ -1275,8 +1276,6 @@ apemode::vk::SceneRenderer::PipelineComposite::PipelineComposite( PipelineCompos
 
 apemode::vk::SceneRenderer::PipelineComposite&
 apemode::vk::SceneRenderer::PipelineComposite::operator=( PipelineComposite&& o ) {
-    // hDescriptorSetLayouts = ( eastl::move( other.hDescriptorSetLayouts ) );
-    // hPipelineLayout = ( eastl::move( o.hPipelineLayout ) );
     eFlags          = o.eFlags;
     hPipelineCache  = eastl::move( o.hPipelineCache );
     hPipeline       = eastl::move( o.hPipeline );

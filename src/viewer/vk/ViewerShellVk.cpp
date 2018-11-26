@@ -75,13 +75,13 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 // const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
 const uint16_t kAnimLayerId   = 0;
-const uint16_t kAnimStackId   = 0;
+const uint16_t kAnimStackId   = 4;
 
 ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     apemode_memory_allocation_scope;
     pCamInput      = apemode::unique_ptr< CameraControllerInputBase >( apemode_new MouseKeyboardCameraControllerInput( ) );
 
-    /*
+#if _WIN32
     pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new FreeLookCameraController( ) );
     auto pFreeLookCameraController = (FreeLookCameraController*)pCamController.get();
     pFreeLookCameraController->Position.x = 50;
@@ -90,9 +90,9 @@ ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     pFreeLookCameraController->PositionDst.x = 50;
     pFreeLookCameraController->PositionDst.y = 50;
     pFreeLookCameraController->PositionDst.z = 50;
-    */
-
+#else
     //*
+
     pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new ModelViewCameraController( ) );
     auto pModelViewCameraController = (ModelViewCameraController*)pCamController.get();
 
@@ -107,6 +107,7 @@ ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     pModelViewCameraController->PositionDst.z = destPosition;
 
     //*/
+#endif
 }
 
 ViewerShell::~ViewerShell( ) {
@@ -206,9 +207,9 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         apemodevk::ImageUploader imgUploader;
         apemodevk::ImageDecoder  imgDecoder;
 
-        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/kyoto_lod.dds" ) ) {
-        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_skybox.dds" ) ) {
-        if ( auto pTexAsset = FileAssetManager.Acquire( "images/Environment/bolonga_lod.dds" ) ) {
+        if ( auto pTexAsset = FileAssetManager.Acquire( "images/Environment/kyoto_lod.dds" ) ) {
+            // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_skybox.dds" ) ) {
+            // if ( auto pTexAsset = FileAssetManager.Acquire( "images/Environment/bolonga_lod.dds" ) ) {
             apemode_memory_allocation_scope;
             {
                 const auto texAssetBin = pTexAsset->GetContentAsBinaryBuffer( );
@@ -246,9 +247,9 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
             pRadianceCubeMapSampler = pSamplerManager->GetSampler( samplerCreateInfo );
         }
 
-        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/kyoto_irr.dds" ) ) {
-        // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_iem.dds" ) ) {
-        if ( auto pTexAsset = FileAssetManager.Acquire( "images/Environment/bolonga_irr.dds" ) ) {
+        if ( auto pTexAsset = FileAssetManager.Acquire( "images/Environment/kyoto_irr.dds" ) ) {
+            // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_iem.dds" ) ) {
+            // if ( auto pTexAsset = FileAssetManager.Acquire( "images/Environment/bolonga_irr.dds" ) ) {
             apemode_memory_allocation_scope;
             {
                 const auto texAssetBin = pTexAsset->GetContentAsBinaryBuffer( );
@@ -562,7 +563,7 @@ void ViewerShell::UpdateUI( const VkExtent2D currentExtent, const apemode::platf
         auto invViewMatrix = GetMatrix( XMMatrixInverse( nullptr, pCamController->ViewMatrix( ) ) );
 
         if ( nk_tree_push( pNkContext, NK_TREE_NODE, "View Matrix", NK_MINIMIZED ) ) {
-            nk_layout_row_dynamic( pNkContext, 10, 1 );
+            nk_layout_row_dynamic( pNkContext, 30, 1 );
             nk_labelf( pNkContext,
                        NK_TEXT_LEFT,
                        "View: %2.2f %2.2f %2.2f %2.2f ",
@@ -591,6 +592,9 @@ void ViewerShell::UpdateUI( const VkExtent2D currentExtent, const apemode::platf
                        invViewMatrix._42,
                        invViewMatrix._43,
                        invViewMatrix._44 );
+
+            nk_labelf( pNkContext, NK_TEXT_LEFT, "bEnableAnimations" );
+            nk_checkbox_label( pNkContext, "", &bEnableAnimations );
 
             nk_labelf( pNkContext, NK_TEXT_LEFT, "WorldRotationY" );
             nk_slider_float( pNkContext, 0, &WorldRotationY, apemodexm::XM_2PI, 0.1f );
@@ -647,7 +651,7 @@ void ViewerShell::UpdateCamera( const apemode::platform::AppInput* pAppInput ) {
         pCamController->Dolly( pCamInput->DollyDelta );
     }
 
-    pCamController->Orbit( {0.01f * DeltaSecs, 0} );
+    //pCamController->Orbit( {0.01f * DeltaSecs, 0} );
     pCamController->Update( DeltaSecs );
 }
 
@@ -684,11 +688,6 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
     auto projBiasMatrix = CamProjController.ProjBiasMatrix( );
     auto invProjMatrix  = XMMatrixInverse( nullptr, projMatrix );
 
-    apemode::vk::DebugRenderer::SkyboxUBO frameData;
-    XMStoreFloat4x4( &frameData.ProjMatrix, projMatrix );
-    XMStoreFloat4x4( &frameData.ViewMatrix, viewMatrix );
-    frameData.Color = {1, 0, 0, 1};
-
     pSkyboxRenderer->Reset( FrameIndex );
     pDebugRenderer->Reset( FrameIndex );
     pSceneRendererBase->Reset( mLoadedScene.pScene.get( ), FrameIndex );
@@ -707,34 +706,6 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
     skyboxRenderParams.FieldOfView = apemodexm::DegreesToRadians( 67 );
 
     pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
-
-    apemode::vk::DebugRenderer::RenderParameters renderParamsDbg;
-    renderParamsDbg.Dims[ 0 ]  = extentF.x;
-    renderParamsDbg.Dims[ 1 ]  = extentF.y;
-    renderParamsDbg.Scale[ 0 ] = 1;
-    renderParamsDbg.Scale[ 1 ] = 1;
-    renderParamsDbg.FrameIndex = FrameIndex;
-    renderParamsDbg.pCmdBuffer = pCmdBuffer;
-    renderParamsDbg.pFrameData = &frameData;
-
-    const float scale = 0.5f;
-
-    XMMATRIX worldMatrix;
-
-    worldMatrix = XMMatrixScaling( scale, scale * 2, scale ) * XMMatrixTranslation( 0, scale * 3, 0 );
-    XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
-    frameData.Color = {0, 1, 0, 1};
-//    pDebugRenderer->Render( &renderParamsDbg );
-
-    worldMatrix = XMMatrixScaling( scale, scale, scale * 2 ) * XMMatrixTranslation( 0, 0, scale * 3 );
-    XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
-    frameData.Color = {0, 0, 1, 1};
-//    pDebugRenderer->Render( &renderParamsDbg );
-
-    worldMatrix = XMMatrixScaling( scale * 2, scale, scale ) * XMMatrixTranslation( scale * 3, 0, 0 );
-    XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
-    frameData.Color = {1, 0, 0, 1};
-//    pDebugRenderer->Render( &renderParamsDbg );
 
     XMMATRIX rootMatrix = XMMatrixRotationY( WorldRotationY );
 
@@ -763,6 +734,64 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
     XMStoreFloat4x4( &sceneRenderParameters.InvProjMatrix, invProjMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.RootMatrix, rootMatrix );
     pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
+
+    {
+        apemode::vk::DebugRenderer::DebugUBO frameData;
+        XMStoreFloat4x4( &frameData.ProjMatrix, projMatrix );
+        XMStoreFloat4x4( &frameData.ViewMatrix, viewMatrix );
+        frameData.Color = {1, 0, 0, 1};
+
+        apemode::vk::DebugRenderer::RenderCubeParameters debugRenderCubeParameters;
+        debugRenderCubeParameters.Dims[ 0 ]  = extentF.x;
+        debugRenderCubeParameters.Dims[ 1 ]  = extentF.y;
+        debugRenderCubeParameters.Scale[ 0 ] = 1;
+        debugRenderCubeParameters.Scale[ 1 ] = 1;
+        debugRenderCubeParameters.FrameIndex = FrameIndex;
+        debugRenderCubeParameters.pCmdBuffer = pCmdBuffer;
+        debugRenderCubeParameters.pFrameData = &frameData;
+
+        const float scale = 0.5f;
+        XMMATRIX    worldMatrix;
+
+        worldMatrix = XMMatrixScaling( scale, scale * 2, scale ) * XMMatrixTranslation( 0, scale * 3, 0 );
+        XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
+        frameData.Color = {0, 1, 0, 1};
+        // pDebugRenderer->Render( &debugRenderCubeParameters );
+
+        worldMatrix = XMMatrixScaling( scale, scale, scale * 2 ) * XMMatrixTranslation( 0, 0, scale * 3 );
+        XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
+        frameData.Color = {0, 0, 1, 1};
+        // pDebugRenderer->Render( &debugRenderCubeParameters );
+
+        worldMatrix = XMMatrixScaling( scale * 2, scale, scale ) * XMMatrixTranslation( scale * 3, 0, 0 );
+        XMStoreFloat4x4( &frameData.WorldMatrix, worldMatrix );
+        frameData.Color = {1, 0, 0, 1};
+        // pDebugRenderer->Render( &debugRenderCubeParameters );
+
+        apemode::vk::DebugRenderer::RenderSceneParameters debugRenderSceneParameters;
+        debugRenderSceneParameters.pNode      = &Surface.Node;
+        debugRenderSceneParameters.pCmdBuffer = pCmdBuffer;
+        debugRenderSceneParameters.FrameIndex = FrameIndex;
+        debugRenderSceneParameters.Dims.x     = extentF.x;
+        debugRenderSceneParameters.Dims.y     = extentF.y;
+        debugRenderSceneParameters.Scale.x    = 1;
+        debugRenderSceneParameters.Scale.y    = 1;
+        XMStoreFloat4x4( &debugRenderSceneParameters.RootMatrix, rootMatrix );
+        XMStoreFloat4x4( &debugRenderSceneParameters.ProjMatrix, projMatrix );
+        XMStoreFloat4x4( &debugRenderSceneParameters.ViewMatrix, viewMatrix );
+        XMStoreFloat4x4( &debugRenderSceneParameters.InvViewMatrix, invViewMatrix );
+        XMStoreFloat4x4( &debugRenderSceneParameters.InvProjMatrix, invProjMatrix );
+
+        debugRenderSceneParameters.pTransformFrame    = &mLoadedScene.pScene->BindPoseFrame;
+        debugRenderSceneParameters.SceneColorOverride = XMFLOAT4{1, 1, 0, 1};
+        debugRenderSceneParameters.LineWidth          = 4;
+        pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
+
+        debugRenderSceneParameters.pTransformFrame    = pTransformFrame;
+        debugRenderSceneParameters.SceneColorOverride = XMFLOAT4{0, 1, 1, 1};
+        debugRenderSceneParameters.LineWidth          = 2;
+        pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
+    }
 
     apemode::vk::NuklearRenderer::RenderParameters renderParamsNk;
     renderParamsNk.Dims[ 0 ]            = extentF.x;
@@ -816,7 +845,7 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
     Frame& swapchainFrame = Frames[ currentFrame.BackbufferIndex ];
 
     const SceneNodeTransformFrame* pTrasformFrame =
-        mLoadedScene.pScene->GetAnimatedTransformFrame( kAnimStackId, kAnimLayerId );
+        bEnableAnimations ? mLoadedScene.pScene->GetAnimatedTransformFrame( kAnimStackId, kAnimLayerId ) : 0;
 
     const uint32_t       queueFamilyId               = 0;
     VkPipelineStageFlags eColorAttachmentOutputStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;

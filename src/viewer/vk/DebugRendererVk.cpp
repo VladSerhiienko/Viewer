@@ -1,7 +1,8 @@
 #include "DebugRendererVk.h"
 
-#include <apemode/vk/TInfoStruct.Vulkan.h>
 #include <apemode/platform/ArrayUtils.h>
+#include <apemode/vk/TInfoStruct.Vulkan.h>
+#include <viewer/Scene.h>
 
 namespace apemode {
     using namespace apemodevk;
@@ -96,7 +97,7 @@ bool apemode::vk::DebugRenderer::RecreateResources( InitParameters* pParams ) {
     VkPipelineDepthStencilStateCreateInfo  depthStencilStateCreateInfo;
     VkPipelineViewportStateCreateInfo      viewportStateCreateInfo;
     VkPipelineMultisampleStateCreateInfo   multisampleStateCreateInfo;
-    VkDynamicState                         dynamicStateEnables[ 2 ];
+    VkDynamicState                         dynamicStateEnables[ 3 ];
     VkPipelineDynamicStateCreateInfo       dynamicStateCreateInfo ;
     VkPipelineShaderStageCreateInfo        shaderStageCreateInfo[ 2 ];
 
@@ -160,6 +161,7 @@ bool apemode::vk::DebugRenderer::RecreateResources( InitParameters* pParams ) {
 
     dynamicStateEnables[ 0 ]                 = VK_DYNAMIC_STATE_SCISSOR;
     dynamicStateEnables[ 1 ]                 = VK_DYNAMIC_STATE_VIEWPORT;
+    dynamicStateEnables[ 2 ]                 = VK_DYNAMIC_STATE_LINE_WIDTH;
     dynamicStateCreateInfo.pDynamicStates    = dynamicStateEnables;
     dynamicStateCreateInfo.dynamicStateCount = GetArraySize( dynamicStateEnables );
     graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
@@ -186,8 +188,8 @@ bool apemode::vk::DebugRenderer::RecreateResources( InitParameters* pParams ) {
 
     //
 
-    depthStencilStateCreateInfo.depthTestEnable       = VK_TRUE;
-    depthStencilStateCreateInfo.depthWriteEnable      = VK_TRUE;
+    depthStencilStateCreateInfo.depthTestEnable       = VK_FALSE;
+    depthStencilStateCreateInfo.depthWriteEnable      = VK_FALSE;
     depthStencilStateCreateInfo.depthCompareOp        = VK_COMPARE_OP_LESS_OR_EQUAL;
     depthStencilStateCreateInfo.depthBoundsTestEnable = VK_FALSE;
     depthStencilStateCreateInfo.back.failOp           = VK_STENCIL_OP_KEEP;
@@ -211,6 +213,8 @@ bool apemode::vk::DebugRenderer::RecreateResources( InitParameters* pParams ) {
 
     //
 
+    rasterizationStateCreateInfo.lineWidth = 1;
+
     if ( false == hPipelineCache.Recreate( pNode->hLogicalDevice, pipelineCacheCreateInfo ) ) {
         apemodevk::platform::DebugBreak( );
         return false;
@@ -221,7 +225,22 @@ bool apemode::vk::DebugRenderer::RecreateResources( InitParameters* pParams ) {
         return false;
     }
 
-    if (  nullptr == hVertexBuffer.Handle.pBuffer ) {
+    //
+
+    inputAssemblyStateCreateInfo.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+    rasterizationStateCreateInfo.lineWidth = 3;
+
+    if ( false == hLinePipelineCache.Recreate( pNode->hLogicalDevice, pipelineCacheCreateInfo ) ) {
+        apemodevk::platform::DebugBreak( );
+        return false;
+    }
+
+    if ( false == hLinePipeline.Recreate( pNode->hLogicalDevice, hLinePipelineCache, graphicsPipelineCreateInfo ) ) {
+        apemodevk::platform::DebugBreak( );
+        return false;
+    }
+
+    if (  nullptr == hCubeBuffer.Handle.pBuffer ) {
 
         // clang-format off
         const float vertexBufferData[] = {
@@ -286,12 +305,12 @@ bool apemode::vk::DebugRenderer::RecreateResources( InitParameters* pParams ) {
         allocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
         allocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-        if ( false == hVertexBuffer.Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
+        if ( false == hCubeBuffer.Recreate( pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
             apemodevk::platform::DebugBreak( );
             return false;
         }
 
-        if ( auto mappedData = hVertexBuffer.Handle.AllocationInfo.pMappedData ) {
+        if ( auto mappedData = hCubeBuffer.Handle.AllocationInfo.pMappedData ) {
             memcpy( mappedData, vertexBufferData, vertexBufferSize );
         }
     }
@@ -300,7 +319,7 @@ bool apemode::vk::DebugRenderer::RecreateResources( InitParameters* pParams ) {
     vkGetPhysicalDeviceProperties( pNode->pPhysicalDevice, &adapterProps );
 
     for (uint32_t i = 0; i < pParams->FrameCount; ++i) {
-        BufferPools[ i ].Recreate( pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, false );
+        BufferPools[ i ].Recreate( pNode, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, false );
         DescSetPools[ i ].Recreate( pNode->hLogicalDevice, pParams->pDescPool, hDescSetLayout );
     }
 
@@ -311,14 +330,14 @@ void apemode::vk::DebugRenderer::Reset( uint32_t frameIndex ) {
     BufferPools[ frameIndex ].Reset( );
 }
 
-bool apemode::vk::DebugRenderer::Render( RenderParameters* renderParams ) {
+bool apemode::vk::DebugRenderer::Render( const RenderCubeParameters* renderParams ) {
     apemodevk_memory_allocation_scope;
 
     auto frameIndex = ( renderParams->FrameIndex ) % kMaxFrameCount;
 
     auto suballocResult = BufferPools[ frameIndex ].TSuballocate( *renderParams->pFrameData );
     assert( VK_NULL_HANDLE != suballocResult.DescriptorBufferInfo.buffer );
-    suballocResult.DescriptorBufferInfo.range = sizeof(SkyboxUBO);
+    suballocResult.DescriptorBufferInfo.range = sizeof( DebugUBO );
 
     VkDescriptorSet descriptorSet[ 1 ]  = {nullptr};
 
@@ -338,7 +357,7 @@ bool apemode::vk::DebugRenderer::Render( RenderParameters* renderParams ) {
                              1,
                              &suballocResult.DynamicOffset );
 
-    VkBuffer     vertexBuffers[ 1 ] = {hVertexBuffer.Handle.pBuffer};
+    VkBuffer     vertexBuffers[ 1 ] = {hCubeBuffer.Handle.pBuffer};
     VkDeviceSize vertexOffsets[ 1 ] = {0};
     vkCmdBindVertexBuffers( renderParams->pCmdBuffer, 0, 1, vertexBuffers, vertexOffsets );
 
@@ -361,7 +380,113 @@ bool apemode::vk::DebugRenderer::Render( RenderParameters* renderParams ) {
     scissor.extent.height = (uint32_t)(renderParams->Dims[ 1 ] * renderParams->Scale[ 1 ]);
 
     vkCmdSetScissor( renderParams->pCmdBuffer, 0, 1, &scissor );
+    vkCmdSetLineWidth( renderParams->pCmdBuffer, renderParams->LineWidth );
     vkCmdDraw( renderParams->pCmdBuffer, 12 * 3, 1, 0, 0 );
+
+    return true;
+}
+
+void PopulateNodeConnectionLines( const apemode::Scene*                   pScene,
+                                  const apemode::SceneNodeTransformFrame* pTransformFrame,
+                                  const uint32_t                          nodeId,
+                                  apemodevk::vector< apemode::XMFLOAT3 >* pOutLines ) {
+    using namespace apemode;
+    if ( pScene && pTransformFrame && pOutLines ) {
+        auto& nodeTransformComposite = pTransformFrame->Transforms[ nodeId ];
+
+        XMFLOAT4X4 nodeWorldMatrix;
+        XMFLOAT4X4 childWorldMatrix;
+
+        XMStoreFloat4x4( &nodeWorldMatrix, nodeTransformComposite.WorldMatrix );
+        XMFLOAT3 nodeWorldPosition{nodeWorldMatrix._41, nodeWorldMatrix._42, nodeWorldMatrix._43};
+
+        const auto childIdRange = pScene->NodeToChildIds.equal_range( nodeId );
+        for ( auto childIdIt = childIdRange.first; childIdIt != childIdRange.second; ++childIdIt ) {
+            const uint32_t childId                 = childIdIt->second;
+            const auto&    childTransformComposite = pTransformFrame->Transforms[ childId ];
+
+            XMStoreFloat4x4( &childWorldMatrix, childTransformComposite.WorldMatrix );
+            XMFLOAT3 childWorldPosition{childWorldMatrix._41, childWorldMatrix._42, childWorldMatrix._43};
+
+            pOutLines->push_back( nodeWorldPosition );
+            pOutLines->push_back( childWorldPosition );
+
+            PopulateNodeConnectionLines( pScene, pTransformFrame, childId, pOutLines );
+        }
+    }
+}
+
+bool apemode::vk::DebugRenderer::Render( const Scene* pScene, const RenderSceneParameters* pRenderParams ) {
+    if ( !pRenderParams || !pRenderParams->pTransformFrame ) {
+        return true;
+    }
+
+    LineStagingBuffer.clear( );
+    LineStagingBuffer.reserve( pScene->Nodes.size( ) << 1 );
+    PopulateNodeConnectionLines( pScene, pRenderParams->pTransformFrame, 0, &LineStagingBuffer );
+
+    apemodevk_memory_allocation_scope;
+
+    auto frameIndex = ( pRenderParams->FrameIndex ) % kMaxFrameCount;
+
+    DebugUBO linesUBO;
+    linesUBO.WorldMatrix = pRenderParams->RootMatrix;
+    linesUBO.ViewMatrix  = pRenderParams->ViewMatrix;
+    linesUBO.ProjMatrix  = pRenderParams->ProjMatrix;
+    linesUBO.Color       = pRenderParams->SceneColorOverride;
+
+    auto linesSuballocResult = BufferPools[ frameIndex ].TSuballocate( linesUBO );
+    assert( VK_NULL_HANDLE != linesSuballocResult.DescriptorBufferInfo.buffer );
+    linesSuballocResult.DescriptorBufferInfo.range = sizeof( linesUBO );
+
+    auto linesStagingSuballocResult = BufferPools[ frameIndex ].Suballocate(
+        LineStagingBuffer.data( ), LineStagingBuffer.size( ) * sizeof( PositionVertex ) );
+    assert( VK_NULL_HANDLE != linesStagingSuballocResult.DescriptorBufferInfo.buffer );
+    linesStagingSuballocResult.DescriptorBufferInfo.range = LineStagingBuffer.size( ) * sizeof( PositionVertex );
+
+    VkDescriptorSet descriptorSet[ 1 ] = {nullptr};
+
+    TDescriptorSetBindings< 1 > descSet;
+    descSet.pBinding[ 0 ].eDescriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC;
+    descSet.pBinding[ 0 ].BufferInfo      = linesSuballocResult.DescriptorBufferInfo;
+
+    descriptorSet[ 0 ] = DescSetPools[ frameIndex ].GetDescriptorSet( &descSet );
+
+    vkCmdBindPipeline( pRenderParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hLinePipeline );
+    vkCmdBindDescriptorSets( pRenderParams->pCmdBuffer,
+                             VK_PIPELINE_BIND_POINT_GRAPHICS,
+                             hPipelineLayout,
+                             0,
+                             1,
+                             descriptorSet,
+                             1,
+                             &linesSuballocResult.DynamicOffset );
+
+    VkBuffer     vertexBuffers[ 1 ] = {linesStagingSuballocResult.DescriptorBufferInfo.buffer};
+    VkDeviceSize vertexOffsets[ 1 ] = {linesStagingSuballocResult.DynamicOffset};
+    vkCmdBindVertexBuffers( pRenderParams->pCmdBuffer, 0, 1, vertexBuffers, vertexOffsets );
+
+    VkViewport viewport;
+    InitializeStruct( viewport );
+    viewport.x        = 0;
+    viewport.y        = 0;
+    viewport.width    = pRenderParams->Dims.x * pRenderParams->Scale.x;
+    viewport.height   = pRenderParams->Dims.y * pRenderParams->Scale.y;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    vkCmdSetViewport( pRenderParams->pCmdBuffer, 0, 1, &viewport );
+
+    VkRect2D scissor;
+    InitializeStruct( scissor );
+    scissor.offset.x      = 0;
+    scissor.offset.y      = 0;
+    scissor.extent.width  = viewport.width;
+    scissor.extent.height = viewport.height;
+
+    vkCmdSetScissor( pRenderParams->pCmdBuffer, 0, 1, &scissor );
+    vkCmdSetLineWidth( pRenderParams->pCmdBuffer, pRenderParams->LineWidth );
+    vkCmdDraw( pRenderParams->pCmdBuffer, LineStagingBuffer.size( ), 1, 0, 0 );
 
     return true;
 }
