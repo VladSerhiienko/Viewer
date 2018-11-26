@@ -94,8 +94,8 @@ void main( ) {
     vec3 modelPosition = inPosition.xyz * PositionScale.xyz + PositionOffset.xyz;
     mat4 accumBoneMatrix = AccumulatedBoneOffsetTransform( inBoneWeights1, inBoneIndices1 ) +
                            AccumulatedBoneOffsetTransform( inBoneWeights0, inBoneIndices0 );
-    // vec4 worldPosition = WorldMatrix * accumBoneMatrix * vec4( modelPosition, 1 );
-    vec4 worldPosition = accumBoneMatrix * WorldMatrix * vec4( modelPosition, 1 );
+    vec4 worldPosition = WorldMatrix * accumBoneMatrix * vec4( modelPosition, 1 );
+    // vec4 worldPosition = accumBoneMatrix * WorldMatrix * vec4( modelPosition, 1 );
 
     gl_Position = ProjMatrix * ViewMatrix * worldPosition;
 

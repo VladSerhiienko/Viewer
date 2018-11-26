@@ -310,17 +310,6 @@ struct SceneNodeAnimCurveIds {
     };
 };
 
-/* SceneSkinLink class contains the node ID (link ID) and its inverse bind pose matrix.
- */
-struct SceneSkinLink {
-    uint32_t LinkId = detail::kInvalidId;
-    XMMATRIX InvBindPoseMatrix;
-};
-
-struct SceneSkin {
-    apemode::vector< SceneSkinLink > Links;
-};
-
 struct SceneNode {
     const char * pszName = nullptr;
     detail::SceneDeviceAssetPtr pDeviceAsset;
@@ -331,6 +320,7 @@ struct SceneNode {
     uint32_t               LimitsId = detail::kInvalidId;
     detail::ERotationOrder eOrder   = detail::eRotationOrder_EulerXYZ;
     detail::EInheritType   eInhType = detail::eInheritType_RSrs;
+    bool                   bIsJoint = false;
 };
 
 /* SceneNodeTransformComposite class contains node transformation properties and calculated matrices.
@@ -347,6 +337,25 @@ struct SceneNodeTransformComposite {
  */
 struct SceneNodeTransformFrame {
     apemode::vector< SceneNodeTransformComposite > Transforms;
+};
+
+/* SceneSkinLink class contains the node ID (link ID) and its inverse bind pose matrix.
+ */
+struct SceneSkinLink {
+    uint32_t LinkId = detail::kInvalidId;
+    XMMATRIX InvBindPoseMatrix;
+};
+
+struct SceneSkin {
+    uint32_t                                       Id = detail::kInvalidId;
+    apemode::vector< SceneSkinLink >               Links;
+    apemode::vector_multimap< uint32_t, uint32_t > ChildIds;
+    SceneNodeTransformFrame                        BindPoseFrame;
+};
+
+struct SceneAnimStack {
+    const char * pszName    = nullptr;
+    uint32_t LayerCount     = 0;
 };
 
 /* Scene class contains nodes, meshes, materials, animation curves and transform frames.
@@ -370,7 +379,7 @@ struct Scene {
     apemode::vector< SceneAnimCurve >                        AnimCurves;
     apemode::vector_multimap< uint32_t, uint32_t >           NodeIdToAnimCurveIds;
     apemode::vector_map< uint64_t, SceneNodeAnimCurveIds >   AnimNodeIdToAnimCurveIds;
-    apemode::vector_map< uint32_t, SceneNodeTransformFrame > AnimLayerIdToTransformFrames;
+    apemode::vector< SceneAnimStack >                        AnimStacks;
 
     //
     // Transform matrices storage.
@@ -383,6 +392,10 @@ struct Scene {
     /* Updates transform frame.
      */
     void UpdateTransformMatrices( SceneNodeTransformFrame &transformFrame ) const;
+    
+    /* Updates transform frame.
+     */
+    void UpdateTransformMatrices( const SceneNodeTransformFrame * pAnimatedFrame, SceneSkin * pSkin, SceneNodeTransformFrame * pSkinAnimatedFrame ) const;
 
     /* Initializes transform frame.
      */
@@ -390,7 +403,7 @@ struct Scene {
 
     /* Animates transform frame, returns it.
      */
-    SceneNodeTransformFrame *UpdateTransformProperties( float time, bool bLoop, uint16_t animStackId, uint16_t animLayerId );
+    void UpdateTransformProperties( float time, bool bLoop, uint16_t animStackId, uint16_t animLayerId, SceneNodeTransformFrame * pOutAnimatedFrame );
 
     /* Returns animated transform frame.
      */
@@ -402,11 +415,7 @@ struct Scene {
 
     /* Returns animated transform frame.
      */
-    SceneNodeTransformFrame *GetAnimatedTransformFrame( uint16_t animStackId, uint16_t animLayerId );
-
-    /* Returns animated transform frame.
-     */
-    const SceneNodeTransformFrame *GetAnimatedTransformFrame( uint16_t animStackId, uint16_t animLayerId ) const;
+    bool HasAnimStackLayer( uint16_t animStackId, uint16_t animLayerId ) const;
 
     /* Returns animation curves for the node.
      */

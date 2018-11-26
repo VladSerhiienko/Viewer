@@ -78,7 +78,7 @@ namespace vk {
         uint64_t FrameId    = 0;
 
         int      bEnableAnimations = true;
-        float    WorldRotationY      = 0;
+        float    WorldRotationY    = 0;
         XMFLOAT4 LightDirection;
         XMFLOAT4 LightColor;
 
@@ -107,6 +107,8 @@ namespace vk {
 
         const bool     bLookAnimation = true;
         LoadedScene    mLoadedScene;
+        apemode::SceneNodeTransformFrame SceneTransformFrame;
+        apemode::vector<apemode::SceneNodeTransformFrame> SkinTransformFrames;
         bool           bIsUsingUI = false;
     };
 

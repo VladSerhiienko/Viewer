@@ -196,54 +196,28 @@ const apemode::SceneNodeAnimCurveIds *apemode::Scene::GetAnimCurveIds( const uin
     return nullptr;
 }
 
-inline XMMATRIX CalculateOffsetMatrix( const SceneSkinLink &skinLink,
-                                       const XMMATRIX       skinLinkWorldMatrix,
-                                       const XMMATRIX       skinWorldInvMatrix ) {
-    return skinLink.InvBindPoseMatrix * skinLinkWorldMatrix;
-    // return skinLink.InvBindPoseMatrix * skinWorldInvMatrix * skinLinkWorldMatrix;
-    // return skinLinkWorldMatrix * skinLink.InvBindPoseMatrix * skinWorldInvMatrix;
-    // return skinWorldInvMatrix * skinLink.InvBindPoseMatrix * skinLinkWorldMatrix;
-    // return skinWorldInvMatrix * skinLink.InvBindPoseMatrix * skinLinkWorldMatrix;
-}
-
-XMMATRIX CalculateSkinGlobalInverse( const Scene *                  pScene,
-                                     const SceneSkin &              skin,
-                                     const SceneNodeTransformFrame &animatedFrame ) {
-    const uint32_t skinRootLinkId = skin.Links.front( ).LinkId;
-
-    XMMATRIX skinGlobalInverseMatrix = XMMatrixIdentity( );
-#if 1
-    skinGlobalInverseMatrix = animatedFrame.Transforms[ skinRootLinkId ].WorldMatrix;
-    skinGlobalInverseMatrix = XMMatrixInverse( nullptr, skinGlobalInverseMatrix );
-    skinGlobalInverseMatrix = skinGlobalInverseMatrix * animatedFrame.Transforms[ skinRootLinkId ].LocalMatrix;
-#elif 0
-    skinGlobalInverseMatrix = animatedFrame.Transforms[ skinRootLinkId ].WorldMatrix;
-    skinGlobalInverseMatrix = XMMatrixInverse( nullptr, skinGlobalInverseMatrix );
-#else
-    const SceneNode &skinRootNode = pScene->Nodes[ skinRootLinkId ];
-    assert( skinRootNode.Id == skinRootLinkId );
-    if ( skinRootNode.ParentId != uint32_t( -1 ) ) {
-        assert( pScene->Nodes[ skinRootNode.ParentId ].Id == skinRootNode.ParentId );
-        skinGlobalInverseMatrix = animatedFrame.Transforms[ skinRootNode.ParentId ].HierarchicalMatrix;
-        skinGlobalInverseMatrix = XMMatrixInverse( nullptr, skinGlobalInverseMatrix );
-    }
-#endif
-
-    return skinGlobalInverseMatrix;
+inline XMMATRIX CalculateOffsetMatrix( const XMMATRIX invBindPoseMatrix, const XMMATRIX worldMatrix ) {
+    return invBindPoseMatrix * worldMatrix;
 }
 
 void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
                                          const SceneNodeTransformFrame &animatedFrame,
-                                         XMMATRIX *                     pSkinMatrices,
+                                         XMMATRIX *                     pOffsetMatrices,
                                          size_t                         skinMatrixCount ) const {
-
-    const XMMATRIX skinGlobalInverseMatrix = CalculateSkinGlobalInverse(this, skin, animatedFrame);
 
     assert( skinMatrixCount >= skin.Links.size( ) );
     for ( size_t i = 0; i < skin.Links.size( ); ++i ) {
-        const SceneSkinLink & skinLink = skin.Links[ i ];
-        const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
-        pSkinMatrices[ i ] = CalculateOffsetMatrix( skinLink, skinLinkTransform.WorldMatrix, skinGlobalInverseMatrix );
+        // const XMMATRIX bindPoseMatrix = skin.BindPoseFrame.Transforms[i].WorldMatrix;
+        // const XMMATRIX invBindPoseMatrix = XMMatrixInverse(0, bindPoseMatrix);
+        const XMMATRIX invBindPoseMatrix = skin.Links[i].InvBindPoseMatrix;
+        const XMMATRIX currentWorldMatrix = animatedFrame.Transforms[i].WorldMatrix;
+        const XMMATRIX offsetMatrix = CalculateOffsetMatrix( invBindPoseMatrix, currentWorldMatrix );
+        
+        pOffsetMatrices[ i ] = offsetMatrix;
+    
+        // const SceneSkinLink & skinLink = skin.Links[ i ];
+        // const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
+        // pSkinMatrices[ i ] = CalculateOffsetMatrix( skinLink, skinLinkTransform.WorldMatrix );
     }
 }
 
@@ -253,15 +227,22 @@ void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
                                          XMFLOAT4X4 *                   pNormalMatrices,
                                          size_t                         matrixCount ) const {
 
-    const XMMATRIX skinGlobalInverseMatrix = CalculateSkinGlobalInverse(this, skin, animatedFrame);
-
     assert( matrixCount >= skin.Links.size( ) );
     for ( size_t i = 0; i < skin.Links.size( ); ++i ) {
-        const SceneSkinLink & skinLink = skin.Links[ i ];
-        const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
-        const XMMATRIX offsetMatrix = CalculateOffsetMatrix( skinLink, skinLinkTransform.WorldMatrix, skinGlobalInverseMatrix );
+        // const XMMATRIX bindPoseMatrix = skin.BindPoseFrame.Transforms[i].WorldMatrix;
+        // const XMMATRIX invBindPoseMatrix = XMMatrixInverse(0, bindPoseMatrix);
+        const XMMATRIX invBindPoseMatrix = skin.Links[i].InvBindPoseMatrix;
+        const XMMATRIX currentWorldMatrix = animatedFrame.Transforms[i].WorldMatrix;
+        const XMMATRIX offsetMatrix = CalculateOffsetMatrix( invBindPoseMatrix, currentWorldMatrix );
+        
         XMStoreFloat4x4( &pOffsetMatrices[ i ], offsetMatrix );
         XMStoreFloat4x4( &pNormalMatrices[ i ], XMMatrixTranspose( XMMatrixInverse( 0, offsetMatrix ) ) );
+        
+        // const SceneSkinLink & skinLink = skin.Links[ i ];
+        // const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
+        // const XMMATRIX offsetMatrix = CalculateOffsetMatrix( skinLink, skinLinkTransform.WorldMatrix );
+        // XMStoreFloat4x4( &pOffsetMatrices[ i ], offsetMatrix );
+        // XMStoreFloat4x4( &pNormalMatrices[ i ], XMMatrixTranspose( XMMatrixInverse( 0, offsetMatrix ) ) );
     }
 }
 
@@ -284,10 +265,11 @@ XMFLOAT3 *MapProperty( apemode::SceneAnimCurve::EProperty eProperty, apemode::Sc
     return reinterpret_cast< XMFLOAT3 * >( pProperties ) + ( eProperty / 3 );
 }
 
-SceneNodeTransformFrame *apemode::Scene::UpdateTransformProperties( float    time,
+void apemode::Scene::UpdateTransformProperties( float    time,
                                                                     const bool     bLoop,
                                                                     const uint16_t animStackId,
-                                                                    const uint16_t animLayerId ) {
+                                                                    const uint16_t animLayerId,
+                                                                    SceneNodeTransformFrame * pAnimTransformFrame ) {
 
     const float debugTimeSpan = 15;
 
@@ -313,7 +295,7 @@ SceneNodeTransformFrame *apemode::Scene::UpdateTransformProperties( float    tim
         #endif
     }
 
-    if ( SceneNodeTransformFrame *pAnimTransformFrame = GetAnimatedTransformFrame( animStackId, animLayerId ) ) {
+    if ( pAnimTransformFrame ) { //SceneNodeTransformFrame *pAnimTransformFrame = GetAnimatedTransformFrame( animStackId, animLayerId ) ) {
         *pAnimTransformFrame = BindPoseFrame;
         // assert( pAnimTransformFrame->Transforms.size( ) == BindPoseFrame.Transforms.size( ) );
         // const size_t transformFrameByteSize = sizeof( SceneNodeTransformComposite ) * pAnimTransformFrame->Transforms.size( );
@@ -370,10 +352,11 @@ SceneNodeTransformFrame *apemode::Scene::UpdateTransformProperties( float    tim
             }
         }
 
-        return pAnimTransformFrame;
+        // return pAnimTransformFrame;
     }
 
-    return nullptr;
+    // return false;
+    // return nullptr;
 }
 
 SceneNodeTransformFrame &apemode::Scene::GetBindPoseTransformFrame( ) {
@@ -384,36 +367,102 @@ const SceneNodeTransformFrame &apemode::Scene::GetBindPoseTransformFrame( ) cons
     return BindPoseFrame;
 }
 
-apemode::SceneNodeTransformFrame *apemode::Scene::GetAnimatedTransformFrame( const uint16_t animStackId,
-                                                                             const uint16_t animLayerId ) {
-    if ( ! AnimLayerIdToTransformFrames.empty( ) ) {
-        SceneAnimLayerId animLayerCompositeId;
-        animLayerCompositeId.AnimStackIndex = animStackId;
-        animLayerCompositeId.AnimLayerIndex = animLayerId;
 
-        auto animTransformFrameIt = AnimLayerIdToTransformFrames.find( animLayerCompositeId.AnimLayerCompositeId );
-        if ( animTransformFrameIt != AnimLayerIdToTransformFrames.end( ) ) {
-            return &animTransformFrameIt->second;
-        }
+bool apemode::Scene::HasAnimStackLayer( uint16_t animStackId, uint16_t animLayerId ) const {
+    if ( animStackId < AnimStacks.size() ) {
+        return animLayerId < AnimStacks[animStackId].LayerCount;
     }
 
-    return nullptr;
+    return false;
 }
 
-const apemode::SceneNodeTransformFrame *apemode::Scene::GetAnimatedTransformFrame( const uint16_t animStackId,
-                                                                                   const uint16_t animLayerId ) const {
-    if ( ! AnimLayerIdToTransformFrames.empty( ) ) {
-        SceneAnimLayerId animLayerCompositeId;
-        animLayerCompositeId.AnimStackIndex = animStackId;
-        animLayerCompositeId.AnimLayerIndex = animLayerId;
+void UpdateLinkTransformMatrices( const uint32_t                                        nodeId,
+                                  const XMMATRIX                                        heirarchicalMatrix,
+                                  const apemode::vector_multimap< uint32_t, uint32_t > &childIds,
+                                  SceneNodeTransformFrame *                             pInOutTransformFrame ) {
+    
+    // LogInfo( "\tUpdateLinkTransformMatrices: link index: {}", nodeId );
+    
+    SceneNodeTransformComposite &transformComposite = pInOutTransformFrame->Transforms[ nodeId ];
+    transformComposite.HierarchicalMatrix = transformComposite.LocalMatrix * heirarchicalMatrix;
+    transformComposite.WorldMatrix = transformComposite.GeometricalMatrix * transformComposite.HierarchicalMatrix;
 
-        auto animTransformFrameIt = AnimLayerIdToTransformFrames.find( animLayerCompositeId.AnimLayerCompositeId );
-        if ( animTransformFrameIt != AnimLayerIdToTransformFrames.end( ) ) {
-            return &animTransformFrameIt->second;
-        }
+    const auto childIdRange = childIds.equal_range( nodeId );
+    for ( auto childIdIt = childIdRange.first; childIdIt != childIdRange.second; ++childIdIt ) {
+        UpdateLinkTransformMatrices( childIdIt->second, transformComposite.HierarchicalMatrix, childIds, pInOutTransformFrame );
+    }
+}
+
+void UpdateLinkTransformMatrices( SceneSkin *pSkin, SceneNodeTransformFrame * pInOutTransformFrame ) {
+    if ( pSkin ) {
+        UpdateLinkTransformMatrices( 0, apemode::XMMatrixIdentity( ), pSkin->ChildIds, pInOutTransformFrame );
+    }
+}
+
+void RebuildSkinHierarchy( const apemode::Scene *pScene, apemode::SceneSkin *pSkin ) {
+    if ( !pScene || !pSkin ) {
+        return;
     }
 
-    return nullptr;
+    auto GetLinkIndexByLinkId = [&]( uint32_t nodeId ) {
+        for ( uint32_t i = 0; i < pSkin->Links.size( ); ++i ) {
+            if ( pSkin->Links[ i ].LinkId == nodeId ) {
+                return i;
+            }
+        }
+
+        return detail::kInvalidId;
+    };
+
+    LogInfo( "\t Rebuilding skin hierarchy: skin {}", pSkin->Id );
+    pSkin->ChildIds.reserve( pSkin->Links.size( ) );
+
+    for ( uint32_t linkIndex = 0; linkIndex < pSkin->Links.size( ); ++linkIndex ) {
+        const uint32_t childId = pSkin->Links[ linkIndex ].LinkId;
+        const auto childIdRange = pScene->NodeToChildIds.equal_range( childId );
+
+        for ( auto childIdIt = childIdRange.first; childIdIt != childIdRange.second; ++childIdIt ) {
+            uint32_t childLinkIndex = GetLinkIndexByLinkId(childIdIt->second);
+            
+            if ( childLinkIndex != detail::kInvalidId ) {
+                pSkin->ChildIds.insert( eastl::make_pair( linkIndex, childLinkIndex ) );
+
+                LogInfo( "\t\t link {} \"{}\" [{}] += link {} \"{}\" [{}]",
+                         childId,
+                         pScene->Nodes[ childId ].pszName,
+                         linkIndex,
+                         childIdIt->second,
+                         pScene->Nodes[ childIdIt->second ].pszName,
+                         childLinkIndex );
+            }
+        }
+    }
+}
+
+void CopyLocalAndGeometricPropertiesToSkin( const apemode::Scene *                  pScene,
+                                            const apemode::SceneNodeTransformFrame *pSceneTransformFrame,
+                                            apemode::SceneSkin *                    pSkin,
+                                            apemode::SceneNodeTransformFrame       *pSkinTransformFrame ) {
+    pSkin->BindPoseFrame.Transforms.resize( pSkin->Links.size( ) );
+    pSkinTransformFrame->Transforms.resize( pSkin->Links.size( ) );
+
+    for ( int i = 0; i < pSkin->Links.size( ); ++i ) {
+        const uint32_t linkId = pSkin->Links[ i ].LinkId;
+
+        auto &linkTransform = pSkinTransformFrame->Transforms[ i ];
+        auto &nodeTransform = pSceneTransformFrame->Transforms[ linkId ];
+
+        linkTransform.Properties        = nodeTransform.Properties;
+        linkTransform.LocalMatrix       = nodeTransform.LocalMatrix;
+        linkTransform.GeometricalMatrix = nodeTransform.GeometricalMatrix;
+    }
+}
+
+void apemode::Scene::UpdateTransformMatrices( const SceneNodeTransformFrame * pAnimatedFrame, SceneSkin * pSkin, SceneNodeTransformFrame * pSkinAnimatedFrame ) const {
+    CopyLocalAndGeometricPropertiesToSkin( this, &BindPoseFrame, pSkin, &pSkin->BindPoseFrame );
+    CopyLocalAndGeometricPropertiesToSkin( this, pAnimatedFrame, pSkin, pSkinAnimatedFrame );
+    UpdateLinkTransformMatrices( pSkin, &pSkin->BindPoseFrame );
+    UpdateLinkTransformMatrices( pSkin, pSkinAnimatedFrame );
 }
 
 void apemode::Scene::UpdateTransformMatrices( const uint32_t parentNodeId, SceneNodeTransformFrame &t ) const {
@@ -435,7 +484,6 @@ void apemode::Scene::UpdateTransformMatrices( const uint32_t parentNodeId, Scene
         childTransformComposite.LocalMatrix        = childTransformComposite.Properties.CalculateLocalMatrix( childNode.eOrder );
         childTransformComposite.GeometricalMatrix  = childTransformComposite.Properties.CalculateGeometricMatrix( childNode.eOrder );
         childTransformComposite.HierarchicalMatrix = childTransformComposite.LocalMatrix * transformComposite.HierarchicalMatrix;
-        //childTransformComposite.WorldMatrix        = childTransformComposite.HierarchicalMatrix *  childTransformComposite.GeometricalMatrix;
         childTransformComposite.WorldMatrix        = childTransformComposite.GeometricalMatrix * childTransformComposite.HierarchicalMatrix;
 
         UpdateTransformMatrices( childId, t );
@@ -490,6 +538,16 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
     auto pSkinsFb      = pSrcScene->skins( );
 
     apemode::unique_ptr< Scene > pScene( apemode_new Scene( ) );
+
+    if ( IsNotNullAndNotEmpty( pAnimStacksFb ) ) {
+        pScene->AnimStacks.resize( pAnimStacksFb->size( ) );
+        for ( int i = 0; i < pAnimStacksFb->size( ); ++i ) {
+            pScene->AnimStacks[ i ].pszName = GetCStringProperty( pSrcScene, pAnimStacksFb->Get( i )->name_id( ) );
+            pScene->AnimStacks[ i ].LayerCount = 0;
+            LogInfo( "Adding animation stack: \"{}\"", pScene->AnimStacks[ i ].pszName );
+        }
+    }
+    
     if ( IsNotNullAndNotEmpty( pNodesFb ) ) {
 
         size_t nodeIdCount      = 0;
@@ -661,6 +719,9 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                 return pAnimLayerFb->id() == pAnimCurveFb->anim_layer_id();
             });
 
+            pScene->AnimStacks[pAnimCurveFb->anim_stack_id( )].LayerCount =
+                eastl::max(pScene->AnimStacks[pAnimCurveFb->anim_stack_id( )].LayerCount, pAnimLayerFbIt->anim_stack_idx( ) + 1);
+
             animCurve.AnimLayerIndex = static_cast< uint16_t >( pAnimLayerFbIt->anim_stack_idx( ) );
             animCurve.AnimStackIndex = static_cast< uint16_t >( pAnimCurveFb->anim_stack_id( ) );
             animCurve.eChannel    = SceneAnimCurve::EChannel( pAnimCurveFb->channel( ) );
@@ -713,7 +774,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             }
         }
 
-        pScene->AnimLayerIdToTransformFrames.reserve( pAnimLayersFb->size( ) );
+        // pScene->AnimLayerIdToTransformFrames.reserve( pAnimLayersFb->size( ) );
         for ( auto pAnimLayerFb : *pAnimLayersFb ) {
             auto pAnimStackFb = pAnimStacksFb->Get( pAnimLayerFb->anim_stack_id( ) );
 
@@ -727,11 +788,11 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             animLayerId.AnimLayerIndex = pAnimLayerFb->anim_stack_idx( );
             animLayerId.AnimStackIndex = pAnimLayerFb->anim_stack_id( );
 
-            auto &animTransformFrame = pScene->AnimLayerIdToTransformFrames[ animLayerId.AnimLayerCompositeId ];
-            pScene->InitializeTransformFrame( animTransformFrame );
-
-            const SceneNodeTransformFrame &bindPoseFrame = pScene->BindPoseFrame;
-            animTransformFrame = bindPoseFrame;
+//            auto &animTransformFrame = pScene->AnimLayerIdToTransformFrames[ animLayerId.AnimLayerCompositeId ];
+//            pScene->InitializeTransformFrame( animTransformFrame );
+//
+//            const SceneNodeTransformFrame &bindPoseFrame = pScene->BindPoseFrame;
+//            animTransformFrame = bindPoseFrame;
         }
     }
 
@@ -826,11 +887,11 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
 
         for ( auto &mesh : pScene->Meshes ) {
             if ( mesh.SkinId != detail::kInvalidId ) {
-
                 auto &skin = pScene->Skins[ mesh.SkinId ];
+                skin.Id = mesh.SkinId;
+                
                 auto pSkinFb = pSkinsFb->Get( mesh.SkinId );
-
-                if ( skin.Links.empty( ) ) {
+                if ( skin.Links.empty( ) && pSkinFb ) {
 
                     auto pLinkIdsFb = pSkinFb->links_ids( );
                     if ( IsNotNullAndNotEmpty( pLinkIdsFb ) ) {
@@ -844,30 +905,12 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                         assert(skinRootNode.Id == skinRootLinkId);
                         LogInfo( "\tRoot: {} -> \"{}\"", skinRootLinkId, skinRootNode.pszName );
 
-                        #if 1
-                        XMMATRIX skinGlobalInverseMatrix = XMMatrixIdentity( );
-                        skinGlobalInverseMatrix = pScene->BindPoseFrame.Transforms[ skinRootLinkId ].HierarchicalMatrix;
-                        skinGlobalInverseMatrix = XMMatrixInverse( nullptr, skinGlobalInverseMatrix );
-                        skinGlobalInverseMatrix = skinGlobalInverseMatrix * pScene->BindPoseFrame.Transforms[ skinRootLinkId ].LocalMatrix;
-                        #elif 0
-                        XMMATRIX skinGlobalInverseMatrix = XMMatrixIdentity( );
-                        skinGlobalInverseMatrix = pScene->BindPoseFrame.Transforms[ skinRootLinkId ].HierarchicalMatrix;
-                        skinGlobalInverseMatrix = XMMatrixInverse( nullptr, skinGlobalInverseMatrix );
-                        #else
-                        XMMATRIX skinGlobalInverseMatrix = XMMatrixIdentity();
-                        if (skinRootNode.ParentId != uint32_t(-1)) {
-                            const SceneNode & skinRootParentNode = pScene->Nodes[skinRootNode.ParentId];
-                            assert(skinRootParentNode.Id == skinRootNode.ParentId);
-                            LogInfo( "\tRoot parent: {} -> \"{}\"", skinRootParentNode.Id, skinRootParentNode.pszName );
-                            skinGlobalInverseMatrix = pScene->BindPoseFrame.Transforms[ skinRootNode.ParentId ].HierarchicalMatrix;
-                            skinGlobalInverseMatrix = XMMatrixInverse( nullptr, skinGlobalInverseMatrix );
-                        }
-                        #endif
-
                         skin.Links.reserve( pLinkIdsFb->size( ) );
                         for ( uint32_t linkIndex = 0; linkIndex < pLinkIdsFb->size( ); ++linkIndex ) {
                             auto linkNodeId = pLinkIdsFb->Get( linkIndex );
                             LogInfo( "\t+ link {}", linkNodeId );
+                            
+                            pScene->Nodes[linkNodeId].bIsJoint |= true;
 
 #if 1
                             auto &bindPoseFrame = pScene->BindPoseFrame;
@@ -878,8 +921,9 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                             XMMATRIX transformLink = XMLoadFloat4x4( transformLinkFb );
                             XMMATRIX transform     = XMLoadFloat4x4( transformFb );
                             XMMATRIX geometric     = linkTransform.GeometricalMatrix;
-                            //XMMATRIX invBindPoseMatrix = XMMatrixInverse( nullptr, transformLink ) * transform; // * geometric;
-                            XMMATRIX invBindPoseMatrix = XMMatrixInverse( nullptr, linkTransform.WorldMatrix ); // * transform * geometric;
+                            XMMATRIX invBindPoseMatrix = XMMatrixInverse( nullptr, transformLink ) * transform * geometric;
+                            // XMMATRIX invBindPoseMatrix = XMMatrixInverse( nullptr, transformLink ) * transform; // * geometric;
+                            // XMMATRIX invBindPoseMatrix = XMMatrixInverse( nullptr, linkTransform.WorldMatrix ); // * transform * geometric;
                             //XMMATRIX invBindPoseMatrix = XMMatrixInverse( nullptr, transformLink ); // * transform * geometric;
 
                             SceneSkinLink skinLink;
@@ -1020,6 +1064,8 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                             return skinLink;
 #endif
                         }
+                    
+                        RebuildSkinHierarchy( pScene.get( ), &skin );
                     }
                 }
             }

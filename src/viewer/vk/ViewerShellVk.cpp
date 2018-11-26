@@ -75,7 +75,7 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 // const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
 const uint16_t kAnimLayerId   = 0;
-const uint16_t kAnimStackId   = 4;
+const uint16_t kAnimStackId   = 0;
 
 ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     apemode_memory_allocation_scope;
@@ -97,7 +97,7 @@ ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     auto pModelViewCameraController = (ModelViewCameraController*)pCamController.get();
 
     float position = 350;
-    float destPosition = 500;
+    float destPosition = 300;
 
     pModelViewCameraController->Position.x = position;
     pModelViewCameraController->Position.y = position;
@@ -593,8 +593,8 @@ void ViewerShell::UpdateUI( const VkExtent2D currentExtent, const apemode::platf
                        invViewMatrix._43,
                        invViewMatrix._44 );
 
-            nk_labelf( pNkContext, NK_TEXT_LEFT, "bEnableAnimations" );
-            nk_checkbox_label( pNkContext, "", &bEnableAnimations );
+            // nk_labelf( pNkContext, NK_TEXT_LEFT, "bEnableAnimations" );
+            // nk_checkbox_label( pNkContext, "", &bEnableAnimations );
 
             nk_labelf( pNkContext, NK_TEXT_LEFT, "WorldRotationY" );
             nk_slider_float( pNkContext, 0, &WorldRotationY, apemodexm::XM_2PI, 0.1f );
@@ -635,9 +635,20 @@ void ViewerShell::UpdateTime( ) {
 
 void ViewerShell::UpdateScene( ) {
     if ( mLoadedScene.pScene ) {
-        mLoadedScene.pScene->UpdateTransformProperties( TotalSecs, true, kAnimStackId, kAnimLayerId );
-        if ( auto pAnimFrame = mLoadedScene.pScene->GetAnimatedTransformFrame( kAnimStackId, kAnimLayerId ) ) {
-            mLoadedScene.pScene->UpdateTransformMatrices( *pAnimFrame );
+//        for (uint32_t i = 0; i < mLoadedScene.pScene->Skins.size(); ++i) {
+//            SkinTransformFrames[i] = mLoadedScene.pScene->Skins[i].BindPoseFrame;
+//        }
+        
+        SkinTransformFrames.clear();
+        if (mLoadedScene.pScene->HasAnimStackLayer(kAnimStackId, kAnimLayerId) ) {
+            mLoadedScene.pScene->UpdateTransformProperties( TotalSecs, true, kAnimStackId, kAnimLayerId, &SceneTransformFrame );
+            mLoadedScene.pScene->UpdateTransformMatrices( SceneTransformFrame );
+            
+            
+            SkinTransformFrames.resize(mLoadedScene.pScene->Skins.size());
+            for (uint32_t i = 0; i < mLoadedScene.pScene->Skins.size(); ++i) {
+                mLoadedScene.pScene->UpdateTransformMatrices(&SceneTransformFrame, &mLoadedScene.pScene->Skins[i], &SkinTransformFrames[i]);
+            }
         }
     }
 }
@@ -728,6 +739,7 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
     sceneRenderParameters.LightColor               = LightColor;
     sceneRenderParameters.LightDirection           = LightDirection;
     sceneRenderParameters.pTransformFrame          = pTransformFrame;
+    sceneRenderParameters.pSkinTransformFrameIt    = SkinTransformFrames.data( );
     XMStoreFloat4x4( &sceneRenderParameters.ProjMatrix, projMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.ViewMatrix, viewMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );
@@ -845,7 +857,7 @@ bool ViewerShell::Update( const VkExtent2D currentExtent, const apemode::platfor
     Frame& swapchainFrame = Frames[ currentFrame.BackbufferIndex ];
 
     const SceneNodeTransformFrame* pTrasformFrame =
-        bEnableAnimations ? mLoadedScene.pScene->GetAnimatedTransformFrame( kAnimStackId, kAnimLayerId ) : 0;
+        bEnableAnimations && mLoadedScene.pScene->HasAnimStackLayer( kAnimStackId, kAnimLayerId ) ? &SceneTransformFrame  : 0;
 
     const uint32_t       queueFamilyId               = 0;
     VkPipelineStageFlags eColorAttachmentOutputStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;

@@ -18,7 +18,7 @@ void PrintPrettyPop( char *depth, int &di ) {
 }
 
 void PrintPrettyPrint( const apemode::Scene *pScene, const apemode::SceneNode *pNode, char *depth, int &di ) {
-    printf( " %s [%u] [%i]\n", pNode->pszName, pNode->Id, (int)pNode->MeshId );
+    printf( " %s %s [ID=%u] [MID=%i]\n", pNode->pszName, pNode->bIsJoint ? "(J)" : "", pNode->Id, (int)pNode->MeshId );
 
     auto childRange = pScene->NodeToChildIds.equal_range( pNode->Id );
     while ( childRange.first != childRange.second ) {

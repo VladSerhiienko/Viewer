@@ -77,6 +77,7 @@ std::vector< const char* > getProcessArguments( ) {
     ppszArgs.push_back("--assets");
     ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Viewer/assets/**");
     ppszArgs.push_back("--scene");
+    
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/mech-m-6k.fbxp"); // +
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/starburst.fbxp"); // M+
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/mountain-king.fbxp"); // +
@@ -102,12 +103,12 @@ std::vector< const char* > getProcessArguments( ) {
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/littlest-tokyo.fbxp"); // M/A
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rusty-mecha.fbxp"); // M/A
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/futuristic-safe.fbxp"); // M/A
-//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/run-hedgehog-run.fbxp"); // M/A
+    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/run-hedgehog-run.fbxp"); // M/A
 
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/integrated-thermostatic-valve-slim-head.fbxp"); // Crash
 
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/sci-fi-girl.fbxp"); // M/BlendShapes?
-//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/bristleback-dota-fan-art.fbxp"); // BlendShapes?
+    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/bristleback-dota-fan-art.fbxp"); // BlendShapes?
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/izzy.fbxp"); // M/BlendShapes?
 
     app.shell = apemode::viewer::vk::CreateViewer( (int) ppszArgs.size( ), ppszArgs.data( ) );

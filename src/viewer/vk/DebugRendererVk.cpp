@@ -165,6 +165,11 @@ bool apemode::vk::DebugRenderer::RecreateResources( InitParameters* pParams ) {
     dynamicStateCreateInfo.pDynamicStates    = dynamicStateEnables;
     dynamicStateCreateInfo.dynamicStateCount = GetArraySize( dynamicStateEnables );
     graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
+    
+    #if __APPLE__
+    // No support for wide lines
+    dynamicStateCreateInfo.dynamicStateCount = GetArraySize( dynamicStateEnables ) - 1;
+    #endif
 
     //
 
@@ -380,7 +385,9 @@ bool apemode::vk::DebugRenderer::Render( const RenderCubeParameters* renderParam
     scissor.extent.height = (uint32_t)(renderParams->Dims[ 1 ] * renderParams->Scale[ 1 ]);
 
     vkCmdSetScissor( renderParams->pCmdBuffer, 0, 1, &scissor );
+    #if !__APPLE__
     vkCmdSetLineWidth( renderParams->pCmdBuffer, renderParams->LineWidth );
+    #endif
     vkCmdDraw( renderParams->pCmdBuffer, 12 * 3, 1, 0, 0 );
 
     return true;
@@ -485,7 +492,9 @@ bool apemode::vk::DebugRenderer::Render( const Scene* pScene, const RenderSceneP
     scissor.extent.height = viewport.height;
 
     vkCmdSetScissor( pRenderParams->pCmdBuffer, 0, 1, &scissor );
+    #if !__APPLE__
     vkCmdSetLineWidth( pRenderParams->pCmdBuffer, pRenderParams->LineWidth );
+    #endif
     vkCmdDraw( pRenderParams->pCmdBuffer, LineStagingBuffer.size( ), 1, 0, 0 );
 
     return true;

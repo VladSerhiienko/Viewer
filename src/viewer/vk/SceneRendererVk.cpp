@@ -92,6 +92,8 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
 
     const apemode::SceneNodeTransformFrame* pTransformFrame =
         pParams->pTransformFrame ? pParams->pTransformFrame : &pScene->GetBindPoseTransformFrame( );
+    const apemode::SceneNodeTransformFrame* pSkinTransformFrameIt =
+        pParams->pTransformFrame ? pParams->pSkinTransformFrameIt : nullptr;
 
     SortedNodeIds.clear( );
     SortedNodeIds.reserve( pScene->Nodes.size( ) );
@@ -142,7 +144,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
            PipelineComposite::kFlag_VertexType_StaticSkinned8 | PipelineComposite::kFlag_BlendType_Disabled} ) {
         auto pipelineCompositeIt = PipelineComposites.find( ePipelineFlags );
         if ( pipelineCompositeIt != PipelineComposites.end( ) ) {
-            if ( !RenderScene( pScene, pParams, pipelineCompositeIt->second, pTransformFrame, pSceneAsset ) )
+            if ( !RenderScene( pScene, pParams, pipelineCompositeIt->second, pTransformFrame, pSkinTransformFrameIt, pSceneAsset ) )
                 return false;
         }
     }
@@ -154,6 +156,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
                                               const RenderParameters*                 pParams,
                                               PipelineComposite&                      pipeline,
                                               const apemode::SceneNodeTransformFrame* pTransformFrame,
+                                              const apemode::SceneNodeTransformFrame* pSkinTransformFrameIt,
                                               const vk::SceneUploader::DeviceAsset*   pSceneAsset ) {
     using namespace apemodevk;
 
@@ -317,7 +320,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             assert( skin.Links.size( ) <= BoneOffsetMatrices.size( ) );
             assert( skin.Links.size( ) <= BoneNormalMatrices.size( ) );
 
-            pScene->UpdateSkinMatrices( skin, *pTransformFrame, BoneOffsetMatrices.data( ),
+            pScene->UpdateSkinMatrices( skin, pSkinTransformFrameIt ? pSkinTransformFrameIt[skin.Id] : skin.BindPoseFrame, BoneOffsetMatrices.data( ),
                                                                 BoneNormalMatrices.data( ),
                                                                 kMaxBoneCount );
 
