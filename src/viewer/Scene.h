@@ -34,6 +34,14 @@ using SceneDeviceAssetPtr = apemode::unique_ptr< SceneDeviceAsset >;
 static constexpr uint32_t kInvalidId   = std::numeric_limits< uint32_t >::max( );
 static constexpr uint16_t kInvalidId16 = std::numeric_limits< uint16_t >::max( );
 
+enum ESkeletonType {
+    eSkeletonType_Root = 0,
+    eSkeletonType_Limb,
+    eSkeletonType_LimbNode,
+    eSkeletonType_Effector,
+    eSkeletonType_None,
+};
+
 enum EVertexType {
     eVertexType_Custom  = 0,
     eVertexType_Default = 1,
@@ -277,8 +285,8 @@ struct SceneAnimCurve {
     detail::SceneDeviceAssetPtr pDeviceAsset;
 
     uint32_t  Id              = detail::kInvalidId;
-    uint16_t  AnimStackIndex     = detail::kInvalidId16;
-    uint16_t  AnimLayerIndex     = detail::kInvalidId16;
+    uint16_t  AnimStackIndex  = detail::kInvalidId16;
+    uint16_t  AnimLayerIndex  = detail::kInvalidId16;
     EProperty eProperty       = ePropertyCount;
     EChannel  eChannel        = eChannelCount;
     XMFLOAT3  TimeMinMaxTotal = XMFLOAT3{0, 0, 0};
@@ -314,13 +322,13 @@ struct SceneNode {
     const char * pszName = nullptr;
     detail::SceneDeviceAssetPtr pDeviceAsset;
 
-    uint32_t               Id       = detail::kInvalidId;
-    uint32_t               ParentId = detail::kInvalidId;
-    uint32_t               MeshId   = detail::kInvalidId;
-    uint32_t               LimitsId = detail::kInvalidId;
-    detail::ERotationOrder eOrder   = detail::eRotationOrder_EulerXYZ;
-    detail::EInheritType   eInhType = detail::eInheritType_RSrs;
-    bool                   bIsJoint = false;
+    uint32_t               Id            = detail::kInvalidId;
+    uint32_t               ParentId      = detail::kInvalidId;
+    uint32_t               MeshId        = detail::kInvalidId;
+    uint32_t               LimitsId      = detail::kInvalidId;
+    detail::ERotationOrder eOrder        = detail::eRotationOrder_EulerXYZ;
+    detail::EInheritType   eInheritType  = detail::eInheritType_RSrs;
+    detail::ESkeletonType  eSkeletonType = detail::eSkeletonType_None;
 };
 
 /* SceneNodeTransformComposite class contains node transformation properties and calculated matrices.
@@ -350,6 +358,13 @@ struct SceneSkinLink {
 struct SceneSkin {
     uint32_t                                       Id = detail::kInvalidId;
     apemode::vector< SceneSkinLink >               Links;
+    apemode::vector< uint32_t >                    NodeIds;
+    apemode::vector_multimap< uint32_t, uint32_t > ChildIds;
+    SceneNodeTransformFrame                        BindPoseFrame;
+};
+
+struct SceneSkeleton {
+    uint32_t                                       Id = detail::kInvalidId;
     apemode::vector< uint32_t >                    NodeIds;
     apemode::vector_multimap< uint32_t, uint32_t > ChildIds;
     SceneNodeTransformFrame                        BindPoseFrame;
@@ -394,7 +409,7 @@ struct Scene {
     /* Updates transform frame.
      */
     void UpdateTransformMatrices( SceneNodeTransformFrame &transformFrame ) const;
-    
+
     /* Updates transform frame.
      */
     void UpdateTransformMatrices( const SceneNodeTransformFrame * pAnimatedFrame, SceneSkin * pSkin, SceneNodeTransformFrame * pSkinAnimatedFrame ) const;
