@@ -86,7 +86,7 @@ std::vector< const char* > getProcessArguments( ) {
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/lovecraftian.fbxp"); // +
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/ice-cream-truck.fbxp"); // +
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/opel-gt-retopo.fbxp"); // +
-//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/vanille-flirty-animation.fbxp"); // +
+    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/vanille-flirty-animation.fbxp"); // +
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/awesome-mix-guardians-of-the-galaxy.fbxp"); // +
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rainier-ak-3d.fbxp"); // +
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/flare-gun.fbxp"); // +
@@ -103,12 +103,12 @@ std::vector< const char* > getProcessArguments( ) {
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/littlest-tokyo.fbxp"); // M/A
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rusty-mecha.fbxp"); // M/A
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/futuristic-safe.fbxp"); // M/A
-    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/run-hedgehog-run.fbxp"); // M/A
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/run-hedgehog-run.fbxp"); // M/A
 
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/integrated-thermostatic-valve-slim-head.fbxp"); // Crash
 
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/sci-fi-girl.fbxp"); // M/BlendShapes?
-    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/bristleback-dota-fan-art.fbxp"); // BlendShapes?
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/bristleback-dota-fan-art.fbxp"); // BlendShapes?
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/izzy.fbxp"); // M/BlendShapes?
 
     app.shell = apemode::viewer::vk::CreateViewer( (int) ppszArgs.size( ), ppszArgs.data( ) );

@@ -343,12 +343,14 @@ struct SceneNodeTransformFrame {
  */
 struct SceneSkinLink {
     uint32_t LinkId = detail::kInvalidId;
+    uint32_t NodeIndex = detail::kInvalidId;
     XMMATRIX InvBindPoseMatrix;
 };
 
 struct SceneSkin {
     uint32_t                                       Id = detail::kInvalidId;
     apemode::vector< SceneSkinLink >               Links;
+    apemode::vector< uint32_t >                    NodeIds;
     apemode::vector_multimap< uint32_t, uint32_t > ChildIds;
     SceneNodeTransformFrame                        BindPoseFrame;
 };
@@ -423,10 +425,6 @@ struct Scene {
 
     /* Calculates skin matrix palette.
      */
-    void UpdateSkinMatrices( const SceneSkin &              skin,
-                             const SceneNodeTransformFrame &animatedFrame,
-                             XMMATRIX *                     pSkinMatrices,
-                             size_t                         skinMatrixCount ) const;
     void UpdateSkinMatrices( const SceneSkin &              skin,
                              const SceneNodeTransformFrame &animatedFrame,
                              XMFLOAT4X4 *                   pOffsetMatrices,

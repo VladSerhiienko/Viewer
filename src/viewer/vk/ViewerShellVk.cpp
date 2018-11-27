@@ -649,6 +649,10 @@ void ViewerShell::UpdateScene( ) {
             for (uint32_t i = 0; i < mLoadedScene.pScene->Skins.size(); ++i) {
                 mLoadedScene.pScene->UpdateTransformMatrices(&SceneTransformFrame, &mLoadedScene.pScene->Skins[i], &SkinTransformFrames[i]);
             }
+        } else {
+            for (uint32_t i = 0; i < mLoadedScene.pScene->Skins.size(); ++i) {
+                mLoadedScene.pScene->UpdateTransformMatrices(nullptr, &mLoadedScene.pScene->Skins[i], nullptr);
+            }
         }
     }
 }

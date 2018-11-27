@@ -14,17 +14,31 @@ template < typename T >
 inline bool IsNotNullAndNotEmpty( const flatbuffers::Vector< T > *pVector ) {
     return pVector && pVector->size( );
 }
-template < typename T, typename U >
-bool NearlyEqual(const T a, const U b, const T eps = std::numeric_limits<T>::epsilon()) {
-    return std::abs(a - T(b)) < eps;
+bool IsValid( const float a ) {
+    return !isnan( a ) && !isinf( a );
 }
-
 bool IsIdentity( const apemode::XMFLOAT4X4 m ) {
-    const float e = 1e-5f;
-    return NearlyEqual( m._11, 1, e ) && NearlyEqual( m._12, 0, e ) && NearlyEqual( m._13, 0, e ) && NearlyEqual( m._14, 0, e ) &&
-           NearlyEqual( m._21, 0, e ) && NearlyEqual( m._22, 1, e ) && NearlyEqual( m._23, 0, e ) && NearlyEqual( m._24, 0, e ) &&
-           NearlyEqual( m._31, 0, e ) && NearlyEqual( m._32, 0, e ) && NearlyEqual( m._33, 1, e ) && NearlyEqual( m._34, 0, e ) &&
-           NearlyEqual( m._41, 0, e ) && NearlyEqual( m._42, 0, e ) && NearlyEqual( m._43, 0, e ) && NearlyEqual( m._44, 1, e );
+    using namespace apemodexm;
+    return IsNearlyEqual( m._11, 1 ) && IsNearlyEqual( m._12, 0 ) && IsNearlyEqual( m._13, 0 ) && IsNearlyEqual( m._14, 0 ) &&
+           IsNearlyEqual( m._21, 0 ) && IsNearlyEqual( m._22, 1 ) && IsNearlyEqual( m._23, 0 ) && IsNearlyEqual( m._24, 0 ) &&
+           IsNearlyEqual( m._31, 0 ) && IsNearlyEqual( m._32, 0 ) && IsNearlyEqual( m._33, 1 ) && IsNearlyEqual( m._34, 0 ) &&
+           IsNearlyEqual( m._41, 0 ) && IsNearlyEqual( m._42, 0 ) && IsNearlyEqual( m._43, 0 ) && IsNearlyEqual( m._44, 1 );
+}
+bool IsValid( const apemode::XMFLOAT4X4 m ) {
+    using namespace apemodexm;
+    return /*!IsNearlyEqual( m._11, 0 ) && */ IsValid( m._12 ) && IsValid( m._13 ) && IsValid( m._14 ) && IsValid( m._21 ) &&
+           /*!IsNearlyEqual( m._22, 0 ) && */ IsValid( m._23 ) && IsValid( m._24 ) && IsValid( m._31 ) && IsValid( m._32 ) &&
+           /*!IsNearlyEqual( m._33, 0 ) && */ IsValid( m._34 ) && IsValid( m._41 ) && IsValid( m._42 ) && IsValid( m._43 ) &&
+           /*!IsNearlyEqual( m._44, 0 ) && */ IsValid( m._11 ) && IsValid( m._22 ) && IsValid( m._33 ) && IsValid( m._44 ) &&
+           false == (   IsNearlyZero( m._12 ) && IsNearlyZero( m._13 ) && IsNearlyZero( m._14 ) && IsNearlyZero( m._21 ) &&
+                        IsNearlyZero( m._23 ) && IsNearlyZero( m._24 ) && IsNearlyZero( m._31 ) && IsNearlyZero( m._32 ) &&
+                        IsNearlyZero( m._34 ) && IsNearlyZero( m._41 ) && IsNearlyZero( m._42 ) && IsNearlyZero( m._43 ) &&
+                        IsNearlyZero( m._11 ) && IsNearlyZero( m._22 ) && IsNearlyZero( m._33 ) && IsNearlyZero( m._44 ) );
+}
+bool IsValid( const apemode::XMMATRIX m ) {
+    apemode::XMFLOAT4X4 storedMatrix;
+    XMStoreFloat4x4( &storedMatrix, m );
+    return IsValid( storedMatrix );
 }
 } // namespace
 
@@ -65,18 +79,18 @@ inline XMFLOAT2 ToVec2( apemodefb::Vec2Fb const v ) {
 }
 
 bool apemode::SceneNodeTransform::Validate( ) const {
-    return false ==
-           ( isnan( Translation.x ) || isnan( Translation.y ) || isnan( Translation.z ) || isnan( RotationOffset.x ) ||
-             isnan( RotationOffset.y ) || isnan( RotationOffset.z ) || isnan( RotationPivot.x ) || isnan( RotationPivot.y ) ||
-             isnan( RotationPivot.z ) || isnan( PreRotation.x ) || isnan( PreRotation.y ) || isnan( PreRotation.z ) ||
-             isnan( PostRotation.x ) || isnan( PostRotation.y ) || isnan( PostRotation.z ) || isnan( Rotation.x ) ||
-             isnan( Rotation.y ) || isnan( Rotation.z ) || isnan( ScalingOffset.x ) || isnan( ScalingOffset.y ) ||
-             isnan( ScalingOffset.z ) || isnan( ScalingPivot.x ) || isnan( ScalingPivot.y ) || isnan( ScalingPivot.z ) ||
-             isnan( Scaling.x ) || isnan( Scaling.y ) || isnan( Scaling.z ) || isnan( GeometricTranslation.x ) ||
-             isnan( GeometricTranslation.y ) || isnan( GeometricTranslation.z ) || isnan( GeometricRotation.x ) ||
-             isnan( GeometricRotation.y ) || isnan( GeometricRotation.z ) || isnan( GeometricScaling.x ) ||
-             isnan( GeometricScaling.y ) || isnan( GeometricScaling.z ) || Scaling.x == 0 || Scaling.y == 0 || Scaling.z == 0 ||
-             GeometricScaling.x == 0 || GeometricScaling.y == 0 || GeometricScaling.z == 0 );
+    return IsValid( Translation.x ) && IsValid( Translation.y ) && IsValid( Translation.z ) && IsValid( RotationOffset.x ) &&
+           IsValid( RotationOffset.y ) && IsValid( RotationOffset.z ) && IsValid( RotationPivot.x ) &&
+           IsValid( RotationPivot.y ) && IsValid( RotationPivot.z ) && IsValid( PreRotation.x ) && IsValid( PreRotation.y ) &&
+           IsValid( PreRotation.z ) && IsValid( PostRotation.x ) && IsValid( PostRotation.y ) && IsValid( PostRotation.z ) &&
+           IsValid( Rotation.x ) && IsValid( Rotation.y ) && IsValid( Rotation.z ) && IsValid( ScalingOffset.x ) &&
+           IsValid( ScalingOffset.y ) && IsValid( ScalingOffset.z ) && IsValid( ScalingPivot.x ) && IsValid( ScalingPivot.y ) &&
+           IsValid( ScalingPivot.z ) && IsValid( Scaling.x ) && IsValid( Scaling.y ) && IsValid( Scaling.z ) &&
+           IsValid( GeometricTranslation.x ) && IsValid( GeometricTranslation.y ) && IsValid( GeometricTranslation.z ) &&
+           IsValid( GeometricRotation.x ) && IsValid( GeometricRotation.y ) && IsValid( GeometricRotation.z ) &&
+           IsValid( GeometricScaling.x ) && IsValid( GeometricScaling.y ) && IsValid( GeometricScaling.z ) &&
+           !IsNearlyZero( Scaling.x ) && !IsNearlyZero( Scaling.y ) && !IsNearlyZero( Scaling.z ) &&
+           !IsNearlyZero( GeometricScaling.x ) && !IsNearlyZero( GeometricScaling.y ) && !IsNearlyZero( GeometricScaling.z );
 }
 
 XMMATRIX XMMatrixRotationOrdered( const XMFLOAT3 v, detail::ERotationOrder eRotOrder ) {
@@ -196,29 +210,8 @@ const apemode::SceneNodeAnimCurveIds *apemode::Scene::GetAnimCurveIds( const uin
     return nullptr;
 }
 
-inline XMMATRIX CalculateOffsetMatrix( const XMMATRIX invBindPoseMatrix, const XMMATRIX worldMatrix ) {
-    return invBindPoseMatrix * worldMatrix;
-}
-
-void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
-                                         const SceneNodeTransformFrame &animatedFrame,
-                                         XMMATRIX *                     pOffsetMatrices,
-                                         size_t                         skinMatrixCount ) const {
-
-    assert( skinMatrixCount >= skin.Links.size( ) );
-    for ( size_t i = 0; i < skin.Links.size( ); ++i ) {
-        // const XMMATRIX bindPoseMatrix = skin.BindPoseFrame.Transforms[i].WorldMatrix;
-        // const XMMATRIX invBindPoseMatrix = XMMatrixInverse(0, bindPoseMatrix);
-        const XMMATRIX invBindPoseMatrix = skin.Links[i].InvBindPoseMatrix;
-        const XMMATRIX currentWorldMatrix = animatedFrame.Transforms[i].WorldMatrix;
-        const XMMATRIX offsetMatrix = CalculateOffsetMatrix( invBindPoseMatrix, currentWorldMatrix );
-        
-        pOffsetMatrices[ i ] = offsetMatrix;
-    
-        // const SceneSkinLink & skinLink = skin.Links[ i ];
-        // const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
-        // pSkinMatrices[ i ] = CalculateOffsetMatrix( skinLink, skinLinkTransform.WorldMatrix );
-    }
+inline XMMATRIX CalculateOffsetMatrix( const XMMATRIX invBindPoseMatrix, const XMMATRIX currentAnimatedMatrix ) {
+    return invBindPoseMatrix * currentAnimatedMatrix;
 }
 
 void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
@@ -229,15 +222,26 @@ void apemode::Scene::UpdateSkinMatrices( const SceneSkin &              skin,
 
     assert( matrixCount >= skin.Links.size( ) );
     for ( size_t i = 0; i < skin.Links.size( ); ++i ) {
-        // const XMMATRIX bindPoseMatrix = skin.BindPoseFrame.Transforms[i].WorldMatrix;
-        // const XMMATRIX invBindPoseMatrix = XMMatrixInverse(0, bindPoseMatrix);
-        const XMMATRIX invBindPoseMatrix = skin.Links[i].InvBindPoseMatrix;
-        const XMMATRIX currentWorldMatrix = animatedFrame.Transforms[i].WorldMatrix;
-        const XMMATRIX offsetMatrix = CalculateOffsetMatrix( invBindPoseMatrix, currentWorldMatrix );
+        const uint32_t nodeIndex = skin.Links[i].NodeIndex;
         
+        const auto & skinBindPoseTransform = skin.BindPoseFrame.Transforms[ nodeIndex ];
+        const XMMATRIX bindPoseMatrix     = skinBindPoseTransform.WorldMatrix;
+        const XMMATRIX invBindPoseMatrix  = XMMatrixInverse( 0, bindPoseMatrix );
+        const XMMATRIX currentWorldMatrix = animatedFrame.Transforms[ nodeIndex ].WorldMatrix;
+        const XMMATRIX offsetMatrix       = CalculateOffsetMatrix( invBindPoseMatrix, currentWorldMatrix );
+
+        assert( IsValid( bindPoseMatrix ) );
+        assert( IsValid( invBindPoseMatrix ) );
+        assert( IsValid( currentWorldMatrix ) );
+        assert( IsValid( offsetMatrix ) );
+
         XMStoreFloat4x4( &pOffsetMatrices[ i ], offsetMatrix );
-        XMStoreFloat4x4( &pNormalMatrices[ i ], XMMatrixTranspose( XMMatrixInverse( 0, offsetMatrix ) ) );
-        
+        // assert( IsIdentity( pOffsetMatrices[ i ] ) );
+
+        if ( pNormalMatrices ) {
+            XMStoreFloat4x4( &pNormalMatrices[ i ], XMMatrixTranspose( XMMatrixInverse( 0, offsetMatrix ) ) );
+        }
+
         // const SceneSkinLink & skinLink = skin.Links[ i ];
         // const SceneNodeTransformComposite &skinLinkTransform = animatedFrame.Transforms[ skinLink.LinkId ];
         // const XMMATRIX offsetMatrix = CalculateOffsetMatrix( skinLink, skinLinkTransform.WorldMatrix );
@@ -376,18 +380,25 @@ bool apemode::Scene::HasAnimStackLayer( uint16_t animStackId, uint16_t animLayer
     return false;
 }
 
-void UpdateLinkTransformMatrices( const uint32_t                                        nodeId,
+void UpdateLinkTransformMatrices( const uint32_t                                        linkIndex,
                                   const XMMATRIX                                        heirarchicalMatrix,
                                   const apemode::vector_multimap< uint32_t, uint32_t > &childIds,
                                   SceneNodeTransformFrame *                             pInOutTransformFrame ) {
     
-    // LogInfo( "\tUpdateLinkTransformMatrices: link index: {}", nodeId );
+    // LogInfo( "\t\tUpdateLinkTransformMatrices: link index: {}", linkIndex );
     
-    SceneNodeTransformComposite &transformComposite = pInOutTransformFrame->Transforms[ nodeId ];
+    SceneNodeTransformComposite &transformComposite = pInOutTransformFrame->Transforms[ linkIndex ];
     transformComposite.HierarchicalMatrix = transformComposite.LocalMatrix * heirarchicalMatrix;
     transformComposite.WorldMatrix = transformComposite.GeometricalMatrix * transformComposite.HierarchicalMatrix;
+    
+    assert( transformComposite.Properties.Validate() );
+    assert( IsValid( heirarchicalMatrix ) );
+    assert( IsValid( transformComposite.LocalMatrix ) );
+    assert( IsValid( transformComposite.HierarchicalMatrix ) );
+    assert( IsValid( transformComposite.GeometricalMatrix ) );
+    assert( IsValid( transformComposite.WorldMatrix ) );
 
-    const auto childIdRange = childIds.equal_range( nodeId );
+    const auto childIdRange = childIds.equal_range( linkIndex );
     for ( auto childIdIt = childIdRange.first; childIdIt != childIdRange.second; ++childIdIt ) {
         UpdateLinkTransformMatrices( childIdIt->second, transformComposite.HierarchicalMatrix, childIds, pInOutTransformFrame );
     }
@@ -395,74 +406,133 @@ void UpdateLinkTransformMatrices( const uint32_t                                
 
 void UpdateLinkTransformMatrices( SceneSkin *pSkin, SceneNodeTransformFrame * pInOutTransformFrame ) {
     if ( pSkin ) {
+        // LogInfo( "\tUpdateLinkTransformMatrices: skin id: {}, links: {}, nodes: {}", pSkin->Id, pSkin->Links.size( ), pSkin->NodeIds.size( ) );
         UpdateLinkTransformMatrices( 0, apemode::XMMatrixIdentity( ), pSkin->ChildIds, pInOutTransformFrame );
     }
 }
 
-void RebuildSkinHierarchy( const apemode::Scene *pScene, apemode::SceneSkin *pSkin ) {
+size_t GetNodeHierarchicalIncludeCount( const apemode::Scene *pScene,
+                                        uint32_t              nodeId,
+                                        const uint32_t *      nodeIds,
+                                        size_t                nodeCount ) {
+
+    auto nodeItEnd = nodeIds + nodeCount;
+    size_t childrenIncluded = eastl::find( nodeIds, nodeItEnd, nodeId ) != nodeItEnd;
+    auto childIdRange = pScene->NodeToChildIds.equal_range( nodeId );
+    for ( auto childIdIt = childIdRange.first; childIdIt != childIdRange.second; ++childIdIt ) {
+        childrenIncluded += GetNodeHierarchicalIncludeCount( pScene, childIdIt->second, nodeIds, nodeCount );
+    }
+
+    return childrenIncluded;
+}
+
+uint32_t GetLinkIndexByLinkId( const apemode::Scene *pScene, const apemode::SceneSkin *pSkin, uint32_t nodeId ) {
+    for ( uint32_t i = 0; i < pSkin->Links.size( ); ++i ) {
+        if ( pSkin->Links[ i ].LinkId == nodeId ) {
+            return i;
+        }
+    }
+
+    return detail::kInvalidId;
+}
+
+void BuildSkinHierarchy( const apemode::Scene *pScene, apemode::SceneSkin *pSkin, uint32_t nodeIndex ) {
+    uint32_t nodeId = pSkin->NodeIds[nodeIndex];
+    
+    uint32_t linkIndex = GetLinkIndexByLinkId( pScene, pSkin, nodeId );
+    if ( linkIndex != detail::kInvalidId ) {
+        LogInfo( "\t\tid {} ({}) <- {}", nodeId, nodeIndex, linkIndex );
+        pSkin->Links[ linkIndex ].NodeIndex = nodeIndex;
+    }
+    
+    // LogInfo( "\tid: {} ({})", nodeId, nodeIndex );
+    
+    const auto childIdRange = pScene->NodeToChildIds.equal_range( nodeId );
+    for ( auto childIdIt = childIdRange.first; childIdIt != childIdRange.second; ++childIdIt ) {
+        uint32_t childNodeId = childIdIt->second;
+        uint32_t childNodeIndex = (uint32_t) pSkin->NodeIds.size( );
+        pSkin->NodeIds.push_back( childNodeId );
+        pSkin->ChildIds.insert( eastl::make_pair( nodeIndex, childNodeIndex ) );
+        
+        LogInfo( "\t\tid {} ({}) += child id: {} ({})", nodeId, nodeIndex, childNodeId, childNodeIndex );
+        BuildSkinHierarchy(pScene, pSkin, childNodeIndex);
+    }
+}
+
+void BuildSkinHierarchy( const apemode::Scene *pScene, apemode::SceneSkin *pSkin ) {
     if ( !pScene || !pSkin ) {
         return;
     }
+    
+    LogInfo( "\tRebuilding skin hierarchy: skin: {}", pSkin->Id );
 
-    auto GetLinkIndexByLinkId = [&]( uint32_t nodeId ) {
-        for ( uint32_t i = 0; i < pSkin->Links.size( ); ++i ) {
-            if ( pSkin->Links[ i ].LinkId == nodeId ) {
-                return i;
-            }
-        }
+    uint32_t actualRootNodeId = uint32_t( -1 );
+    apemode::vector< uint32_t > childNodeIds;
+    childNodeIds.reserve( pSkin->Links.size( ) );
+    eastl::transform( pSkin->Links.begin( ),
+                      pSkin->Links.end( ),
+                      eastl::back_inserter( childNodeIds ),
+                      [&]( const apemode::SceneSkinLink &link ) {
+                          actualRootNodeId = eastl::min( actualRootNodeId, link.LinkId );
+                          LogInfo( "\t+= node {} \"{}\"", link.LinkId, pScene->Nodes[ link.LinkId ].pszName );
+                          return link.LinkId;
+                      } );
 
-        return detail::kInvalidId;
-    };
-
-    LogInfo( "\t Rebuilding skin hierarchy: skin {}", pSkin->Id );
-    pSkin->ChildIds.reserve( pSkin->Links.size( ) );
-
-    for ( uint32_t linkIndex = 0; linkIndex < pSkin->Links.size( ); ++linkIndex ) {
-        const uint32_t childId = pSkin->Links[ linkIndex ].LinkId;
-        const auto childIdRange = pScene->NodeToChildIds.equal_range( childId );
-
-        for ( auto childIdIt = childIdRange.first; childIdIt != childIdRange.second; ++childIdIt ) {
-            uint32_t childLinkIndex = GetLinkIndexByLinkId(childIdIt->second);
-            
-            if ( childLinkIndex != detail::kInvalidId ) {
-                pSkin->ChildIds.insert( eastl::make_pair( linkIndex, childLinkIndex ) );
-
-                LogInfo( "\t\t link {} \"{}\" [{}] += link {} \"{}\" [{}]",
-                         childId,
-                         pScene->Nodes[ childId ].pszName,
-                         linkIndex,
-                         childIdIt->second,
-                         pScene->Nodes[ childIdIt->second ].pszName,
-                         childLinkIndex );
-            }
+    size_t includedCount = GetNodeHierarchicalIncludeCount( pScene, actualRootNodeId, childNodeIds.data( ), childNodeIds.size( ) );
+    if ( includedCount != childNodeIds.size( ) ) {
+        LogInfo( "\tSearching for the skin root node." );
+        
+        while ( includedCount != childNodeIds.size( ) ) {
+            actualRootNodeId = pScene->Nodes[ actualRootNodeId ].ParentId;
+            LogInfo( "\tTrying the node {}" , actualRootNodeId );
+            assert( actualRootNodeId != detail::kInvalidId );
+            includedCount = GetNodeHierarchicalIncludeCount( pScene, actualRootNodeId, childNodeIds.data( ), childNodeIds.size( ) );
         }
     }
+
+    LogInfo( "\tSkin root node: {} \"{}\"", actualRootNodeId, pScene->Nodes[ actualRootNodeId ].pszName );
+    
+    pSkin->NodeIds.push_back(actualRootNodeId);
+    BuildSkinHierarchy( pScene, pSkin, 0 );
+    pSkin->BindPoseFrame.Transforms.resize(pSkin->NodeIds.size());
 }
 
 void CopyLocalAndGeometricPropertiesToSkin( const apemode::Scene *                  pScene,
                                             const apemode::SceneNodeTransformFrame *pSceneTransformFrame,
                                             apemode::SceneSkin *                    pSkin,
                                             apemode::SceneNodeTransformFrame       *pSkinTransformFrame ) {
-    pSkin->BindPoseFrame.Transforms.resize( pSkin->Links.size( ) );
-    pSkinTransformFrame->Transforms.resize( pSkin->Links.size( ) );
+    pSkin->BindPoseFrame.Transforms.resize( pSkin->NodeIds.size( ) );
+    pSkinTransformFrame->Transforms.resize( pSkin->NodeIds.size( ) );
 
-    for ( int i = 0; i < pSkin->Links.size( ); ++i ) {
-        const uint32_t linkId = pSkin->Links[ i ].LinkId;
+    for ( int i = 0; i < pSkin->NodeIds.size( ); ++i ) {
+        const uint32_t nodeId = pSkin->NodeIds[ i ];
 
-        auto &linkTransform = pSkinTransformFrame->Transforms[ i ];
-        auto &nodeTransform = pSceneTransformFrame->Transforms[ linkId ];
+        const SceneNodeTransformComposite &nodeTransform = pSceneTransformFrame->Transforms[ nodeId ];
+        assert( nodeTransform.Properties.Validate( ) );
+        assert( IsValid( nodeTransform.LocalMatrix ) );
+        assert( IsValid( nodeTransform.GeometricalMatrix ) );
+        
+        SceneNodeTransformComposite &linkTransform = pSkinTransformFrame->Transforms[ i ];
 
         linkTransform.Properties        = nodeTransform.Properties;
         linkTransform.LocalMatrix       = nodeTransform.LocalMatrix;
         linkTransform.GeometricalMatrix = nodeTransform.GeometricalMatrix;
+        
+        assert( linkTransform.Properties.Validate( ) );
+        assert( IsValid( linkTransform.LocalMatrix ) );
+        assert( IsValid( linkTransform.GeometricalMatrix ) );
+        
+        // LogInfo( "\tCopying local transform props: id {} \"{}\"", nodeId, pScene->Nodes[ nodeId ].pszName );
     }
 }
 
 void apemode::Scene::UpdateTransformMatrices( const SceneNodeTransformFrame * pAnimatedFrame, SceneSkin * pSkin, SceneNodeTransformFrame * pSkinAnimatedFrame ) const {
-    CopyLocalAndGeometricPropertiesToSkin( this, &BindPoseFrame, pSkin, &pSkin->BindPoseFrame );
-    CopyLocalAndGeometricPropertiesToSkin( this, pAnimatedFrame, pSkin, pSkinAnimatedFrame );
-    UpdateLinkTransformMatrices( pSkin, &pSkin->BindPoseFrame );
-    UpdateLinkTransformMatrices( pSkin, pSkinAnimatedFrame );
+    // CopyLocalAndGeometricPropertiesToSkin( this, &BindPoseFrame, pSkin, &pSkin->BindPoseFrame );
+    // UpdateLinkTransformMatrices( pSkin, &pSkin->BindPoseFrame );
+    if ( pAnimatedFrame && pSkinAnimatedFrame ) {
+        CopyLocalAndGeometricPropertiesToSkin( this, pAnimatedFrame, pSkin, pSkinAnimatedFrame );
+        UpdateLinkTransformMatrices( pSkin, pSkinAnimatedFrame );
+    }
 }
 
 void apemode::Scene::UpdateTransformMatrices( const uint32_t parentNodeId, SceneNodeTransformFrame &t ) const {
@@ -485,6 +555,13 @@ void apemode::Scene::UpdateTransformMatrices( const uint32_t parentNodeId, Scene
         childTransformComposite.GeometricalMatrix  = childTransformComposite.Properties.CalculateGeometricMatrix( childNode.eOrder );
         childTransformComposite.HierarchicalMatrix = childTransformComposite.LocalMatrix * transformComposite.HierarchicalMatrix;
         childTransformComposite.WorldMatrix        = childTransformComposite.GeometricalMatrix * childTransformComposite.HierarchicalMatrix;
+
+        assert( childTransformComposite.Properties.Validate() );
+        assert( IsValid( transformComposite.HierarchicalMatrix ) );
+        assert( IsValid( childTransformComposite.LocalMatrix ) );
+        assert( IsValid( childTransformComposite.HierarchicalMatrix ) );
+        assert( IsValid( childTransformComposite.GeometricalMatrix ) );
+        assert( IsValid( childTransformComposite.WorldMatrix ) );
 
         UpdateTransformMatrices( childId, t );
     }
@@ -632,7 +709,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             transformComposite.Properties.GeometricRotation.z *= toRadsFactor;
 
 #define REPORT_USED_PROPERTY( P, d )                                                    \
-    if ( !NearlyEqual( P.x, d ) || !NearlyEqual( P.y, d ) || !NearlyEqual( P.z, d ) ) { \
+    if ( !IsNearlyEqual( P.x, d ) || !IsNearlyEqual( P.y, d ) || !IsNearlyEqual( P.z, d ) ) { \
         LogWarn( "Node \"{}\" uses property \"{}\".", GetCStringProperty( pSrcScene, pNodeFb->name_id( ) ), #P );                                          \
     }
 
@@ -896,19 +973,14 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                     auto pLinkIdsFb = pSkinFb->links_ids( );
                     if ( IsNotNullAndNotEmpty( pLinkIdsFb ) ) {
 
-                        LogInfo( "Processing skin: \"{}\", links={}",
+                        LogInfo( "Processing skin: \"{}\", links {}",
                                  GetCStringProperty( pSrcScene, pSkinFb->name_id( ) ),
                                  pLinkIdsFb->size( ) );
-
-                        const uint32_t skinRootLinkId = *pLinkIdsFb->begin( );
-                        const SceneNode & skinRootNode = pScene->Nodes[skinRootLinkId];
-                        assert(skinRootNode.Id == skinRootLinkId);
-                        LogInfo( "\tRoot: {} -> \"{}\"", skinRootLinkId, skinRootNode.pszName );
 
                         skin.Links.reserve( pLinkIdsFb->size( ) );
                         for ( uint32_t linkIndex = 0; linkIndex < pLinkIdsFb->size( ); ++linkIndex ) {
                             auto linkNodeId = pLinkIdsFb->Get( linkIndex );
-                            LogInfo( "\t+ link {}", linkNodeId );
+                            // LogInfo( "\t+ link {}", linkNodeId );
                             
                             pScene->Nodes[linkNodeId].bIsJoint |= true;
 
@@ -1064,8 +1136,30 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                             return skinLink;
 #endif
                         }
-                    
-                        RebuildSkinHierarchy( pScene.get( ), &skin );
+
+                        BuildSkinHierarchy( pScene.get( ), &skin );
+                        CopyLocalAndGeometricPropertiesToSkin( pScene.get( ), &pScene->BindPoseFrame, &skin, &skin.BindPoseFrame );
+                        UpdateLinkTransformMatrices( &skin, &skin.BindPoseFrame );
+
+                        for ( uint32_t linkIndex = 0; linkIndex < skin.Links.size( ); ++linkIndex ) {
+                            uint32_t nodeIndex = skin.Links[ linkIndex ].NodeIndex;
+                            assert( nodeIndex != -1 );
+
+                            XMFLOAT4X4 WM;
+                            XMStoreFloat4x4( &WM, skin.BindPoseFrame.Transforms[ nodeIndex ].WorldMatrix );
+
+                            LogInfo( " -+ WM  : {} {} {} {}", WM._11, WM._12, WM._13, WM._14 );
+                            LogInfo( " -+     : {} {} {} {}", WM._21, WM._22, WM._23, WM._24 );
+                            LogInfo( " -+     : {} {} {} {}", WM._31, WM._32, WM._33, WM._34 );
+                            LogInfo( " -+     : {} {} {} {}", WM._41, WM._42, WM._43, WM._44 );
+
+                            auto TLM = *(const XMFLOAT4X4 *) pSkinFb->transform_link_matrices( )->Get( linkIndex );
+
+                            LogInfo( " -+ TLM : {} {} {} {}", TLM._11, TLM._12, TLM._13, TLM._14 );
+                            LogInfo( " -+     : {} {} {} {}", TLM._21, TLM._22, TLM._23, TLM._24 );
+                            LogInfo( " -+     : {} {} {} {}", TLM._31, TLM._32, TLM._33, TLM._34 );
+                            LogInfo( " -+     : {} {} {} {}", TLM._41, TLM._42, TLM._43, TLM._44 );
+                        }
                     }
                 }
             }
@@ -1149,25 +1243,13 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
     return LoadedScene{std::move( fileContents ), pSrcScene, std::move( pScene )};
 }
 
-namespace {
-inline bool NearlyEqual( const float a, const float b ) {
-    return std::abs( a - b ) <= std::numeric_limits< float >::epsilon( );
-}
-inline bool NearlyEqualOrLess( const float a, const float b ) {
-    return std::abs( a - b ) <= std::numeric_limits< float >::epsilon( ) || ( a < b );
-}
-inline bool NearlyEqualOrGreater( const float a, const float b ) {
-    return std::abs( a - b ) <= std::numeric_limits< float >::epsilon( ) || ( a > b );
-}
-} // namespace
-
 void apemode::SceneAnimCurve::GetKeyIndices( float & time, uint32_t &i, uint32_t &j ) const {
 
-    if ( NearlyEqualOrLess( time, TimeMinMaxTotal.x ) ) {
+    if ( apemode::IsNearlyEqualOrLess( time, TimeMinMaxTotal.x ) ) {
         // Case: before the curve's first key, or on it.
         i = 0;
         j = 0;
-    } else if ( NearlyEqualOrGreater( time, TimeMinMaxTotal.y ) ) {
+    } else if ( apemode::IsNearlyEqualOrGreater( time, TimeMinMaxTotal.y ) ) {
         // Case: after the curve's last key, or on it.
         i = static_cast< uint32_t >( Keys.size( ) ) - 1;
         j = i;
@@ -1176,7 +1258,7 @@ void apemode::SceneAnimCurve::GetKeyIndices( float & time, uint32_t &i, uint32_t
         auto matchOrUpperBoundIt = Keys.lower_bound( time );
         assert( matchOrUpperBoundIt != Keys.end( ) );
 
-        if ( NearlyEqual( matchOrUpperBoundIt->second.Time, time ) ) {
+        if ( apemode::IsNearlyEqual( matchOrUpperBoundIt->second.Time, time ) ) {
             // Case: exactly on curve's key.
             i = static_cast< uint32_t >( eastl::distance( Keys.cbegin( ), matchOrUpperBoundIt ) );
             j = i;

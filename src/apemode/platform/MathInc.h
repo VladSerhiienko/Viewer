@@ -66,9 +66,14 @@ namespace apemodexm {
     inline auto DegreesToRadians( T const& DegVal ) -> decltype( DegVal * ( kPi / 180.f ) ) {
         return DegVal * ( kPi / 180.f );
     }
-
     inline bool IsNearlyEqual( float A, float B, float ErrorTolerance = kSmallNumber ) {
         return fabsf( A - B ) <= ErrorTolerance;
+    }
+    inline bool IsNearlyEqualOrLess( const float a, const float b, float ErrorTolerance = kSmallNumber ) {
+        return IsNearlyEqual(a, b, ErrorTolerance) || ( a < b );
+    }
+    inline bool IsNearlyEqualOrGreater( const float a, const float b, float ErrorTolerance = kSmallNumber ) {
+        return IsNearlyEqual(a, b, ErrorTolerance) || ( a > b );
     }
 
     inline bool IsNearlyEqual( float2 const A, float2 const B, const float ErrorTolerance = kSmallNumber ) {
