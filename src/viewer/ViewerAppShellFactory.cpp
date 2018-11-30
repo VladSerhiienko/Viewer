@@ -50,7 +50,7 @@ private:
 
 } // namespace vk
 } // namespace viewer
-} // namespace apemode
+} // namespace apemode 
 
 namespace std {
 template <>

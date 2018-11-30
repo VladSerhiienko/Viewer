@@ -92,8 +92,11 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
 
     const apemode::SceneNodeTransformFrame* pTransformFrame =
         pParams->pTransformFrame ? pParams->pTransformFrame : &pScene->GetBindPoseTransformFrame( );
-    const apemode::SceneNodeTransformFrame* pSkinTransformFrameIt =
-        pParams->pTransformFrame ? pParams->pSkinTransformFrameIt : nullptr;
+    const apemode::SceneNodeTransformFrame* pSkeletonTransformFrameIt =
+        pParams->pTransformFrame ? pParams->pSkeletonTransformFrameIt : nullptr;
+
+    assert( ( pParams->pTransformFrame && pParams->pSkeletonTransformFrameIt ) ||
+            ( !pParams->pTransformFrame && !pParams->pSkeletonTransformFrameIt ) );
 
     SortedNodeIds.clear( );
     SortedNodeIds.reserve( pScene->Nodes.size( ) );
@@ -139,12 +142,12 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
     for ( PipelineComposite::Flags ePipelineFlags :
           {// PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled,
            // PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
-           // PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
            PipelineComposite::kFlag_VertexType_StaticSkinned4 | PipelineComposite::kFlag_BlendType_Disabled,
            PipelineComposite::kFlag_VertexType_StaticSkinned8 | PipelineComposite::kFlag_BlendType_Disabled} ) {
         auto pipelineCompositeIt = PipelineComposites.find( ePipelineFlags );
         if ( pipelineCompositeIt != PipelineComposites.end( ) ) {
-            if ( !RenderScene( pScene, pParams, pipelineCompositeIt->second, pTransformFrame, pSkinTransformFrameIt, pSceneAsset ) )
+            if ( !RenderScene( pScene, pParams, pipelineCompositeIt->second, pTransformFrame, pSkeletonTransformFrameIt, pSceneAsset ) )
                 return false;
         }
     }
@@ -156,7 +159,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
                                               const RenderParameters*                 pParams,
                                               PipelineComposite&                      pipeline,
                                               const apemode::SceneNodeTransformFrame* pTransformFrame,
-                                              const apemode::SceneNodeTransformFrame* pSkinTransformFrameIt,
+                                              const apemode::SceneNodeTransformFrame* pSkeletonTransformFrameIt,
                                               const vk::SceneUploader::DeviceAsset*   pSceneAsset ) {
     using namespace apemodevk;
 
@@ -260,11 +263,11 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
 
         if ( mesh.SkinId != uint32_t( -1 ) ) {
             auto& skin = pScene->Skins[ mesh.SkinId ];
-            if ( skin.Links.size( ) > kMaxBoneCount ) {
+            if ( skin.LinkIds.size( ) > kMaxBoneCount ) {
                 apemodevk::platform::LogFmt( apemodevk::platform::Err,
                                              "The skin is too big, supported skeleton = %u, received = %u",
                                              uint32_t( kMaxBoneCount ),
-                                             uint32_t( skin.Links.size( ) ) );
+                                             uint32_t( skin.LinkIds.size( ) ) );
                 continue;
             }
         }
@@ -288,11 +291,16 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
         objectData.TexcoordOffsetScale.z = mesh.TexcoordScale.x;
         objectData.TexcoordOffsetScale.w = mesh.TexcoordScale.y;
 
-        const XMMATRIX rootMatrix   = XMLoadFloat4x4( &pParams->RootMatrix );
-        const XMMATRIX worldMatrix  = pTransformFrame->Transforms[ node.Id ].WorldMatrix * rootMatrix;
+        // const XMMATRIX rootMatrix   = XMLoadFloat4x4( &pParams->RootMatrix );
+        const XMMATRIX worldMatrix  = pTransformFrame->Transforms[ node.Id ].WorldMatrix; // * rootMatrix;
         const XMMATRIX normalMatrix = XMMatrixTranspose( XMMatrixInverse( nullptr, worldMatrix ) );
-
-        XMStoreFloat4x4( &objectData.WorldMatrix, worldMatrix );
+        
+        if ( mesh.SkinId != uint32_t( -1 ) ) {
+            XMStoreFloat4x4( &objectData.WorldMatrix, XMMatrixIdentity() );
+        } else {
+            XMStoreFloat4x4( &objectData.WorldMatrix, worldMatrix );
+        }
+        
         XMStoreFloat4x4( &objectData.NormalMatrix, normalMatrix );
         // XMStoreFloat3x3( &objectData.NormalMatrix, normalMatrix );
 
@@ -317,12 +325,19 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
                     HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_PackedSkinned ) );
 
             auto& skin = pScene->Skins[ mesh.SkinId ];
-            assert( skin.Links.size( ) <= BoneOffsetMatrices.size( ) );
-            assert( skin.Links.size( ) <= BoneNormalMatrices.size( ) );
+            assert( skin.LinkIds.size( ) <= BoneOffsetMatrices.size( ) );
+            assert( skin.LinkIds.size( ) <= BoneNormalMatrices.size( ) );
 
-            pScene->UpdateSkinMatrices( skin, pSkinTransformFrameIt ? pSkinTransformFrameIt[skin.Id] : skin.BindPoseFrame, BoneOffsetMatrices.data( ),
-                                                                BoneNormalMatrices.data( ),
-                                                                kMaxBoneCount );
+            auto pSkeletonFrame = pSkeletonTransformFrameIt ? &pSkeletonTransformFrameIt[ skin.SkeletonId ]
+                                                            : &pScene->Skeletons[ skin.SkeletonId ].BindPoseFrame;
+
+            pScene->UpdateSkinMatrices( skin,
+                                        pTransformFrame,
+                                        pSkeletonFrame,
+                                        worldMatrix,
+                                        BoneOffsetMatrices.data( ),
+                                        BoneNormalMatrices.data( ),
+                                        kMaxBoneCount );
 
             //
             // Upload SkinnedObject

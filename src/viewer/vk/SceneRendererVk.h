@@ -56,7 +56,7 @@ public:
         XMFLOAT4                       LightDirection;              /* Required. */
         XMFLOAT4                       LightColor;                  /* Required. */
         const SceneNodeTransformFrame* pTransformFrame = nullptr;   /* Ok (BindPose). */
-        const SceneNodeTransformFrame* pSkinTransformFrameIt = nullptr; /* Ok (BindPose). */
+        const SceneNodeTransformFrame* pSkeletonTransformFrameIt = nullptr; /* Ok (BindPose). */
     };
 
     bool Reset( const Scene* pScene, uint32_t FrameIndex ) override;
@@ -116,7 +116,7 @@ public:
                       const RenderParameters*                 pParams,
                       PipelineComposite&                      pipeline,
                       const apemode::SceneNodeTransformFrame* pTransformFrame,
-                      const apemode::SceneNodeTransformFrame* pSkinTransformFrameIt,
+                      const apemode::SceneNodeTransformFrame* pSkeletonTransformFrameIt,
                       const vk::SceneUploader::DeviceAsset*   pSceneAsset );
 
     apemodevk::GraphicsDevice*                       pNode = nullptr;

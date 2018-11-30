@@ -735,7 +735,7 @@ bool apemode::vk::SceneUploader::UploadScene( apemode::Scene* pScene, const apem
 
     for ( apemode::SceneSkin& skin : pScene->Skins ) {
         DeviceAsset* deviceAsset  = static_cast< DeviceAsset* >( pScene->pDeviceAsset.get( ) );
-        deviceAsset->MaxBoneCount = eastl::max( deviceAsset->MaxBoneCount, skin.Links.size( ) );
+        deviceAsset->MaxBoneCount = eastl::max( deviceAsset->MaxBoneCount, skin.LinkIds.size( ) );
     }
 
     return true;

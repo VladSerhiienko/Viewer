@@ -97,7 +97,7 @@ ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     auto pModelViewCameraController = (ModelViewCameraController*)pCamController.get();
 
     float position = 350;
-    float destPosition = 300;
+    float destPosition = 500;
 
     pModelViewCameraController->Position.x = position;
     pModelViewCameraController->Position.y = position;
@@ -635,23 +635,18 @@ void ViewerShell::UpdateTime( ) {
 
 void ViewerShell::UpdateScene( ) {
     if ( mLoadedScene.pScene ) {
-//        for (uint32_t i = 0; i < mLoadedScene.pScene->Skins.size(); ++i) {
-//            SkinTransformFrames[i] = mLoadedScene.pScene->Skins[i].BindPoseFrame;
-//        }
+        SkeletonTransformFrames.clear();
         
-        SkinTransformFrames.clear();
         if (mLoadedScene.pScene->HasAnimStackLayer(kAnimStackId, kAnimLayerId) ) {
             mLoadedScene.pScene->UpdateTransformProperties( TotalSecs, true, kAnimStackId, kAnimLayerId, &SceneTransformFrame );
             mLoadedScene.pScene->UpdateTransformMatrices( SceneTransformFrame );
-            
-            
-            SkinTransformFrames.resize(mLoadedScene.pScene->Skins.size());
-            for (uint32_t i = 0; i < mLoadedScene.pScene->Skins.size(); ++i) {
-                mLoadedScene.pScene->UpdateTransformMatrices(&SceneTransformFrame, &mLoadedScene.pScene->Skins[i], &SkinTransformFrames[i]);
-            }
-        } else {
-            for (uint32_t i = 0; i < mLoadedScene.pScene->Skins.size(); ++i) {
-                mLoadedScene.pScene->UpdateTransformMatrices(nullptr, &mLoadedScene.pScene->Skins[i], nullptr);
+
+            SkeletonTransformFrames.resize( mLoadedScene.pScene->Skeletons.size( ) );
+            for ( uint32_t i = 0; i < mLoadedScene.pScene->Skeletons.size( ); ++i ) {
+                mLoadedScene.pScene->UpdateTransformMatrices(
+                    &SceneTransformFrame,
+                    &mLoadedScene.pScene->Skeletons[ i ],
+                    &SkeletonTransformFrames[ i ] );
             }
         }
     }
@@ -666,7 +661,11 @@ void ViewerShell::UpdateCamera( const apemode::platform::AppInput* pAppInput ) {
         pCamController->Dolly( pCamInput->DollyDelta );
     }
 
-    //pCamController->Orbit( {0.01f * DeltaSecs, 0} );
+#if __APPLE__
+    if ( bLookAnimation )
+        pCamController->Orbit( {0.01f * DeltaSecs, 0} );
+#endif
+
     pCamController->Update( DeltaSecs );
 }
 
@@ -725,25 +724,25 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
     XMMATRIX rootMatrix = XMMatrixRotationY( WorldRotationY );
 
     apemode::vk::SceneRenderer::RenderParameters sceneRenderParameters;
-    sceneRenderParameters.Dims.x                   = extentF.x;
-    sceneRenderParameters.Dims.y                   = extentF.y;
-    sceneRenderParameters.Scale.x                  = 1;
-    sceneRenderParameters.Scale.y                  = 1;
-    sceneRenderParameters.FrameIndex               = FrameIndex;
-    sceneRenderParameters.pCmdBuffer               = pCmdBuffer;
-    sceneRenderParameters.pNode                    = &Surface.Node;
-    sceneRenderParameters.RadianceMap.eImgLayout   = RadianceImg->eImgLayout;
-    sceneRenderParameters.RadianceMap.pImgView     = RadianceImg->hImgView;
-    sceneRenderParameters.RadianceMap.pSampler     = pRadianceCubeMapSampler;
-    sceneRenderParameters.RadianceMap.MipLevels    = RadianceImg->ImgCreateInfo.mipLevels;
-    sceneRenderParameters.IrradianceMap.eImgLayout = IrradianceImg->eImgLayout;
-    sceneRenderParameters.IrradianceMap.pImgView   = IrradianceImg->hImgView;
-    sceneRenderParameters.IrradianceMap.pSampler   = pIrradianceCubeMapSampler;
-    sceneRenderParameters.IrradianceMap.MipLevels  = IrradianceImg->ImgCreateInfo.mipLevels;
-    sceneRenderParameters.LightColor               = LightColor;
-    sceneRenderParameters.LightDirection           = LightDirection;
-    sceneRenderParameters.pTransformFrame          = pTransformFrame;
-    sceneRenderParameters.pSkinTransformFrameIt    = SkinTransformFrames.data( );
+    sceneRenderParameters.Dims.x                    = extentF.x;
+    sceneRenderParameters.Dims.y                    = extentF.y;
+    sceneRenderParameters.Scale.x                   = 1;
+    sceneRenderParameters.Scale.y                   = 1;
+    sceneRenderParameters.FrameIndex                = FrameIndex;
+    sceneRenderParameters.pCmdBuffer                = pCmdBuffer;
+    sceneRenderParameters.pNode                     = &Surface.Node;
+    sceneRenderParameters.RadianceMap.eImgLayout    = RadianceImg->eImgLayout;
+    sceneRenderParameters.RadianceMap.pImgView      = RadianceImg->hImgView;
+    sceneRenderParameters.RadianceMap.pSampler      = pRadianceCubeMapSampler;
+    sceneRenderParameters.RadianceMap.MipLevels     = RadianceImg->ImgCreateInfo.mipLevels;
+    sceneRenderParameters.IrradianceMap.eImgLayout  = IrradianceImg->eImgLayout;
+    sceneRenderParameters.IrradianceMap.pImgView    = IrradianceImg->hImgView;
+    sceneRenderParameters.IrradianceMap.pSampler    = pIrradianceCubeMapSampler;
+    sceneRenderParameters.IrradianceMap.MipLevels   = IrradianceImg->ImgCreateInfo.mipLevels;
+    sceneRenderParameters.LightColor                = LightColor;
+    sceneRenderParameters.LightDirection            = LightDirection;
+    sceneRenderParameters.pTransformFrame           = pTransformFrame;
+    sceneRenderParameters.pSkeletonTransformFrameIt = SkeletonTransformFrames.data( );
     XMStoreFloat4x4( &sceneRenderParameters.ProjMatrix, projMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.ViewMatrix, viewMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );

@@ -105,11 +105,12 @@ namespace vk {
         apemode::unique_ptr< apemode::vk::SkyboxRenderer >        pSkyboxRenderer;
         apemode::unique_ptr< apemode::vk::DebugRenderer >         pDebugRenderer;
 
-        const bool     bLookAnimation = true;
-        LoadedScene    mLoadedScene;
-        apemode::SceneNodeTransformFrame SceneTransformFrame;
-        apemode::vector<apemode::SceneNodeTransformFrame> SkinTransformFrames;
-        bool           bIsUsingUI = false;
+        const bool                                          bLookAnimation = true;
+        bool                                                bIsUsingUI = false;
+
+        LoadedScene                                         mLoadedScene;
+        apemode::SceneNodeTransformFrame                    SceneTransformFrame;
+        apemode::vector< apemode::SceneNodeTransformFrame > SkeletonTransformFrames;
     };
 
 } // namespace vk
