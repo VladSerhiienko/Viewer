@@ -3,6 +3,7 @@
 #include <math.h>
 #include <random>
 #include <Inc/DirectXMath.h>
+#include <Inc/DirectXCollision.h>
 #include <algorithm>
 
 namespace apemodexm {

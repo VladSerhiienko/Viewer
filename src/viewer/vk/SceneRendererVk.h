@@ -46,7 +46,6 @@ public:
         XMFLOAT2                       Scale;                       /* Required. */
         uint32_t                       FrameIndex = 0;              /* Required. */
         VkCommandBuffer                pCmdBuffer = VK_NULL_HANDLE; /* Required. */
-        XMFLOAT4X4                     RootMatrix;                  /* Required. */
         XMFLOAT4X4                     ViewMatrix;                  /* Required. */
         XMFLOAT4X4                     ProjMatrix;                  /* Required. */
         XMFLOAT4X4                     InvViewMatrix;               /* Required. */
@@ -56,7 +55,6 @@ public:
         XMFLOAT4                       LightDirection;              /* Required. */
         XMFLOAT4                       LightColor;                  /* Required. */
         const SceneNodeTransformFrame* pTransformFrame = nullptr;   /* Ok (BindPose). */
-        const SceneNodeTransformFrame* pSkeletonTransformFrameIt = nullptr; /* Ok (BindPose). */
     };
 
     bool Reset( const Scene* pScene, uint32_t FrameIndex ) override;
@@ -116,7 +114,6 @@ public:
                       const RenderParameters*                 pParams,
                       PipelineComposite&                      pipeline,
                       const apemode::SceneNodeTransformFrame* pTransformFrame,
-                      const apemode::SceneNodeTransformFrame* pSkeletonTransformFrameIt,
                       const vk::SceneUploader::DeviceAsset*   pSceneAsset );
 
     apemodevk::GraphicsDevice*                       pNode = nullptr;

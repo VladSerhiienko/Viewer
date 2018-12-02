@@ -165,7 +165,7 @@ bool apemode::vk::DebugRenderer::RecreateResources( InitParameters* pParams ) {
     dynamicStateCreateInfo.pDynamicStates    = dynamicStateEnables;
     dynamicStateCreateInfo.dynamicStateCount = GetArraySize( dynamicStateEnables );
     graphicsPipelineCreateInfo.pDynamicState = &dynamicStateCreateInfo;
-    
+
     #if __APPLE__
     // No support for wide lines
     dynamicStateCreateInfo.dynamicStateCount = GetArraySize( dynamicStateEnables ) - 1;
@@ -430,6 +430,44 @@ bool apemode::vk::DebugRenderer::Render( const Scene* pScene, const RenderSceneP
 
     LineStagingBuffer.clear( );
     LineStagingBuffer.reserve( pScene->Nodes.size( ) << 1 );
+
+    LineStagingBuffer.push_back( XMFLOAT3{0, 0, 0} );
+    LineStagingBuffer.push_back( XMFLOAT3{5, 0, 0} );
+    LineStagingBuffer.push_back( XMFLOAT3{0, 0, 0} );
+    LineStagingBuffer.push_back( XMFLOAT3{0, 5, 0} );
+    LineStagingBuffer.push_back( XMFLOAT3{0, 0, 0} );
+    LineStagingBuffer.push_back( XMFLOAT3{0, 0, 5} );
+
+    XMFLOAT3 corners[ apemode::BoundingBox::CORNER_COUNT ];
+    pScene->BindPoseBoundingBox.GetCorners( corners );
+
+    LineStagingBuffer.push_back( corners[ 0 ] );
+    LineStagingBuffer.push_back( corners[ 1 ] );
+    LineStagingBuffer.push_back( corners[ 1 ] );
+    LineStagingBuffer.push_back( corners[ 2 ] );
+    LineStagingBuffer.push_back( corners[ 2 ] );
+    LineStagingBuffer.push_back( corners[ 3 ] );
+    LineStagingBuffer.push_back( corners[ 3 ] );
+    LineStagingBuffer.push_back( corners[ 0 ] );
+
+    LineStagingBuffer.push_back( corners[ 0 ] );
+    LineStagingBuffer.push_back( corners[ 4 ] );
+    LineStagingBuffer.push_back( corners[ 1 ] );
+    LineStagingBuffer.push_back( corners[ 5 ] );
+    LineStagingBuffer.push_back( corners[ 2 ] );
+    LineStagingBuffer.push_back( corners[ 6 ] );
+    LineStagingBuffer.push_back( corners[ 3 ] );
+    LineStagingBuffer.push_back( corners[ 7 ] );
+
+    LineStagingBuffer.push_back( corners[ 4 + 0 ] );
+    LineStagingBuffer.push_back( corners[ 4 + 1 ] );
+    LineStagingBuffer.push_back( corners[ 4 + 1 ] );
+    LineStagingBuffer.push_back( corners[ 4 + 2 ] );
+    LineStagingBuffer.push_back( corners[ 4 + 2 ] );
+    LineStagingBuffer.push_back( corners[ 4 + 3 ] );
+    LineStagingBuffer.push_back( corners[ 4 + 3 ] );
+    LineStagingBuffer.push_back( corners[ 4 + 0 ] );
+
     PopulateNodeConnectionLines( pScene, pRenderParams->pTransformFrame, 0, &LineStagingBuffer );
 
     apemodevk_memory_allocation_scope;

@@ -347,40 +347,21 @@ struct SceneNodeTransformFrame {
     std::vector< SceneNodeTransformComposite > Transforms;
 };
 
-/* SceneSkinLink class contains the node ID (link ID) and its inverse bind pose matrix.
+/* SceneSkin class contains the information related to the skinning.
  */
-//struct SceneSkinLink {
-//    uint32_t LinkId = detail::kInvalidId;
-//    uint32_t NodeIndex = detail::kInvalidId;
-//    XMMATRIX InvBindPoseMatrix;
-//};
-
 struct SceneSkin {
-    uint32_t                         Id = detail::kInvalidId;
-    uint32_t                         MeshId = detail::kInvalidId;
-    uint32_t                         NodeId = detail::kInvalidId;
-    uint32_t                         SkeletonId = detail::kInvalidId;
+    uint32_t                    Id     = detail::kInvalidId;
+    uint32_t                    MeshId = detail::kInvalidId;
+    uint32_t                    NodeId = detail::kInvalidId;
     apemode::vector< uint32_t > LinkIds;
-    apemode::vector< uint32_t > SkeletonNodeIndices;
     apemode::vector< XMMATRIX > InvBindPoseMatrices;
-    // apemode::vector< SceneSkinLink > Links;
-    
-    // apemode::vector< uint32_t >                    NodeIds;
-    // apemode::vector_multimap< uint32_t, uint32_t > ChildIds;
-    // SceneNodeTransformFrame                        BindPoseFrame;
 };
 
-struct SceneSkeleton {
-    uint32_t                                       Id = detail::kInvalidId;
-    apemode::vector< uint32_t >                    RootIndices;
-    apemode::vector< uint32_t >                    NodeIds;
-    apemode::vector_multimap< uint32_t, uint32_t > ChildIds;
-    SceneNodeTransformFrame                        BindPoseFrame;
-};
-
+/* SceneAnimStack class contains the animation stack name and layer count.
+ */
 struct SceneAnimStack {
-    const char * pszName    = nullptr;
-    uint32_t LayerCount     = 0;
+    const char *pszName    = nullptr;
+    uint32_t    LayerCount = 0;
 };
 
 /* Scene class contains nodes, meshes, materials, animation curves and transform frames.
@@ -401,11 +382,12 @@ struct Scene {
     SceneNodeTransformFrame                        BindPoseFrame;
 
     apemode::vector< SceneSkin >                             Skins;
-    apemode::vector< SceneSkeleton >                         Skeletons;
     apemode::vector< SceneAnimCurve >                        AnimCurves;
     apemode::vector_multimap< uint32_t, uint32_t >           NodeIdToAnimCurveIds;
     apemode::vector_map< uint64_t, SceneNodeAnimCurveIds >   AnimNodeIdToAnimCurveIds;
     apemode::vector< SceneAnimStack >                        AnimStacks;
+
+    apemode::BoundingBox BindPoseBoundingBox;
 
     //
     // Transform matrices storage.
@@ -418,10 +400,6 @@ struct Scene {
     /* Updates transform frame.
      */
     void UpdateTransformMatrices( SceneNodeTransformFrame &transformFrame ) const;
-
-    /* Updates transform frame.
-     */
-    void UpdateTransformMatrices( const SceneNodeTransformFrame * pAnimatedFrame, SceneSkeleton * pSkeleton, SceneNodeTransformFrame * pSkinAnimatedFrame ) const;
 
     /* Initializes transform frame.
      */
@@ -451,7 +429,6 @@ struct Scene {
      */
     void UpdateSkinMatrices( const SceneSkin &              skin,
                              const SceneNodeTransformFrame *pSceneAnimatedFrame,
-                             const SceneNodeTransformFrame *pSkeletonAnimatedFrame,
                              const XMMATRIX                 nodeWorldTransform,
                              XMFLOAT4X4 *                   pOffsetMatrices,
                              XMFLOAT4X4 *                   pNormalMatrices,

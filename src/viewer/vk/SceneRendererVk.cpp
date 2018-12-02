@@ -92,8 +92,6 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
 
     const apemode::SceneNodeTransformFrame* pTransformFrame =
         pParams->pTransformFrame ? pParams->pTransformFrame : &pScene->GetBindPoseTransformFrame( );
-    const apemode::SceneNodeTransformFrame* pSkeletonTransformFrameIt =
-        pParams->pTransformFrame ? pParams->pSkeletonTransformFrameIt : nullptr;
 
     assert( ( pParams->pTransformFrame && pParams->pSkeletonTransformFrameIt ) ||
             ( !pParams->pTransformFrame && !pParams->pSkeletonTransformFrameIt ) );
@@ -147,7 +145,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
            PipelineComposite::kFlag_VertexType_StaticSkinned8 | PipelineComposite::kFlag_BlendType_Disabled} ) {
         auto pipelineCompositeIt = PipelineComposites.find( ePipelineFlags );
         if ( pipelineCompositeIt != PipelineComposites.end( ) ) {
-            if ( !RenderScene( pScene, pParams, pipelineCompositeIt->second, pTransformFrame, pSkeletonTransformFrameIt, pSceneAsset ) )
+            if ( !RenderScene( pScene, pParams, pipelineCompositeIt->second, pTransformFrame, pSceneAsset ) )
                 return false;
         }
     }
@@ -159,7 +157,6 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
                                               const RenderParameters*                 pParams,
                                               PipelineComposite&                      pipeline,
                                               const apemode::SceneNodeTransformFrame* pTransformFrame,
-                                              const apemode::SceneNodeTransformFrame* pSkeletonTransformFrameIt,
                                               const vk::SceneUploader::DeviceAsset*   pSceneAsset ) {
     using namespace apemodevk;
 
@@ -291,18 +288,16 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
         objectData.TexcoordOffsetScale.z = mesh.TexcoordScale.x;
         objectData.TexcoordOffsetScale.w = mesh.TexcoordScale.y;
 
-        // const XMMATRIX rootMatrix   = XMLoadFloat4x4( &pParams->RootMatrix );
-        const XMMATRIX worldMatrix  = pTransformFrame->Transforms[ node.Id ].WorldMatrix; // * rootMatrix;
+        const XMMATRIX worldMatrix  = pTransformFrame->Transforms[ node.Id ].WorldMatrix;
         const XMMATRIX normalMatrix = XMMatrixTranspose( XMMatrixInverse( nullptr, worldMatrix ) );
-        
+
         if ( mesh.SkinId != uint32_t( -1 ) ) {
             XMStoreFloat4x4( &objectData.WorldMatrix, XMMatrixIdentity() );
+            XMStoreFloat4x4( &objectData.NormalMatrix, XMMatrixIdentity() );
         } else {
             XMStoreFloat4x4( &objectData.WorldMatrix, worldMatrix );
+            XMStoreFloat4x4( &objectData.NormalMatrix, normalMatrix );
         }
-        
-        XMStoreFloat4x4( &objectData.NormalMatrix, normalMatrix );
-        // XMStoreFloat3x3( &objectData.NormalMatrix, normalMatrix );
 
         //
         // Upload Object (Spatial)
@@ -328,12 +323,8 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             assert( skin.LinkIds.size( ) <= BoneOffsetMatrices.size( ) );
             assert( skin.LinkIds.size( ) <= BoneNormalMatrices.size( ) );
 
-            auto pSkeletonFrame = pSkeletonTransformFrameIt ? &pSkeletonTransformFrameIt[ skin.SkeletonId ]
-                                                            : &pScene->Skeletons[ skin.SkeletonId ].BindPoseFrame;
-
             pScene->UpdateSkinMatrices( skin,
                                         pTransformFrame,
-                                        pSkeletonFrame,
                                         worldMatrix,
                                         BoneOffsetMatrices.data( ),
                                         BoneNormalMatrices.data( ),
@@ -410,12 +401,16 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             flags |= pMaterialAsset->hOcclusionImgView ? 1 << 5 : 0;
 
             MaterialUBO materialData;
+            /*
             materialData.BaseColorFactor.x = 1;
             materialData.BaseColorFactor.y = 1;
             materialData.BaseColorFactor.z = 1;
-            /*materialData.BaseColorFactor.x         = pMaterial->BaseColorFactor.x;
-              materialData.BaseColorFactor.y         = pMaterial->BaseColorFactor.y;
-              materialData.BaseColorFactor.z         = pMaterial->BaseColorFactor.z; */
+            */
+            //*
+            materialData.BaseColorFactor.x         = pMaterial->BaseColorFactor.x;
+            materialData.BaseColorFactor.y         = pMaterial->BaseColorFactor.y;
+            materialData.BaseColorFactor.z         = pMaterial->BaseColorFactor.z;
+            //*/
             materialData.BaseColorFactor.w         = pMaterial->BaseColorFactor.w;
             materialData.EmissiveFactor.x          = pMaterial->EmissiveFactor.x;
             materialData.EmissiveFactor.y          = pMaterial->EmissiveFactor.y;
@@ -454,8 +449,8 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
 
             descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 2;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
-                                                                    pSceneAsset->MissingTextureOnes->hImgView,
-                                                                    // pMaterialAsset->hBaseColorImgView,
+                                                                    // pSceneAsset->MissingTextureOnes->hImgView,
+                                                                    pMaterialAsset->hBaseColorImgView,
                                                                     pMaterialAsset->pBaseColorSampler,
                                                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                                                     pSceneAsset->MissingTextureZeros->hImgView,

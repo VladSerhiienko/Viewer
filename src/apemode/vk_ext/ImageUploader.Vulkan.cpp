@@ -121,7 +121,7 @@ gli::texture LoadTexture( const uint8_t*                                        
                 eDriver = eImageDecodeDriver_GLI;
             } else if ( memcmp( KTX_MAGIC, pFileContent, sizeof( KTX_MAGIC ) ) == 0 ) {
                 eDriver = eImageDecodeDriver_GLI;
-            } else if ( memcmp( PNG_MAGIC, pFileContent, sizeof( PNG_MAGIC ) ) == 0 ) {
+            } else /* if ( memcmp( PNG_MAGIC, pFileContent, sizeof( PNG_MAGIC ) ) == 0 ) */ {
                 eDriver = eImageDecodeDriver_STBI;
             }
 

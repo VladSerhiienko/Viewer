@@ -61,7 +61,7 @@ void main( ) {
     outViewDirection  = normalize( GetCameraWorldPosition( ).xyz - worldPosition.xyz );
     outWorldNormal    = normalize( mat3( NormalMatrix ) * inNormal );
     outWorldTangent   = normalize( mat3( NormalMatrix ) * inTangent.xyz );
-    outWorldBitangent = cross( outWorldNormal.xyz, outWorldTangent.xyz );
+    outWorldBitangent = cross( outWorldNormal.xyz, outWorldTangent.xyz ) * inTangent.w;
     outTexcoords      = inTexcoords * TexcoordOffsetScale.zw + TexcoordOffsetScale.xy;
     gl_Position       = ProjMatrix * ViewMatrix * worldPosition;
 }

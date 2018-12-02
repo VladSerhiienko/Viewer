@@ -75,7 +75,7 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 // const VkFormat sDepthFormat = VK_FORMAT_D16_UNORM;
 
 const uint16_t kAnimLayerId   = 0;
-const uint16_t kAnimStackId   = 0;
+const uint16_t kAnimStackId   = 6;
 
 ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     apemode_memory_allocation_scope;
@@ -635,19 +635,9 @@ void ViewerShell::UpdateTime( ) {
 
 void ViewerShell::UpdateScene( ) {
     if ( mLoadedScene.pScene ) {
-        SkeletonTransformFrames.clear();
-        
         if (mLoadedScene.pScene->HasAnimStackLayer(kAnimStackId, kAnimLayerId) ) {
             mLoadedScene.pScene->UpdateTransformProperties( TotalSecs, true, kAnimStackId, kAnimLayerId, &SceneTransformFrame );
             mLoadedScene.pScene->UpdateTransformMatrices( SceneTransformFrame );
-
-            SkeletonTransformFrames.resize( mLoadedScene.pScene->Skeletons.size( ) );
-            for ( uint32_t i = 0; i < mLoadedScene.pScene->Skeletons.size( ); ++i ) {
-                mLoadedScene.pScene->UpdateTransformMatrices(
-                    &SceneTransformFrame,
-                    &mLoadedScene.pScene->Skeletons[ i ],
-                    &SkeletonTransformFrames[ i ] );
-            }
         }
     }
 }
@@ -742,12 +732,10 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
     sceneRenderParameters.LightColor                = LightColor;
     sceneRenderParameters.LightDirection            = LightDirection;
     sceneRenderParameters.pTransformFrame           = pTransformFrame;
-    sceneRenderParameters.pSkeletonTransformFrameIt = SkeletonTransformFrames.data( );
     XMStoreFloat4x4( &sceneRenderParameters.ProjMatrix, projMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.ViewMatrix, viewMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.InvProjMatrix, invProjMatrix );
-    XMStoreFloat4x4( &sceneRenderParameters.RootMatrix, rootMatrix );
     pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
 
     {
@@ -800,12 +788,12 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
         debugRenderSceneParameters.pTransformFrame    = &mLoadedScene.pScene->BindPoseFrame;
         debugRenderSceneParameters.SceneColorOverride = XMFLOAT4{1, 1, 0, 1};
         debugRenderSceneParameters.LineWidth          = 4;
-        pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
+        // pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
 
         debugRenderSceneParameters.pTransformFrame    = pTransformFrame;
         debugRenderSceneParameters.SceneColorOverride = XMFLOAT4{0, 1, 1, 1};
         debugRenderSceneParameters.LineWidth          = 2;
-        pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
+        // pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
     }
 
     apemode::vk::NuklearRenderer::RenderParameters renderParamsNk;
