@@ -879,7 +879,9 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                 auto &skin = pScene->Skins[ mesh.SkinId ];
                 skin.Id = mesh.SkinId;
 
-                auto pSkinFb = pSkinsFb->Get( mesh.SkinId );
+                auto pSkinFb          = pSkinsFb->Get( mesh.SkinId );
+                auto pInvBindMatrices = pSkinFb->inv_bind_pose_matrices( );
+
                 if ( skin.LinkIds.empty( ) && pSkinFb ) {
 
                     auto pLinkIdsFb = pSkinFb->links_ids( );
@@ -889,15 +891,6 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                                  GetCStringProperty( pSrcScene, pSkinFb->name_id( ) ),
                                  pLinkIdsFb->size( ) );
 
-                        auto meshIt = eastl::find_if(pScene->Meshes.begin(), pScene->Meshes.end(), [&]( const SceneMesh & mesh ) {
-                            return mesh.SkinId == skin.Id;
-                        });
-                        auto nodeIt = eastl::find_if(pScene->Nodes.begin(), pScene->Nodes.end(), [&]( const SceneNode & node ) {
-                            return node.MeshId == meshIt->Id;
-                        });
-
-                        skin.MeshId = meshIt->Id;
-                        skin.NodeId = nodeIt->Id;
                         skin.LinkIds.reserve( pLinkIdsFb->size( ) );
                         skin.InvBindPoseMatrices.reserve( pLinkIdsFb->size( ) );
 
@@ -905,19 +898,10 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                             auto linkNodeId = pLinkIdsFb->Get( linkIndex );
                             LogInfo( "\t+ link {} \"{}\"", linkNodeId, pScene->Nodes[ linkNodeId ].pszName );
 
-                            auto &bindPoseFrame = pScene->BindPoseFrame;
-                            auto &linkTransform = bindPoseFrame.Transforms[ linkNodeId ];
-                            auto &meshTransform = bindPoseFrame.Transforms[ skin.NodeId ];
-
-                            auto transformLinkFb   = (const XMFLOAT4X4 *) pSkinFb->transform_link_matrices( )->Get( linkIndex );
-                            auto transformFb       = (const XMFLOAT4X4 *) pSkinFb->transform_matrices( )->Get( linkIndex );
-                            XMMATRIX transformLink = XMLoadFloat4x4( transformLinkFb );
-                            XMMATRIX transform     = XMLoadFloat4x4( transformFb );
-                            XMMATRIX geometric     = meshTransform.GeometricalMatrix;
-                            XMMATRIX invBindPoseMatrix = geometric * transform * XMMatrixInverse( nullptr, transformLink );
-
-                            skin.LinkIds.push_back(linkNodeId);
-                            skin.InvBindPoseMatrices.push_back(invBindPoseMatrix);
+                            const XMFLOAT4X4 *invBindPoseMatrixFb = (const XMFLOAT4X4 *) pInvBindMatrices->Get( linkIndex );
+                            XMMATRIX invBindPoseMatrix = XMLoadFloat4x4( invBindPoseMatrixFb );
+                            skin.LinkIds.push_back( linkNodeId );
+                            skin.InvBindPoseMatrices.push_back( invBindPoseMatrix );
                         }
                     }
                 }

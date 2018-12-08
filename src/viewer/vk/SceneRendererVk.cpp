@@ -93,9 +93,6 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
     const apemode::SceneNodeTransformFrame* pTransformFrame =
         pParams->pTransformFrame ? pParams->pTransformFrame : &pScene->GetBindPoseTransformFrame( );
 
-    assert( ( pParams->pTransformFrame && pParams->pSkeletonTransformFrameIt ) ||
-            ( !pParams->pTransformFrame && !pParams->pSkeletonTransformFrameIt ) );
-
     SortedNodeIds.clear( );
     SortedNodeIds.reserve( pScene->Nodes.size( ) );
 

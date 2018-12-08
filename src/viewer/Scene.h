@@ -350,9 +350,7 @@ struct SceneNodeTransformFrame {
 /* SceneSkin class contains the information related to the skinning.
  */
 struct SceneSkin {
-    uint32_t                    Id     = detail::kInvalidId;
-    uint32_t                    MeshId = detail::kInvalidId;
-    uint32_t                    NodeId = detail::kInvalidId;
+    uint32_t Id = detail::kInvalidId;
     apemode::vector< uint32_t > LinkIds;
     apemode::vector< XMMATRIX > InvBindPoseMatrices;
 };
