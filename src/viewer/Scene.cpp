@@ -652,9 +652,6 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             }
         }
 
-        detail::ScenePrintPretty prettyPrint;
-        prettyPrint.PrintPretty( pScene.get( ) );
-
         pScene->UpdateTransformMatrices( bindPoseFrame );
         //BuildSkeletons( pScene.get(), eastl::move( rootIds ), eastl::move( limbIds ) );
 
@@ -763,7 +760,6 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             }
         }
 
-        // pScene->AnimLayerIdToTransformFrames.reserve( pAnimLayersFb->size( ) );
         for ( auto pAnimLayerFb : *pAnimLayersFb ) {
             auto pAnimStackFb = pAnimStacksFb->Get( pAnimLayerFb->anim_stack_id( ) );
 
@@ -776,12 +772,6 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             SceneAnimLayerId animLayerId;
             animLayerId.AnimLayerIndex = pAnimLayerFb->anim_stack_idx( );
             animLayerId.AnimStackIndex = pAnimLayerFb->anim_stack_id( );
-
-//            auto &animTransformFrame = pScene->AnimLayerIdToTransformFrames[ animLayerId.AnimLayerCompositeId ];
-//            pScene->InitializeTransformFrame( animTransformFrame );
-//
-//            const SceneNodeTransformFrame &bindPoseFrame = pScene->BindPoseFrame;
-//            animTransformFrame = bindPoseFrame;
         }
     }
 
@@ -981,6 +971,8 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
         }         /* pMaterialFb */
     }             /* pMaterialsFb */
 
+    detail::ScenePrintPretty prettyPrint;
+    prettyPrint.PrintPretty( pScene.get( ) );
     return LoadedScene{std::move( fileContents ), pSrcScene, std::move( pScene )};
 }
 

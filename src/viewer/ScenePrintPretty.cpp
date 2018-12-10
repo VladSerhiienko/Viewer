@@ -17,32 +17,46 @@ void PrintPrettyPop( char *depth, int &di ) {
     depth[ di -= 4 ] = 0;
 }
 
-void PrintPrettyPrint( const apemode::Scene *pScene, const apemode::SceneNode *pNode, char *depth, int &di ) {
-    printf( " %s %s [ID=%u]\n",
-            pNode->pszName,
-            pNode->eSkeletonType != apemode::detail::eSkeletonType_None ? "(J)" : "",
-            pNode->Id );
+void PrintPrettyPrint( const apemode::Scene &    scene,
+                       const apemode::SceneNode &sceneNode,
+                       char *                    pszDepthString,
+                       int &                     depthStringIndex ) {
 
-    auto childRange = pScene->NodeToChildIds.equal_range( pNode->Id );
+    auto childRange = scene.NodeToChildIds.equal_range( sceneNode.Id );
     while ( childRange.first != childRange.second ) {
-        bool bHasNext = eastl::next( childRange.first ) != childRange.second;
-        if ( bHasNext ) {
-            printf( "%s ├──", depth );
-            PrintPrettyPush( '|', depth, di );
-        } else {
-            printf( "%s └──", depth );
-            PrintPrettyPush( ' ', depth, di );
-        }
+        const bool bHasNext = eastl::next( childRange.first ) != childRange.second;
 
-        PrintPrettyPrint( pScene, &pScene->Nodes[ childRange.first->second ], depth, di );
-        PrintPrettyPop( depth, di );
+        const apemode::SceneNode &childSceneNode = scene.Nodes[ childRange.first->second ];
+        apemode::LogInfo( "{} {} {} {} [ID={}]",
+                          pszDepthString,
+                          bHasNext ? "|--" : "`--",
+                          childSceneNode.pszName,
+                          childSceneNode.eSkeletonType != apemode::detail::eSkeletonType_None ? "(J)" : "",
+                          childSceneNode.Id );
+
+        PrintPrettyPush( bHasNext ? '|' : ' ', pszDepthString, depthStringIndex );
+        PrintPrettyPrint( scene, childSceneNode, pszDepthString, depthStringIndex );
+        PrintPrettyPop( pszDepthString, depthStringIndex );
+
         ++childRange.first;
     }
 }
+
+void PrintPrettyPrint( const apemode::Scene &scene ) {
+
+    const apemode::SceneNode &sceneNode = scene.Nodes.front( );
+    apemode::LogInfo( " {} {} [ID={}]",
+                      sceneNode.pszName,
+                      sceneNode.eSkeletonType != apemode::detail::eSkeletonType_None ? "(J)" : "",
+                      sceneNode.Id );
+
+    int  depthIndex = 0;
+    char depth[ 2056 ] = {0};
+    PrintPrettyPrint( scene, sceneNode, depth, depthIndex );
 }
+} // namespace
 
 void apemode::detail::ScenePrintPretty::PrintPretty( const apemode::Scene *pScene ) {
-    int  depthIndex    = 0;
-    char depth[ 2056 ] = {0};
-    PrintPrettyPrint( pScene, &pScene->Nodes.front( ), depth, depthIndex );
+    if ( pScene )
+        PrintPrettyPrint( *pScene );
 }

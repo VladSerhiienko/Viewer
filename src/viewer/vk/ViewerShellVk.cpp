@@ -788,12 +788,12 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
         debugRenderSceneParameters.pTransformFrame    = &mLoadedScene.pScene->BindPoseFrame;
         debugRenderSceneParameters.SceneColorOverride = XMFLOAT4{1, 1, 0, 1};
         debugRenderSceneParameters.LineWidth          = 4;
-        // pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
+        pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
 
         debugRenderSceneParameters.pTransformFrame    = pTransformFrame;
         debugRenderSceneParameters.SceneColorOverride = XMFLOAT4{0, 1, 1, 1};
         debugRenderSceneParameters.LineWidth          = 2;
-        // pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
+        pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
     }
 
     apemode::vk::NuklearRenderer::RenderParameters renderParamsNk;
