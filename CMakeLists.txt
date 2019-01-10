@@ -309,8 +309,11 @@ ExternalProject_Add(
     BUILD_IN_SOURCE 1
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/MoltenVK"
     BUILD_COMMAND   ./fetchDependencies &&
-                    xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Debug) (macOS only)" build &&
-                    xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Release) (macOS only)" build
+                    xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package" build &&
+                    xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Debug)" build &&
+                    xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (iOS only)" build &&
+                    xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (macOS only)" build
+                    # xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Debug) (macOS only)" build &&
 )
  
 endif ()
@@ -476,7 +479,7 @@ if (APPLE)
 
     set( Vulkan_include_dirs ${MOLTENVK_SDK_PATH}/MoltenVK/include )
     set( Vulkan_third_party_libs
-         ${MOLTENVK_SDK_PATH}/Package${CONFIGURATION_SUFFIX}/MoltenVK/macOS/libMoltenVK.dylib
+         ${MOLTENVK_SDK_PATH}/Package${CONFIGURATION_SUFFIX}/MoltenVK/macOS/dynamic/libMoltenVK.dylib
          ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
          ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a )
 
@@ -871,14 +874,14 @@ if (APPLE)
     add_custom_command(
         TARGET Viewer POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVK/macOS/libMoltenVK.dylib
+        ${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVK/macOS/dynamic/libMoltenVK.dylib
         ${CMAKE_BINARY_DIR}/Debug
     )
 
     add_custom_command(
         TARGET Viewer POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${MOLTENVK_SDK_PATH}/Package/Release/MoltenVK/macOS/libMoltenVK.dylib
+        ${MOLTENVK_SDK_PATH}/Package/Release/MoltenVK/macOS/dynamic/libMoltenVK.dylib
         ${CMAKE_BINARY_DIR}/Release
     )
 endif()
@@ -940,6 +943,7 @@ set(
 )
 
 if (APPLE)
+    # set( glslangValidatorAbsolute "${MOLTENVK_SDK_PATH}/External/glslang/Test/glslangValidator")
     set( glslangValidatorAbsolute "${MOLTENVK_SDK_PATH}/External/glslang/build/StandAlone/glslangValidator")
 else()
     set( glslangValidatorAbsolute "$ENV{VK_SDK_PATH}/bin/glslangValidator")
