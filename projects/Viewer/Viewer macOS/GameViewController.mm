@@ -13,6 +13,7 @@
 
 #include "apemode/platform/AppInput.h"
 #include "apemode/platform/AppSurface.h"
+#include "apemode/platform/DefaultAppShellCommand.h"
 #include "viewer/ViewerAppShellFactory.h"
 
 #include <vector>
@@ -21,10 +22,19 @@ struct App {
     std::unique_ptr< apemode::platform::IAppShell > shell;
     apemode::platform::AppSurface                   surface;
     apemode::platform::AppInput                     input;
+    apemode::platform::AppShellCommand              initCmd;
+    apemode::platform::AppShellCommand              updateCmd;
 };
 
 /** Rendering loop callback function for use with a CVDisplayLink. */
 namespace {
+apemode::platform::AppShellCommandArgumentValue&
+getShellCmdArgument(apemode::platform::AppShellCommand& cmd, const char* pszName ) {
+    auto& arg = cmd.Args[pszName];
+    arg.Name = pszName;
+    return arg.Value;
+}
+
 CVReturn DisplayLinkCallback( CVDisplayLinkRef   displayLink,
                               const CVTimeStamp* now,
                               const CVTimeStamp* outputTime,
@@ -32,7 +42,7 @@ CVReturn DisplayLinkCallback( CVDisplayLinkRef   displayLink,
                               CVOptionFlags*     flagsOut,
                               void*              target ) {
     App* app = static_cast< App* >( target );
-    app->shell->Update( &app->surface, &app->input );
+    app->shell->Execute(&app->updateCmd);
     return kCVReturnSuccess;
 }
 
@@ -107,7 +117,7 @@ std::vector< const char* > getProcessArguments( ) {
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/subzero-b-posicao-vitoria.fbxp");
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/luminaris-starship.fbxp");
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/mech-drone.fbxp");
-    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/mech-drone.fbxp");
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/mech-drone.fbxp");
 
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/kgirls01.fbxp");
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/alien.fbxp"); // M/A
@@ -129,9 +139,16 @@ std::vector< const char* > getProcessArguments( ) {
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/combat-jet-animation.fbxp");
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/combat-jet-animation.fbxp");
 
-
     app.shell = apemode::viewer::vk::CreateViewer( (int) ppszArgs.size( ), ppszArgs.data( ) );
-    app.shell->Initialize( &app.surface );
+    
+    app.initCmd.Type = "Initialize";
+    getShellCmdArgument(app.initCmd, "Surface").SetPtrValue(&app.surface);
+    
+    app.updateCmd.Type = "Update";
+    getShellCmdArgument(app.updateCmd, "Surface").SetPtrValue(&app.surface);
+    getShellCmdArgument(app.updateCmd, "Input").SetPtrValue(&app.input);
+    
+    app.shell->Execute(&app.initCmd);
 
     CVDisplayLinkCreateWithActiveCGDisplays( &displayLink );
     CVDisplayLinkSetOutputCallback( displayLink, &DisplayLinkCallback, &app );

@@ -344,6 +344,7 @@ namespace apemodevk
             apemode_assert( hLogicalDevice != nullptr, "Device is required." );
             const VkResult eIsFreed = vkFreeDescriptorSets( hLogicalDevice, hDescPool, 1, &Handle );
             apemode_assert( VK_SUCCESS == eIsFreed, "Failed to free descriptor set (vkFreeDescriptorSets)." );
+            (void)eIsFreed;
 
             Handle = VK_NULL_HANDLE;
         }

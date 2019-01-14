@@ -80,12 +80,12 @@ const char* apemode::platform::shared::AssetFile::GetId( ) const {
 
 apemode::vector< uint8_t > apemode::platform::shared::AssetFile::GetContentAsTextBuffer( ) const {
     apemode_memory_allocation_scope;
-    return std::move( FileReader( ).ReadTxtFile( Path.c_str( ) ) );
+    return FileReader( ).ReadTxtFile( Path.c_str( ) );
 }
 
 apemode::vector< uint8_t > apemode::platform::shared::AssetFile::GetContentAsBinaryBuffer( ) const {
     apemode_memory_allocation_scope;
-    return std::move( FileReader( ).ReadBinFile( Path.c_str( ) ) );
+    return FileReader( ).ReadBinFile( Path.c_str( ) );
 }
 
 uint64_t apemode::platform::shared::AssetFile::GetCurrentVersion( ) const {
@@ -304,13 +304,13 @@ apemode::vector< uint8_t > TReadFile( const char* pszFilePath ) {
         assetContentBuffer[ size ] = 0;
     }
 
-    return std::move( assetContentBuffer );
+    return assetContentBuffer;
 }
 
 apemode::vector< uint8_t > apemode::platform::shared::FileReader::ReadBinFile( const char* pszFilePath ) {
-    return std::move( TReadFile< false >( pszFilePath ) );
+    return TReadFile< false >( pszFilePath );
 }
 
 apemode::vector< uint8_t > apemode::platform::shared::FileReader::ReadTxtFile( const char* pszFilePath ) {
-    return std::move( TReadFile< true >( pszFilePath ) );
+    return TReadFile< true >( pszFilePath );
 }

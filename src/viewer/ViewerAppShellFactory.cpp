@@ -1,10 +1,23 @@
 #include "ViewerAppShellFactory.h"
 #include <viewer/vk/ViewerShellVk.h>
 #include <memory>
+#include <string.h>
 
 namespace apemode {
 namespace viewer {
 namespace vk {
+
+void DumpCmd( const apemode::platform::IAppShellCommand* pCmd ) {
+    if ( pCmd ) {
+        apemode::LogInfo( "Cmd @{}, type: {}", (const void*)pCmd, pCmd->GetType( ) );
+    } else {
+        apemode::LogError( "Nullptr command." );
+    }
+}
+
+bool IsCmdOfType( const apemode::platform::IAppShellCommand* pCmd, const char *pszType ) {
+    return pCmd && !strcmp( pCmd->GetType( ), pszType );
+}
 
 class ViewerAppShellBridge : public apemode::platform::IAppShell {
 public:
@@ -18,7 +31,44 @@ public:
         apemode::AppState::OnExit( );
     }
 
-    bool Initialize( const apemode::platform::AppSurface* pAppSurface ) override {
+    apemode::platform::AppShellCommandResult Execute( const apemode::platform::IAppShellCommand* pCmd ) override {
+        using namespace  apemode::platform;
+
+        using T = IAppShellCommandArgumentValue::ValueType;
+
+        if ( IsCmdOfType( pCmd, "Initialize" ) ) {
+            auto pSurfaceArg = pCmd->FindArgumentByName( "Surface" );
+            assert( pSurfaceArg && pSurfaceArg->GetValue( ) && pSurfaceArg->GetValue( )->GetType( ) == T::kValueType_PtrValue );
+
+            auto pAppSurface = (const AppSurface*) pSurfaceArg->GetValue( )->GetPtrValue( );
+            apemode::platform::AppShellCommandResult result;
+            result.bSucceeded = Initialize( pAppSurface );
+            return result;
+        } else if ( IsCmdOfType( pCmd, "Update" ) ) {
+            auto pSurfaceArg = pCmd->FindArgumentByName( "Surface" );
+            auto pInputArg   = pCmd->FindArgumentByName( "Input" );
+
+            assert( pSurfaceArg && pSurfaceArg->GetValue( ) && pSurfaceArg->GetValue( )->GetType( ) == T::kValueType_PtrValue );
+            assert( pInputArg && pInputArg->GetValue( ) && pInputArg->GetValue( )->GetType( ) == T::kValueType_PtrValue );
+
+            auto pAppSurface = (const AppSurface*) pSurfaceArg->GetValue( )->GetPtrValue( );
+            auto pAppInput   = (const AppInput*) pInputArg->GetValue( )->GetPtrValue( );
+            apemode::platform::AppShellCommandResult result;
+            result.bSucceeded = Update( pAppSurface, pAppInput );
+            return result;
+        }
+    
+        apemode::LogWarn( "Unprocessed command:" );
+        DumpCmd( pCmd );
+
+        AppShellCommandResult result;
+        result.bSucceeded = false;
+        return result;
+}
+
+protected:
+
+    bool Initialize( const apemode::platform::AppSurface* pAppSurface ) {
         apemodevk::PlatformSurface platformSurface;
         platformSurface.OverrideExtent.width  = (uint32_t) pAppSurface->OverrideWidth;
         platformSurface.OverrideExtent.height = (uint32_t) pAppSurface->OverrideHeight;
@@ -37,7 +87,7 @@ public:
         return pShell->Initialize( &platformSurface );
     }
 
-    bool Update( const apemode::platform::AppSurface* pAppSurface, const apemode::platform::AppInput* pAppInput ) override {
+    bool Update( const apemode::platform::AppSurface* pAppSurface, const apemode::platform::AppInput* pAppInput ) {
         VkExtent2D currentExtent;
         currentExtent.width  = (uint32_t) pAppSurface->OverrideWidth;
         currentExtent.height = (uint32_t) pAppSurface->OverrideHeight;
