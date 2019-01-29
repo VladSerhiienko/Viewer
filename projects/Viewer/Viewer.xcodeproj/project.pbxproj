@@ -7,6 +7,110 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		CA4D143F22008409004A0A2B /* attribute_quantization_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143A22008409004A0A2B /* attribute_quantization_transform.cc */; };
+		CA4D144022008409004A0A2B /* attribute_quantization_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143A22008409004A0A2B /* attribute_quantization_transform.cc */; };
+		CA4D144122008409004A0A2B /* point_attribute.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143B22008409004A0A2B /* point_attribute.cc */; };
+		CA4D144222008409004A0A2B /* point_attribute.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143B22008409004A0A2B /* point_attribute.cc */; };
+		CA4D144322008409004A0A2B /* attribute_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143C22008409004A0A2B /* attribute_transform.cc */; };
+		CA4D144422008409004A0A2B /* attribute_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143C22008409004A0A2B /* attribute_transform.cc */; };
+		CA4D144522008409004A0A2B /* attribute_octahedron_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143D22008409004A0A2B /* attribute_octahedron_transform.cc */; };
+		CA4D144622008409004A0A2B /* attribute_octahedron_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143D22008409004A0A2B /* attribute_octahedron_transform.cc */; };
+		CA4D144722008409004A0A2B /* geometry_attribute.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143E22008409004A0A2B /* geometry_attribute.cc */; };
+		CA4D144822008409004A0A2B /* geometry_attribute.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143E22008409004A0A2B /* geometry_attribute.cc */; };
+		CA4D1472220085C4004A0A2B /* mesh_misc_functions.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1449220085C0004A0A2B /* mesh_misc_functions.cc */; };
+		CA4D1473220085C4004A0A2B /* mesh_misc_functions.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1449220085C0004A0A2B /* mesh_misc_functions.cc */; };
+		CA4D1474220085C4004A0A2B /* keyframe_animation.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144A220085C0004A0A2B /* keyframe_animation.cc */; };
+		CA4D1475220085C4004A0A2B /* keyframe_animation.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144A220085C0004A0A2B /* keyframe_animation.cc */; };
+		CA4D1476220085C4004A0A2B /* mesh_sequential_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144B220085C0004A0A2B /* mesh_sequential_decoder.cc */; };
+		CA4D1477220085C4004A0A2B /* mesh_sequential_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144B220085C0004A0A2B /* mesh_sequential_decoder.cc */; };
+		CA4D1478220085C4004A0A2B /* point_cloud_sequential_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144C220085C0004A0A2B /* point_cloud_sequential_decoder.cc */; };
+		CA4D1479220085C4004A0A2B /* point_cloud_sequential_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144C220085C0004A0A2B /* point_cloud_sequential_decoder.cc */; };
+		CA4D147A220085C4004A0A2B /* sequential_attribute_decoders_controller.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144D220085C0004A0A2B /* sequential_attribute_decoders_controller.cc */; };
+		CA4D147B220085C4004A0A2B /* sequential_attribute_decoders_controller.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144D220085C0004A0A2B /* sequential_attribute_decoders_controller.cc */; };
+		CA4D147C220085C4004A0A2B /* sequential_integer_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144E220085C0004A0A2B /* sequential_integer_attribute_decoder.cc */; };
+		CA4D147D220085C4004A0A2B /* sequential_integer_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144E220085C0004A0A2B /* sequential_integer_attribute_decoder.cc */; };
+		CA4D147E220085C4004A0A2B /* sequential_quantization_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144F220085C0004A0A2B /* sequential_quantization_attribute_decoder.cc */; };
+		CA4D147F220085C4004A0A2B /* sequential_quantization_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144F220085C0004A0A2B /* sequential_quantization_attribute_decoder.cc */; };
+		CA4D1480220085C4004A0A2B /* mesh.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1450220085C0004A0A2B /* mesh.cc */; };
+		CA4D1481220085C4004A0A2B /* mesh.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1450220085C0004A0A2B /* mesh.cc */; };
+		CA4D1482220085C4004A0A2B /* decode.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1451220085C1004A0A2B /* decode.cc */; };
+		CA4D1483220085C4004A0A2B /* decode.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1451220085C1004A0A2B /* decode.cc */; };
+		CA4D1484220085C4004A0A2B /* direct_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1452220085C1004A0A2B /* direct_bit_decoder.cc */; };
+		CA4D1485220085C4004A0A2B /* direct_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1452220085C1004A0A2B /* direct_bit_decoder.cc */; };
+		CA4D1486220085C4004A0A2B /* adaptive_rans_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1453220085C1004A0A2B /* adaptive_rans_bit_decoder.cc */; };
+		CA4D1487220085C4004A0A2B /* adaptive_rans_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1453220085C1004A0A2B /* adaptive_rans_bit_decoder.cc */; };
+		CA4D1488220085C4004A0A2B /* keyframe_animation_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1454220085C1004A0A2B /* keyframe_animation_decoder.cc */; };
+		CA4D1489220085C4004A0A2B /* keyframe_animation_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1454220085C1004A0A2B /* keyframe_animation_decoder.cc */; };
+		CA4D148A220085C4004A0A2B /* metadata_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1455220085C1004A0A2B /* metadata_decoder.cc */; };
+		CA4D148B220085C4004A0A2B /* metadata_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1455220085C1004A0A2B /* metadata_decoder.cc */; };
+		CA4D148C220085C4004A0A2B /* metadata.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1456220085C1004A0A2B /* metadata.cc */; };
+		CA4D148D220085C4004A0A2B /* metadata.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1456220085C1004A0A2B /* metadata.cc */; };
+		CA4D148E220085C4004A0A2B /* point_cloud.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1457220085C1004A0A2B /* point_cloud.cc */; };
+		CA4D148F220085C4004A0A2B /* point_cloud.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1457220085C1004A0A2B /* point_cloud.cc */; };
+		CA4D1490220085C4004A0A2B /* sequential_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1458220085C1004A0A2B /* sequential_attribute_decoder.cc */; };
+		CA4D1491220085C4004A0A2B /* sequential_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1458220085C1004A0A2B /* sequential_attribute_decoder.cc */; };
+		CA4D1492220085C4004A0A2B /* sequential_normal_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1459220085C1004A0A2B /* sequential_normal_attribute_decoder.cc */; };
+		CA4D1493220085C4004A0A2B /* sequential_normal_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1459220085C1004A0A2B /* sequential_normal_attribute_decoder.cc */; };
+		CA4D1494220085C4004A0A2B /* attributes_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145A220085C1004A0A2B /* attributes_decoder.cc */; };
+		CA4D1495220085C4004A0A2B /* attributes_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145A220085C1004A0A2B /* attributes_decoder.cc */; };
+		CA4D1496220085C4004A0A2B /* geometry_metadata.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145B220085C1004A0A2B /* geometry_metadata.cc */; };
+		CA4D1497220085C4004A0A2B /* geometry_metadata.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145B220085C1004A0A2B /* geometry_metadata.cc */; };
+		CA4D1498220085C4004A0A2B /* point_cloud_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145C220085C1004A0A2B /* point_cloud_decoder.cc */; };
+		CA4D1499220085C4004A0A2B /* point_cloud_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145C220085C1004A0A2B /* point_cloud_decoder.cc */; };
+		CA4D149A220085C4004A0A2B /* mesh_attribute_corner_table.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145D220085C1004A0A2B /* mesh_attribute_corner_table.cc */; };
+		CA4D149B220085C4004A0A2B /* mesh_attribute_corner_table.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145D220085C1004A0A2B /* mesh_attribute_corner_table.cc */; };
+		CA4D149C220085C4004A0A2B /* symbol_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145E220085C2004A0A2B /* symbol_bit_decoder.cc */; };
+		CA4D149D220085C4004A0A2B /* symbol_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145E220085C2004A0A2B /* symbol_bit_decoder.cc */; };
+		CA4D149E220085C4004A0A2B /* bit_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145F220085C2004A0A2B /* bit_utils.cc */; };
+		CA4D149F220085C4004A0A2B /* bit_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145F220085C2004A0A2B /* bit_utils.cc */; };
+		CA4D14A0220085C4004A0A2B /* draco_types.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1460220085C2004A0A2B /* draco_types.cc */; };
+		CA4D14A1220085C4004A0A2B /* draco_types.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1460220085C2004A0A2B /* draco_types.cc */; };
+		CA4D14A2220085C4004A0A2B /* point_cloud_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1461220085C2004A0A2B /* point_cloud_kd_tree_decoder.cc */; };
+		CA4D14A3220085C4004A0A2B /* point_cloud_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1461220085C2004A0A2B /* point_cloud_kd_tree_decoder.cc */; };
+		CA4D14A4220085C4004A0A2B /* mesh_are_equivalent.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1462220085C2004A0A2B /* mesh_are_equivalent.cc */; };
+		CA4D14A5220085C4004A0A2B /* mesh_are_equivalent.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1462220085C2004A0A2B /* mesh_are_equivalent.cc */; };
+		CA4D14A6220085C4004A0A2B /* divide.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1463220085C2004A0A2B /* divide.cc */; };
+		CA4D14A7220085C4004A0A2B /* divide.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1463220085C2004A0A2B /* divide.cc */; };
+		CA4D14A8220085C4004A0A2B /* bounding_box.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1464220085C2004A0A2B /* bounding_box.cc */; };
+		CA4D14A9220085C4004A0A2B /* bounding_box.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1464220085C2004A0A2B /* bounding_box.cc */; };
+		CA4D14AA220085C4004A0A2B /* mesh_edgebreaker_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1465220085C2004A0A2B /* mesh_edgebreaker_decoder.cc */; };
+		CA4D14AB220085C4004A0A2B /* mesh_edgebreaker_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1465220085C2004A0A2B /* mesh_edgebreaker_decoder.cc */; };
+		CA4D14AC220085C4004A0A2B /* options.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1466220085C2004A0A2B /* options.cc */; };
+		CA4D14AD220085C4004A0A2B /* options.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1466220085C2004A0A2B /* options.cc */; };
+		CA4D14AE220085C4004A0A2B /* data_buffer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1467220085C2004A0A2B /* data_buffer.cc */; };
+		CA4D14AF220085C4004A0A2B /* data_buffer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1467220085C2004A0A2B /* data_buffer.cc */; };
+		CA4D14B0220085C4004A0A2B /* cycle_timer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1468220085C3004A0A2B /* cycle_timer.cc */; };
+		CA4D14B1220085C4004A0A2B /* cycle_timer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1468220085C3004A0A2B /* cycle_timer.cc */; };
+		CA4D14B2220085C4004A0A2B /* rans_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1469220085C3004A0A2B /* rans_bit_decoder.cc */; };
+		CA4D14B3220085C4004A0A2B /* rans_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1469220085C3004A0A2B /* rans_bit_decoder.cc */; };
+		CA4D14B4220085C4004A0A2B /* decoder_buffer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146A220085C3004A0A2B /* decoder_buffer.cc */; };
+		CA4D14B5220085C4004A0A2B /* decoder_buffer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146A220085C3004A0A2B /* decoder_buffer.cc */; };
+		CA4D14B6220085C4004A0A2B /* quantization_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146B220085C3004A0A2B /* quantization_utils.cc */; };
+		CA4D14B7220085C4004A0A2B /* quantization_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146B220085C3004A0A2B /* quantization_utils.cc */; };
+		CA4D14B8220085C4004A0A2B /* mesh_stripifier.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146C220085C3004A0A2B /* mesh_stripifier.cc */; };
+		CA4D14B9220085C4004A0A2B /* mesh_stripifier.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146C220085C3004A0A2B /* mesh_stripifier.cc */; };
+		CA4D14BA220085C4004A0A2B /* corner_table.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146D220085C3004A0A2B /* corner_table.cc */; };
+		CA4D14BB220085C4004A0A2B /* corner_table.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146D220085C3004A0A2B /* corner_table.cc */; };
+		CA4D14BC220085C4004A0A2B /* kd_tree_attributes_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146E220085C3004A0A2B /* kd_tree_attributes_decoder.cc */; };
+		CA4D14BD220085C4004A0A2B /* kd_tree_attributes_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146E220085C3004A0A2B /* kd_tree_attributes_decoder.cc */; };
+		CA4D14BE220085C4004A0A2B /* mesh_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146F220085C3004A0A2B /* mesh_decoder.cc */; };
+		CA4D14BF220085C4004A0A2B /* mesh_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146F220085C3004A0A2B /* mesh_decoder.cc */; };
+		CA4D14C0220085C4004A0A2B /* hash_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1470220085C3004A0A2B /* hash_utils.cc */; };
+		CA4D14C1220085C4004A0A2B /* hash_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1470220085C3004A0A2B /* hash_utils.cc */; };
+		CA4D14C2220085C4004A0A2B /* mesh_cleanup.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1471220085C3004A0A2B /* mesh_cleanup.cc */; };
+		CA4D14C3220085C4004A0A2B /* mesh_cleanup.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1471220085C3004A0A2B /* mesh_cleanup.cc */; };
+		CA4D14CB220087D2004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C4220087D1004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc */; };
+		CA4D14CC220087D2004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C4220087D1004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc */; };
+		CA4D14CF220087D2004A0A2B /* integer_points_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C6220087D2004A0A2B /* integer_points_kd_tree_decoder.cc */; };
+		CA4D14D0220087D2004A0A2B /* integer_points_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C6220087D2004A0A2B /* integer_points_kd_tree_decoder.cc */; };
+		CA4D14D1220087D2004A0A2B /* shannon_entropy.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C7220087D2004A0A2B /* shannon_entropy.cc */; };
+		CA4D14D2220087D2004A0A2B /* shannon_entropy.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C7220087D2004A0A2B /* shannon_entropy.cc */; };
+		CA4D14D3220087D2004A0A2B /* float_points_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C8220087D2004A0A2B /* float_points_tree_decoder.cc */; };
+		CA4D14D4220087D2004A0A2B /* float_points_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C8220087D2004A0A2B /* float_points_tree_decoder.cc */; };
+		CA4D14D5220087D2004A0A2B /* symbol_decoding.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C9220087D2004A0A2B /* symbol_decoding.cc */; };
+		CA4D14D6220087D2004A0A2B /* symbol_decoding.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C9220087D2004A0A2B /* symbol_decoding.cc */; };
+		CA4D14D7220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14CA220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc */; };
+		CA4D14D8220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14CA220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc */; };
 		CA676D04217A2E8F0098A888 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CA676D03217A2E8F0098A888 /* AppDelegate.m */; };
 		CA676D07217A2E8F0098A888 /* GameViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CA676D06217A2E8F0098A888 /* GameViewController.mm */; };
 		CA676D0A217A2E8F0098A888 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CA676D08217A2E8F0098A888 /* Main.storyboard */; };
@@ -86,6 +190,58 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		CA4D143A22008409004A0A2B /* attribute_quantization_transform.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = attribute_quantization_transform.cc; path = ../../dependencies/draco/src/draco/attributes/attribute_quantization_transform.cc; sourceTree = SOURCE_ROOT; };
+		CA4D143B22008409004A0A2B /* point_attribute.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = point_attribute.cc; path = ../../dependencies/draco/src/draco/attributes/point_attribute.cc; sourceTree = SOURCE_ROOT; };
+		CA4D143C22008409004A0A2B /* attribute_transform.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = attribute_transform.cc; path = ../../dependencies/draco/src/draco/attributes/attribute_transform.cc; sourceTree = SOURCE_ROOT; };
+		CA4D143D22008409004A0A2B /* attribute_octahedron_transform.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = attribute_octahedron_transform.cc; path = ../../dependencies/draco/src/draco/attributes/attribute_octahedron_transform.cc; sourceTree = SOURCE_ROOT; };
+		CA4D143E22008409004A0A2B /* geometry_attribute.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = geometry_attribute.cc; path = ../../dependencies/draco/src/draco/attributes/geometry_attribute.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1449220085C0004A0A2B /* mesh_misc_functions.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh_misc_functions.cc; path = ../../dependencies/draco/src/draco/mesh/mesh_misc_functions.cc; sourceTree = SOURCE_ROOT; };
+		CA4D144A220085C0004A0A2B /* keyframe_animation.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = keyframe_animation.cc; path = ../../dependencies/draco/src/draco/animation/keyframe_animation.cc; sourceTree = SOURCE_ROOT; };
+		CA4D144B220085C0004A0A2B /* mesh_sequential_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh_sequential_decoder.cc; path = ../../dependencies/draco/src/draco/compression/mesh/mesh_sequential_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D144C220085C0004A0A2B /* point_cloud_sequential_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = point_cloud_sequential_decoder.cc; path = ../../dependencies/draco/src/draco/compression/point_cloud/point_cloud_sequential_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D144D220085C0004A0A2B /* sequential_attribute_decoders_controller.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sequential_attribute_decoders_controller.cc; path = ../../dependencies/draco/src/draco/compression/attributes/sequential_attribute_decoders_controller.cc; sourceTree = SOURCE_ROOT; };
+		CA4D144E220085C0004A0A2B /* sequential_integer_attribute_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sequential_integer_attribute_decoder.cc; path = ../../dependencies/draco/src/draco/compression/attributes/sequential_integer_attribute_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D144F220085C0004A0A2B /* sequential_quantization_attribute_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sequential_quantization_attribute_decoder.cc; path = ../../dependencies/draco/src/draco/compression/attributes/sequential_quantization_attribute_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1450220085C0004A0A2B /* mesh.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh.cc; path = ../../dependencies/draco/src/draco/mesh/mesh.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1451220085C1004A0A2B /* decode.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = decode.cc; path = ../../dependencies/draco/src/draco/compression/decode.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1452220085C1004A0A2B /* direct_bit_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = direct_bit_decoder.cc; path = ../../dependencies/draco/src/draco/compression/bit_coders/direct_bit_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1453220085C1004A0A2B /* adaptive_rans_bit_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = adaptive_rans_bit_decoder.cc; path = ../../dependencies/draco/src/draco/compression/bit_coders/adaptive_rans_bit_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1454220085C1004A0A2B /* keyframe_animation_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = keyframe_animation_decoder.cc; path = ../../dependencies/draco/src/draco/animation/keyframe_animation_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1455220085C1004A0A2B /* metadata_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = metadata_decoder.cc; path = ../../dependencies/draco/src/draco/metadata/metadata_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1456220085C1004A0A2B /* metadata.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = metadata.cc; path = ../../dependencies/draco/src/draco/metadata/metadata.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1457220085C1004A0A2B /* point_cloud.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = point_cloud.cc; path = ../../dependencies/draco/src/draco/point_cloud/point_cloud.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1458220085C1004A0A2B /* sequential_attribute_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sequential_attribute_decoder.cc; path = ../../dependencies/draco/src/draco/compression/attributes/sequential_attribute_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1459220085C1004A0A2B /* sequential_normal_attribute_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = sequential_normal_attribute_decoder.cc; path = ../../dependencies/draco/src/draco/compression/attributes/sequential_normal_attribute_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D145A220085C1004A0A2B /* attributes_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = attributes_decoder.cc; path = ../../dependencies/draco/src/draco/compression/attributes/attributes_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D145B220085C1004A0A2B /* geometry_metadata.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = geometry_metadata.cc; path = ../../dependencies/draco/src/draco/metadata/geometry_metadata.cc; sourceTree = SOURCE_ROOT; };
+		CA4D145C220085C1004A0A2B /* point_cloud_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = point_cloud_decoder.cc; path = ../../dependencies/draco/src/draco/compression/point_cloud/point_cloud_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D145D220085C1004A0A2B /* mesh_attribute_corner_table.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh_attribute_corner_table.cc; path = ../../dependencies/draco/src/draco/mesh/mesh_attribute_corner_table.cc; sourceTree = SOURCE_ROOT; };
+		CA4D145E220085C2004A0A2B /* symbol_bit_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = symbol_bit_decoder.cc; path = ../../dependencies/draco/src/draco/compression/bit_coders/symbol_bit_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D145F220085C2004A0A2B /* bit_utils.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = bit_utils.cc; path = ../../dependencies/draco/src/draco/core/bit_utils.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1460220085C2004A0A2B /* draco_types.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = draco_types.cc; path = ../../dependencies/draco/src/draco/core/draco_types.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1461220085C2004A0A2B /* point_cloud_kd_tree_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = point_cloud_kd_tree_decoder.cc; path = ../../dependencies/draco/src/draco/compression/point_cloud/point_cloud_kd_tree_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1462220085C2004A0A2B /* mesh_are_equivalent.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh_are_equivalent.cc; path = ../../dependencies/draco/src/draco/mesh/mesh_are_equivalent.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1463220085C2004A0A2B /* divide.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = divide.cc; path = ../../dependencies/draco/src/draco/core/divide.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1464220085C2004A0A2B /* bounding_box.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = bounding_box.cc; path = ../../dependencies/draco/src/draco/core/bounding_box.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1465220085C2004A0A2B /* mesh_edgebreaker_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh_edgebreaker_decoder.cc; path = ../../dependencies/draco/src/draco/compression/mesh/mesh_edgebreaker_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1466220085C2004A0A2B /* options.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = options.cc; path = ../../dependencies/draco/src/draco/core/options.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1467220085C2004A0A2B /* data_buffer.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = data_buffer.cc; path = ../../dependencies/draco/src/draco/core/data_buffer.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1468220085C3004A0A2B /* cycle_timer.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = cycle_timer.cc; path = ../../dependencies/draco/src/draco/core/cycle_timer.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1469220085C3004A0A2B /* rans_bit_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = rans_bit_decoder.cc; path = ../../dependencies/draco/src/draco/compression/bit_coders/rans_bit_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D146A220085C3004A0A2B /* decoder_buffer.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = decoder_buffer.cc; path = ../../dependencies/draco/src/draco/core/decoder_buffer.cc; sourceTree = SOURCE_ROOT; };
+		CA4D146B220085C3004A0A2B /* quantization_utils.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = quantization_utils.cc; path = ../../dependencies/draco/src/draco/core/quantization_utils.cc; sourceTree = SOURCE_ROOT; };
+		CA4D146C220085C3004A0A2B /* mesh_stripifier.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh_stripifier.cc; path = ../../dependencies/draco/src/draco/mesh/mesh_stripifier.cc; sourceTree = SOURCE_ROOT; };
+		CA4D146D220085C3004A0A2B /* corner_table.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = corner_table.cc; path = ../../dependencies/draco/src/draco/mesh/corner_table.cc; sourceTree = SOURCE_ROOT; };
+		CA4D146E220085C3004A0A2B /* kd_tree_attributes_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = kd_tree_attributes_decoder.cc; path = ../../dependencies/draco/src/draco/compression/attributes/kd_tree_attributes_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D146F220085C3004A0A2B /* mesh_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh_decoder.cc; path = ../../dependencies/draco/src/draco/compression/mesh/mesh_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1470220085C3004A0A2B /* hash_utils.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = hash_utils.cc; path = ../../dependencies/draco/src/draco/core/hash_utils.cc; sourceTree = SOURCE_ROOT; };
+		CA4D1471220085C3004A0A2B /* mesh_cleanup.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh_cleanup.cc; path = ../../dependencies/draco/src/draco/mesh/mesh_cleanup.cc; sourceTree = SOURCE_ROOT; };
+		CA4D14C4220087D1004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = dynamic_integer_points_kd_tree_decoder.cc; path = ../../dependencies/draco/src/draco/compression/point_cloud/algorithms/dynamic_integer_points_kd_tree_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D14C6220087D2004A0A2B /* integer_points_kd_tree_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = integer_points_kd_tree_decoder.cc; path = ../../dependencies/draco/src/draco/compression/point_cloud/algorithms/integer_points_kd_tree_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D14C7220087D2004A0A2B /* shannon_entropy.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = shannon_entropy.cc; path = ../../dependencies/draco/src/draco/compression/entropy/shannon_entropy.cc; sourceTree = SOURCE_ROOT; };
+		CA4D14C8220087D2004A0A2B /* float_points_tree_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = float_points_tree_decoder.cc; path = ../../dependencies/draco/src/draco/compression/point_cloud/algorithms/float_points_tree_decoder.cc; sourceTree = SOURCE_ROOT; };
+		CA4D14C9220087D2004A0A2B /* symbol_decoding.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = symbol_decoding.cc; path = ../../dependencies/draco/src/draco/compression/entropy/symbol_decoding.cc; sourceTree = SOURCE_ROOT; };
+		CA4D14CA220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh_edgebreaker_decoder_impl.cc; path = ../../dependencies/draco/src/draco/compression/mesh/mesh_edgebreaker_decoder_impl.cc; sourceTree = SOURCE_ROOT; };
 		CA676CFA217A2E8F0098A888 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CA676CFF217A2E8F0098A888 /* Viewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Viewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA676D02217A2E8F0098A888 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -173,6 +329,66 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		CA4D1436220082A6004A0A2B /* draco */ = {
+			isa = PBXGroup;
+			children = (
+				CA4D14C4220087D1004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc */,
+				CA4D14C8220087D2004A0A2B /* float_points_tree_decoder.cc */,
+				CA4D14C6220087D2004A0A2B /* integer_points_kd_tree_decoder.cc */,
+				CA4D14CA220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc */,
+				CA4D14C7220087D2004A0A2B /* shannon_entropy.cc */,
+				CA4D14C9220087D2004A0A2B /* symbol_decoding.cc */,
+				CA4D1453220085C1004A0A2B /* adaptive_rans_bit_decoder.cc */,
+				CA4D145A220085C1004A0A2B /* attributes_decoder.cc */,
+				CA4D145F220085C2004A0A2B /* bit_utils.cc */,
+				CA4D1464220085C2004A0A2B /* bounding_box.cc */,
+				CA4D146D220085C3004A0A2B /* corner_table.cc */,
+				CA4D1468220085C3004A0A2B /* cycle_timer.cc */,
+				CA4D1467220085C2004A0A2B /* data_buffer.cc */,
+				CA4D1451220085C1004A0A2B /* decode.cc */,
+				CA4D146A220085C3004A0A2B /* decoder_buffer.cc */,
+				CA4D1452220085C1004A0A2B /* direct_bit_decoder.cc */,
+				CA4D1463220085C2004A0A2B /* divide.cc */,
+				CA4D1460220085C2004A0A2B /* draco_types.cc */,
+				CA4D145B220085C1004A0A2B /* geometry_metadata.cc */,
+				CA4D1470220085C3004A0A2B /* hash_utils.cc */,
+				CA4D146E220085C3004A0A2B /* kd_tree_attributes_decoder.cc */,
+				CA4D1454220085C1004A0A2B /* keyframe_animation_decoder.cc */,
+				CA4D144A220085C0004A0A2B /* keyframe_animation.cc */,
+				CA4D1462220085C2004A0A2B /* mesh_are_equivalent.cc */,
+				CA4D145D220085C1004A0A2B /* mesh_attribute_corner_table.cc */,
+				CA4D1471220085C3004A0A2B /* mesh_cleanup.cc */,
+				CA4D146F220085C3004A0A2B /* mesh_decoder.cc */,
+				CA4D1465220085C2004A0A2B /* mesh_edgebreaker_decoder.cc */,
+				CA4D1449220085C0004A0A2B /* mesh_misc_functions.cc */,
+				CA4D144B220085C0004A0A2B /* mesh_sequential_decoder.cc */,
+				CA4D146C220085C3004A0A2B /* mesh_stripifier.cc */,
+				CA4D1450220085C0004A0A2B /* mesh.cc */,
+				CA4D1455220085C1004A0A2B /* metadata_decoder.cc */,
+				CA4D1456220085C1004A0A2B /* metadata.cc */,
+				CA4D1466220085C2004A0A2B /* options.cc */,
+				CA4D145C220085C1004A0A2B /* point_cloud_decoder.cc */,
+				CA4D1461220085C2004A0A2B /* point_cloud_kd_tree_decoder.cc */,
+				CA4D144C220085C0004A0A2B /* point_cloud_sequential_decoder.cc */,
+				CA4D1457220085C1004A0A2B /* point_cloud.cc */,
+				CA4D146B220085C3004A0A2B /* quantization_utils.cc */,
+				CA4D1469220085C3004A0A2B /* rans_bit_decoder.cc */,
+				CA4D1458220085C1004A0A2B /* sequential_attribute_decoder.cc */,
+				CA4D144D220085C0004A0A2B /* sequential_attribute_decoders_controller.cc */,
+				CA4D144E220085C0004A0A2B /* sequential_integer_attribute_decoder.cc */,
+				CA4D1459220085C1004A0A2B /* sequential_normal_attribute_decoder.cc */,
+				CA4D144F220085C0004A0A2B /* sequential_quantization_attribute_decoder.cc */,
+				CA4D145E220085C2004A0A2B /* symbol_bit_decoder.cc */,
+				CA4D143D22008409004A0A2B /* attribute_octahedron_transform.cc */,
+				CA4D143A22008409004A0A2B /* attribute_quantization_transform.cc */,
+				CA4D143C22008409004A0A2B /* attribute_transform.cc */,
+				CA4D143E22008409004A0A2B /* geometry_attribute.cc */,
+				CA4D143B22008409004A0A2B /* point_attribute.cc */,
+			);
+			name = draco;
+			path = "Viewer Shared/Viewer/draco";
+			sourceTree = SOURCE_ROOT;
+		};
 		CA676CF0217A2E780098A888 = {
 			isa = PBXGroup;
 			children = (
@@ -297,6 +513,7 @@
 		CABD243D217B43830056A686 /* Viewer */ = {
 			isa = PBXGroup;
 			children = (
+				CA4D1436220082A6004A0A2B /* draco */,
 				CA9A2CAA21A811DD005FE302 /* ScenePrintPretty.cpp */,
 				CA9A4ABB217DC752007E4D21 /* NuklearRendererBase.cpp */,
 				CA9A4ABC217DC752007E4D21 /* ViewerAppShellFactory.cpp */,
@@ -421,10 +638,26 @@
 			buildActionMask = 2147483647;
 			files = (
 				CABD2447217B43A60056A686 /* DebugRendererVk.cpp in Sources */,
+				CA4D14A8220085C4004A0A2B /* bounding_box.cc in Sources */,
+				CA4D14A4220085C4004A0A2B /* mesh_are_equivalent.cc in Sources */,
+				CA4D144322008409004A0A2B /* attribute_transform.cc in Sources */,
+				CA4D1472220085C4004A0A2B /* mesh_misc_functions.cc in Sources */,
+				CA4D1494220085C4004A0A2B /* attributes_decoder.cc in Sources */,
+				CA4D149A220085C4004A0A2B /* mesh_attribute_corner_table.cc in Sources */,
 				CA9A4ACA217DC8F2007E4D21 /* MTScheduler.cpp in Sources */,
+				CA4D1486220085C4004A0A2B /* adaptive_rans_bit_decoder.cc in Sources */,
 				CA9A4AC8217DC8F2007E4D21 /* MTFiberContext.cpp in Sources */,
+				CA4D1492220085C4004A0A2B /* sequential_normal_attribute_decoder.cc in Sources */,
+				CA4D144522008409004A0A2B /* attribute_octahedron_transform.cc in Sources */,
 				CABD244D217B43A60056A686 /* ViewerShellVk.cpp in Sources */,
+				CA4D1482220085C4004A0A2B /* decode.cc in Sources */,
+				CA4D148A220085C4004A0A2B /* metadata_decoder.cc in Sources */,
+				CA4D14CB220087D2004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc in Sources */,
 				CABD244B217B43A60056A686 /* SceneUploaderVk.cpp in Sources */,
+				CA4D148E220085C4004A0A2B /* point_cloud.cc in Sources */,
+				CA4D1496220085C4004A0A2B /* geometry_metadata.cc in Sources */,
+				CA4D14AE220085C4004A0A2B /* data_buffer.cc in Sources */,
+				CA4D147E220085C4004A0A2B /* sequential_quantization_attribute_decoder.cc in Sources */,
 				CABD2439217B3F450056A686 /* ImageUploader.Vulkan.cpp in Sources */,
 				CA676D07217A2E8F0098A888 /* GameViewController.mm in Sources */,
 				CABD2430217B3E030056A686 /* CityHash.Vulkan.cpp in Sources */,
@@ -432,25 +665,61 @@
 				CA9A4ACE217DC8F2007E4D21 /* MTDefaultAppInterop.cpp in Sources */,
 				CABD23EC217B0BF20056A686 /* CityHash.cpp in Sources */,
 				CA9A4ACC217DC8F2007E4D21 /* MTThreadContext.cpp in Sources */,
+				CA4D143F22008409004A0A2B /* attribute_quantization_transform.cc in Sources */,
 				CABD243B217B3F450056A686 /* SamplerManager.Vulkan.cpp in Sources */,
+				CA4D144722008409004A0A2B /* geometry_attribute.cc in Sources */,
+				CA4D14B2220085C4004A0A2B /* rans_bit_decoder.cc in Sources */,
+				CA4D144122008409004A0A2B /* point_attribute.cc in Sources */,
 				CA9A4ABD217DC752007E4D21 /* NuklearRendererBase.cpp in Sources */,
+				CA4D14A2220085C4004A0A2B /* point_cloud_kd_tree_decoder.cc in Sources */,
+				CA4D1478220085C4004A0A2B /* point_cloud_sequential_decoder.cc in Sources */,
+				CA4D14D5220087D2004A0A2B /* symbol_decoding.cc in Sources */,
+				CA4D1490220085C4004A0A2B /* sequential_attribute_decoder.cc in Sources */,
+				CA4D149E220085C4004A0A2B /* bit_utils.cc in Sources */,
 				CA9A2CAB21A811DE005FE302 /* ScenePrintPretty.cpp in Sources */,
+				CA4D148C220085C4004A0A2B /* metadata.cc in Sources */,
 				CA676D10217A2E900098A888 /* main.m in Sources */,
 				CABD242C217B3E030056A686 /* GraphicsManager.Vulkan.cpp in Sources */,
 				CABD2445217B43A60056A686 /* NuklearRendererVk.cpp in Sources */,
+				CA4D14D1220087D2004A0A2B /* shannon_entropy.cc in Sources */,
 				CABD23EA217B0BF20056A686 /* AppState.cpp in Sources */,
+				CA4D14B8220085C4004A0A2B /* mesh_stripifier.cc in Sources */,
 				CA676D04217A2E8F0098A888 /* AppDelegate.m in Sources */,
+				CA4D14B4220085C4004A0A2B /* decoder_buffer.cc in Sources */,
 				CA9A4ABF217DC752007E4D21 /* ViewerAppShellFactory.cpp in Sources */,
 				CA9A4AD1217DC94F007E4D21 /* QueuePools.Vulkan.cpp in Sources */,
+				CA4D1498220085C4004A0A2B /* point_cloud_decoder.cc in Sources */,
+				CA4D1474220085C4004A0A2B /* keyframe_animation.cc in Sources */,
 				CABD2428217B3E030056A686 /* DescriptorPool.Vulkan.cpp in Sources */,
 				CABD2426217B3E030056A686 /* Swapchain.Vulkan.cpp in Sources */,
+				CA4D1476220085C4004A0A2B /* mesh_sequential_decoder.cc in Sources */,
+				CA4D147A220085C4004A0A2B /* sequential_attribute_decoders_controller.cc in Sources */,
 				CABD2449217B43A60056A686 /* SceneRendererVk.cpp in Sources */,
 				CABD242E217B3E030056A686 /* AssetManager.cpp in Sources */,
+				CA4D149C220085C4004A0A2B /* symbol_bit_decoder.cc in Sources */,
+				CA4D14BA220085C4004A0A2B /* corner_table.cc in Sources */,
+				CA4D14A6220085C4004A0A2B /* divide.cc in Sources */,
 				CABD2432217B3E030056A686 /* GraphicsDevice.Vulkan.cpp in Sources */,
+				CA4D1484220085C4004A0A2B /* direct_bit_decoder.cc in Sources */,
+				CA4D1488220085C4004A0A2B /* keyframe_animation_decoder.cc in Sources */,
 				CABD23EF217B0F180056A686 /* MemoryManager.cpp in Sources */,
+				CA4D14D7220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc in Sources */,
+				CA4D14AC220085C4004A0A2B /* options.cc in Sources */,
 				CABD242A217B3E030056A686 /* BufferPools.Vulkan.cpp in Sources */,
+				CA4D1480220085C4004A0A2B /* mesh.cc in Sources */,
+				CA4D14BE220085C4004A0A2B /* mesh_decoder.cc in Sources */,
+				CA4D14B0220085C4004A0A2B /* cycle_timer.cc in Sources */,
+				CA4D14C2220085C4004A0A2B /* mesh_cleanup.cc in Sources */,
+				CA4D14D3220087D2004A0A2B /* float_points_tree_decoder.cc in Sources */,
+				CA4D14CF220087D2004A0A2B /* integer_points_kd_tree_decoder.cc in Sources */,
 				CABD244F217B43A60056A686 /* SkyboxRendererVk.cpp in Sources */,
+				CA4D14C0220085C4004A0A2B /* hash_utils.cc in Sources */,
+				CA4D14B6220085C4004A0A2B /* quantization_utils.cc in Sources */,
 				CABD2437217B3F450056A686 /* AppSurface.Vulkan.cpp in Sources */,
+				CA4D14AA220085C4004A0A2B /* mesh_edgebreaker_decoder.cc in Sources */,
+				CA4D147C220085C4004A0A2B /* sequential_integer_attribute_decoder.cc in Sources */,
+				CA4D14BC220085C4004A0A2B /* kd_tree_attributes_decoder.cc in Sources */,
+				CA4D14A0220085C4004A0A2B /* draco_types.cc in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -459,10 +728,26 @@
 			buildActionMask = 2147483647;
 			files = (
 				CABD2448217B43A60056A686 /* DebugRendererVk.cpp in Sources */,
+				CA4D14A9220085C4004A0A2B /* bounding_box.cc in Sources */,
+				CA4D14A5220085C4004A0A2B /* mesh_are_equivalent.cc in Sources */,
+				CA4D144422008409004A0A2B /* attribute_transform.cc in Sources */,
+				CA4D1473220085C4004A0A2B /* mesh_misc_functions.cc in Sources */,
+				CA4D1495220085C4004A0A2B /* attributes_decoder.cc in Sources */,
+				CA4D149B220085C4004A0A2B /* mesh_attribute_corner_table.cc in Sources */,
 				CA9A4ACB217DC8F2007E4D21 /* MTScheduler.cpp in Sources */,
+				CA4D1487220085C4004A0A2B /* adaptive_rans_bit_decoder.cc in Sources */,
 				CA9A4AC9217DC8F2007E4D21 /* MTFiberContext.cpp in Sources */,
+				CA4D1493220085C4004A0A2B /* sequential_normal_attribute_decoder.cc in Sources */,
+				CA4D144622008409004A0A2B /* attribute_octahedron_transform.cc in Sources */,
 				CABD244E217B43A60056A686 /* ViewerShellVk.cpp in Sources */,
+				CA4D1483220085C4004A0A2B /* decode.cc in Sources */,
+				CA4D148B220085C4004A0A2B /* metadata_decoder.cc in Sources */,
+				CA4D14CC220087D2004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc in Sources */,
 				CABD244C217B43A60056A686 /* SceneUploaderVk.cpp in Sources */,
+				CA4D148F220085C4004A0A2B /* point_cloud.cc in Sources */,
+				CA4D1497220085C4004A0A2B /* geometry_metadata.cc in Sources */,
+				CA4D14AF220085C4004A0A2B /* data_buffer.cc in Sources */,
+				CA4D147F220085C4004A0A2B /* sequential_quantization_attribute_decoder.cc in Sources */,
 				CABD243A217B3F450056A686 /* ImageUploader.Vulkan.cpp in Sources */,
 				CA676D1C217A2E900098A888 /* GameViewController.mm in Sources */,
 				CABD2431217B3E030056A686 /* CityHash.Vulkan.cpp in Sources */,
@@ -470,25 +755,61 @@
 				CA9A4ACF217DC8F2007E4D21 /* MTDefaultAppInterop.cpp in Sources */,
 				CABD23ED217B0BF20056A686 /* CityHash.cpp in Sources */,
 				CA9A4ACD217DC8F2007E4D21 /* MTThreadContext.cpp in Sources */,
+				CA4D144022008409004A0A2B /* attribute_quantization_transform.cc in Sources */,
 				CABD243C217B3F450056A686 /* SamplerManager.Vulkan.cpp in Sources */,
+				CA4D144822008409004A0A2B /* geometry_attribute.cc in Sources */,
+				CA4D14B3220085C4004A0A2B /* rans_bit_decoder.cc in Sources */,
+				CA4D144222008409004A0A2B /* point_attribute.cc in Sources */,
 				CA9A4ABE217DC752007E4D21 /* NuklearRendererBase.cpp in Sources */,
+				CA4D14A3220085C4004A0A2B /* point_cloud_kd_tree_decoder.cc in Sources */,
+				CA4D1479220085C4004A0A2B /* point_cloud_sequential_decoder.cc in Sources */,
+				CA4D14D6220087D2004A0A2B /* symbol_decoding.cc in Sources */,
+				CA4D1491220085C4004A0A2B /* sequential_attribute_decoder.cc in Sources */,
+				CA4D149F220085C4004A0A2B /* bit_utils.cc in Sources */,
 				CA9A2CAC21A812F0005FE302 /* ScenePrintPretty.cpp in Sources */,
+				CA4D148D220085C4004A0A2B /* metadata.cc in Sources */,
 				CA676D22217A2E900098A888 /* main.m in Sources */,
 				CABD242D217B3E030056A686 /* GraphicsManager.Vulkan.cpp in Sources */,
 				CABD2446217B43A60056A686 /* NuklearRendererVk.cpp in Sources */,
+				CA4D14D2220087D2004A0A2B /* shannon_entropy.cc in Sources */,
 				CABD23EB217B0BF20056A686 /* AppState.cpp in Sources */,
+				CA4D14B9220085C4004A0A2B /* mesh_stripifier.cc in Sources */,
 				CA676D19217A2E900098A888 /* AppDelegate.m in Sources */,
+				CA4D14B5220085C4004A0A2B /* decoder_buffer.cc in Sources */,
 				CA9A4AC0217DC752007E4D21 /* ViewerAppShellFactory.cpp in Sources */,
 				CA9A4AD2217DC94F007E4D21 /* QueuePools.Vulkan.cpp in Sources */,
+				CA4D1499220085C4004A0A2B /* point_cloud_decoder.cc in Sources */,
+				CA4D1475220085C4004A0A2B /* keyframe_animation.cc in Sources */,
 				CABD2429217B3E030056A686 /* DescriptorPool.Vulkan.cpp in Sources */,
 				CABD2427217B3E030056A686 /* Swapchain.Vulkan.cpp in Sources */,
+				CA4D1477220085C4004A0A2B /* mesh_sequential_decoder.cc in Sources */,
+				CA4D147B220085C4004A0A2B /* sequential_attribute_decoders_controller.cc in Sources */,
 				CABD244A217B43A60056A686 /* SceneRendererVk.cpp in Sources */,
 				CABD242F217B3E030056A686 /* AssetManager.cpp in Sources */,
+				CA4D149D220085C4004A0A2B /* symbol_bit_decoder.cc in Sources */,
+				CA4D14BB220085C4004A0A2B /* corner_table.cc in Sources */,
+				CA4D14A7220085C4004A0A2B /* divide.cc in Sources */,
 				CABD2433217B3E030056A686 /* GraphicsDevice.Vulkan.cpp in Sources */,
+				CA4D1485220085C4004A0A2B /* direct_bit_decoder.cc in Sources */,
+				CA4D1489220085C4004A0A2B /* keyframe_animation_decoder.cc in Sources */,
 				CABD23F0217B0F180056A686 /* MemoryManager.cpp in Sources */,
+				CA4D14D8220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc in Sources */,
+				CA4D14AD220085C4004A0A2B /* options.cc in Sources */,
 				CABD242B217B3E030056A686 /* BufferPools.Vulkan.cpp in Sources */,
+				CA4D1481220085C4004A0A2B /* mesh.cc in Sources */,
+				CA4D14BF220085C4004A0A2B /* mesh_decoder.cc in Sources */,
+				CA4D14B1220085C4004A0A2B /* cycle_timer.cc in Sources */,
+				CA4D14C3220085C4004A0A2B /* mesh_cleanup.cc in Sources */,
+				CA4D14D4220087D2004A0A2B /* float_points_tree_decoder.cc in Sources */,
+				CA4D14D0220087D2004A0A2B /* integer_points_kd_tree_decoder.cc in Sources */,
 				CABD2450217B43A60056A686 /* SkyboxRendererVk.cpp in Sources */,
+				CA4D14C1220085C4004A0A2B /* hash_utils.cc in Sources */,
+				CA4D14B7220085C4004A0A2B /* quantization_utils.cc in Sources */,
 				CABD2438217B3F450056A686 /* AppSurface.Vulkan.cpp in Sources */,
+				CA4D14AB220085C4004A0A2B /* mesh_edgebreaker_decoder.cc in Sources */,
+				CA4D147D220085C4004A0A2B /* sequential_integer_attribute_decoder.cc in Sources */,
+				CA4D14BD220085C4004A0A2B /* kd_tree_attributes_decoder.cc in Sources */,
+				CA4D14A1220085C4004A0A2B /* draco_types.cc in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -666,6 +987,8 @@
 					$SRCROOT/../../dependencies/DirectXMath,
 					$SRCROOT/../../dependencies/DirectXMath/Inc,
 					$SRCROOT/../../dependencies/nuklear,
+					$SRCROOT/../../dependencies/draco/src,
+					"$SRCROOT/../../build_darwin_x86_64_appleclang_xcode/draco-prefix/src/draco-build",
 				);
 			};
 			name = Debug;
@@ -711,6 +1034,8 @@
 					$SRCROOT/../../dependencies/DirectXMath,
 					$SRCROOT/../../dependencies/DirectXMath/Inc,
 					$SRCROOT/../../dependencies/nuklear,
+					$SRCROOT/../../dependencies/draco/src,
+					"$SRCROOT/../../build_darwin_x86_64_appleclang_xcode/draco-prefix/src/draco-build",
 				);
 				VALIDATE_PRODUCT = YES;
 			};
@@ -761,6 +1086,8 @@
 					$SRCROOT/../../dependencies/DirectXMath,
 					$SRCROOT/../../dependencies/DirectXMath/Inc,
 					$SRCROOT/../../dependencies/nuklear,
+					$SRCROOT/../../dependencies/draco/src,
+					"$SRCROOT/../../build_darwin_x86_64_appleclang_xcode/draco-prefix/src/draco-build",
 				);
 			};
 			name = Debug;
@@ -810,6 +1137,8 @@
 					$SRCROOT/../../dependencies/DirectXMath,
 					$SRCROOT/../../dependencies/DirectXMath/Inc,
 					$SRCROOT/../../dependencies/nuklear,
+					$SRCROOT/../../dependencies/draco/src,
+					"$SRCROOT/../../build_darwin_x86_64_appleclang_xcode/draco-prefix/src/draco-build",
 				);
 			};
 			name = Release;

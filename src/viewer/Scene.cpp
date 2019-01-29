@@ -807,27 +807,38 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
             auto pSubmeshesFb = pMeshFb->submeshes( );
             auto pSubmeshFb   = pSubmeshesFb->Get( 0 );
 
-            mesh.PositionOffset.x = pSubmeshFb->position_offset( ).x( );
-            mesh.PositionOffset.y = pSubmeshFb->position_offset( ).y( );
-            mesh.PositionOffset.z = pSubmeshFb->position_offset( ).z( );
-            mesh.PositionScale.x  = pSubmeshFb->position_scale( ).x( );
-            mesh.PositionScale.y  = pSubmeshFb->position_scale( ).y( );
-            mesh.PositionScale.z  = pSubmeshFb->position_scale( ).z( );
-            mesh.TexcoordOffset.x = pSubmeshFb->uv_offset( ).x( );
-            mesh.TexcoordOffset.y = pSubmeshFb->uv_offset( ).y( );
-            mesh.TexcoordScale.x  = pSubmeshFb->uv_scale( ).x( );
-            mesh.TexcoordScale.y  = pSubmeshFb->uv_scale( ).y( );
+//            mesh.PositionOffset.x = pSubmeshFb->position_offset( ).x( );
+//            mesh.PositionOffset.y = pSubmeshFb->position_offset( ).y( );
+//            mesh.PositionOffset.z = pSubmeshFb->position_offset( ).z( );
+//            mesh.PositionScale.x  = pSubmeshFb->position_scale( ).x( );
+//            mesh.PositionScale.y  = pSubmeshFb->position_scale( ).y( );
+//            mesh.PositionScale.z  = pSubmeshFb->position_scale( ).z( );
+//            mesh.TexcoordOffset.x = pSubmeshFb->uv_offset( ).x( );
+//            mesh.TexcoordOffset.y = pSubmeshFb->uv_offset( ).y( );
+//            mesh.TexcoordScale.x  = pSubmeshFb->uv_scale( ).x( );
+//            mesh.TexcoordScale.y  = pSubmeshFb->uv_scale( ).y( );
+
+            mesh.PositionOffset.x = 0; // pSubmeshFb->position_offset( ).x( );
+            mesh.PositionOffset.y = 0; // pSubmeshFb->position_offset( ).y( );
+            mesh.PositionOffset.z = 0; // pSubmeshFb->position_offset( ).z( );
+            mesh.PositionScale.x  = 1; // pSubmeshFb->position_scale( ).x( );
+            mesh.PositionScale.y  = 1; // pSubmeshFb->position_scale( ).y( );
+            mesh.PositionScale.z  = 1; // pSubmeshFb->position_scale( ).z( );
+            mesh.TexcoordOffset.x = 0; // pSubmeshFb->uv_offset( ).x( );
+            mesh.TexcoordOffset.y = 0; // pSubmeshFb->uv_offset( ).y( );
+            mesh.TexcoordScale.x  = 1; // pSubmeshFb->uv_scale( ).x( );
+            mesh.TexcoordScale.y  = 1; // pSubmeshFb->uv_scale( ).y( );
 
             mesh.SubsetCount = static_cast< uint32_t >( pMeshFb->subsets( )->size( ) );
             mesh.BaseSubset  = static_cast< uint32_t >( pScene->Subsets.size( ) );
 
             switch ( pSubmeshFb->vertex_format( ) ) {
-                case apemodefb::EVertexFormatFb_Packed:
-                    mesh.eVertexType = detail::eVertexType_Packed;
-                    break;
-                case apemodefb::EVertexFormatFb_PackedSkinned:
-                    mesh.eVertexType = detail::eVertexType_PackedSkinned;
-                    break;
+//                case apemodefb::EVertexFormatFb_Packed:
+//                    mesh.eVertexType = detail::eVertexType_Packed;
+//                    break;
+//                case apemodefb::EVertexFormatFb_PackedSkinned:
+//                    mesh.eVertexType = detail::eVertexType_PackedSkinned;
+//                    break;
                 case apemodefb::EVertexFormatFb_Static:
                     mesh.eVertexType = detail::eVertexType_Default;
                     break;

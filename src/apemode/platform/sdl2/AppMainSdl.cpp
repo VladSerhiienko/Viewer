@@ -46,15 +46,12 @@ int main( int argc, char** ppArgs ) {
 
     apemode::platform::AppShellCommand initializeCommand;
     initializeCommand.Type = "Initialize";
-    initializeCommand.Args[ "Surface" ].Value.Type = apemode::platform::IAppShellCommandArgumentValue::kValueType_PtrValue;
-    initializeCommand.Args[ "Surface" ].Value.Value.PtrValue = &appSurface;
-
+    initializeCommand.Args[ "Surface" ].Value.SetPtrValue(&appSurface);
+    
     apemode::platform::AppShellCommand updateCommand;
-    initializeCommand.Type = "Update";
-    initializeCommand.Args[ "Surface" ].Value.Type = apemode::platform::IAppShellCommandArgumentValue::kValueType_PtrValue;
-    initializeCommand.Args[ "Surface" ].Value.Value.PtrValue = &appSurface;
-    initializeCommand.Args[ "Input" ].Value.Type = apemode::platform::IAppShellCommandArgumentValue::kValueType_PtrValue;
-    initializeCommand.Args[ "Input" ].Value.Value.PtrValue = &appInputState;
+    updateCommand.Type = "Update";
+    updateCommand.Args[ "Surface" ].Value.SetPtrValue(&appSurface);
+    updateCommand.Args[ "Input" ].Value.SetPtrValue(&appInputState);
 
     if ( appShell && appShell->Execute( &initializeCommand ).bSucceeded ) {
         inputManagerSdl.Update( appInputState, 0 );

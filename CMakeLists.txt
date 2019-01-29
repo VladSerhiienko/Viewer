@@ -221,6 +221,25 @@ set(flatbuffers_binary_dir ${BINARY_DIR})
 message(STATUS "flatbuffers_source_dir = ${flatbuffers_source_dir}")
 message(STATUS "flatbuffers_binary_dir = ${flatbuffers_binary_dir}")
 
+ExternalProject_Add(
+    draco
+    GIT_REPOSITORY "git@github.com:google/draco.git"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/draco"
+    GIT_TAG "1.3.4"
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    CMAKE_ARGS ${default_cmake_args}
+    TEST_COMMAND ""
+    INSTALL_COMMAND ""
+)
+
+ExternalProject_Get_Property(draco SOURCE_DIR)
+ExternalProject_Get_Property(draco BINARY_DIR)
+set(draco_source_dir ${SOURCE_DIR})
+set(draco_binary_dir ${BINARY_DIR})
+message(STATUS "draco_source_dir = ${draco_source_dir}")
+message(STATUS "draco_binary_dir = ${draco_binary_dir}")
+
 #
 #
 # sdl2
@@ -383,6 +402,8 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
     # using AppleClang
     add_definitions( "-g" )
     add_definitions( "-DHAVE_PTHREAD" )
+    add_definitions( "-D_XOPEN_SOURCE=600" )
+    add_definitions( "-D_DARWIN_C_SOURCE=600" )
     set( CONFIGURATION_SUFFIX "/$CONFIGURATION" )
 
     if (UNIX AND APPLE)
@@ -703,6 +724,7 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath
     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath/Inc
     ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
+    ${CMAKE_SOURCE_DIR}/dependencies/draco/src
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/include/utils
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
     ${Vulkan_include_dirs}
@@ -727,6 +749,7 @@ if (APPLE)
 
     target_link_libraries(
         Viewer
+        ${draco_binary_dir}${CONFIGURATION_SUFFIX}/libdraco.a
         ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/libflatbuffers.a
         ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/libApemodePlatform.a
         ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/libApemodeVulkan.a
@@ -738,6 +761,7 @@ elseif (WIN32)
 
     target_link_libraries(
         Viewer
+        ${draco_binary_dir}${CONFIGURATION_SUFFIX}/draco.lib
         ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/flatbuffers.lib
         ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/ApemodePlatform.lib
         ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/ApemodeVulkan.lib
@@ -749,6 +773,7 @@ elseif (UNIX)
 
     target_link_libraries(
         Viewer
+        ${draco_binary_dir}${CONFIGURATION_SUFFIX}/libdraco.a
         ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/libflatbuffers.a
         ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/libApemodePlatform.a
         ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/libApemodeVulkan.a
@@ -763,6 +788,7 @@ add_dependencies(
     ApemodePlatform
     ApemodeVulkan
     nuklear
+    draco
     flatbuffers
     DirectXMath
     FbxPipeline

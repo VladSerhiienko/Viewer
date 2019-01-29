@@ -8,8 +8,25 @@
             "args": [
                 "-G",
                 "\"'Visual Studio 15 2017 Win64'\"",
-                "-B${workspaceFolder}/build_windows_amd64_msvc",
+                "-B${workspaceFolder}/build_windows_amd64_msvc_visual_studio_15_2017_win64",
                 "-H${workspaceFolder}"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
+            "label": "CMake/Viewer(Darwin/Xcode)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-G", "Xcode",
+                "-H.", "-Bbuild_darwin_x86_64_appleclang_xcode",
+                "-DMOLTENVK_SDK_PATH=${workspaceFolder}/dependencies/MoltenVK",
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -42,23 +59,6 @@
                 "-H.", "-Bbuild_linux_x86_64_clang",
                 "-DCMAKE_C_COMPILER=/usr/bin/clang-5.0",
                 "-DCMAKE_CXX_COMPILER=/usr/bin/clang++-5.0",
-            ],
-            "options": {
-                "cwd": "${workspaceFolder}"
-            },
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            }
-        },
-        {
-            "label": "CMake/Viewer(Darwin/Xcode)",
-            "type": "shell",
-            "command": "cmake",
-            "args": [
-                "-G", "Xcode",
-                "-H.", "-Bbuild_darwin_x86_64_appleclang",
-                "-DMOLTENVK_SDK_PATH=${workspaceFolder}/dependencies/MoltenVK",
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
