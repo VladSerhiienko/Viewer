@@ -404,9 +404,9 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             materialData.BaseColorFactor.z = 1;
             */
             //*
-            materialData.BaseColorFactor.x         = pMaterial->BaseColorFactor.x;
-            materialData.BaseColorFactor.y         = pMaterial->BaseColorFactor.y;
-            materialData.BaseColorFactor.z         = pMaterial->BaseColorFactor.z;
+            materialData.BaseColorFactor.x         = 1; // pMaterial->BaseColorFactor.x;
+            materialData.BaseColorFactor.y         = 1; // pMaterial->BaseColorFactor.y;
+            materialData.BaseColorFactor.z         = 1; // pMaterial->BaseColorFactor.z;
             //*/
             materialData.BaseColorFactor.w         = pMaterial->BaseColorFactor.w;
             materialData.EmissiveFactor.x          = pMaterial->EmissiveFactor.x;
@@ -520,7 +520,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             vkCmdBindIndexBuffer( pParams->pCmdBuffer,                     /* Cmd */
                                   pMeshAsset->hIndexBuffer.Handle.pBuffer, /* IndexBuffer */
                                   pMeshAsset->IndexOffset,                 /* Offset */
-                                  pMeshAsset->IndexType );                 /* UInt16/Uint32 */
+                                  pMeshAsset->eIndexType );                 /* UInt16/Uint32 */
 
             vkCmdDrawIndexed( pParams->pCmdBuffer,   /* Cmd */
                               pSubsetIt->IndexCount, /* IndexCount */

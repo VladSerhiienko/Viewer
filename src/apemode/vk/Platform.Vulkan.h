@@ -158,6 +158,7 @@ namespace apemodevk {
 #include <EASTL/vector_multimap.h>
 #include <EASTL/slist.h>
 #include <EASTL/string.h>
+#include <EASTL/optional.h>
 
 namespace apemodevk {
 
@@ -235,6 +236,11 @@ namespace apemodevk {
     template < typename T, typename... Args >
     std::unique_ptr< T > std_make_unique( Args &&... args ) {
         return  std::unique_ptr< T >( new T( eastl::forward< Args >( args )... ) );
+    }
+
+    template <typename TContainer >
+    void Wipe( TContainer& container ) {
+        TContainer( ).swap( container );
     }
 }
 

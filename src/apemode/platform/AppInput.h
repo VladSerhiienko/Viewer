@@ -136,7 +136,8 @@ enum AnalogInput {
     // mouse
     kAnalogInput_MouseX,
     kAnalogInput_MouseY,
-    kAnalogInput_MouseScroll,
+    kAnalogInput_MouseHorzScroll,
+    kAnalogInput_MouseVertScroll,
     kAnalogInput_Touch0X,
     kAnalogInput_Touch0Y = kAnalogInput_Touch0X + kDigitalInput_TouchMaxCount,
 

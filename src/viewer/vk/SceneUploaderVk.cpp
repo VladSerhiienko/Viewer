@@ -11,6 +11,8 @@
 #include <apemode/platform/MathInc.h>
 #include <apemode/platform/ArrayUtils.h>
 
+#include <draco/compression/decode.h>
+
 #include <cstdlib>
 
 namespace {
@@ -18,13 +20,21 @@ namespace {
 /* Uploads resources from CPU to GPU with respect to staging memory limit. */
 struct BufferUploadInfo {
     VkBuffer       pDstBuffer      = VK_NULL_HANDLE;
-    const uint8_t* pSrcBufferData  = nullptr;
-    uint32_t       SrcBufferSize   = 0;
+    const void*    pSrcBufferData  = nullptr;
+    VkDeviceSize   SrcBufferSize   = 0;
     VkAccessFlags  eDstAccessFlags = 0;
 };
 
-struct BufferUploadCmpOpGreaterBySize {
+struct BufferUploadCmpOpGreaterBySizeOrByAccessFlags {
     int operator( )( const BufferUploadInfo& a, const BufferUploadInfo& b ) const {
+        if ( a.SrcBufferSize == b.SrcBufferSize ) {
+            if ( a.eDstAccessFlags > b.eDstAccessFlags )
+                return ( -1 );
+            if ( a.eDstAccessFlags < b.eDstAccessFlags )
+                return ( +1 );
+            return 0;
+        }
+    
         if ( a.SrcBufferSize > b.SrcBufferSize )
             return ( -1 );
         if ( a.SrcBufferSize < b.SrcBufferSize )
@@ -59,38 +69,38 @@ void UploadImage( ImageUploadInfo* pUploadInfo ) {
     }
 }
 
-struct ImageUploadTask {
-    MT_DECLARE_TASK( ImageUploadTask, MT::StackRequirements::STANDARD, MT::TaskPriority::HIGH, MT::Color::Blue );
-
-    ImageUploadInfo* pUploadInfo = nullptr;
-
-    ImageUploadTask( ImageUploadInfo* pUploadInfo ) : pUploadInfo( pUploadInfo ) {
-    }
-
-    void Do( MT::FiberContext& ctx ) {
-
-        const uint32_t fiberIndex        = ctx.fiberIndex;
-        const uint32_t threadWorkedIndex = ctx.GetThreadContext( )->workerIndex;
-
-        apemode::Log( apemode::LogLevel::Trace,
-                      "Executing task @{}: Fb#{} <- Th#{}, "
-                      "file: \"{}\"",
-                      (void*) this,
-                      fiberIndex,
-                      threadWorkedIndex,
-                      (const char*) pUploadInfo->pszFileName );
-
-        UploadImage( pUploadInfo );
-
-        apemode::Log( apemode::LogLevel::Trace,
-                      "Done task execution @{}: Fb#{} <- Th#{}, "
-                      "file: \"{}\"",
-                      (void*) this,
-                      fiberIndex,
-                      threadWorkedIndex,
-                      (const char*) pUploadInfo->pszFileName );
-    }
-};
+//struct ImageUploadTask {
+//    MT_DECLARE_TASK( ImageUploadTask, MT::StackRequirements::STANDARD, MT::TaskPriority::HIGH, MT::Color::Blue );
+//
+//    ImageUploadInfo* pUploadInfo = nullptr;
+//
+//    ImageUploadTask( ImageUploadInfo* pUploadInfo ) : pUploadInfo( pUploadInfo ) {
+//    }
+//
+//    void Do( MT::FiberContext& ctx ) {
+//
+//        const uint32_t fiberIndex        = ctx.fiberIndex;
+//        const uint32_t threadWorkedIndex = ctx.GetThreadContext( )->workerIndex;
+//
+//        apemode::Log( apemode::LogLevel::Trace,
+//                      "Executing task @{}: Fb#{} <- Th#{}, "
+//                      "file: \"{}\"",
+//                      (void*) this,
+//                      fiberIndex,
+//                      threadWorkedIndex,
+//                      (const char*) pUploadInfo->pszFileName );
+//
+//        UploadImage( pUploadInfo );
+//
+//        apemode::Log( apemode::LogLevel::Trace,
+//                      "Done task execution @{}: Fb#{} <- Th#{}, "
+//                      "file: \"{}\"",
+//                      (void*) this,
+//                      fiberIndex,
+//                      threadWorkedIndex,
+//                      (const char*) pUploadInfo->pszFileName );
+//    }
+//};
 
 // Something to consider adding: An eastl sort which uses qsort underneath.
 // The primary purpose of this is to have an eastl interface for sorting which
@@ -161,71 +171,395 @@ bool ShouldGenerateMipMapsForPropertyName(  const char* pszTexturePropName ) {
     return false;
 }
 
-} // namespace
+struct DecompressedMeshInfo {
+    apemodevk::vector< uint8_t > DecompressedVertexBuffer = {};
+    apemodevk::vector< uint8_t > DecompressedIndexBuffer  = {};
+    VkDeviceSize VertexCount = 0;
+    VkDeviceSize IndexCount = 0;
+    VkIndexType eIndexType = VK_INDEX_TYPE_MAX_ENUM;
+    
+    bool IsUsed( ) const {
+        return eIndexType != VK_INDEX_TYPE_MAX_ENUM && VertexCount && IndexCount &&
+               !DecompressedVertexBuffer.empty() &&
+               !DecompressedIndexBuffer.empty() ;
+    }
+};
 
-bool InitializeMesh( apemode::SceneMesh&                                 mesh,
-                     const apemode::Scene*                               pScene,
-                     const apemode::vk::SceneUploader::UploadParameters* pParams ) {
+struct SourceSubmeshInfo {
+    const apemodefb::MeshFb*    pSrcMesh    = nullptr;
+    const apemodefb::SubmeshFb* pSrcSubmesh = nullptr;
+
+    bool IsOk( ) const {
+        return pSrcMesh && pSrcSubmesh;
+    }
+    
+    bool IsIndexTypeUInt32( ) const {
+        assert( IsOk( ) );
+        return pSrcMesh && pSrcMesh->index_type( ) == apemodefb::EIndexTypeFb_UInt32;
+    }
+    
+    VkIndexType GetIndexType( ) const {
+        return IsIndexTypeUInt32( ) ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16;
+    }
+
+    bool IsCompressedMesh( ) const {
+        assert( IsOk( ) );
+        return pSrcSubmesh && pSrcSubmesh->compression_type( ) != apemodefb::ECompressionTypeFb_None;
+    }
+    
+    apemodefb::ECompressionTypeFb GetCompressionType( ) const {
+        return pSrcSubmesh->compression_type( );
+    }
+    
+    const apemodefb::EVertexFormatFb GetVertexFormat( ) const {
+        assert( IsOk( ) );
+        return pSrcSubmesh->vertex_format( );
+    }
+};
+
+SourceSubmeshInfo GetSrcSubmesh( apemode::SceneMesh&                                 mesh,
+                                 const apemode::Scene*                               pScene,
+                                 const apemode::vk::SceneUploader::UploadParameters* pParams ) {
 
     assert( pParams && pParams->pSrcScene );
-    auto pMeshesFb = pParams->pSrcScene->meshes( );
+    if ( pParams && pParams->pSrcScene && pParams->pSrcScene->meshes( ) ) {
+        auto pMeshesFb = pParams->pSrcScene->meshes( );
+        assert( pMeshesFb && pMeshesFb->size( ) > mesh.Id );
+        auto pSrcMesh = pMeshesFb->Get( mesh.Id );
+        assert( pSrcMesh && pSrcMesh->submeshes( ) && ( pSrcMesh->submeshes( )->size( ) == 1 ) );
+        auto pSrcSubmesh = pSrcMesh->submeshes( )->Get( 0 );
+        assert( pSrcSubmesh );
+        return {pSrcMesh, pSrcSubmesh};
+    }
 
-    /* Get source mesh object. */
+    return {};
+}
 
-    assert( pMeshesFb && pMeshesFb->size( ) > mesh.Id );
-    auto pSrcMesh = pMeshesFb->Get( mesh.Id );
-    assert( pSrcMesh );
+template < typename TIndex >
+void TPopulateIndices( const draco::Mesh& decodedMesh, TIndex* pDstIndices ) {
+    const uint32_t faceCount = decodedMesh.num_faces( );
+    for ( uint32_t i = 0; i < faceCount; ++i ) {
+        const draco::Mesh::Face faceIndices = decodedMesh.face( draco::FaceIndex( i ) );
+        assert( faceIndices.size( ) == 3 );
+        pDstIndices[ i * 3 + 0 ] = static_cast< const TIndex >( faceIndices[ 0 ].value( ) );
+        pDstIndices[ i * 3 + 1 ] = static_cast< const TIndex >( faceIndices[ 1 ].value( ) );
+        pDstIndices[ i * 3 + 2 ] = static_cast< const TIndex >( faceIndices[ 2 ].value( ) );
+    }
+}
 
-    /* Get or create mesh device asset. */
+template <typename TVertex>
+void TPopulateVertices( const draco::Mesh& decodedMesh, DecompressedMeshInfo &decompressedMeshInfo );
+
+template <>
+void TPopulateVertices< apemodefb::StaticVertexQTangentFb >( const draco::Mesh&    decodedMesh,
+                                                             DecompressedMeshInfo& decompressedMeshInfo ) {
+    using namespace draco;
+    using namespace apemodefb;
+    
+    const size_t vertexCount = decodedMesh.num_points();
+
+    decompressedMeshInfo.VertexCount = vertexCount;
+    decompressedMeshInfo.IndexCount = decodedMesh.num_faces() * 3;
+    
+    decompressedMeshInfo.DecompressedVertexBuffer.resize( sizeof( StaticVertexQTangentFb ) * vertexCount );
+    auto pDstVertices = reinterpret_cast< StaticVertexQTangentFb* >( decompressedMeshInfo.DecompressedVertexBuffer.data( ) );
+
+    constexpr int positionAttributeIndex  = 0;
+    constexpr int qtangentAttributeIndex  = 1;
+    constexpr int texCoordsAttributeIndex = 2;
+    assert( decodedMesh.num_attributes( ) == 3 );
+
+    const PointAttribute* positionAttribute  = decodedMesh.attribute( positionAttributeIndex );
+    const PointAttribute* qtangentAttribute  = decodedMesh.attribute( qtangentAttributeIndex );
+    const PointAttribute* texCoordsAttribute = decodedMesh.attribute( texCoordsAttributeIndex );
+
+    assert( positionAttribute->attribute_type( ) == GeometryAttribute::Type::POSITION );
+    assert( qtangentAttribute->attribute_type( ) == GeometryAttribute::Type::GENERIC );
+    assert( texCoordsAttribute->attribute_type( ) == GeometryAttribute::Type::TEX_COORD );
+
+    assert( positionAttribute->data_type( ) == DataType::DT_FLOAT32 );
+    assert( qtangentAttribute->data_type( ) == DataType::DT_FLOAT32 );
+    assert( texCoordsAttribute->data_type( ) == DataType::DT_FLOAT32 );
+
+    assert( positionAttribute->num_components( ) == 3 );
+    assert( qtangentAttribute->num_components( ) == 4 );
+    assert( texCoordsAttribute->num_components( ) == 2 );
+    
+    assert( positionAttribute->byte_stride( ) == 3 * sizeof(float) );
+    assert( qtangentAttribute->byte_stride( ) == 4 * sizeof(float) );
+    assert( texCoordsAttribute->byte_stride( ) == 2 * sizeof(float) );
+
+    for ( uint32_t i = 0; i < vertexCount; ++i ) {
+        const PointIndex typedPointIndex( i );
+        StaticVertexQTangentFb& dstVertex = pDstVertices[ i ];
+        
+        positionAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_position( ) );
+        qtangentAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_qtangent( ) );
+        texCoordsAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_uv( ) );
+    }
+}
+
+template <>
+void TPopulateVertices< apemodefb::StaticVertexFb >( const draco::Mesh&    decodedMesh,
+                                                     DecompressedMeshInfo& decompressedMeshInfo ) {
+    using namespace draco;
+    using namespace apemodefb;
+    
+    const size_t pointCount = decodedMesh.num_points( );
+
+    decompressedMeshInfo.VertexCount = pointCount;
+    decompressedMeshInfo.IndexCount = decodedMesh.num_faces() * 3;
+    decompressedMeshInfo.DecompressedVertexBuffer.resize( sizeof( StaticVertexFb ) * pointCount );
+    auto pDstVertices = reinterpret_cast< StaticVertexFb* >( decompressedMeshInfo.DecompressedVertexBuffer.data( ) );
+
+    constexpr int positionAttributeIndex   = 0;
+    constexpr int normalAttributeIndex     = 1;
+    constexpr int tangentAttributeIndex    = 2;
+    constexpr int reflectionAttributeIndex = 3;
+    constexpr int texCoordsAttributeIndex  = 4;
+    
+    assert( decodedMesh.num_attributes( ) == 5 );
+
+    const PointAttribute* positionAttribute   = decodedMesh.attribute( positionAttributeIndex );
+    const PointAttribute* normalAttribute     = decodedMesh.attribute( normalAttributeIndex );
+    const PointAttribute* tangentAttribute    = decodedMesh.attribute( tangentAttributeIndex );
+    const PointAttribute* reflectionAttribute = decodedMesh.attribute( reflectionAttributeIndex );
+    const PointAttribute* texCoordsAttribute  = decodedMesh.attribute( texCoordsAttributeIndex );
+
+    assert( positionAttribute->attribute_type( ) == GeometryAttribute::Type::POSITION );
+    assert( normalAttribute->attribute_type( ) == GeometryAttribute::Type::NORMAL );
+    assert( tangentAttribute->attribute_type( ) == GeometryAttribute::Type::NORMAL );
+    assert( reflectionAttribute->attribute_type( ) == GeometryAttribute::Type::GENERIC );
+    assert( texCoordsAttribute->attribute_type( ) == GeometryAttribute::Type::TEX_COORD );
+
+    assert( positionAttribute->data_type( ) == DataType::DT_FLOAT32 );
+    assert( normalAttribute->data_type( ) == DataType::DT_FLOAT32 );
+    assert( tangentAttribute->data_type( ) == DataType::DT_FLOAT32 );
+    assert( reflectionAttribute->data_type( ) == DataType::DT_FLOAT32 );
+    assert( texCoordsAttribute->data_type( ) == DataType::DT_FLOAT32 );
+
+    assert( positionAttribute->num_components( ) == 3 );
+    assert( normalAttribute->num_components( ) == 3 );
+    assert( tangentAttribute->num_components( ) == 3 );
+    assert( reflectionAttribute->num_components( ) == 1 );
+    assert( texCoordsAttribute->num_components( ) == 2 );
+    
+    assert( positionAttribute->byte_stride( ) == 3 * sizeof(float) );
+    assert( normalAttribute->byte_stride( ) == 3 * sizeof(float) );
+    assert( tangentAttribute->byte_stride( ) == 3 * sizeof(float) );
+    assert( reflectionAttribute->byte_stride( ) == 1 * sizeof(float) );
+    assert( texCoordsAttribute->byte_stride( ) == 2 * sizeof(float) );
+
+    for ( uint32_t i = 0; i < pointCount; ++i ) {
+        const PointIndex typedPointIndex( i );
+        StaticVertexFb& dstVertex = pDstVertices[ i ];
+        
+        positionAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_position( ) );
+        normalAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_normal( ) );
+        tangentAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_tangent( ) );
+        reflectionAttribute->GetMappedValue( typedPointIndex, (float*)&dstVertex.mutable_tangent( ) + 3 );
+        texCoordsAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_uv( ) );
+    }
+}
+
+} // namespace
+
+DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubmeshInfo& srcSubmesh ) {
+    using namespace draco;
+    using namespace apemodefb;
+    
+    if ( !srcSubmesh.IsCompressedMesh( ) ) {
+        assert( false && "The mesh buffers are uncompressed." );
+        return {};
+    }
+    
+    const ECompressionTypeFb eCompression = srcSubmesh.GetCompressionType();
+    switch ( eCompression ) {
+    case apemodefb::ECompressionTypeFb_GoogleDraco3D:
+        break;
+    default:
+        assert( false && "Unsupported compression type." );
+        return {};
+    }
+    
+    const EVertexFormatFb eVertexFormat = srcSubmesh.GetVertexFormat( );
+    switch ( eVertexFormat ) {
+    case EVertexFormatFb_Static:
+    case EVertexFormatFb_StaticQTangent:
+        break;
+    default:
+        assert( false && "Unsupported vertex type." );
+        return {};
+    }
+    
+    auto start = std::chrono::high_resolution_clock::now();
+
+    DecoderBuffer decoderBuffer;
+    decoderBuffer.Init( (const char*) srcSubmesh.pSrcMesh->vertices( )->data( ),
+                        (size_t) srcSubmesh.pSrcMesh->vertices( )->size( ) );
+
+    Decoder decoder;
+    Mesh decodedMesh;
+
+    if ( Status::OK != decoder.DecodeBufferToGeometry( &decoderBuffer, &decodedMesh ).code( ) ) {
+        return {};
+    }
+    
+    DecompressedMeshInfo decompressedMeshInfo = {};
+
+    const size_t vertexCount = decodedMesh.num_points( );
+    const size_t faceCount   = decodedMesh.num_faces( );
+    const size_t indexCount  = faceCount * 3;
+
+    if ( indexCount > std::numeric_limits< uint16_t >::max( ) ) {
+        assert( indexCount <= std::numeric_limits< uint32_t >::max( ) );
+        decompressedMeshInfo.eIndexType = VK_INDEX_TYPE_UINT32;
+        decompressedMeshInfo.DecompressedIndexBuffer.resize( sizeof( uint32_t ) * indexCount );
+        TPopulateIndices( decodedMesh, (uint32_t*) decompressedMeshInfo.DecompressedIndexBuffer.data( ) );
+    } else {
+        assert( indexCount <= std::numeric_limits< uint16_t >::max( ) );
+        decompressedMeshInfo.eIndexType = VK_INDEX_TYPE_UINT16;
+        decompressedMeshInfo.DecompressedIndexBuffer.resize( sizeof( uint16_t ) * indexCount );
+        TPopulateIndices( decodedMesh, (uint16_t*) decompressedMeshInfo.DecompressedIndexBuffer.data( ) );
+    }
+
+    switch ( eVertexFormat ) {
+    case EVertexFormatFb_Static:
+        TPopulateVertices< StaticVertexFb >( decodedMesh, decompressedMeshInfo );
+        break;
+    case EVertexFormatFb_StaticQTangent:
+        TPopulateVertices< StaticVertexQTangentFb >( decodedMesh, decompressedMeshInfo );
+        break;
+        
+    default:
+        assert( false );
+        return {};
+    }
+    
+    
+    auto end = std::chrono::high_resolution_clock::now();
+    std::chrono::duration<double> diff = end-start;
+    apemode::LogError( "Decoding done: {} vertices, {} indices, {} seconds", vertexCount, indexCount, diff.count() );
+
+    return decompressedMeshInfo;
+}
+
+struct InitializedMeshInfo {
+    eastl::optional< DecompressedMeshInfo >      OptionalDecompressedMesh = {};
+    BufferUploadInfo                             VertexUploadInfo         = {};
+    BufferUploadInfo                             IndexUploadInfo          = {};
+    VkDeviceSize                                 VertexCount              = 0;
+    VkDeviceSize                                 IndexCount               = 0;
+    VkIndexType                                  eIndexType               = VK_INDEX_TYPE_MAX_ENUM;
+    apemode::vk::SceneUploader::MeshDeviceAsset* pMeshAsset               = nullptr;
+
+    bool IsOk( ) const {
+        return VertexUploadInfo.pDstBuffer && IndexUploadInfo.pDstBuffer &&         // Buffers
+               VertexUploadInfo.SrcBufferSize && VertexUploadInfo.pSrcBufferData && // Src Vertex Data
+               IndexUploadInfo.SrcBufferSize && IndexUploadInfo.pSrcBufferData &&   // Src Index Data
+               ( eIndexType != VK_INDEX_TYPE_MAX_ENUM ) && pMeshAsset &&
+               ( OptionalDecompressedMesh ? ( !OptionalDecompressedMesh->DecompressedVertexBuffer.empty( ) &&
+                                              !OptionalDecompressedMesh->DecompressedVertexBuffer.empty( ) &&
+                                              ( OptionalDecompressedMesh->eIndexType != VK_INDEX_TYPE_MAX_ENUM ) )
+                                          : true );
+    }
+};
+
+InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                                 mesh,
+                                    apemode::Scene*                                     pScene,
+                                    const apemode::vk::SceneUploader::UploadParameters* pParams ) {
+    using namespace apemodevk;
+    using namespace eastl;
+    
+    InitializedMeshInfo initializedMeshInfo;
+
+    auto srcSubmesh = GetSrcSubmesh( mesh, pScene, pParams );
+    if ( !srcSubmesh.IsOk( ) ) {
+        assert( false );
+        return {};
+    }
+    
+    VkBufferCreateInfo vertexBufferCreateInfo;
+    VmaAllocationCreateInfo vertexAllocationCreateInfo;
+    InitializeStruct( vertexBufferCreateInfo );
+    InitializeStruct( vertexAllocationCreateInfo );
+    
+    VkBufferCreateInfo indexBufferCreateInfo;
+    VmaAllocationCreateInfo indexAllocationCreateInfo;
+    InitializeStruct( indexBufferCreateInfo );
+    InitializeStruct( indexAllocationCreateInfo );
+
+    if ( srcSubmesh.IsCompressedMesh( ) ) {
+        DecompressedMeshInfo decompressedMeshInfo = DecompressMesh( mesh, srcSubmesh );
+
+        assert( !decompressedMeshInfo.DecompressedVertexBuffer.empty( ) );
+        assert( !decompressedMeshInfo.DecompressedIndexBuffer.empty( ) );
+        if ( decompressedMeshInfo.DecompressedVertexBuffer.empty( ) ||
+             decompressedMeshInfo.DecompressedIndexBuffer.empty( ) ) {
+            assert( false );
+            return {};
+        }
+
+        initializedMeshInfo.VertexUploadInfo.pSrcBufferData = decompressedMeshInfo.DecompressedVertexBuffer.data( );
+        initializedMeshInfo.VertexUploadInfo.SrcBufferSize  = decompressedMeshInfo.DecompressedVertexBuffer.size( );
+        initializedMeshInfo.VertexCount                     = decompressedMeshInfo.VertexCount;
+
+        initializedMeshInfo.IndexUploadInfo.pSrcBufferData = decompressedMeshInfo.DecompressedIndexBuffer.data( );
+        initializedMeshInfo.IndexUploadInfo.SrcBufferSize  = decompressedMeshInfo.DecompressedIndexBuffer.size( );
+        initializedMeshInfo.IndexCount                     = decompressedMeshInfo.IndexCount;
+        initializedMeshInfo.eIndexType                     = decompressedMeshInfo.eIndexType;
+
+        initializedMeshInfo.OptionalDecompressedMesh.emplace( eastl::move( decompressedMeshInfo ) );
+        
+        pScene->Subsets[ mesh.BaseSubset ].IndexCount = (uint32_t)initializedMeshInfo.IndexCount;
+        assert( mesh.SubsetCount == 1 );
+    } else {
+        initializedMeshInfo.VertexUploadInfo.pSrcBufferData = srcSubmesh.pSrcMesh->vertices( )->data( );
+        initializedMeshInfo.VertexUploadInfo.SrcBufferSize  = srcSubmesh.pSrcMesh->vertices( )->size( );
+        initializedMeshInfo.VertexCount                     = srcSubmesh.pSrcSubmesh->vertex_count( );
+
+        initializedMeshInfo.IndexUploadInfo.pSrcBufferData = srcSubmesh.pSrcMesh->indices( )->data( );
+        initializedMeshInfo.IndexUploadInfo.SrcBufferSize  = srcSubmesh.pSrcMesh->indices( )->size( );
+        initializedMeshInfo.IndexCount                     = srcSubmesh.pSrcSubmesh->vertex_count( );
+        initializedMeshInfo.eIndexType                     = srcSubmesh.GetIndexType();
+    }
+    
+    initializedMeshInfo.VertexUploadInfo.eDstAccessFlags = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
+    initializedMeshInfo.IndexUploadInfo.eDstAccessFlags  = VK_ACCESS_INDEX_READ_BIT;
+
+    vertexBufferCreateInfo.usage     = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    vertexBufferCreateInfo.size      = initializedMeshInfo.VertexUploadInfo.SrcBufferSize;
+    vertexAllocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+
+    indexBufferCreateInfo.usage     = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    indexBufferCreateInfo.size      = initializedMeshInfo.IndexUploadInfo.SrcBufferSize;
+    indexAllocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
 
     auto pMeshAsset = static_cast< apemode::vk::SceneUploader::MeshDeviceAsset* >( mesh.pDeviceAsset.get( ) );
-    if ( nullptr == pMeshAsset ) {
+    if ( !pMeshAsset ) {
         pMeshAsset = apemode_new apemode::vk::SceneUploader::MeshDeviceAsset( );
         mesh.pDeviceAsset.reset( pMeshAsset );
+        assert( pMeshAsset );
     }
 
-    /* Assign vertex count. */
+    pMeshAsset->VertexCount = initializedMeshInfo.VertexCount;
+    pMeshAsset->IndexCount  = initializedMeshInfo.IndexCount;
+    pMeshAsset->eIndexType  = initializedMeshInfo.eIndexType;
+    
+    initializedMeshInfo.pMeshAsset = pMeshAsset;
 
-    /* Currently, there is only one submesh object supported. */
-    assert( pSrcMesh->submeshes( ) && ( pSrcMesh->submeshes( )->size( ) == 1 ) );
-    auto pSubmesh = pSrcMesh->submeshes( )->Get( 0 );
-    pMeshAsset->VertexCount = pSubmesh->vertex_count( );
-
-    /* Assign index type. Currently, there are only two types supported: UInt16, UInt32. */
-
-    if ( pSrcMesh->index_type( ) == apemodefb::EIndexTypeFb_UInt32 ) {
-        pMeshAsset->IndexType = VK_INDEX_TYPE_UINT32;
+    if ( !pMeshAsset->hVertexBuffer.Recreate( pParams->pNode->hAllocator, vertexBufferCreateInfo, vertexAllocationCreateInfo ) ||
+         !pMeshAsset->hIndexBuffer.Recreate( pParams->pNode->hAllocator, indexBufferCreateInfo, indexAllocationCreateInfo ) ) {
+        return {};
     }
 
-    /* Create vertex buffer. */
+    initializedMeshInfo.VertexUploadInfo.pDstBuffer = pMeshAsset->hVertexBuffer.Handle.pBuffer;
+    initializedMeshInfo.IndexUploadInfo.pDstBuffer  = pMeshAsset->hIndexBuffer.Handle.pBuffer;
 
-    VkBufferCreateInfo bufferCreateInfo;
-    VmaAllocationCreateInfo allocationCreateInfo;
+    assert( initializedMeshInfo.VertexUploadInfo.pDstBuffer );
+    assert( initializedMeshInfo.IndexUploadInfo.pDstBuffer );
 
-    apemodevk::InitializeStruct( bufferCreateInfo );
-    apemodevk::InitializeStruct( allocationCreateInfo );
-
-    bufferCreateInfo.usage     = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    bufferCreateInfo.size      = pSrcMesh->vertices( )->size( );
-    allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-    if ( false == pMeshAsset->hVertexBuffer.Recreate( pParams->pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
-    }
-
-    /* Create index buffer. */
-
-    bufferCreateInfo.usage     = VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
-    bufferCreateInfo.size      = pSrcMesh->indices( )->size( );
-    allocationCreateInfo.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-
-    if ( false == pMeshAsset->hIndexBuffer.Recreate( pParams->pNode->hAllocator, bufferCreateInfo, allocationCreateInfo ) ) {
-        apemodevk::platform::DebugBreak( );
-        return false;
-    }
-
-    return true;
+    return initializedMeshInfo;
 }
 
 bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::UploadParameters* pParams ) {
@@ -234,55 +568,35 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
 
     assert( pScene && pParams && pParams->pSrcScene && pParams->pNode );
 
-    auto pNode = pParams->pNode;
-
     auto pMeshesFb = pParams->pSrcScene->meshes( );
-    assert ( pMeshesFb && pMeshesFb->size( ) );
+    if ( !pMeshesFb || !pMeshesFb->size( ) ) {
+        return false;
+    }
 
+    auto pNode = pParams->pNode;
     uint64_t totalBytesRequired = 0;
 
+    apemode::vector< InitializedMeshInfo > initializedMeshInfos;
     apemode::vector< BufferUploadInfo > bufferUploads;
+    
+    initializedMeshInfos.reserve( pMeshesFb->size( ) );
     bufferUploads.reserve( pMeshesFb->size( ) << 1 );
 
     for ( auto & mesh : pScene->Meshes ) {
-        if ( !InitializeMesh( mesh, pScene, pParams ) ) {
-            return false;
+        InitializedMeshInfo initializedMeshInfo = InitializeMesh( mesh, pScene, pParams );
+        if ( initializedMeshInfo.IsOk() ) {
+            auto& emplacedInitializedMeshInfo = initializedMeshInfos.emplace_back( eastl::move( initializedMeshInfo ) );
+            bufferUploads.push_back( emplacedInitializedMeshInfo.VertexUploadInfo );
+            bufferUploads.push_back( emplacedInitializedMeshInfo.IndexUploadInfo );
+            totalBytesRequired += emplacedInitializedMeshInfo.VertexUploadInfo.SrcBufferSize;
+            totalBytesRequired += emplacedInitializedMeshInfo.IndexUploadInfo.SrcBufferSize;
         }
-
-        /* Get source mesh object. */
-
-        auto pSrcMesh = pMeshesFb->Get( mesh.Id );
-        assert( pSrcMesh );
-
-        /* Get or create mesh device asset. */
-
-        auto pMeshAsset = static_cast< apemode::vk::SceneUploader::MeshDeviceAsset* >( mesh.pDeviceAsset.get( ) );
-        assert( pMeshAsset );
-
-        BufferUploadInfo bufferUpload;
-
-        bufferUpload.pDstBuffer      = pMeshAsset->hVertexBuffer.Handle.pBuffer;
-        bufferUpload.pSrcBufferData  = pSrcMesh->vertices( )->data( );
-        bufferUpload.SrcBufferSize   = pSrcMesh->vertices( )->size( );
-        bufferUpload.eDstAccessFlags = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
-
-        bufferUploads.push_back( bufferUpload );
-        totalBytesRequired += pSrcMesh->vertices( )->size( );
-
-        bufferUpload.pDstBuffer      = pMeshAsset->hIndexBuffer.Handle.pBuffer;
-        bufferUpload.pSrcBufferData  = pSrcMesh->indices( )->data( );
-        bufferUpload.SrcBufferSize   = pSrcMesh->indices( )->size( );
-        bufferUpload.eDstAccessFlags = VK_ACCESS_INDEX_READ_BIT;
-
-        bufferUploads.push_back( bufferUpload );
-        totalBytesRequired += pSrcMesh->indices( )->size( );
     }
 
     { /* Sort by size in descending order. */
-
-        BufferUploadInfo* pMeshUploadIt     = bufferUploads.data( );
+        BufferUploadInfo* pMeshUploadIt = bufferUploads.data( );
         BufferUploadInfo* pMeshUploadItLast = pMeshUploadIt + ( bufferUploads.size( ) - 1 );
-        TQSort< BufferUploadInfo, BufferUploadCmpOpGreaterBySize >( pMeshUploadIt, pMeshUploadItLast );
+        TQSort< BufferUploadInfo, BufferUploadCmpOpGreaterBySizeOrByAccessFlags >( pMeshUploadIt, pMeshUploadItLast );
     }
 
     const BufferUploadInfo* const pMeshUploadIt    = bufferUploads.data( );
@@ -326,9 +640,9 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
         return true;
     } );
 
-    size_t const contiguousBufferSize = max< size_t >( pParams->StagingMemoryLimitHint, pMeshUploadIt->SrcBufferSize );
-    size_t const stagingMemorySizeNeeded = max< size_t >( pNode->AdapterProps.limits.maxUniformBufferRange, contiguousBufferSize );
-    size_t const stagingMemorySize = min< size_t >( totalBytesRequired, stagingMemorySizeNeeded );
+    const size_t contiguousBufferSize    = max< size_t >( pParams->StagingMemoryLimitHint, pMeshUploadIt->SrcBufferSize );
+    const size_t stagingMemorySizeNeeded = max< size_t >( pNode->AdapterProps.limits.maxUniformBufferRange, contiguousBufferSize );
+    const size_t stagingMemorySize       = min< size_t >( totalBytesRequired, stagingMemorySizeNeeded );
 
     /* The purpose is to get some control over the memory allocation from CPU heap
      * and make it efficient, manageable and easy to understand.
@@ -336,22 +650,22 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
      */
     THandle< BufferComposite > hStagingBuffer;
 
-    VkBufferCreateInfo bufferCreateInfo;
-    InitializeStruct( bufferCreateInfo );
-    bufferCreateInfo.size  = stagingMemorySize;
-    bufferCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    VkBufferCreateInfo stagingCreateInfo;
+    InitializeStruct( stagingCreateInfo );
+    stagingCreateInfo.size  = stagingMemorySize;
+    stagingCreateInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
 
     VmaAllocationCreateInfo stagingAllocationCreateInfo;
     InitializeStruct( stagingAllocationCreateInfo );
     stagingAllocationCreateInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
     stagingAllocationCreateInfo.flags = VMA_ALLOCATION_CREATE_MAPPED_BIT;
 
-    if ( false == hStagingBuffer.Recreate( pNode->hAllocator, bufferCreateInfo, stagingAllocationCreateInfo ) ) {
+    if ( !hStagingBuffer.Recreate( pNode->hAllocator, stagingCreateInfo, stagingAllocationCreateInfo ) ) {
         return false;
     }
 
     uint8_t* pMappedStagingMemory = MapStagingBuffer( pNode, hStagingBuffer );
-    if ( nullptr == pMappedStagingMemory ) {
+    if ( !pMappedStagingMemory ) {
         return false;
     }
 
@@ -511,16 +825,23 @@ bool FinalizeMaterial( apemode::vk::SceneUploader::MaterialDeviceAsset*    pMate
         VkImageViewCreateInfo metallicImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessImg->ImgViewCreateInfo;
         metallicImgViewCreateInfo.image                 = pMaterialAsset->pMetallicRoughnessImg->hImg;
         metallicImgViewCreateInfo.components.r          = VK_COMPONENT_SWIZZLE_R;
-        metallicImgViewCreateInfo.components.g          = VK_COMPONENT_SWIZZLE_ONE;
-        metallicImgViewCreateInfo.components.b          = VK_COMPONENT_SWIZZLE_ONE;
-        metallicImgViewCreateInfo.components.a          = VK_COMPONENT_SWIZZLE_ONE;
+        metallicImgViewCreateInfo.components.g          = VK_COMPONENT_SWIZZLE_G;
+        metallicImgViewCreateInfo.components.b          = VK_COMPONENT_SWIZZLE_B;
+        metallicImgViewCreateInfo.components.a          = VK_COMPONENT_SWIZZLE_A;
+//        metallicImgViewCreateInfo.components.g          = VK_COMPONENT_SWIZZLE_ONE;
+//        metallicImgViewCreateInfo.components.b          = VK_COMPONENT_SWIZZLE_ONE;
+//        metallicImgViewCreateInfo.components.a          = VK_COMPONENT_SWIZZLE_ONE;
 
         VkImageViewCreateInfo roughnessImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessImg->ImgViewCreateInfo;
         roughnessImgViewCreateInfo.image                 = pMaterialAsset->pMetallicRoughnessImg->hImg;
-        roughnessImgViewCreateInfo.components.r          = VK_COMPONENT_SWIZZLE_G;
-        roughnessImgViewCreateInfo.components.g          = VK_COMPONENT_SWIZZLE_ONE;
-        roughnessImgViewCreateInfo.components.b          = VK_COMPONENT_SWIZZLE_ONE;
-        roughnessImgViewCreateInfo.components.a          = VK_COMPONENT_SWIZZLE_ONE;
+        roughnessImgViewCreateInfo.components.r          = VK_COMPONENT_SWIZZLE_R;
+        roughnessImgViewCreateInfo.components.g          = VK_COMPONENT_SWIZZLE_G;
+        roughnessImgViewCreateInfo.components.b          = VK_COMPONENT_SWIZZLE_B;
+        roughnessImgViewCreateInfo.components.a          = VK_COMPONENT_SWIZZLE_A;
+//        roughnessImgViewCreateInfo.components.r          = VK_COMPONENT_SWIZZLE_G;
+//        roughnessImgViewCreateInfo.components.g          = VK_COMPONENT_SWIZZLE_ONE;
+//        roughnessImgViewCreateInfo.components.b          = VK_COMPONENT_SWIZZLE_ONE;
+//        roughnessImgViewCreateInfo.components.a          = VK_COMPONENT_SWIZZLE_ONE;
 
         if ( !pMaterialAsset->hMetallicImgView.Recreate( pParams->pNode->hLogicalDevice, metallicImgViewCreateInfo ) ) {
             return false;
@@ -558,7 +879,9 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::
         return false;
     }
 
-    MT::TaskScheduler* pTaskScheduler = apemode::AppState::Get( )->GetTaskScheduler( );
+    
+    auto pTaskflow =  apemode::AppState::Get( )->GetDefaultTaskflow( );
+    // MT::TaskScheduler* pTaskScheduler = apemode::AppState::Get( )->GetTaskScheduler( );
 
     auto pMaterialsFb = pParams->pSrcScene->materials( );
     auto pTexturesFb  = pParams->pSrcScene->textures( );
@@ -640,18 +963,21 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::
 #if 1
 
     if ( !imgUploads.empty( ) ) {
-        apemode::vector< ImageUploadTask > imageUploadTasks;
-        imageUploadTasks.reserve( imgUploads.size( ) );
+//        apemode::vector< ImageUploadTask > imageUploadTasks;
+//        imageUploadTasks.reserve( imgUploads.size( ) );
+//        for ( auto& imgUpload : imgUploads ) {
+//            imageUploadTasks.emplace_back( &imgUpload.second );
+//        }
+        
         for ( auto& imgUpload : imgUploads ) {
-            imageUploadTasks.emplace_back( &imgUpload.second );
+            //pTaskflow->silent_emplace([&imgUpload] () {
+                
+            // apemode::Log( apemode::LogLevel::Trace, "Starting loading image: \"{}\"", (const char*) imgUpload.second.pszFileName );
+            UploadImage(&imgUpload.second); // });
+            // apemode::Log( apemode::LogLevel::Trace, "Done loading image: \"{}\"", (const char*) imgUpload.second.pszFileName );
         }
-
-        MT::TaskGroup uploadTaskGroup = pTaskScheduler->CreateGroup( );
-        pTaskScheduler->RunAsync( uploadTaskGroup, imageUploadTasks.data( ), uint32_t( imageUploadTasks.size( ) ) );
-
-        if ( !pTaskScheduler->WaitGroup( uploadTaskGroup, std::numeric_limits< uint32_t >::max( ) ) ) {
-            return false;
-        }
+        
+        // pTaskflow->wait_for_all();
     }
 
 #else
@@ -701,7 +1027,7 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::
         pSceneAsset->LoadedImgs.emplace_back( std::move( imgUpload.second.UploadedImg ) );
     }
 
-    { ( decltype( imgUploads )( ) ).swap( imgUploads ); }
+    apemodevk::Wipe( imgUploads );
 
     for ( auto& material : pScene->Materials ) {
 
@@ -719,18 +1045,12 @@ bool apemode::vk::SceneUploader::UploadScene( apemode::Scene* pScene, const apem
     if ( !pParams || !pScene )
         return false;
 
-    auto pMeshesFb = pParams->pSrcScene->meshes( );
-    if ( pMeshesFb && pMeshesFb->size( ) ) {
-        if ( !UploadMeshes( pScene, pParams ) ) {
-            return false;
-        }
+    if ( !UploadMeshes( pScene, pParams ) ) {
+        return false;
     }
-
-    auto pMaterialsFb = pParams->pSrcScene->materials( );
-    if ( pMaterialsFb && pMaterialsFb->size( ) ) {
-        if ( !UploadMaterials( pScene, pParams ) ) {
-            return false;
-        }
+    
+    if ( !UploadMaterials( pScene, pParams ) ) {
+        return false;
     }
 
     for ( apemode::SceneSkin& skin : pScene->Skins ) {

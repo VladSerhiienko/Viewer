@@ -20,7 +20,7 @@ namespace apemode {
             using namespace apemode::platform;
             XMFLOAT3 mxyz = {_input.Analogs[ kAnalogInput_MouseX ],
                                    _input.Analogs[ kAnalogInput_MouseY ],
-                                   _input.Analogs[ kAnalogInput_MouseScroll ]};
+                                   _input.Analogs[ kAnalogInput_MouseVertScroll ]};
 
             if ( PrevPosition.x == apemodexm::kMaxFloat ) {
                 PrevPosition.x = mxyz.x;
@@ -44,6 +44,7 @@ namespace apemode {
             DollyDelta.z += ( _input.Buttons[ 0 ][ kDigitalInput_KeyW ] || _input.Buttons[ 0 ][ kDigitalInput_KeyUp ] ) * _dt;
             DollyDelta.z -= ( _input.Buttons[ 0 ][ kDigitalInput_KeyS ] || _input.Buttons[ 0 ][ kDigitalInput_KeyDown ] ) * _dt;
             DollyDelta.z += _input.Buttons[ 0 ][ kDigitalInput_Mouse1 ] ? ( DeltaPosition.x + DeltaPosition.y ) : 0;
+            DollyDelta.z += _input.Analogs[ kAnalogInput_MouseVertScroll ];
         }
     };
 } // namespace apemode

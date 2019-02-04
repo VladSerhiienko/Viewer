@@ -77,9 +77,9 @@ const VkFormat sDepthFormat = VK_FORMAT_D32_SFLOAT_S8_UINT;
 const uint16_t kAnimLayerId   = 0;
 const uint16_t kAnimStackId   = 0;
 
-ViewerShell::ViewerShell( ) : FileAssetManager( ) {
+ViewerShell::ViewerShell( ) {
     apemode_memory_allocation_scope;
-    pCamInput      = apemode::unique_ptr< CameraControllerInputBase >( apemode_new MouseKeyboardCameraControllerInput( ) );
+    pCamInput = apemode::unique_ptr< CameraControllerInputBase >( apemode_new MouseKeyboardCameraControllerInput( ) );
 
 #if _WIN32
     pCamController = apemode::unique_ptr< CameraControllerBase >( apemode_new FreeLookCameraController( ) );
@@ -97,7 +97,7 @@ ViewerShell::ViewerShell( ) : FileAssetManager( ) {
     auto pModelViewCameraController = (ModelViewCameraController*)pCamController.get();
 
     float position = 350;
-    float destPosition = 500;
+    float destPosition = 100;
 
     pModelViewCameraController->Position.x = position;
     pModelViewCameraController->Position.y = position;
@@ -111,7 +111,14 @@ ViewerShell::ViewerShell( ) : FileAssetManager( ) {
 }
 
 ViewerShell::~ViewerShell( ) {
-    LogInfo( "ViewerApp: Destroyed." );
+    LogInfo( "ViewerShell: Destroyed." );
+}
+
+
+void ViewerShell::SetAssetManager( apemode::platform::IAssetManager* pInAssetManager ) {
+    assert( pInAssetManager );
+    pAssetManager = pInAssetManager;
+    LogInfo( "ViewerShell: AssetManager={}", (void*)pInAssetManager );
 }
 
 bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface ) {
@@ -153,8 +160,8 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
                              (const char**) ppszExtensions.data( ),
                              ppszExtensions.size( ) - optionalLayerCount,
                              optionalLayerCount ) ) {
-        apemode::string8 assetsFolder( TGetOption< std::string >( "--assets", "./" ).c_str( ) );
-        FileAssetManager.UpdateAssets( assetsFolder.c_str( ), nullptr, 0 );
+        // apemode::string8 assetsFolder( TGetOption< std::string >( "--assets", "./" ).c_str( ) );
+        // pAssetManager->UpdateAssets( assetsFolder.c_str( ), nullptr, 0 );
 
         TotalSecs = 0.0f;
 
@@ -207,13 +214,13 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         apemodevk::ImageUploader imgUploader;
         apemodevk::ImageDecoder  imgDecoder;
 
-        if ( auto pTexAsset = FileAssetManager.Acquire( "images/Environment/kyoto_lod.dds" ) ) {
+        if ( auto pTexAsset = pAssetManager->Acquire( "images/Environment/kyoto_lod.dds" ) ) {
             // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_skybox.dds" ) ) {
-            // if ( auto pTexAsset = FileAssetManager.Acquire( "images/Environment/bolonga_lod.dds" ) ) {
+            // if ( auto pTexAsset = pAssetManager->Acquire( "images/Environment/bolonga_lod.dds" ) ) {
             apemode_memory_allocation_scope;
             {
                 const auto texAssetBin = pTexAsset->GetContentAsBinaryBuffer( );
-                FileAssetManager.Release( pTexAsset );
+                pAssetManager->Release( pTexAsset );
 
                 apemodevk::ImageDecoder::DecodeOptions decodeOptions;
                 decodeOptions.eFileFormat      = apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_DDS;
@@ -247,13 +254,13 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
             pRadianceCubeMapSampler = pSamplerManager->GetSampler( samplerCreateInfo );
         }
 
-        if ( auto pTexAsset = FileAssetManager.Acquire( "images/Environment/kyoto_irr.dds" ) ) {
+        if ( auto pTexAsset = pAssetManager->Acquire( "images/Environment/kyoto_irr.dds" ) ) {
             // if ( auto pTexAsset = mAssetManager.GetAsset( "images/Environment/output_iem.dds" ) ) {
-            // if ( auto pTexAsset = FileAssetManager.Acquire( "images/Environment/bolonga_irr.dds" ) ) {
+            // if ( auto pTexAsset = pAssetManager->Acquire( "images/Environment/bolonga_irr.dds" ) ) {
             apemode_memory_allocation_scope;
             {
                 const auto texAssetBin = pTexAsset->GetContentAsBinaryBuffer( );
-                FileAssetManager.Release( pTexAsset );
+                pAssetManager->Release( pTexAsset );
 
                 apemodevk::ImageDecoder::DecodeOptions decodeOptions;
                 decodeOptions.eFileFormat      = apemodevk::ImageDecoder::DecodeOptions::eImageFileFormat_DDS;
@@ -287,14 +294,14 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
             pIrradianceCubeMapSampler = pSamplerManager->GetSampler( samplerCreateInfo );
         }
 
-        pNkRenderer = apemode::unique_ptr< NuklearRendererBase >( apemode_new apemode::vk::NuklearRenderer( ) );
+        pNkRenderer = apemode::unique_ptr< apemode::vk::NuklearRenderer >( apemode_new apemode::vk::NuklearRenderer( ) );
 
-        auto pFontAsset = FileAssetManager.Acquire( "fonts/Mecha.ttf" );
-        // auto pFontAsset = FileAssetManager.Acquire( "fonts/iosevka-ss07-medium.ttf" );
+        auto pFontAsset = pAssetManager->Acquire( "fonts/Mecha.ttf" );
+        // auto pFontAsset = pAssetManager->Acquire( "fonts/iosevka-ss07-medium.ttf" );
 
         apemode::vk::NuklearRenderer::InitParameters initParamsNk;
         initParamsNk.pNode           = &Surface.Node;
-        initParamsNk.pAssetManager   = &FileAssetManager;
+        initParamsNk.pAssetManager   = pAssetManager;
         initParamsNk.pFontAsset      = pFontAsset;
         initParamsNk.pSamplerManager = pSamplerManager.get( );
         initParamsNk.pDescPool       = DescriptorPool;
@@ -303,11 +310,11 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         // initParamsNk.pRenderPass     = hNkRenderPass;
 
         pNkRenderer->Init( &initParamsNk );
-        FileAssetManager.Release( pFontAsset );
+        pAssetManager->Release( pFontAsset );
 
         apemode::vk::DebugRenderer::InitParameters initParamsDbg;
         initParamsDbg.pNode         = &Surface.Node;
-        initParamsDbg.pAssetManager = &FileAssetManager;
+        initParamsDbg.pAssetManager = pAssetManager;
         initParamsDbg.pRenderPass   = hDbgRenderPass;
         initParamsDbg.pDescPool     = DescriptorPool;
         initParamsDbg.FrameCount    = uint32_t( Frames.size( ) );
@@ -315,11 +322,11 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         pDebugRenderer = apemode::unique_ptr< apemode::vk::DebugRenderer >( apemode_new apemode::vk::DebugRenderer( ) );
         pDebugRenderer->RecreateResources( &initParamsDbg );
 
-        pSceneRendererBase = apemode::unique_ptr< apemode::SceneRendererBase >( apemode_new apemode::vk::SceneRenderer( ) );
+        pSceneRenderer = apemode::unique_ptr< apemode::vk::SceneRenderer >( apemode_new apemode::vk::SceneRenderer( ) );
 
         apemode::vk::SceneRenderer::RecreateParameters recreateParams;
         recreateParams.pNode         = &Surface.Node;
-        recreateParams.pAssetManager = &FileAssetManager;
+        recreateParams.pAssetManager = pAssetManager;
         recreateParams.pRenderPass   = hDbgRenderPass;
         recreateParams.pDescPool     = DescriptorPool;
         recreateParams.FrameCount    = uint32_t( Frames.size( ) );
@@ -353,13 +360,24 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         --assets "..\..\assets\**" --scene "C:/Sources/Models/FbxPipeline/mech-m-6k.fbxp"
         */
 
-        if ( ! pSceneRendererBase->Recreate( &recreateParams ) ) {
+        if ( ! pSceneRenderer->Recreate( &recreateParams ) ) {
             apemode::platform::DebugBreak( );
             return false;
         }
 
-        auto sceneFile = TGetOption< std::string >( "scene", "" );
-        mLoadedScene   = LoadSceneFromBin( apemode::platform::shared::FileReader( ).ReadBinFile( sceneFile.c_str( ) ) );
+        // const std::string sceneFile = "shared/horned_infernal_duke.fbxp";
+        // const std::string sceneFile = "shared/alien.fbxp";
+        // const std::string sceneFile = "shared/opel-gt-retopo.fbxp";
+        // const std::string sceneFile = "shared/flare-gun.fbxp";
+        // const std::string sceneFile = "shared/stesla_8.fbxp";
+        // const std::string sceneFile = "shared/horned_infernal_duke.fbxp";
+        const std::string sceneFile = "shared/horned_infernal_duke_8.fbxp";
+        // const std::string sceneFile = "shared/0004_16.fbxp";
+        // const std::string sceneFile = "shared/0004.fbxp";
+        // const std::string sceneFile = "shared/0005.fbxp";
+        // TGetOption< std::string >( "scene", "" );
+        auto pSceneAsset = pAssetManager->Acquire( sceneFile.c_str() );
+        mLoadedScene = LoadSceneFromBin( pSceneAsset->GetContentAsBinaryBuffer() );
 
         apemode::vk::SceneUploader::UploadParameters uploadParams;
         uploadParams.pSamplerManager = pSamplerManager.get( );
@@ -375,7 +393,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
 
         apemode::vk::SkyboxRenderer::RecreateParameters skyboxRendererRecreateParams;
         skyboxRendererRecreateParams.pNode         = &Surface.Node;
-        skyboxRendererRecreateParams.pAssetManager = &FileAssetManager;
+        skyboxRendererRecreateParams.pAssetManager = pAssetManager;
         skyboxRendererRecreateParams.pRenderPass   = hDbgRenderPass;
         skyboxRendererRecreateParams.pDescPool     = DescriptorPool;
         skyboxRendererRecreateParams.FrameCount    = uint32_t( Frames.size( ) );
@@ -651,10 +669,8 @@ void ViewerShell::UpdateCamera( const apemode::platform::AppInput* pAppInput ) {
         pCamController->Dolly( pCamInput->DollyDelta );
     }
 
-#if __APPLE__
     if ( bLookAnimation )
         pCamController->Orbit( {0.01f * DeltaSecs, 0} );
-#endif
 
     pCamController->Update( DeltaSecs );
 }
@@ -694,7 +710,7 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
 
     pSkyboxRenderer->Reset( FrameIndex );
     pDebugRenderer->Reset( FrameIndex );
-    pSceneRendererBase->Reset( mLoadedScene.pScene.get( ), FrameIndex );
+    pSceneRenderer->Reset( mLoadedScene.pScene.get( ), FrameIndex );
 
     apemode::vk::SkyboxRenderer::RenderParameters skyboxRenderParams;
     XMStoreFloat4x4( &skyboxRenderParams.InvViewMatrix, invViewMatrix );
@@ -736,7 +752,7 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
     XMStoreFloat4x4( &sceneRenderParameters.ViewMatrix, viewMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.InvViewMatrix, invViewMatrix );
     XMStoreFloat4x4( &sceneRenderParameters.InvProjMatrix, invProjMatrix );
-    pSceneRendererBase->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
+    pSceneRenderer->RenderScene( mLoadedScene.pScene.get( ), &sceneRenderParameters );
 
     {
         apemode::vk::DebugRenderer::DebugUBO frameData;
@@ -814,7 +830,7 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
     vkCmdEndRenderPass( pCmdBuffer );
 
     pDebugRenderer->Flush( FrameIndex );
-    pSceneRendererBase->Flush( mLoadedScene.pScene.get( ), FrameIndex );
+    pSceneRenderer->Flush( mLoadedScene.pScene.get( ), FrameIndex );
     pSkyboxRenderer->Flush( FrameIndex );
 }
 

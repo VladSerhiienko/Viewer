@@ -24,4 +24,5 @@
 
 /** The Metal-compatibile view for the demo Storyboard. */
 @interface GameView : NSView
+-(void)setGameViewController:(GameViewController*)controller;
 @end

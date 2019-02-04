@@ -795,7 +795,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
 
             assert( pMeshFb );
             assert( IsNotNullAndNotEmpty( pMeshFb->vertices( ) ) );
-            assert( IsNotNullAndNotEmpty( pMeshFb->indices( ) ) );
+            // assert( IsNotNullAndNotEmpty( pMeshFb->indices( ) ) );
             assert( IsNotNullAndNotEmpty( pMeshFb->subsets( ) ) );
             assert( IsNotNullAndNotEmpty( pMeshFb->submeshes( ) ) );
 

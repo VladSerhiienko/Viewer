@@ -43,6 +43,7 @@ struct AssetManager : IAssetManager {
     const IAsset* Acquire( const char* pszAssetName ) const override;
     void          Release( const IAsset* pAsset ) const override;
 
+    void AddAsset( const char* pszAssetName, const char* pszAssetPath );
     void UpdateAssets( const char* pszFolderPath, const char** ppszFilePatterns, size_t filePatternCount );
 
 protected:

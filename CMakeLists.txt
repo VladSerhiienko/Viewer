@@ -35,6 +35,16 @@ endif()
 
 #
 #
+# platform decisions
+#
+#
+
+set( CMAKE_CXX_STANDARD 17 )
+set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG" )
+set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG" )
+
+#
+#
 # argh
 #
 #
@@ -266,6 +276,28 @@ message(STATUS "sdl2_binary_dir = ${sdl2_binary_dir}")
 
 #
 #
+# taskflow
+#
+#
+
+ExternalProject_Add(
+    taskflow
+    GIT_REPOSITORY "git@github.com:cpp-taskflow/cpp-taskflow.git"
+    GIT_TAG "master"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/cpp-taskflow"
+    CMAKE_ARGS ${default_cmake_args}
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    TEST_COMMAND ""
+    INSTALL_COMMAND ""
+)
+
+ExternalProject_Get_Property(taskflow SOURCE_DIR)
+set(taskflow_source_dir ${SOURCE_DIR})
+message(STATUS "taskflow_source_dir = ${taskflow_source_dir}")
+
+#
+#
 # TaskScheduler
 #
 #
@@ -274,10 +306,10 @@ ExternalProject_Add(
     TaskScheduler
     GIT_REPOSITORY "git@github.com:VladSerhiienko/TaskScheduler.git"
     GIT_TAG "master"
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler"
     CMAKE_ARGS ${default_cmake_args}
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
     TEST_COMMAND ""
     INSTALL_COMMAND ""
 )
@@ -359,16 +391,6 @@ ExternalProject_Add(
 ExternalProject_Get_Property(VulkanMemoryAllocator SOURCE_DIR)
 set(VulkanMemoryAllocator_source_dir ${SOURCE_DIR})
 message(STATUS "VulkanMemoryAllocator_source_dir = ${VulkanMemoryAllocator_source_dir}")
-
-#
-#
-# platform decisions
-#
-#
-
-set( CMAKE_CXX_STANDARD 17 )
-set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG" )
-set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG" )
 
 if (UNIX)
 add_definitions("-rdynamic")
@@ -582,7 +604,7 @@ if (APPLE)
     set( ApemodePlatform_third_party_libs
          ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
          ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a
-         ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/libTaskScheduler.a
+        #  ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/libTaskScheduler.a
          pthread
          )
 
@@ -591,7 +613,7 @@ elseif(WIN32)
     set( ApemodePlatform_third_party_libs
          ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/EASTL.lib
          ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/EAStdC.lib
-         ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/TaskScheduler.lib
+        #  ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/TaskScheduler.lib
          )
 
 elseif (UNIX)
@@ -599,7 +621,8 @@ elseif (UNIX)
     set( ApemodePlatform_third_party_libs
          ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
          ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a
-         ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/libTaskScheduler.a )
+        #  ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/libTaskScheduler.a
+         )
 
 endif()
 
@@ -642,7 +665,8 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
-    ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
+    # ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
+    ${CMAKE_SOURCE_DIR}/dependencies/cpp-taskflow
 )
 
 # target_link_libraries( ApemodePlatform
@@ -657,7 +681,7 @@ add_dependencies(
     argh
     spdlog
     eastl
-    TaskScheduler
+    taskflow
 )
 
 #
@@ -742,7 +766,8 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
     ${CMAKE_SOURCE_DIR}/dependencies/argh
     ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
-    ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
+    ${CMAKE_SOURCE_DIR}/dependencies/cpp-taskflow
+    # ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
 )
 
 if (APPLE)
@@ -798,7 +823,8 @@ add_dependencies(
     argh
     spdlog
     eastl
-    TaskScheduler
+    taskflow
+    # TaskScheduler
 )
 
 #
@@ -839,8 +865,9 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
-    ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
     ${CMAKE_SOURCE_DIR}/dependencies/sdl2/include
+    ${CMAKE_SOURCE_DIR}/dependencies/cpp-taskflow
+    # ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
 )
 
 if (APPLE)

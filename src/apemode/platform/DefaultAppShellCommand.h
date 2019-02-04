@@ -4,6 +4,7 @@
 
 #include <string>
 #include <map>
+#include <vector>
 #include <cstdint>
 
 namespace apemode {
@@ -25,8 +26,9 @@ struct AppShellCommandArgumentValue : IAppShellCommandArgumentValue {
         float       Float32Value;
     };
 
-    ValueType  Type;
-    ValueUnion Value;
+    ValueType                                   Type;
+    ValueUnion                                  Value;
+    std::vector< AppShellCommandArgumentValue > ArrayValues;
 
     AppShellCommandArgumentValue( ) : Type( kValueType_PtrValue ) {
         Value.PtrValue = nullptr;
@@ -36,17 +38,18 @@ struct AppShellCommandArgumentValue : IAppShellCommandArgumentValue {
         return Type;
     }
 
-#define APPSHELLCOMMANDARGVALUE_DEFINE_TYPED_GETTER( T )         \
+#define APPSHELLCOMMANDARGVALUE_DEFINE_TYPED_GETTER( T ) \
     decltype( ValueUnion::T ) Get##T( ) const override { \
-        assert( Type == kValueType_##T );                        \
-        return Value.T;                                          \
+        assert( Type == kValueType_##T );                \
+        return Value.T;                                  \
     }
-#define APPSHELLCOMMANDARGVALUE_DEFINE_TYPED_SETTER( T )      \
-    void Set##T( decltype( ValueUnion::T ) value ) override { \
-        Type    = kValueType_##T;                             \
-        Value.T = value;                                      \
+#define APPSHELLCOMMANDARGVALUE_DEFINE_TYPED_SETTER( T ) \
+    void Set##T( decltype( ValueUnion::T ) value ) {     \
+        Type    = kValueType_##T;                        \
+        Value.T = value;                                 \
+        ArrayValues.clear( );                            \
     }
-    
+
     APPSHELLCOMMANDARGVALUE_DEFINE_TYPED_GETTER( PtrValue );
     APPSHELLCOMMANDARGVALUE_DEFINE_TYPED_GETTER( StringValue );
     APPSHELLCOMMANDARGVALUE_DEFINE_TYPED_GETTER( UInt64Value );
@@ -75,6 +78,25 @@ struct AppShellCommandArgumentValue : IAppShellCommandArgumentValue {
     
 #undef APPSHELLCOMMANDARGVALUE_DEFINE_TYPED_GETTER
 #undef APPSHELLCOMMANDARGVALUE_DEFINE_TYPED_SETTER
+
+    uint32_t GetArraySize( ) const override {
+        assert( Type == kValueType_Array );
+        return uint32_t( ArrayValues.size( ) );
+    }
+    const IAppShellCommandArgumentValue* GetArrayValue( uint32_t valueIndex) const override {
+        assert( Type == kValueType_Array );
+        assert( valueIndex < uint32_t( ArrayValues.size( ) ) );
+        return &ArrayValues[ valueIndex ];
+    }
+
+    void SetArray( ) {
+        Type = kValueType_Array;
+    }
+
+    decltype( ArrayValues ) & GetArray( ) {
+        assert( Type == kValueType_Array );
+        return ArrayValues;
+    }
 };
 
 struct AppShellCommandArgument : IAppShellCommandArgument {

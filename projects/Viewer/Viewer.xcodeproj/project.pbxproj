@@ -111,6 +111,12 @@
 		CA4D14D6220087D2004A0A2B /* symbol_decoding.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C9220087D2004A0A2B /* symbol_decoding.cc */; };
 		CA4D14D7220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14CA220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc */; };
 		CA4D14D8220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14CA220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc */; };
+		CA4E25392205E85F005190FB /* fonts in Resources */ = {isa = PBXBuildFile; fileRef = CA4E25362205E85F005190FB /* fonts */; };
+		CA4E253A2205E85F005190FB /* fonts in Resources */ = {isa = PBXBuildFile; fileRef = CA4E25362205E85F005190FB /* fonts */; };
+		CA4E253B2205E85F005190FB /* shaders in Resources */ = {isa = PBXBuildFile; fileRef = CA4E25372205E85F005190FB /* shaders */; };
+		CA4E253C2205E85F005190FB /* shaders in Resources */ = {isa = PBXBuildFile; fileRef = CA4E25372205E85F005190FB /* shaders */; };
+		CA4E253D2205E85F005190FB /* images in Resources */ = {isa = PBXBuildFile; fileRef = CA4E25382205E85F005190FB /* images */; };
+		CA4E253E2205E85F005190FB /* images in Resources */ = {isa = PBXBuildFile; fileRef = CA4E25382205E85F005190FB /* images */; };
 		CA676D04217A2E8F0098A888 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CA676D03217A2E8F0098A888 /* AppDelegate.m */; };
 		CA676D07217A2E8F0098A888 /* GameViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CA676D06217A2E8F0098A888 /* GameViewController.mm */; };
 		CA676D0A217A2E8F0098A888 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CA676D08217A2E8F0098A888 /* Main.storyboard */; };
@@ -131,14 +137,6 @@
 		CA9A4ABE217DC752007E4D21 /* NuklearRendererBase.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4ABB217DC752007E4D21 /* NuklearRendererBase.cpp */; };
 		CA9A4ABF217DC752007E4D21 /* ViewerAppShellFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4ABC217DC752007E4D21 /* ViewerAppShellFactory.cpp */; };
 		CA9A4AC0217DC752007E4D21 /* ViewerAppShellFactory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4ABC217DC752007E4D21 /* ViewerAppShellFactory.cpp */; };
-		CA9A4AC8217DC8F2007E4D21 /* MTFiberContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC4217DC8F1007E4D21 /* MTFiberContext.cpp */; };
-		CA9A4AC9217DC8F2007E4D21 /* MTFiberContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC4217DC8F1007E4D21 /* MTFiberContext.cpp */; };
-		CA9A4ACA217DC8F2007E4D21 /* MTScheduler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC5217DC8F1007E4D21 /* MTScheduler.cpp */; };
-		CA9A4ACB217DC8F2007E4D21 /* MTScheduler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC5217DC8F1007E4D21 /* MTScheduler.cpp */; };
-		CA9A4ACC217DC8F2007E4D21 /* MTThreadContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC6217DC8F1007E4D21 /* MTThreadContext.cpp */; };
-		CA9A4ACD217DC8F2007E4D21 /* MTThreadContext.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC6217DC8F1007E4D21 /* MTThreadContext.cpp */; };
-		CA9A4ACE217DC8F2007E4D21 /* MTDefaultAppInterop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC7217DC8F1007E4D21 /* MTDefaultAppInterop.cpp */; };
-		CA9A4ACF217DC8F2007E4D21 /* MTDefaultAppInterop.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AC7217DC8F1007E4D21 /* MTDefaultAppInterop.cpp */; };
 		CA9A4AD1217DC94F007E4D21 /* QueuePools.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AD0217DC94F007E4D21 /* QueuePools.Vulkan.cpp */; };
 		CA9A4AD2217DC94F007E4D21 /* QueuePools.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA9A4AD0217DC94F007E4D21 /* QueuePools.Vulkan.cpp */; };
 		CABD23EA217B0BF20056A686 /* AppState.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD23E6217B0BF20056A686 /* AppState.cpp */; };
@@ -242,6 +240,9 @@
 		CA4D14C8220087D2004A0A2B /* float_points_tree_decoder.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = float_points_tree_decoder.cc; path = ../../dependencies/draco/src/draco/compression/point_cloud/algorithms/float_points_tree_decoder.cc; sourceTree = SOURCE_ROOT; };
 		CA4D14C9220087D2004A0A2B /* symbol_decoding.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = symbol_decoding.cc; path = ../../dependencies/draco/src/draco/compression/entropy/symbol_decoding.cc; sourceTree = SOURCE_ROOT; };
 		CA4D14CA220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = mesh_edgebreaker_decoder_impl.cc; path = ../../dependencies/draco/src/draco/compression/mesh/mesh_edgebreaker_decoder_impl.cc; sourceTree = SOURCE_ROOT; };
+		CA4E25362205E85F005190FB /* fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; name = fonts; path = ../../../../assets/fonts; sourceTree = "<group>"; };
+		CA4E25372205E85F005190FB /* shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = shaders; path = ../../../../assets/shaders; sourceTree = "<group>"; };
+		CA4E25382205E85F005190FB /* images */ = {isa = PBXFileReference; lastKnownFileType = folder; name = images; path = ../../../../assets/images; sourceTree = "<group>"; };
 		CA676CFA217A2E8F0098A888 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CA676CFF217A2E8F0098A888 /* Viewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Viewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA676D02217A2E8F0098A888 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -266,10 +267,6 @@
 		CA9A2CAA21A811DD005FE302 /* ScenePrintPretty.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ScenePrintPretty.cpp; path = ../../src/viewer/ScenePrintPretty.cpp; sourceTree = SOURCE_ROOT; };
 		CA9A4ABB217DC752007E4D21 /* NuklearRendererBase.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NuklearRendererBase.cpp; path = ../../src/viewer/NuklearRendererBase.cpp; sourceTree = SOURCE_ROOT; };
 		CA9A4ABC217DC752007E4D21 /* ViewerAppShellFactory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ViewerAppShellFactory.cpp; path = ../../src/viewer/ViewerAppShellFactory.cpp; sourceTree = SOURCE_ROOT; };
-		CA9A4AC4217DC8F1007E4D21 /* MTFiberContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MTFiberContext.cpp; path = ../../dependencies/TaskScheduler/Scheduler/Source/MTFiberContext.cpp; sourceTree = SOURCE_ROOT; };
-		CA9A4AC5217DC8F1007E4D21 /* MTScheduler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MTScheduler.cpp; path = ../../dependencies/TaskScheduler/Scheduler/Source/MTScheduler.cpp; sourceTree = SOURCE_ROOT; };
-		CA9A4AC6217DC8F1007E4D21 /* MTThreadContext.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MTThreadContext.cpp; path = ../../dependencies/TaskScheduler/Scheduler/Source/MTThreadContext.cpp; sourceTree = SOURCE_ROOT; };
-		CA9A4AC7217DC8F1007E4D21 /* MTDefaultAppInterop.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MTDefaultAppInterop.cpp; path = ../../dependencies/TaskScheduler/Scheduler/Source/MTDefaultAppInterop.cpp; sourceTree = SOURCE_ROOT; };
 		CA9A4AD0217DC94F007E4D21 /* QueuePools.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = QueuePools.Vulkan.cpp; path = ../../src/apemode/vk/QueuePools.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
 		CABD23E6217B0BF20056A686 /* AppState.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppState.cpp; path = ../../src/apemode/platform/AppState.cpp; sourceTree = SOURCE_ROOT; };
 		CABD23E7217B0BF20056A686 /* CityHash.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CityHash.cpp; path = ../../src/apemode/platform/CityHash.cpp; sourceTree = SOURCE_ROOT; };
@@ -389,6 +386,17 @@
 			path = "Viewer Shared/Viewer/draco";
 			sourceTree = SOURCE_ROOT;
 		};
+		CA4E25352205E808005190FB /* Assets */ = {
+			isa = PBXGroup;
+			children = (
+				CA4E25362205E85F005190FB /* fonts */,
+				CA4E25382205E85F005190FB /* images */,
+				CA4E25372205E85F005190FB /* shaders */,
+			);
+			name = Assets;
+			path = "Viewer Shared/Assets";
+			sourceTree = SOURCE_ROOT;
+		};
 		CA676CF0217A2E780098A888 = {
 			isa = PBXGroup;
 			children = (
@@ -407,6 +415,7 @@
 				CABD241E217B3DC50056A686 /* ApemodeVulkan */,
 				CABD23E4217B0B9F0056A686 /* ApemodePlatform */,
 				CA676CFA217A2E8F0098A888 /* Assets.xcassets */,
+				CA4E25352205E808005190FB /* Assets */,
 			);
 			path = "Viewer Shared";
 			sourceTree = SOURCE_ROOT;
@@ -452,7 +461,6 @@
 		CABD23E4217B0B9F0056A686 /* ApemodePlatform */ = {
 			isa = PBXGroup;
 			children = (
-				CABD2409217B3AB70056A686 /* TaskScheduler */,
 				CABD23EE217B0F180056A686 /* MemoryManager.cpp */,
 				CABD23E6217B0BF20056A686 /* AppState.cpp */,
 				CABD23E7217B0BF20056A686 /* CityHash.cpp */,
@@ -479,17 +487,6 @@
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
-		};
-		CABD2409217B3AB70056A686 /* TaskScheduler */ = {
-			isa = PBXGroup;
-			children = (
-				CA9A4AC7217DC8F1007E4D21 /* MTDefaultAppInterop.cpp */,
-				CA9A4AC4217DC8F1007E4D21 /* MTFiberContext.cpp */,
-				CA9A4AC5217DC8F1007E4D21 /* MTScheduler.cpp */,
-				CA9A4AC6217DC8F1007E4D21 /* MTThreadContext.cpp */,
-			);
-			path = TaskScheduler;
-			sourceTree = SOURCE_ROOT;
 		};
 		CABD241E217B3DC50056A686 /* ApemodeVulkan */ = {
 			isa = PBXGroup;
@@ -615,9 +612,12 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CA4E253D2205E85F005190FB /* images in Resources */,
 				CA676D0A217A2E8F0098A888 /* Main.storyboard in Resources */,
 				CA676D27217A2E900098A888 /* Assets.xcassets in Resources */,
 				CA676D0D217A2E8F0098A888 /* LaunchScreen.storyboard in Resources */,
+				CA4E253B2205E85F005190FB /* shaders in Resources */,
+				CA4E25392205E85F005190FB /* fonts in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -625,6 +625,9 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				CA4E253E2205E85F005190FB /* images in Resources */,
+				CA4E253A2205E85F005190FB /* fonts in Resources */,
+				CA4E253C2205E85F005190FB /* shaders in Resources */,
 				CA676D28217A2E900098A888 /* Assets.xcassets in Resources */,
 				CA676D1F217A2E900098A888 /* Main.storyboard in Resources */,
 			);
@@ -644,9 +647,7 @@
 				CA4D1472220085C4004A0A2B /* mesh_misc_functions.cc in Sources */,
 				CA4D1494220085C4004A0A2B /* attributes_decoder.cc in Sources */,
 				CA4D149A220085C4004A0A2B /* mesh_attribute_corner_table.cc in Sources */,
-				CA9A4ACA217DC8F2007E4D21 /* MTScheduler.cpp in Sources */,
 				CA4D1486220085C4004A0A2B /* adaptive_rans_bit_decoder.cc in Sources */,
-				CA9A4AC8217DC8F2007E4D21 /* MTFiberContext.cpp in Sources */,
 				CA4D1492220085C4004A0A2B /* sequential_normal_attribute_decoder.cc in Sources */,
 				CA4D144522008409004A0A2B /* attribute_octahedron_transform.cc in Sources */,
 				CABD244D217B43A60056A686 /* ViewerShellVk.cpp in Sources */,
@@ -662,9 +663,7 @@
 				CA676D07217A2E8F0098A888 /* GameViewController.mm in Sources */,
 				CABD2430217B3E030056A686 /* CityHash.Vulkan.cpp in Sources */,
 				CABD2458217B43EB0056A686 /* Scene.cpp in Sources */,
-				CA9A4ACE217DC8F2007E4D21 /* MTDefaultAppInterop.cpp in Sources */,
 				CABD23EC217B0BF20056A686 /* CityHash.cpp in Sources */,
-				CA9A4ACC217DC8F2007E4D21 /* MTThreadContext.cpp in Sources */,
 				CA4D143F22008409004A0A2B /* attribute_quantization_transform.cc in Sources */,
 				CABD243B217B3F450056A686 /* SamplerManager.Vulkan.cpp in Sources */,
 				CA4D144722008409004A0A2B /* geometry_attribute.cc in Sources */,
@@ -734,9 +733,7 @@
 				CA4D1473220085C4004A0A2B /* mesh_misc_functions.cc in Sources */,
 				CA4D1495220085C4004A0A2B /* attributes_decoder.cc in Sources */,
 				CA4D149B220085C4004A0A2B /* mesh_attribute_corner_table.cc in Sources */,
-				CA9A4ACB217DC8F2007E4D21 /* MTScheduler.cpp in Sources */,
 				CA4D1487220085C4004A0A2B /* adaptive_rans_bit_decoder.cc in Sources */,
-				CA9A4AC9217DC8F2007E4D21 /* MTFiberContext.cpp in Sources */,
 				CA4D1493220085C4004A0A2B /* sequential_normal_attribute_decoder.cc in Sources */,
 				CA4D144622008409004A0A2B /* attribute_octahedron_transform.cc in Sources */,
 				CABD244E217B43A60056A686 /* ViewerShellVk.cpp in Sources */,
@@ -752,9 +749,7 @@
 				CA676D1C217A2E900098A888 /* GameViewController.mm in Sources */,
 				CABD2431217B3E030056A686 /* CityHash.Vulkan.cpp in Sources */,
 				CABD2459217B43EB0056A686 /* Scene.cpp in Sources */,
-				CA9A4ACF217DC8F2007E4D21 /* MTDefaultAppInterop.cpp in Sources */,
 				CABD23ED217B0BF20056A686 /* CityHash.cpp in Sources */,
-				CA9A4ACD217DC8F2007E4D21 /* MTThreadContext.cpp in Sources */,
 				CA4D144022008409004A0A2B /* attribute_quantization_transform.cc in Sources */,
 				CABD243C217B3F450056A686 /* SamplerManager.Vulkan.cpp in Sources */,
 				CA4D144822008409004A0A2B /* geometry_attribute.cc in Sources */,
@@ -951,9 +946,14 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = CP4Y4M4WP5;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"_LIBCPP_DISABLE_AVAILABILITY=1",
+					"$(inherited)",
+				);
 				INFOPLIST_FILE = "Viewer iOS/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -989,6 +989,7 @@
 					$SRCROOT/../../dependencies/nuklear,
 					$SRCROOT/../../dependencies/draco/src,
 					"$SRCROOT/../../build_darwin_x86_64_appleclang_xcode/draco-prefix/src/draco-build",
+					"$SRCROOT/../../dependencies/cpp-taskflow",
 				);
 			};
 			name = Debug;
@@ -998,9 +999,14 @@
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = YES;
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_IDENTITY = "iPhone Developer";
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = CP4Y4M4WP5;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"_LIBCPP_DISABLE_AVAILABILITY=1",
+					"$(inherited)",
+				);
 				INFOPLIST_FILE = "Viewer iOS/Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 11.4;
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -1036,6 +1042,7 @@
 					$SRCROOT/../../dependencies/nuklear,
 					$SRCROOT/../../dependencies/draco/src,
 					"$SRCROOT/../../build_darwin_x86_64_appleclang_xcode/draco-prefix/src/draco-build",
+					"$SRCROOT/../../dependencies/cpp-taskflow",
 				);
 				VALIDATE_PRODUCT = YES;
 			};
@@ -1045,13 +1052,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"DEBUG=1",
-					"_XOPEN_SOURCE=600",
-					"_DARWIN_C_SOURCE=1",
+					"_LIBCPP_DISABLE_AVAILABILITY=1",
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = "Viewer macOS/Info.plist";
@@ -1088,6 +1094,7 @@
 					$SRCROOT/../../dependencies/nuklear,
 					$SRCROOT/../../dependencies/draco/src,
 					"$SRCROOT/../../build_darwin_x86_64_appleclang_xcode/draco-prefix/src/draco-build",
+					"$SRCROOT/../../dependencies/cpp-taskflow",
 				);
 			};
 			name = Debug;
@@ -1096,13 +1103,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				CLANG_CXX_LANGUAGE_STANDARD = "c++17";
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_PREPROCESSOR_DEFINITIONS = (
-					"RELEASE=1",
-					"_XOPEN_SOURCE=600",
-					"_DARWIN_C_SOURCE=1",
+					"_LIBCPP_DISABLE_AVAILABILITY=1",
 					"$(inherited)",
 				);
 				INFOPLIST_FILE = "Viewer macOS/Info.plist";
@@ -1139,6 +1145,7 @@
 					$SRCROOT/../../dependencies/nuklear,
 					$SRCROOT/../../dependencies/draco/src,
 					"$SRCROOT/../../build_darwin_x86_64_appleclang_xcode/draco-prefix/src/draco-build",
+					"$SRCROOT/../../dependencies/cpp-taskflow",
 				);
 			};
 			name = Release;

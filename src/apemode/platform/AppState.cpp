@@ -18,7 +18,7 @@ namespace apemode {
     public:
         std::shared_ptr< spdlog::logger > Logger;        /* Prints to console and file */
         argh::parser                      Cmdl;          /* User parameters */
-        MT::TaskScheduler                 TaskScheduler; /* Task scheduler */
+        tf::Taskflow                      Taskflow;      /* Task flow */
 
         ImplementedAppState( int args, const char** argv );
         virtual ~ImplementedAppState( );
@@ -38,9 +38,13 @@ spdlog::logger* apemode::AppState::GetLogger( ) {
 argh::parser* apemode::AppState::GetArgs( ) {
     return &gState->Cmdl;
 }
+//
+//MT::TaskScheduler* apemode::AppState::GetTaskScheduler( ) {
+//    return &gState->TaskScheduler;
+//}
 
-MT::TaskScheduler* apemode::AppState::GetTaskScheduler( ) {
-    return &gState->TaskScheduler;
+tf::Taskflow* apemode::AppState::GetDefaultTaskflow( ) {
+    return &gState->Taskflow;
 }
 
 void apemode::AppState::OnMain( int args, const char** ppArgs ) {
@@ -93,7 +97,7 @@ std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, s
         std::make_shared< spdlog::sinks::simple_file_sink_mt >( logFile.c_str( ) )
 #else
         std::make_shared< spdlog::sinks::stdout_sink_mt >( ),
-        std::make_shared< spdlog::sinks::simple_file_sink_mt >( logFile.c_str( ) )
+        // std::make_shared< spdlog::sinks::simple_file_sink_mt >( logFile.c_str( ) )
 #endif
     };
 
@@ -120,8 +124,8 @@ std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, s
 apemode::ImplementedAppState::ImplementedAppState( int argc, const char** argv )
     : Logger( nullptr )
     , Cmdl( )
-    , TaskScheduler( 3 ) {
-    
+    , Taskflow( 3 )
+{
     Logger = CreateLogger( spdlog::level::trace, ComposeLogFile( ) );
     Logger->info("Input argumets:");
     for (int i = 0; i < argc; ++i) {

@@ -8,7 +8,8 @@
 #endif
 #endif
 
-#include <MTScheduler.h>
+//#include <MTScheduler.h>
+#include <taskflow/taskflow.hpp>
 
 #pragma warning( push )
 #pragma warning( disable: 4244 )
@@ -50,7 +51,7 @@ namespace apemode {
 
         spdlog::logger*    GetLogger( );
         argh::parser*      GetArgs( );
-        MT::TaskScheduler* GetTaskScheduler( );
+        tf::Taskflow*      GetDefaultTaskflow( );
     };
 
     /**

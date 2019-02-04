@@ -51,6 +51,7 @@ namespace vk {
         /* Returns true if initialization succeeded, false otherwise.
          */
         bool Initialize( const apemodevk::PlatformSurface* pPlatformSurface );
+        void SetAssetManager( apemode::platform::IAssetManager* pAssetManager );
 
         /* Returns true if the app is running, false otherwise.
          */
@@ -83,7 +84,7 @@ namespace vk {
         XMFLOAT4 LightColor;
 
         apemode::platform::Stopwatch                              Stopwatch;
-        apemode::platform::shared::AssetManager                   FileAssetManager;
+        apemode::platform::IAssetManager*                         pAssetManager = nullptr;
         apemode::CameraProjectionController                       CamProjController;
         apemode::unique_ptr< apemode::CameraControllerInputBase > pCamInput;
         apemode::unique_ptr< apemode::CameraControllerBase >      pCamController;
@@ -99,13 +100,13 @@ namespace vk {
         apemodevk::unique_ptr< apemodevk::UploadedImage >         IrradianceImg;
         VkSampler                                                 pRadianceCubeMapSampler   = VK_NULL_HANDLE;
         VkSampler                                                 pIrradianceCubeMapSampler = VK_NULL_HANDLE;
-        apemode::unique_ptr< NuklearRendererBase >                pNkRenderer;
-        apemode::unique_ptr< SceneRendererBase >                  pSceneRendererBase;
+        apemode::unique_ptr< apemode::vk::SceneRenderer >         pSceneRenderer;
+        apemode::unique_ptr< apemode::vk::NuklearRenderer >       pNkRenderer;
         apemode::unique_ptr< apemode::vk::Skybox >                pSkybox;
         apemode::unique_ptr< apemode::vk::SkyboxRenderer >        pSkyboxRenderer;
         apemode::unique_ptr< apemode::vk::DebugRenderer >         pDebugRenderer;
 
-        const bool                       bLookAnimation = true;
+        const bool                       bLookAnimation = false;
         bool                             bIsUsingUI     = false;
         LoadedScene                      mLoadedScene;
         apemode::SceneNodeTransformFrame SceneTransformFrame;

@@ -159,6 +159,25 @@ apemode::unique_ptr< apemode::platform::IAssetManager > apemode::platform::Creat
     return apemode::unique_ptr< apemode::platform::IAssetManager >( apemode_new apemode::platform::shared::AssetManager( ) );
 }
 
+
+void apemode::platform::shared::AssetManager::AddAsset( const char* pszAssetName, const char* pszAssetPath ) {
+
+    apemode_memory_allocation_scope;
+
+    /* Lock. */
+    if ( std::atomic_exchange_explicit( &InUse, true, std::memory_order_acquire ) == true ) {
+        return;
+    }
+    
+    auto& file = AssetFiles[ pszAssetName ];
+    file.Asset.SetName( pszAssetName );
+    file.Asset.SetId( pszAssetPath );
+    file.Asset.SetCurrentVersion( 0 );
+    
+    /* Unlock. */
+    std::atomic_exchange( &InUse, false );
+}
+
 void apemode::platform::shared::AssetManager::UpdateAssets( const char*  pszFolderPath,
                                                             const char** ppszFilePatterns,
                                                             size_t       filePatternCount ) {

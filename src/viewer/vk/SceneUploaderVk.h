@@ -17,9 +17,10 @@ public:
     struct MeshDeviceAsset : apemode::detail::SceneDeviceAsset {
         apemodevk::THandle< apemodevk::BufferComposite > hVertexBuffer;
         apemodevk::THandle< apemodevk::BufferComposite > hIndexBuffer;
-        uint32_t                                         VertexCount = 0;
+        VkDeviceSize                                     VertexCount = 0;
+        VkDeviceSize                                     IndexCount = 0;
         uint32_t                                         IndexOffset = 0;
-        VkIndexType                                      IndexType   = VK_INDEX_TYPE_UINT16;
+        VkIndexType                                      eIndexType   = VK_INDEX_TYPE_UINT16;
     };
 
     struct MaterialDeviceAsset : apemode::detail::SceneDeviceAsset {

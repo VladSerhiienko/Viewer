@@ -19,6 +19,11 @@ bool IsCmdOfType( const apemode::platform::IAppShellCommand* pCmd, const char *p
     return pCmd && !strcmp( pCmd->GetType( ), pszType );
 }
 
+void AssertIsValidPtrArgument( const apemode::platform::IAppShellCommandArgument* pCmdArg ) {
+    using T = apemode::platform::IAppShellCommandArgumentValue::ValueType;
+    assert( pCmdArg && pCmdArg->GetValue( ) && pCmdArg->GetValue( )->GetType( ) == T::kValueType_PtrValue );
+}
+
 class ViewerAppShellBridge : public apemode::platform::IAppShell {
 public:
     ViewerAppShellBridge( int args, const char** ppArgs ) {
@@ -38,21 +43,30 @@ public:
 
         if ( IsCmdOfType( pCmd, "Initialize" ) ) {
             auto pSurfaceArg = pCmd->FindArgumentByName( "Surface" );
-            assert( pSurfaceArg && pSurfaceArg->GetValue( ) && pSurfaceArg->GetValue( )->GetType( ) == T::kValueType_PtrValue );
-
+            AssertIsValidPtrArgument( pSurfaceArg );
+           
             auto pAppSurface = (const AppSurface*) pSurfaceArg->GetValue( )->GetPtrValue( );
             apemode::platform::AppShellCommandResult result;
             result.bSucceeded = Initialize( pAppSurface );
             return result;
+        } else if ( IsCmdOfType( pCmd, "SetAssetManager" ) ) {
+            auto pAssetManagerArg = pCmd->FindArgumentByName( "AssetManager" );
+            AssertIsValidPtrArgument( pAssetManagerArg );
+            
+            auto pAssetManager = (IAssetManager*) pAssetManagerArg->GetValue( )->GetPtrValue( );
+            apemode::platform::AppShellCommandResult result;
+            result.bSucceeded = nullptr != pAssetManager;
+            pShell->SetAssetManager( pAssetManager );
+            return result;
         } else if ( IsCmdOfType( pCmd, "Update" ) ) {
             auto pSurfaceArg = pCmd->FindArgumentByName( "Surface" );
             auto pInputArg   = pCmd->FindArgumentByName( "Input" );
-
-            assert( pSurfaceArg && pSurfaceArg->GetValue( ) && pSurfaceArg->GetValue( )->GetType( ) == T::kValueType_PtrValue );
-            assert( pInputArg && pInputArg->GetValue( ) && pInputArg->GetValue( )->GetType( ) == T::kValueType_PtrValue );
+            AssertIsValidPtrArgument( pSurfaceArg );
+            AssertIsValidPtrArgument( pInputArg );
 
             auto pAppSurface = (const AppSurface*) pSurfaceArg->GetValue( )->GetPtrValue( );
             auto pAppInput   = (const AppInput*) pInputArg->GetValue( )->GetPtrValue( );
+            
             apemode::platform::AppShellCommandResult result;
             result.bSucceeded = Update( pAppSurface, pAppInput );
             return result;
