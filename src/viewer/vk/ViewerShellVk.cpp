@@ -99,12 +99,22 @@ ViewerShell::ViewerShell( ) {
     float position = 350;
     float destPosition = 100;
 
+    pModelViewCameraController->Target.x = 0;
+    pModelViewCameraController->Target.y = 0;
+    pModelViewCameraController->Target.z = 0;
+    pModelViewCameraController->TargetDst.x = 0;
+    pModelViewCameraController->TargetDst.y = 28;
+    pModelViewCameraController->TargetDst.z = 0;
+
     pModelViewCameraController->Position.x = position;
     pModelViewCameraController->Position.y = position;
     pModelViewCameraController->Position.z = position;
-    pModelViewCameraController->PositionDst.x = destPosition;
-    pModelViewCameraController->PositionDst.y = destPosition;
-    pModelViewCameraController->PositionDst.z = destPosition;
+//    pModelViewCameraController->PositionDst.x = destPosition;
+//    pModelViewCameraController->PositionDst.y = destPosition;
+//    pModelViewCameraController->PositionDst.z = destPosition;
+    pModelViewCameraController->PositionDst.x = 4;
+    pModelViewCameraController->PositionDst.y = 60;
+    pModelViewCameraController->PositionDst.z = -40;
 
     //*/
 #endif
@@ -370,11 +380,11 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         // const std::string sceneFile = "shared/opel-gt-retopo.fbxp";
         // const std::string sceneFile = "shared/flare-gun.fbxp";
         // const std::string sceneFile = "shared/stesla_8.fbxp";
-        // const std::string sceneFile = "shared/horned_infernal_duke.fbxp";
-        const std::string sceneFile = "shared/horned_infernal_duke_8.fbxp";
+        // const std::string sceneFile = "shared/horned_infernal_duke_8.fbxp";
         // const std::string sceneFile = "shared/0004_16.fbxp";
         // const std::string sceneFile = "shared/0004.fbxp";
         // const std::string sceneFile = "shared/0005.fbxp";
+        const std::string sceneFile = "shared/horned_infernal_duke.fbxp";
         // TGetOption< std::string >( "scene", "" );
         auto pSceneAsset = pAssetManager->Acquire( sceneFile.c_str() );
         mLoadedScene = LoadSceneFromBin( pSceneAsset->GetContentAsBinaryBuffer() );
@@ -567,6 +577,63 @@ bool apemode::viewer::vk::ViewerShell::OnResized( ) {
             return false;
         }
     }
+    
+    for ( uint32_t i = 0; i < false && Frames.size( ); ++i ) {
+        
+        VkImageCreateInfo sceneImgCreateInfo;
+        InitializeStruct( sceneImgCreateInfo );
+        
+        sceneImgCreateInfo.imageType = VK_IMAGE_TYPE_2D;
+        sceneImgCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+        sceneImgCreateInfo.tiling = VK_IMAGE_TILING_OPTIMAL;
+        sceneImgCreateInfo.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        sceneImgCreateInfo.usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        sceneImgCreateInfo.format = Surface.Surface.eColorFormat;
+        sceneImgCreateInfo.extent.width = Surface.Swapchain.ImgExtent.width;
+        sceneImgCreateInfo.extent.height = Surface.Swapchain.ImgExtent.height;
+        sceneImgCreateInfo.extent.depth = 1;
+        sceneImgCreateInfo.arrayLayers = 1;
+        sceneImgCreateInfo.mipLevels = 1;
+
+        for ( uint32_t ii = 0; ii < apemodevk::utils::GetArraySizeU( Frames[i].hSceneImgs ); ++ii ) {
+            if ( ! Frames[ i ].hSceneImgs[ii].Recreate( Surface.Node.hAllocator, sceneImgCreateInfo, allocationCreateInfo ) ) {
+                return false;
+            }
+        }
+
+        VkImageViewCreateInfo sceneImgViewCreateInfo;
+        InitializeStruct( sceneImgViewCreateInfo );
+        sceneImgViewCreateInfo.format                          = sceneImgCreateInfo.format;
+        sceneImgViewCreateInfo.viewType                        = VK_IMAGE_VIEW_TYPE_2D;
+        sceneImgViewCreateInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        sceneImgViewCreateInfo.subresourceRange.baseMipLevel   = 0;
+        sceneImgViewCreateInfo.subresourceRange.levelCount     = 1;
+        sceneImgViewCreateInfo.subresourceRange.baseArrayLayer = 0;
+        sceneImgViewCreateInfo.subresourceRange.layerCount     = 1;
+        
+        for ( uint32_t ii = 0; ii < apemodevk::utils::GetArraySizeU( Frames[i].hSceneImgs ); ++ii ) {
+            depthImgViewCreateInfo.image = Frames[ i ].hSceneImgs[ii].Handle.pImg;
+            
+            if ( ! Frames[ i ].hSceneImgViews[ii].Recreate( Surface.Node, sceneImgViewCreateInfo ) ) {
+                return false;
+            }
+        }
+        
+//        VkFramebufferCreateInfo framebufferCreateInfoDbg;
+//        InitializeStruct( framebufferCreateInfoDbg );
+//        framebufferCreateInfoDbg.renderPass      = hDbgRenderPass;
+//        framebufferCreateInfoDbg.attachmentCount = 2;
+//        framebufferCreateInfoDbg.width           = Surface.Swapchain.ImgExtent.width;
+//        framebufferCreateInfoDbg.height          = Surface.Swapchain.ImgExtent.height;
+//        framebufferCreateInfoDbg.layers          = 1;
+//
+//        for ( uint32_t ii = 0; ii < apemodevk::utils::GetArraySizeU( Frames[i].hSceneImgs ); ++ii ) {
+//            depthImgViewCreateInfo.image = Frames[ i ].hSceneImgs[ii].Handle.pImg;
+//            if ( ! Frames[ i ].hSceneImgViews[ii].Recreate( Surface.Node, sceneImgViewCreateInfo ) ) {
+//                return false;
+//            }
+//        }
+    }
 
     return true;
 }
@@ -679,7 +746,9 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
                             ViewerShell::Frame*                     pCurrentFrame,
                             ViewerShell::Frame*                     pSwapchainFrame,
                             VkCommandBuffer                         pCmdBuffer ) {
-    float clearColor[ 4 ] = {0.5f, 0.5f, 1.0f, 1.0f};
+    float clearColor[ 4 ] = { 0.1f, 0.1f, 0.1f, 1.0f };
+    // float clearColor[ 4 ] = { 1.0f, 1.0f, 1.0f, 1.0f };
+    // float clearColor[ 4 ] = {0.5f, 0.5f, 1.0f, 1.0f};
 
     VkClearValue clearValue[ 2 ];
     clearValue[ 0 ].color.float32[ 0 ]   = clearColor[ 0 ];
@@ -725,7 +794,7 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
     skyboxRenderParams.pNode       = &Surface.Node;
     skyboxRenderParams.FieldOfView = apemodexm::DegreesToRadians( 67 );
 
-    pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
+    // pSkyboxRenderer->Render( pSkybox.get( ), &skyboxRenderParams );
 
     XMMATRIX rootMatrix = XMMatrixRotationY( WorldRotationY );
 
@@ -804,12 +873,12 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
         debugRenderSceneParameters.pTransformFrame    = &mLoadedScene.pScene->BindPoseFrame;
         debugRenderSceneParameters.SceneColorOverride = XMFLOAT4{1, 1, 0, 1};
         debugRenderSceneParameters.LineWidth          = 4;
-        pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
+        // pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
 
         debugRenderSceneParameters.pTransformFrame    = pTransformFrame;
         debugRenderSceneParameters.SceneColorOverride = XMFLOAT4{0, 1, 1, 1};
         debugRenderSceneParameters.LineWidth          = 2;
-        pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
+        // pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
     }
 
     apemode::vk::NuklearRenderer::RenderParameters renderParamsNk;
@@ -823,7 +892,7 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
     renderParamsNk.FrameIndex           = FrameIndex;
     renderParamsNk.pCmdBuffer           = pCmdBuffer;
 
-    pNkRenderer->Render( &renderParamsNk );
+    // pNkRenderer->Render( &renderParamsNk );
     nk_clear( &pNkRenderer->Context );
     // apemodevk::platform::LogFmt(apemodevk::platform::Info, "nk_clear");
 

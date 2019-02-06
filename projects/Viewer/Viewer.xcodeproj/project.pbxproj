@@ -7,110 +7,112 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		CA4D143F22008409004A0A2B /* attribute_quantization_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143A22008409004A0A2B /* attribute_quantization_transform.cc */; };
-		CA4D144022008409004A0A2B /* attribute_quantization_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143A22008409004A0A2B /* attribute_quantization_transform.cc */; };
-		CA4D144122008409004A0A2B /* point_attribute.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143B22008409004A0A2B /* point_attribute.cc */; };
-		CA4D144222008409004A0A2B /* point_attribute.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143B22008409004A0A2B /* point_attribute.cc */; };
-		CA4D144322008409004A0A2B /* attribute_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143C22008409004A0A2B /* attribute_transform.cc */; };
-		CA4D144422008409004A0A2B /* attribute_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143C22008409004A0A2B /* attribute_transform.cc */; };
-		CA4D144522008409004A0A2B /* attribute_octahedron_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143D22008409004A0A2B /* attribute_octahedron_transform.cc */; };
-		CA4D144622008409004A0A2B /* attribute_octahedron_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143D22008409004A0A2B /* attribute_octahedron_transform.cc */; };
-		CA4D144722008409004A0A2B /* geometry_attribute.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143E22008409004A0A2B /* geometry_attribute.cc */; };
-		CA4D144822008409004A0A2B /* geometry_attribute.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143E22008409004A0A2B /* geometry_attribute.cc */; };
-		CA4D1472220085C4004A0A2B /* mesh_misc_functions.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1449220085C0004A0A2B /* mesh_misc_functions.cc */; };
-		CA4D1473220085C4004A0A2B /* mesh_misc_functions.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1449220085C0004A0A2B /* mesh_misc_functions.cc */; };
-		CA4D1474220085C4004A0A2B /* keyframe_animation.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144A220085C0004A0A2B /* keyframe_animation.cc */; };
-		CA4D1475220085C4004A0A2B /* keyframe_animation.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144A220085C0004A0A2B /* keyframe_animation.cc */; };
-		CA4D1476220085C4004A0A2B /* mesh_sequential_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144B220085C0004A0A2B /* mesh_sequential_decoder.cc */; };
-		CA4D1477220085C4004A0A2B /* mesh_sequential_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144B220085C0004A0A2B /* mesh_sequential_decoder.cc */; };
-		CA4D1478220085C4004A0A2B /* point_cloud_sequential_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144C220085C0004A0A2B /* point_cloud_sequential_decoder.cc */; };
-		CA4D1479220085C4004A0A2B /* point_cloud_sequential_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144C220085C0004A0A2B /* point_cloud_sequential_decoder.cc */; };
-		CA4D147A220085C4004A0A2B /* sequential_attribute_decoders_controller.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144D220085C0004A0A2B /* sequential_attribute_decoders_controller.cc */; };
-		CA4D147B220085C4004A0A2B /* sequential_attribute_decoders_controller.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144D220085C0004A0A2B /* sequential_attribute_decoders_controller.cc */; };
-		CA4D147C220085C4004A0A2B /* sequential_integer_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144E220085C0004A0A2B /* sequential_integer_attribute_decoder.cc */; };
-		CA4D147D220085C4004A0A2B /* sequential_integer_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144E220085C0004A0A2B /* sequential_integer_attribute_decoder.cc */; };
-		CA4D147E220085C4004A0A2B /* sequential_quantization_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144F220085C0004A0A2B /* sequential_quantization_attribute_decoder.cc */; };
-		CA4D147F220085C4004A0A2B /* sequential_quantization_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144F220085C0004A0A2B /* sequential_quantization_attribute_decoder.cc */; };
-		CA4D1480220085C4004A0A2B /* mesh.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1450220085C0004A0A2B /* mesh.cc */; };
-		CA4D1481220085C4004A0A2B /* mesh.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1450220085C0004A0A2B /* mesh.cc */; };
-		CA4D1482220085C4004A0A2B /* decode.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1451220085C1004A0A2B /* decode.cc */; };
-		CA4D1483220085C4004A0A2B /* decode.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1451220085C1004A0A2B /* decode.cc */; };
-		CA4D1484220085C4004A0A2B /* direct_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1452220085C1004A0A2B /* direct_bit_decoder.cc */; };
-		CA4D1485220085C4004A0A2B /* direct_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1452220085C1004A0A2B /* direct_bit_decoder.cc */; };
-		CA4D1486220085C4004A0A2B /* adaptive_rans_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1453220085C1004A0A2B /* adaptive_rans_bit_decoder.cc */; };
-		CA4D1487220085C4004A0A2B /* adaptive_rans_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1453220085C1004A0A2B /* adaptive_rans_bit_decoder.cc */; };
-		CA4D1488220085C4004A0A2B /* keyframe_animation_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1454220085C1004A0A2B /* keyframe_animation_decoder.cc */; };
-		CA4D1489220085C4004A0A2B /* keyframe_animation_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1454220085C1004A0A2B /* keyframe_animation_decoder.cc */; };
-		CA4D148A220085C4004A0A2B /* metadata_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1455220085C1004A0A2B /* metadata_decoder.cc */; };
-		CA4D148B220085C4004A0A2B /* metadata_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1455220085C1004A0A2B /* metadata_decoder.cc */; };
-		CA4D148C220085C4004A0A2B /* metadata.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1456220085C1004A0A2B /* metadata.cc */; };
-		CA4D148D220085C4004A0A2B /* metadata.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1456220085C1004A0A2B /* metadata.cc */; };
-		CA4D148E220085C4004A0A2B /* point_cloud.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1457220085C1004A0A2B /* point_cloud.cc */; };
-		CA4D148F220085C4004A0A2B /* point_cloud.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1457220085C1004A0A2B /* point_cloud.cc */; };
-		CA4D1490220085C4004A0A2B /* sequential_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1458220085C1004A0A2B /* sequential_attribute_decoder.cc */; };
-		CA4D1491220085C4004A0A2B /* sequential_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1458220085C1004A0A2B /* sequential_attribute_decoder.cc */; };
-		CA4D1492220085C4004A0A2B /* sequential_normal_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1459220085C1004A0A2B /* sequential_normal_attribute_decoder.cc */; };
-		CA4D1493220085C4004A0A2B /* sequential_normal_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1459220085C1004A0A2B /* sequential_normal_attribute_decoder.cc */; };
-		CA4D1494220085C4004A0A2B /* attributes_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145A220085C1004A0A2B /* attributes_decoder.cc */; };
-		CA4D1495220085C4004A0A2B /* attributes_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145A220085C1004A0A2B /* attributes_decoder.cc */; };
-		CA4D1496220085C4004A0A2B /* geometry_metadata.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145B220085C1004A0A2B /* geometry_metadata.cc */; };
-		CA4D1497220085C4004A0A2B /* geometry_metadata.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145B220085C1004A0A2B /* geometry_metadata.cc */; };
-		CA4D1498220085C4004A0A2B /* point_cloud_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145C220085C1004A0A2B /* point_cloud_decoder.cc */; };
-		CA4D1499220085C4004A0A2B /* point_cloud_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145C220085C1004A0A2B /* point_cloud_decoder.cc */; };
-		CA4D149A220085C4004A0A2B /* mesh_attribute_corner_table.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145D220085C1004A0A2B /* mesh_attribute_corner_table.cc */; };
-		CA4D149B220085C4004A0A2B /* mesh_attribute_corner_table.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145D220085C1004A0A2B /* mesh_attribute_corner_table.cc */; };
-		CA4D149C220085C4004A0A2B /* symbol_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145E220085C2004A0A2B /* symbol_bit_decoder.cc */; };
-		CA4D149D220085C4004A0A2B /* symbol_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145E220085C2004A0A2B /* symbol_bit_decoder.cc */; };
-		CA4D149E220085C4004A0A2B /* bit_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145F220085C2004A0A2B /* bit_utils.cc */; };
-		CA4D149F220085C4004A0A2B /* bit_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145F220085C2004A0A2B /* bit_utils.cc */; };
-		CA4D14A0220085C4004A0A2B /* draco_types.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1460220085C2004A0A2B /* draco_types.cc */; };
-		CA4D14A1220085C4004A0A2B /* draco_types.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1460220085C2004A0A2B /* draco_types.cc */; };
-		CA4D14A2220085C4004A0A2B /* point_cloud_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1461220085C2004A0A2B /* point_cloud_kd_tree_decoder.cc */; };
-		CA4D14A3220085C4004A0A2B /* point_cloud_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1461220085C2004A0A2B /* point_cloud_kd_tree_decoder.cc */; };
-		CA4D14A4220085C4004A0A2B /* mesh_are_equivalent.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1462220085C2004A0A2B /* mesh_are_equivalent.cc */; };
-		CA4D14A5220085C4004A0A2B /* mesh_are_equivalent.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1462220085C2004A0A2B /* mesh_are_equivalent.cc */; };
-		CA4D14A6220085C4004A0A2B /* divide.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1463220085C2004A0A2B /* divide.cc */; };
-		CA4D14A7220085C4004A0A2B /* divide.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1463220085C2004A0A2B /* divide.cc */; };
-		CA4D14A8220085C4004A0A2B /* bounding_box.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1464220085C2004A0A2B /* bounding_box.cc */; };
-		CA4D14A9220085C4004A0A2B /* bounding_box.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1464220085C2004A0A2B /* bounding_box.cc */; };
-		CA4D14AA220085C4004A0A2B /* mesh_edgebreaker_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1465220085C2004A0A2B /* mesh_edgebreaker_decoder.cc */; };
-		CA4D14AB220085C4004A0A2B /* mesh_edgebreaker_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1465220085C2004A0A2B /* mesh_edgebreaker_decoder.cc */; };
-		CA4D14AC220085C4004A0A2B /* options.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1466220085C2004A0A2B /* options.cc */; };
-		CA4D14AD220085C4004A0A2B /* options.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1466220085C2004A0A2B /* options.cc */; };
-		CA4D14AE220085C4004A0A2B /* data_buffer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1467220085C2004A0A2B /* data_buffer.cc */; };
-		CA4D14AF220085C4004A0A2B /* data_buffer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1467220085C2004A0A2B /* data_buffer.cc */; };
-		CA4D14B0220085C4004A0A2B /* cycle_timer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1468220085C3004A0A2B /* cycle_timer.cc */; };
-		CA4D14B1220085C4004A0A2B /* cycle_timer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1468220085C3004A0A2B /* cycle_timer.cc */; };
-		CA4D14B2220085C4004A0A2B /* rans_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1469220085C3004A0A2B /* rans_bit_decoder.cc */; };
-		CA4D14B3220085C4004A0A2B /* rans_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1469220085C3004A0A2B /* rans_bit_decoder.cc */; };
-		CA4D14B4220085C4004A0A2B /* decoder_buffer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146A220085C3004A0A2B /* decoder_buffer.cc */; };
-		CA4D14B5220085C4004A0A2B /* decoder_buffer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146A220085C3004A0A2B /* decoder_buffer.cc */; };
-		CA4D14B6220085C4004A0A2B /* quantization_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146B220085C3004A0A2B /* quantization_utils.cc */; };
-		CA4D14B7220085C4004A0A2B /* quantization_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146B220085C3004A0A2B /* quantization_utils.cc */; };
-		CA4D14B8220085C4004A0A2B /* mesh_stripifier.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146C220085C3004A0A2B /* mesh_stripifier.cc */; };
-		CA4D14B9220085C4004A0A2B /* mesh_stripifier.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146C220085C3004A0A2B /* mesh_stripifier.cc */; };
-		CA4D14BA220085C4004A0A2B /* corner_table.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146D220085C3004A0A2B /* corner_table.cc */; };
-		CA4D14BB220085C4004A0A2B /* corner_table.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146D220085C3004A0A2B /* corner_table.cc */; };
-		CA4D14BC220085C4004A0A2B /* kd_tree_attributes_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146E220085C3004A0A2B /* kd_tree_attributes_decoder.cc */; };
-		CA4D14BD220085C4004A0A2B /* kd_tree_attributes_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146E220085C3004A0A2B /* kd_tree_attributes_decoder.cc */; };
-		CA4D14BE220085C4004A0A2B /* mesh_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146F220085C3004A0A2B /* mesh_decoder.cc */; };
-		CA4D14BF220085C4004A0A2B /* mesh_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146F220085C3004A0A2B /* mesh_decoder.cc */; };
-		CA4D14C0220085C4004A0A2B /* hash_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1470220085C3004A0A2B /* hash_utils.cc */; };
-		CA4D14C1220085C4004A0A2B /* hash_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1470220085C3004A0A2B /* hash_utils.cc */; };
-		CA4D14C2220085C4004A0A2B /* mesh_cleanup.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1471220085C3004A0A2B /* mesh_cleanup.cc */; };
-		CA4D14C3220085C4004A0A2B /* mesh_cleanup.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1471220085C3004A0A2B /* mesh_cleanup.cc */; };
-		CA4D14CB220087D2004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C4220087D1004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc */; };
-		CA4D14CC220087D2004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C4220087D1004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc */; };
-		CA4D14CF220087D2004A0A2B /* integer_points_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C6220087D2004A0A2B /* integer_points_kd_tree_decoder.cc */; };
-		CA4D14D0220087D2004A0A2B /* integer_points_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C6220087D2004A0A2B /* integer_points_kd_tree_decoder.cc */; };
-		CA4D14D1220087D2004A0A2B /* shannon_entropy.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C7220087D2004A0A2B /* shannon_entropy.cc */; };
-		CA4D14D2220087D2004A0A2B /* shannon_entropy.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C7220087D2004A0A2B /* shannon_entropy.cc */; };
-		CA4D14D3220087D2004A0A2B /* float_points_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C8220087D2004A0A2B /* float_points_tree_decoder.cc */; };
-		CA4D14D4220087D2004A0A2B /* float_points_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C8220087D2004A0A2B /* float_points_tree_decoder.cc */; };
-		CA4D14D5220087D2004A0A2B /* symbol_decoding.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C9220087D2004A0A2B /* symbol_decoding.cc */; };
-		CA4D14D6220087D2004A0A2B /* symbol_decoding.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C9220087D2004A0A2B /* symbol_decoding.cc */; };
-		CA4D14D7220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14CA220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc */; };
-		CA4D14D8220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14CA220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc */; };
+		CA1675D0220B0440006672C4 /* SceneUploaderVk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2442217B43A60056A686 /* SceneUploaderVk.cpp */; };
+		CA1675D1220B0441006672C4 /* SceneUploaderVk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2442217B43A60056A686 /* SceneUploaderVk.cpp */; };
+		CA1675D2220B0452006672C4 /* dynamic_integer_points_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C4220087D1004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc */; };
+		CA1675D3220B0452006672C4 /* float_points_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C8220087D2004A0A2B /* float_points_tree_decoder.cc */; };
+		CA1675D4220B0452006672C4 /* integer_points_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C6220087D2004A0A2B /* integer_points_kd_tree_decoder.cc */; };
+		CA1675D5220B0452006672C4 /* mesh_edgebreaker_decoder_impl.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14CA220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc */; };
+		CA1675D6220B0452006672C4 /* shannon_entropy.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C7220087D2004A0A2B /* shannon_entropy.cc */; };
+		CA1675D7220B0452006672C4 /* symbol_decoding.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C9220087D2004A0A2B /* symbol_decoding.cc */; };
+		CA1675D8220B0452006672C4 /* adaptive_rans_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1453220085C1004A0A2B /* adaptive_rans_bit_decoder.cc */; };
+		CA1675D9220B0452006672C4 /* attributes_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145A220085C1004A0A2B /* attributes_decoder.cc */; };
+		CA1675DA220B0452006672C4 /* bit_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145F220085C2004A0A2B /* bit_utils.cc */; };
+		CA1675DB220B0452006672C4 /* bounding_box.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1464220085C2004A0A2B /* bounding_box.cc */; };
+		CA1675DC220B0452006672C4 /* corner_table.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146D220085C3004A0A2B /* corner_table.cc */; };
+		CA1675DD220B0452006672C4 /* cycle_timer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1468220085C3004A0A2B /* cycle_timer.cc */; };
+		CA1675DE220B0452006672C4 /* data_buffer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1467220085C2004A0A2B /* data_buffer.cc */; };
+		CA1675DF220B0452006672C4 /* decode.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1451220085C1004A0A2B /* decode.cc */; };
+		CA1675E0220B0452006672C4 /* decoder_buffer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146A220085C3004A0A2B /* decoder_buffer.cc */; };
+		CA1675E1220B0452006672C4 /* direct_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1452220085C1004A0A2B /* direct_bit_decoder.cc */; };
+		CA1675E2220B0452006672C4 /* divide.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1463220085C2004A0A2B /* divide.cc */; };
+		CA1675E3220B0452006672C4 /* draco_types.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1460220085C2004A0A2B /* draco_types.cc */; };
+		CA1675E4220B0452006672C4 /* geometry_metadata.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145B220085C1004A0A2B /* geometry_metadata.cc */; };
+		CA1675E5220B0452006672C4 /* hash_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1470220085C3004A0A2B /* hash_utils.cc */; };
+		CA1675E6220B0452006672C4 /* kd_tree_attributes_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146E220085C3004A0A2B /* kd_tree_attributes_decoder.cc */; };
+		CA1675E7220B0452006672C4 /* keyframe_animation_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1454220085C1004A0A2B /* keyframe_animation_decoder.cc */; };
+		CA1675E8220B0452006672C4 /* keyframe_animation.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144A220085C0004A0A2B /* keyframe_animation.cc */; };
+		CA1675E9220B0452006672C4 /* mesh_are_equivalent.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1462220085C2004A0A2B /* mesh_are_equivalent.cc */; };
+		CA1675EA220B0452006672C4 /* mesh_attribute_corner_table.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145D220085C1004A0A2B /* mesh_attribute_corner_table.cc */; };
+		CA1675EB220B0452006672C4 /* mesh_cleanup.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1471220085C3004A0A2B /* mesh_cleanup.cc */; };
+		CA1675EC220B0452006672C4 /* mesh_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146F220085C3004A0A2B /* mesh_decoder.cc */; };
+		CA1675ED220B0452006672C4 /* mesh_edgebreaker_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1465220085C2004A0A2B /* mesh_edgebreaker_decoder.cc */; };
+		CA1675EE220B0452006672C4 /* mesh_misc_functions.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1449220085C0004A0A2B /* mesh_misc_functions.cc */; };
+		CA1675EF220B0452006672C4 /* mesh_sequential_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144B220085C0004A0A2B /* mesh_sequential_decoder.cc */; };
+		CA1675F0220B0452006672C4 /* mesh_stripifier.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146C220085C3004A0A2B /* mesh_stripifier.cc */; };
+		CA1675F1220B0452006672C4 /* mesh.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1450220085C0004A0A2B /* mesh.cc */; };
+		CA1675F2220B0452006672C4 /* metadata_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1455220085C1004A0A2B /* metadata_decoder.cc */; };
+		CA1675F3220B0452006672C4 /* metadata.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1456220085C1004A0A2B /* metadata.cc */; };
+		CA1675F4220B0452006672C4 /* options.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1466220085C2004A0A2B /* options.cc */; };
+		CA1675F5220B0452006672C4 /* point_cloud_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145C220085C1004A0A2B /* point_cloud_decoder.cc */; };
+		CA1675F6220B0452006672C4 /* point_cloud_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1461220085C2004A0A2B /* point_cloud_kd_tree_decoder.cc */; };
+		CA1675F7220B0452006672C4 /* point_cloud_sequential_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144C220085C0004A0A2B /* point_cloud_sequential_decoder.cc */; };
+		CA1675F8220B0452006672C4 /* point_cloud.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1457220085C1004A0A2B /* point_cloud.cc */; };
+		CA1675F9220B0452006672C4 /* quantization_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146B220085C3004A0A2B /* quantization_utils.cc */; };
+		CA1675FA220B0452006672C4 /* rans_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1469220085C3004A0A2B /* rans_bit_decoder.cc */; };
+		CA1675FB220B0452006672C4 /* sequential_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1458220085C1004A0A2B /* sequential_attribute_decoder.cc */; };
+		CA1675FC220B0452006672C4 /* sequential_attribute_decoders_controller.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144D220085C0004A0A2B /* sequential_attribute_decoders_controller.cc */; };
+		CA1675FD220B0452006672C4 /* sequential_integer_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144E220085C0004A0A2B /* sequential_integer_attribute_decoder.cc */; };
+		CA1675FE220B0452006672C4 /* sequential_normal_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1459220085C1004A0A2B /* sequential_normal_attribute_decoder.cc */; };
+		CA1675FF220B0452006672C4 /* sequential_quantization_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144F220085C0004A0A2B /* sequential_quantization_attribute_decoder.cc */; };
+		CA167600220B0452006672C4 /* symbol_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145E220085C2004A0A2B /* symbol_bit_decoder.cc */; };
+		CA167601220B0452006672C4 /* attribute_octahedron_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143D22008409004A0A2B /* attribute_octahedron_transform.cc */; };
+		CA167602220B0452006672C4 /* attribute_quantization_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143A22008409004A0A2B /* attribute_quantization_transform.cc */; };
+		CA167603220B0452006672C4 /* attribute_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143C22008409004A0A2B /* attribute_transform.cc */; };
+		CA167604220B0452006672C4 /* geometry_attribute.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143E22008409004A0A2B /* geometry_attribute.cc */; };
+		CA167605220B0452006672C4 /* point_attribute.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143B22008409004A0A2B /* point_attribute.cc */; };
+		CA167606220B0453006672C4 /* dynamic_integer_points_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C4220087D1004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc */; };
+		CA167607220B0453006672C4 /* float_points_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C8220087D2004A0A2B /* float_points_tree_decoder.cc */; };
+		CA167608220B0453006672C4 /* integer_points_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C6220087D2004A0A2B /* integer_points_kd_tree_decoder.cc */; };
+		CA167609220B0453006672C4 /* mesh_edgebreaker_decoder_impl.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14CA220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc */; };
+		CA16760A220B0453006672C4 /* shannon_entropy.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C7220087D2004A0A2B /* shannon_entropy.cc */; };
+		CA16760B220B0453006672C4 /* symbol_decoding.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D14C9220087D2004A0A2B /* symbol_decoding.cc */; };
+		CA16760C220B0453006672C4 /* adaptive_rans_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1453220085C1004A0A2B /* adaptive_rans_bit_decoder.cc */; };
+		CA16760D220B0453006672C4 /* attributes_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145A220085C1004A0A2B /* attributes_decoder.cc */; };
+		CA16760E220B0453006672C4 /* bit_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145F220085C2004A0A2B /* bit_utils.cc */; };
+		CA16760F220B0453006672C4 /* bounding_box.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1464220085C2004A0A2B /* bounding_box.cc */; };
+		CA167610220B0453006672C4 /* corner_table.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146D220085C3004A0A2B /* corner_table.cc */; };
+		CA167611220B0453006672C4 /* cycle_timer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1468220085C3004A0A2B /* cycle_timer.cc */; };
+		CA167612220B0453006672C4 /* data_buffer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1467220085C2004A0A2B /* data_buffer.cc */; };
+		CA167613220B0453006672C4 /* decode.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1451220085C1004A0A2B /* decode.cc */; };
+		CA167614220B0453006672C4 /* decoder_buffer.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146A220085C3004A0A2B /* decoder_buffer.cc */; };
+		CA167615220B0453006672C4 /* direct_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1452220085C1004A0A2B /* direct_bit_decoder.cc */; };
+		CA167616220B0453006672C4 /* divide.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1463220085C2004A0A2B /* divide.cc */; };
+		CA167617220B0453006672C4 /* draco_types.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1460220085C2004A0A2B /* draco_types.cc */; };
+		CA167618220B0453006672C4 /* geometry_metadata.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145B220085C1004A0A2B /* geometry_metadata.cc */; };
+		CA167619220B0453006672C4 /* hash_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1470220085C3004A0A2B /* hash_utils.cc */; };
+		CA16761A220B0453006672C4 /* kd_tree_attributes_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146E220085C3004A0A2B /* kd_tree_attributes_decoder.cc */; };
+		CA16761B220B0453006672C4 /* keyframe_animation_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1454220085C1004A0A2B /* keyframe_animation_decoder.cc */; };
+		CA16761C220B0453006672C4 /* keyframe_animation.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144A220085C0004A0A2B /* keyframe_animation.cc */; };
+		CA16761D220B0453006672C4 /* mesh_are_equivalent.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1462220085C2004A0A2B /* mesh_are_equivalent.cc */; };
+		CA16761E220B0453006672C4 /* mesh_attribute_corner_table.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145D220085C1004A0A2B /* mesh_attribute_corner_table.cc */; };
+		CA16761F220B0453006672C4 /* mesh_cleanup.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1471220085C3004A0A2B /* mesh_cleanup.cc */; };
+		CA167620220B0453006672C4 /* mesh_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146F220085C3004A0A2B /* mesh_decoder.cc */; };
+		CA167621220B0453006672C4 /* mesh_edgebreaker_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1465220085C2004A0A2B /* mesh_edgebreaker_decoder.cc */; };
+		CA167622220B0453006672C4 /* mesh_misc_functions.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1449220085C0004A0A2B /* mesh_misc_functions.cc */; };
+		CA167623220B0453006672C4 /* mesh_sequential_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144B220085C0004A0A2B /* mesh_sequential_decoder.cc */; };
+		CA167624220B0453006672C4 /* mesh_stripifier.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146C220085C3004A0A2B /* mesh_stripifier.cc */; };
+		CA167625220B0453006672C4 /* mesh.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1450220085C0004A0A2B /* mesh.cc */; };
+		CA167626220B0453006672C4 /* metadata_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1455220085C1004A0A2B /* metadata_decoder.cc */; };
+		CA167627220B0453006672C4 /* metadata.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1456220085C1004A0A2B /* metadata.cc */; };
+		CA167628220B0453006672C4 /* options.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1466220085C2004A0A2B /* options.cc */; };
+		CA167629220B0453006672C4 /* point_cloud_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145C220085C1004A0A2B /* point_cloud_decoder.cc */; };
+		CA16762A220B0453006672C4 /* point_cloud_kd_tree_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1461220085C2004A0A2B /* point_cloud_kd_tree_decoder.cc */; };
+		CA16762B220B0453006672C4 /* point_cloud_sequential_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144C220085C0004A0A2B /* point_cloud_sequential_decoder.cc */; };
+		CA16762C220B0453006672C4 /* point_cloud.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1457220085C1004A0A2B /* point_cloud.cc */; };
+		CA16762D220B0453006672C4 /* quantization_utils.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D146B220085C3004A0A2B /* quantization_utils.cc */; };
+		CA16762E220B0453006672C4 /* rans_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1469220085C3004A0A2B /* rans_bit_decoder.cc */; };
+		CA16762F220B0453006672C4 /* sequential_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1458220085C1004A0A2B /* sequential_attribute_decoder.cc */; };
+		CA167630220B0453006672C4 /* sequential_attribute_decoders_controller.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144D220085C0004A0A2B /* sequential_attribute_decoders_controller.cc */; };
+		CA167631220B0453006672C4 /* sequential_integer_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144E220085C0004A0A2B /* sequential_integer_attribute_decoder.cc */; };
+		CA167632220B0453006672C4 /* sequential_normal_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D1459220085C1004A0A2B /* sequential_normal_attribute_decoder.cc */; };
+		CA167633220B0453006672C4 /* sequential_quantization_attribute_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D144F220085C0004A0A2B /* sequential_quantization_attribute_decoder.cc */; };
+		CA167634220B0453006672C4 /* symbol_bit_decoder.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D145E220085C2004A0A2B /* symbol_bit_decoder.cc */; };
+		CA167635220B0453006672C4 /* attribute_octahedron_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143D22008409004A0A2B /* attribute_octahedron_transform.cc */; };
+		CA167636220B0453006672C4 /* attribute_quantization_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143A22008409004A0A2B /* attribute_quantization_transform.cc */; };
+		CA167637220B0453006672C4 /* attribute_transform.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143C22008409004A0A2B /* attribute_transform.cc */; };
+		CA167638220B0453006672C4 /* geometry_attribute.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143E22008409004A0A2B /* geometry_attribute.cc */; };
+		CA167639220B0453006672C4 /* point_attribute.cc in Sources */ = {isa = PBXBuildFile; fileRef = CA4D143B22008409004A0A2B /* point_attribute.cc */; };
 		CA4E25392205E85F005190FB /* fonts in Resources */ = {isa = PBXBuildFile; fileRef = CA4E25362205E85F005190FB /* fonts */; };
 		CA4E253A2205E85F005190FB /* fonts in Resources */ = {isa = PBXBuildFile; fileRef = CA4E25362205E85F005190FB /* fonts */; };
 		CA4E253B2205E85F005190FB /* shaders in Resources */ = {isa = PBXBuildFile; fileRef = CA4E25372205E85F005190FB /* shaders */; };
@@ -175,8 +177,6 @@
 		CABD2448217B43A60056A686 /* DebugRendererVk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2440217B43A60056A686 /* DebugRendererVk.cpp */; };
 		CABD2449217B43A60056A686 /* SceneRendererVk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2441217B43A60056A686 /* SceneRendererVk.cpp */; };
 		CABD244A217B43A60056A686 /* SceneRendererVk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2441217B43A60056A686 /* SceneRendererVk.cpp */; };
-		CABD244B217B43A60056A686 /* SceneUploaderVk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2442217B43A60056A686 /* SceneUploaderVk.cpp */; };
-		CABD244C217B43A60056A686 /* SceneUploaderVk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2442217B43A60056A686 /* SceneUploaderVk.cpp */; };
 		CABD244D217B43A60056A686 /* ViewerShellVk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2443217B43A60056A686 /* ViewerShellVk.cpp */; };
 		CABD244E217B43A60056A686 /* ViewerShellVk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2443217B43A60056A686 /* ViewerShellVk.cpp */; };
 		CABD244F217B43A60056A686 /* SkyboxRendererVk.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2444217B43A60056A686 /* SkyboxRendererVk.cpp */; };
@@ -641,84 +641,84 @@
 			buildActionMask = 2147483647;
 			files = (
 				CABD2447217B43A60056A686 /* DebugRendererVk.cpp in Sources */,
-				CA4D14A8220085C4004A0A2B /* bounding_box.cc in Sources */,
-				CA4D14A4220085C4004A0A2B /* mesh_are_equivalent.cc in Sources */,
-				CA4D144322008409004A0A2B /* attribute_transform.cc in Sources */,
-				CA4D1472220085C4004A0A2B /* mesh_misc_functions.cc in Sources */,
-				CA4D1494220085C4004A0A2B /* attributes_decoder.cc in Sources */,
-				CA4D149A220085C4004A0A2B /* mesh_attribute_corner_table.cc in Sources */,
-				CA4D1486220085C4004A0A2B /* adaptive_rans_bit_decoder.cc in Sources */,
-				CA4D1492220085C4004A0A2B /* sequential_normal_attribute_decoder.cc in Sources */,
-				CA4D144522008409004A0A2B /* attribute_octahedron_transform.cc in Sources */,
 				CABD244D217B43A60056A686 /* ViewerShellVk.cpp in Sources */,
-				CA4D1482220085C4004A0A2B /* decode.cc in Sources */,
-				CA4D148A220085C4004A0A2B /* metadata_decoder.cc in Sources */,
-				CA4D14CB220087D2004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc in Sources */,
-				CABD244B217B43A60056A686 /* SceneUploaderVk.cpp in Sources */,
-				CA4D148E220085C4004A0A2B /* point_cloud.cc in Sources */,
-				CA4D1496220085C4004A0A2B /* geometry_metadata.cc in Sources */,
-				CA4D14AE220085C4004A0A2B /* data_buffer.cc in Sources */,
-				CA4D147E220085C4004A0A2B /* sequential_quantization_attribute_decoder.cc in Sources */,
+				CA1675D0220B0440006672C4 /* SceneUploaderVk.cpp in Sources */,
+				CA167633220B0453006672C4 /* sequential_quantization_attribute_decoder.cc in Sources */,
+				CA167615220B0453006672C4 /* direct_bit_decoder.cc in Sources */,
 				CABD2439217B3F450056A686 /* ImageUploader.Vulkan.cpp in Sources */,
 				CA676D07217A2E8F0098A888 /* GameViewController.mm in Sources */,
+				CA167607220B0453006672C4 /* float_points_tree_decoder.cc in Sources */,
 				CABD2430217B3E030056A686 /* CityHash.Vulkan.cpp in Sources */,
+				CA167635220B0453006672C4 /* attribute_octahedron_transform.cc in Sources */,
+				CA167628220B0453006672C4 /* options.cc in Sources */,
+				CA167608220B0453006672C4 /* integer_points_kd_tree_decoder.cc in Sources */,
+				CA16762B220B0453006672C4 /* point_cloud_sequential_decoder.cc in Sources */,
+				CA167620220B0453006672C4 /* mesh_decoder.cc in Sources */,
+				CA167630220B0453006672C4 /* sequential_attribute_decoders_controller.cc in Sources */,
+				CA167634220B0453006672C4 /* symbol_bit_decoder.cc in Sources */,
+				CA167632220B0453006672C4 /* sequential_normal_attribute_decoder.cc in Sources */,
+				CA167629220B0453006672C4 /* point_cloud_decoder.cc in Sources */,
 				CABD2458217B43EB0056A686 /* Scene.cpp in Sources */,
+				CA16760F220B0453006672C4 /* bounding_box.cc in Sources */,
 				CABD23EC217B0BF20056A686 /* CityHash.cpp in Sources */,
-				CA4D143F22008409004A0A2B /* attribute_quantization_transform.cc in Sources */,
+				CA167626220B0453006672C4 /* metadata_decoder.cc in Sources */,
+				CA16761C220B0453006672C4 /* keyframe_animation.cc in Sources */,
 				CABD243B217B3F450056A686 /* SamplerManager.Vulkan.cpp in Sources */,
-				CA4D144722008409004A0A2B /* geometry_attribute.cc in Sources */,
-				CA4D14B2220085C4004A0A2B /* rans_bit_decoder.cc in Sources */,
-				CA4D144122008409004A0A2B /* point_attribute.cc in Sources */,
+				CA167619220B0453006672C4 /* hash_utils.cc in Sources */,
+				CA16762C220B0453006672C4 /* point_cloud.cc in Sources */,
+				CA16760E220B0453006672C4 /* bit_utils.cc in Sources */,
+				CA16760A220B0453006672C4 /* shannon_entropy.cc in Sources */,
+				CA167639220B0453006672C4 /* point_attribute.cc in Sources */,
+				CA167637220B0453006672C4 /* attribute_transform.cc in Sources */,
+				CA167636220B0453006672C4 /* attribute_quantization_transform.cc in Sources */,
+				CA167622220B0453006672C4 /* mesh_misc_functions.cc in Sources */,
+				CA16761D220B0453006672C4 /* mesh_are_equivalent.cc in Sources */,
+				CA167613220B0453006672C4 /* decode.cc in Sources */,
+				CA16761B220B0453006672C4 /* keyframe_animation_decoder.cc in Sources */,
 				CA9A4ABD217DC752007E4D21 /* NuklearRendererBase.cpp in Sources */,
-				CA4D14A2220085C4004A0A2B /* point_cloud_kd_tree_decoder.cc in Sources */,
-				CA4D1478220085C4004A0A2B /* point_cloud_sequential_decoder.cc in Sources */,
-				CA4D14D5220087D2004A0A2B /* symbol_decoding.cc in Sources */,
-				CA4D1490220085C4004A0A2B /* sequential_attribute_decoder.cc in Sources */,
-				CA4D149E220085C4004A0A2B /* bit_utils.cc in Sources */,
+				CA16761E220B0453006672C4 /* mesh_attribute_corner_table.cc in Sources */,
+				CA167614220B0453006672C4 /* decoder_buffer.cc in Sources */,
+				CA16762E220B0453006672C4 /* rans_bit_decoder.cc in Sources */,
+				CA167624220B0453006672C4 /* mesh_stripifier.cc in Sources */,
+				CA167625220B0453006672C4 /* mesh.cc in Sources */,
 				CA9A2CAB21A811DE005FE302 /* ScenePrintPretty.cpp in Sources */,
-				CA4D148C220085C4004A0A2B /* metadata.cc in Sources */,
 				CA676D10217A2E900098A888 /* main.m in Sources */,
+				CA167609220B0453006672C4 /* mesh_edgebreaker_decoder_impl.cc in Sources */,
 				CABD242C217B3E030056A686 /* GraphicsManager.Vulkan.cpp in Sources */,
 				CABD2445217B43A60056A686 /* NuklearRendererVk.cpp in Sources */,
-				CA4D14D1220087D2004A0A2B /* shannon_entropy.cc in Sources */,
 				CABD23EA217B0BF20056A686 /* AppState.cpp in Sources */,
-				CA4D14B8220085C4004A0A2B /* mesh_stripifier.cc in Sources */,
+				CA16762A220B0453006672C4 /* point_cloud_kd_tree_decoder.cc in Sources */,
+				CA167611220B0453006672C4 /* cycle_timer.cc in Sources */,
 				CA676D04217A2E8F0098A888 /* AppDelegate.m in Sources */,
-				CA4D14B4220085C4004A0A2B /* decoder_buffer.cc in Sources */,
 				CA9A4ABF217DC752007E4D21 /* ViewerAppShellFactory.cpp in Sources */,
 				CA9A4AD1217DC94F007E4D21 /* QueuePools.Vulkan.cpp in Sources */,
-				CA4D1498220085C4004A0A2B /* point_cloud_decoder.cc in Sources */,
-				CA4D1474220085C4004A0A2B /* keyframe_animation.cc in Sources */,
 				CABD2428217B3E030056A686 /* DescriptorPool.Vulkan.cpp in Sources */,
+				CA16762D220B0453006672C4 /* quantization_utils.cc in Sources */,
 				CABD2426217B3E030056A686 /* Swapchain.Vulkan.cpp in Sources */,
-				CA4D1476220085C4004A0A2B /* mesh_sequential_decoder.cc in Sources */,
-				CA4D147A220085C4004A0A2B /* sequential_attribute_decoders_controller.cc in Sources */,
 				CABD2449217B43A60056A686 /* SceneRendererVk.cpp in Sources */,
 				CABD242E217B3E030056A686 /* AssetManager.cpp in Sources */,
-				CA4D149C220085C4004A0A2B /* symbol_bit_decoder.cc in Sources */,
-				CA4D14BA220085C4004A0A2B /* corner_table.cc in Sources */,
-				CA4D14A6220085C4004A0A2B /* divide.cc in Sources */,
+				CA16760C220B0453006672C4 /* adaptive_rans_bit_decoder.cc in Sources */,
 				CABD2432217B3E030056A686 /* GraphicsDevice.Vulkan.cpp in Sources */,
-				CA4D1484220085C4004A0A2B /* direct_bit_decoder.cc in Sources */,
-				CA4D1488220085C4004A0A2B /* keyframe_animation_decoder.cc in Sources */,
+				CA167631220B0453006672C4 /* sequential_integer_attribute_decoder.cc in Sources */,
+				CA167618220B0453006672C4 /* geometry_metadata.cc in Sources */,
 				CABD23EF217B0F180056A686 /* MemoryManager.cpp in Sources */,
-				CA4D14D7220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc in Sources */,
-				CA4D14AC220085C4004A0A2B /* options.cc in Sources */,
+				CA16760B220B0453006672C4 /* symbol_decoding.cc in Sources */,
 				CABD242A217B3E030056A686 /* BufferPools.Vulkan.cpp in Sources */,
-				CA4D1480220085C4004A0A2B /* mesh.cc in Sources */,
-				CA4D14BE220085C4004A0A2B /* mesh_decoder.cc in Sources */,
-				CA4D14B0220085C4004A0A2B /* cycle_timer.cc in Sources */,
-				CA4D14C2220085C4004A0A2B /* mesh_cleanup.cc in Sources */,
-				CA4D14D3220087D2004A0A2B /* float_points_tree_decoder.cc in Sources */,
-				CA4D14CF220087D2004A0A2B /* integer_points_kd_tree_decoder.cc in Sources */,
+				CA16760D220B0453006672C4 /* attributes_decoder.cc in Sources */,
+				CA167606220B0453006672C4 /* dynamic_integer_points_kd_tree_decoder.cc in Sources */,
+				CA167610220B0453006672C4 /* corner_table.cc in Sources */,
+				CA167621220B0453006672C4 /* mesh_edgebreaker_decoder.cc in Sources */,
+				CA16762F220B0453006672C4 /* sequential_attribute_decoder.cc in Sources */,
+				CA16761A220B0453006672C4 /* kd_tree_attributes_decoder.cc in Sources */,
+				CA167612220B0453006672C4 /* data_buffer.cc in Sources */,
 				CABD244F217B43A60056A686 /* SkyboxRendererVk.cpp in Sources */,
-				CA4D14C0220085C4004A0A2B /* hash_utils.cc in Sources */,
-				CA4D14B6220085C4004A0A2B /* quantization_utils.cc in Sources */,
+				CA16761F220B0453006672C4 /* mesh_cleanup.cc in Sources */,
+				CA167616220B0453006672C4 /* divide.cc in Sources */,
+				CA167627220B0453006672C4 /* metadata.cc in Sources */,
 				CABD2437217B3F450056A686 /* AppSurface.Vulkan.cpp in Sources */,
-				CA4D14AA220085C4004A0A2B /* mesh_edgebreaker_decoder.cc in Sources */,
-				CA4D147C220085C4004A0A2B /* sequential_integer_attribute_decoder.cc in Sources */,
-				CA4D14BC220085C4004A0A2B /* kd_tree_attributes_decoder.cc in Sources */,
-				CA4D14A0220085C4004A0A2B /* draco_types.cc in Sources */,
+				CA167623220B0453006672C4 /* mesh_sequential_decoder.cc in Sources */,
+				CA167638220B0453006672C4 /* geometry_attribute.cc in Sources */,
+				CA167617220B0453006672C4 /* draco_types.cc in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -727,84 +727,84 @@
 			buildActionMask = 2147483647;
 			files = (
 				CABD2448217B43A60056A686 /* DebugRendererVk.cpp in Sources */,
-				CA4D14A9220085C4004A0A2B /* bounding_box.cc in Sources */,
-				CA4D14A5220085C4004A0A2B /* mesh_are_equivalent.cc in Sources */,
-				CA4D144422008409004A0A2B /* attribute_transform.cc in Sources */,
-				CA4D1473220085C4004A0A2B /* mesh_misc_functions.cc in Sources */,
-				CA4D1495220085C4004A0A2B /* attributes_decoder.cc in Sources */,
-				CA4D149B220085C4004A0A2B /* mesh_attribute_corner_table.cc in Sources */,
-				CA4D1487220085C4004A0A2B /* adaptive_rans_bit_decoder.cc in Sources */,
-				CA4D1493220085C4004A0A2B /* sequential_normal_attribute_decoder.cc in Sources */,
-				CA4D144622008409004A0A2B /* attribute_octahedron_transform.cc in Sources */,
 				CABD244E217B43A60056A686 /* ViewerShellVk.cpp in Sources */,
-				CA4D1483220085C4004A0A2B /* decode.cc in Sources */,
-				CA4D148B220085C4004A0A2B /* metadata_decoder.cc in Sources */,
-				CA4D14CC220087D2004A0A2B /* dynamic_integer_points_kd_tree_decoder.cc in Sources */,
-				CABD244C217B43A60056A686 /* SceneUploaderVk.cpp in Sources */,
-				CA4D148F220085C4004A0A2B /* point_cloud.cc in Sources */,
-				CA4D1497220085C4004A0A2B /* geometry_metadata.cc in Sources */,
-				CA4D14AF220085C4004A0A2B /* data_buffer.cc in Sources */,
-				CA4D147F220085C4004A0A2B /* sequential_quantization_attribute_decoder.cc in Sources */,
+				CA1675D1220B0441006672C4 /* SceneUploaderVk.cpp in Sources */,
+				CA1675FF220B0452006672C4 /* sequential_quantization_attribute_decoder.cc in Sources */,
+				CA1675E1220B0452006672C4 /* direct_bit_decoder.cc in Sources */,
 				CABD243A217B3F450056A686 /* ImageUploader.Vulkan.cpp in Sources */,
 				CA676D1C217A2E900098A888 /* GameViewController.mm in Sources */,
+				CA1675D3220B0452006672C4 /* float_points_tree_decoder.cc in Sources */,
 				CABD2431217B3E030056A686 /* CityHash.Vulkan.cpp in Sources */,
+				CA167601220B0452006672C4 /* attribute_octahedron_transform.cc in Sources */,
+				CA1675F4220B0452006672C4 /* options.cc in Sources */,
+				CA1675D4220B0452006672C4 /* integer_points_kd_tree_decoder.cc in Sources */,
+				CA1675F7220B0452006672C4 /* point_cloud_sequential_decoder.cc in Sources */,
+				CA1675EC220B0452006672C4 /* mesh_decoder.cc in Sources */,
+				CA1675FC220B0452006672C4 /* sequential_attribute_decoders_controller.cc in Sources */,
+				CA167600220B0452006672C4 /* symbol_bit_decoder.cc in Sources */,
+				CA1675FE220B0452006672C4 /* sequential_normal_attribute_decoder.cc in Sources */,
+				CA1675F5220B0452006672C4 /* point_cloud_decoder.cc in Sources */,
 				CABD2459217B43EB0056A686 /* Scene.cpp in Sources */,
+				CA1675DB220B0452006672C4 /* bounding_box.cc in Sources */,
 				CABD23ED217B0BF20056A686 /* CityHash.cpp in Sources */,
-				CA4D144022008409004A0A2B /* attribute_quantization_transform.cc in Sources */,
+				CA1675F2220B0452006672C4 /* metadata_decoder.cc in Sources */,
+				CA1675E8220B0452006672C4 /* keyframe_animation.cc in Sources */,
 				CABD243C217B3F450056A686 /* SamplerManager.Vulkan.cpp in Sources */,
-				CA4D144822008409004A0A2B /* geometry_attribute.cc in Sources */,
-				CA4D14B3220085C4004A0A2B /* rans_bit_decoder.cc in Sources */,
-				CA4D144222008409004A0A2B /* point_attribute.cc in Sources */,
+				CA1675E5220B0452006672C4 /* hash_utils.cc in Sources */,
+				CA1675F8220B0452006672C4 /* point_cloud.cc in Sources */,
+				CA1675DA220B0452006672C4 /* bit_utils.cc in Sources */,
+				CA1675D6220B0452006672C4 /* shannon_entropy.cc in Sources */,
+				CA167605220B0452006672C4 /* point_attribute.cc in Sources */,
+				CA167603220B0452006672C4 /* attribute_transform.cc in Sources */,
+				CA167602220B0452006672C4 /* attribute_quantization_transform.cc in Sources */,
+				CA1675EE220B0452006672C4 /* mesh_misc_functions.cc in Sources */,
+				CA1675E9220B0452006672C4 /* mesh_are_equivalent.cc in Sources */,
+				CA1675DF220B0452006672C4 /* decode.cc in Sources */,
+				CA1675E7220B0452006672C4 /* keyframe_animation_decoder.cc in Sources */,
 				CA9A4ABE217DC752007E4D21 /* NuklearRendererBase.cpp in Sources */,
-				CA4D14A3220085C4004A0A2B /* point_cloud_kd_tree_decoder.cc in Sources */,
-				CA4D1479220085C4004A0A2B /* point_cloud_sequential_decoder.cc in Sources */,
-				CA4D14D6220087D2004A0A2B /* symbol_decoding.cc in Sources */,
-				CA4D1491220085C4004A0A2B /* sequential_attribute_decoder.cc in Sources */,
-				CA4D149F220085C4004A0A2B /* bit_utils.cc in Sources */,
+				CA1675EA220B0452006672C4 /* mesh_attribute_corner_table.cc in Sources */,
+				CA1675E0220B0452006672C4 /* decoder_buffer.cc in Sources */,
+				CA1675FA220B0452006672C4 /* rans_bit_decoder.cc in Sources */,
+				CA1675F0220B0452006672C4 /* mesh_stripifier.cc in Sources */,
+				CA1675F1220B0452006672C4 /* mesh.cc in Sources */,
 				CA9A2CAC21A812F0005FE302 /* ScenePrintPretty.cpp in Sources */,
-				CA4D148D220085C4004A0A2B /* metadata.cc in Sources */,
 				CA676D22217A2E900098A888 /* main.m in Sources */,
+				CA1675D5220B0452006672C4 /* mesh_edgebreaker_decoder_impl.cc in Sources */,
 				CABD242D217B3E030056A686 /* GraphicsManager.Vulkan.cpp in Sources */,
 				CABD2446217B43A60056A686 /* NuklearRendererVk.cpp in Sources */,
-				CA4D14D2220087D2004A0A2B /* shannon_entropy.cc in Sources */,
 				CABD23EB217B0BF20056A686 /* AppState.cpp in Sources */,
-				CA4D14B9220085C4004A0A2B /* mesh_stripifier.cc in Sources */,
+				CA1675F6220B0452006672C4 /* point_cloud_kd_tree_decoder.cc in Sources */,
+				CA1675DD220B0452006672C4 /* cycle_timer.cc in Sources */,
 				CA676D19217A2E900098A888 /* AppDelegate.m in Sources */,
-				CA4D14B5220085C4004A0A2B /* decoder_buffer.cc in Sources */,
 				CA9A4AC0217DC752007E4D21 /* ViewerAppShellFactory.cpp in Sources */,
 				CA9A4AD2217DC94F007E4D21 /* QueuePools.Vulkan.cpp in Sources */,
-				CA4D1499220085C4004A0A2B /* point_cloud_decoder.cc in Sources */,
-				CA4D1475220085C4004A0A2B /* keyframe_animation.cc in Sources */,
 				CABD2429217B3E030056A686 /* DescriptorPool.Vulkan.cpp in Sources */,
+				CA1675F9220B0452006672C4 /* quantization_utils.cc in Sources */,
 				CABD2427217B3E030056A686 /* Swapchain.Vulkan.cpp in Sources */,
-				CA4D1477220085C4004A0A2B /* mesh_sequential_decoder.cc in Sources */,
-				CA4D147B220085C4004A0A2B /* sequential_attribute_decoders_controller.cc in Sources */,
 				CABD244A217B43A60056A686 /* SceneRendererVk.cpp in Sources */,
 				CABD242F217B3E030056A686 /* AssetManager.cpp in Sources */,
-				CA4D149D220085C4004A0A2B /* symbol_bit_decoder.cc in Sources */,
-				CA4D14BB220085C4004A0A2B /* corner_table.cc in Sources */,
-				CA4D14A7220085C4004A0A2B /* divide.cc in Sources */,
+				CA1675D8220B0452006672C4 /* adaptive_rans_bit_decoder.cc in Sources */,
 				CABD2433217B3E030056A686 /* GraphicsDevice.Vulkan.cpp in Sources */,
-				CA4D1485220085C4004A0A2B /* direct_bit_decoder.cc in Sources */,
-				CA4D1489220085C4004A0A2B /* keyframe_animation_decoder.cc in Sources */,
+				CA1675FD220B0452006672C4 /* sequential_integer_attribute_decoder.cc in Sources */,
+				CA1675E4220B0452006672C4 /* geometry_metadata.cc in Sources */,
 				CABD23F0217B0F180056A686 /* MemoryManager.cpp in Sources */,
-				CA4D14D8220087D2004A0A2B /* mesh_edgebreaker_decoder_impl.cc in Sources */,
-				CA4D14AD220085C4004A0A2B /* options.cc in Sources */,
+				CA1675D7220B0452006672C4 /* symbol_decoding.cc in Sources */,
 				CABD242B217B3E030056A686 /* BufferPools.Vulkan.cpp in Sources */,
-				CA4D1481220085C4004A0A2B /* mesh.cc in Sources */,
-				CA4D14BF220085C4004A0A2B /* mesh_decoder.cc in Sources */,
-				CA4D14B1220085C4004A0A2B /* cycle_timer.cc in Sources */,
-				CA4D14C3220085C4004A0A2B /* mesh_cleanup.cc in Sources */,
-				CA4D14D4220087D2004A0A2B /* float_points_tree_decoder.cc in Sources */,
-				CA4D14D0220087D2004A0A2B /* integer_points_kd_tree_decoder.cc in Sources */,
+				CA1675D9220B0452006672C4 /* attributes_decoder.cc in Sources */,
+				CA1675D2220B0452006672C4 /* dynamic_integer_points_kd_tree_decoder.cc in Sources */,
+				CA1675DC220B0452006672C4 /* corner_table.cc in Sources */,
+				CA1675ED220B0452006672C4 /* mesh_edgebreaker_decoder.cc in Sources */,
+				CA1675FB220B0452006672C4 /* sequential_attribute_decoder.cc in Sources */,
+				CA1675E6220B0452006672C4 /* kd_tree_attributes_decoder.cc in Sources */,
+				CA1675DE220B0452006672C4 /* data_buffer.cc in Sources */,
 				CABD2450217B43A60056A686 /* SkyboxRendererVk.cpp in Sources */,
-				CA4D14C1220085C4004A0A2B /* hash_utils.cc in Sources */,
-				CA4D14B7220085C4004A0A2B /* quantization_utils.cc in Sources */,
+				CA1675EB220B0452006672C4 /* mesh_cleanup.cc in Sources */,
+				CA1675E2220B0452006672C4 /* divide.cc in Sources */,
+				CA1675F3220B0452006672C4 /* metadata.cc in Sources */,
 				CABD2438217B3F450056A686 /* AppSurface.Vulkan.cpp in Sources */,
-				CA4D14AB220085C4004A0A2B /* mesh_edgebreaker_decoder.cc in Sources */,
-				CA4D147D220085C4004A0A2B /* sequential_integer_attribute_decoder.cc in Sources */,
-				CA4D14BD220085C4004A0A2B /* kd_tree_attributes_decoder.cc in Sources */,
-				CA4D14A1220085C4004A0A2B /* draco_types.cc in Sources */,
+				CA1675EF220B0452006672C4 /* mesh_sequential_decoder.cc in Sources */,
+				CA167604220B0452006672C4 /* geometry_attribute.cc in Sources */,
+				CA1675E3220B0452006672C4 /* draco_types.cc in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

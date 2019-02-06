@@ -156,7 +156,9 @@ std::vector< const char* > getProcessArguments( ) {
     
     app.assetManager.UpdateAssets("/Users/vlad.serhiienko/Projects/Home/Viewer/assets/**", nullptr, 0);
     app.assetManager.AddAsset( "shared/stesla.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_8/stesla.fbxp" );
-    app.assetManager.AddAsset( "shared/horned_infernal_duke.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_8/horned_infernal_duke.fbxp" );
+    app.assetManager.AddAsset( "shared/horned_infernal_duke.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/horned_infernal_duke.fbxp" );
+    app.assetManager.AddAsset( "shared/horned_infernal_duke_8.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_8/horned_infernal_duke.fbxp" );
+    app.assetManager.AddAsset( "shared/horned_infernal_duke_16.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_16/horned_infernal_duke.fbxp" );
     app.assetManager.AddAsset( "shared/0004.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_16/0004.fbxp" );
     app.assetManager.AddAsset( "shared/0005.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_16/0005.fbxp" );
     

@@ -11,7 +11,10 @@
 #include <apemode/platform/MathInc.h>
 #include <apemode/platform/ArrayUtils.h>
 
+//#define APEMODEVK_NO_GOOGLE_DRACO
+#ifndef APEMODEVK_NO_GOOGLE_DRACO
 #include <draco/compression/decode.h>
+#endif
 
 #include <cstdlib>
 
@@ -171,20 +174,6 @@ bool ShouldGenerateMipMapsForPropertyName(  const char* pszTexturePropName ) {
     return false;
 }
 
-struct DecompressedMeshInfo {
-    apemodevk::vector< uint8_t > DecompressedVertexBuffer = {};
-    apemodevk::vector< uint8_t > DecompressedIndexBuffer  = {};
-    VkDeviceSize VertexCount = 0;
-    VkDeviceSize IndexCount = 0;
-    VkIndexType eIndexType = VK_INDEX_TYPE_MAX_ENUM;
-    
-    bool IsUsed( ) const {
-        return eIndexType != VK_INDEX_TYPE_MAX_ENUM && VertexCount && IndexCount &&
-               !DecompressedVertexBuffer.empty() &&
-               !DecompressedIndexBuffer.empty() ;
-    }
-};
-
 struct SourceSubmeshInfo {
     const apemodefb::MeshFb*    pSrcMesh    = nullptr;
     const apemodefb::SubmeshFb* pSrcSubmesh = nullptr;
@@ -235,6 +224,25 @@ SourceSubmeshInfo GetSrcSubmesh( apemode::SceneMesh&                            
     return {};
 }
 
+
+} // namespace
+
+namespace {
+struct DecompressedMeshInfo {
+    apemodevk::vector< uint8_t > DecompressedVertexBuffer = {};
+    apemodevk::vector< uint8_t > DecompressedIndexBuffer  = {};
+    VkDeviceSize VertexCount = 0;
+    VkDeviceSize IndexCount = 0;
+    VkIndexType eIndexType = VK_INDEX_TYPE_MAX_ENUM;
+    
+    bool IsUsed( ) const {
+        return eIndexType != VK_INDEX_TYPE_MAX_ENUM && VertexCount && IndexCount &&
+               !DecompressedVertexBuffer.empty() &&
+               !DecompressedIndexBuffer.empty() ;
+    }
+};
+
+#ifndef APEMODEVK_NO_GOOGLE_DRACO
 template < typename TIndex >
 void TPopulateIndices( const draco::Mesh& decodedMesh, TIndex* pDstIndices ) {
     const uint32_t faceCount = decodedMesh.num_faces( );
@@ -362,8 +370,6 @@ void TPopulateVertices< apemodefb::StaticVertexFb >( const draco::Mesh&    decod
     }
 }
 
-} // namespace
-
 DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubmeshInfo& srcSubmesh ) {
     using namespace draco;
     using namespace apemodefb;
@@ -443,6 +449,9 @@ DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubme
 
     return decompressedMeshInfo;
 }
+#endif
+
+}
 
 struct InitializedMeshInfo {
     eastl::optional< DecompressedMeshInfo >      OptionalDecompressedMesh = {};
@@ -490,6 +499,7 @@ InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                         
     InitializeStruct( indexAllocationCreateInfo );
 
     if ( srcSubmesh.IsCompressedMesh( ) ) {
+        #ifndef APEMODEVK_NO_GOOGLE_DRACO
         DecompressedMeshInfo decompressedMeshInfo = DecompressMesh( mesh, srcSubmesh );
 
         assert( !decompressedMeshInfo.DecompressedVertexBuffer.empty( ) );
@@ -513,6 +523,13 @@ InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                         
         
         pScene->Subsets[ mesh.BaseSubset ].IndexCount = (uint32_t)initializedMeshInfo.IndexCount;
         assert( mesh.SubsetCount == 1 );
+        
+        #else
+        
+        assert( false );
+        return {};
+        
+        #endif
     } else {
         initializedMeshInfo.VertexUploadInfo.pSrcBufferData = srcSubmesh.pSrcMesh->vertices( )->data( );
         initializedMeshInfo.VertexUploadInfo.SrcBufferSize  = srcSubmesh.pSrcMesh->vertices( )->size( );

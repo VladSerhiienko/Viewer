@@ -382,8 +382,8 @@ namespace apemodevk {
 #undef ARRAYSIZEU
 #endif
 
-#define ARRAYSIZE apemodevk::GetArraySize
-#define ARRAYSIZEU apemodevk::GetArraySizeU
+#define ARRAYSIZE apemodevk::utils::GetArraySize
+#define ARRAYSIZEU apemodevk::utils::GetArraySizeU
 
 #ifdef ZeroMemory
 #undef ZeroMemory

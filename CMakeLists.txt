@@ -285,11 +285,17 @@ ExternalProject_Add(
     GIT_REPOSITORY "git@github.com:cpp-taskflow/cpp-taskflow.git"
     GIT_TAG "master"
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/cpp-taskflow"
-    CMAKE_ARGS ${default_cmake_args}
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
-    TEST_COMMAND ""
-    INSTALL_COMMAND ""
+    LOG_DOWNLOAD ON
+    # CMAKE_ARGS ${default_cmake_args}
+    # UPDATE_COMMAND ""
+    # PATCH_COMMAND ""
+    # TEST_COMMAND ""
+    # INSTALL_COMMAND ""
 )
 
 ExternalProject_Get_Property(taskflow SOURCE_DIR)
@@ -749,6 +755,7 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath/Inc
     ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
     ${CMAKE_SOURCE_DIR}/dependencies/draco/src
+    ${draco_binary_dir}
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/include/utils
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
     ${Vulkan_include_dirs}

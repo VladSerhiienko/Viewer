@@ -6,6 +6,7 @@
 #include <apemode/platform/Stopwatch.h>
 
 #include <apemode/vk/Swapchain.Vulkan.h>
+#include <apemode/vk/Image.Vulkan.h>
 #include <apemode/vk_ext/AppSurface.Vulkan.h>
 #include <apemode/vk_ext/ImageUploader.Vulkan.h>
 #include <apemode/vk_ext/SamplerManager.Vulkan.h>
@@ -43,6 +44,12 @@ namespace vk {
             apemodevk::THandle< apemodevk::ImageComposite > hDepthImg;
             apemodevk::THandle< VkImageView >               hDepthImgView;
             apemodevk::THandle< VkDeviceMemory >            hDepthImgMemory;
+            
+            
+            apemodevk::THandle< apemodevk::ImageComposite > hSceneImgs[2];
+            apemodevk::THandle< VkImageView >               hSceneImgViews[2];
+            apemodevk::THandle< VkFramebuffer >             hSceneFramebuffers[2];
+            
         };
 
         ViewerShell( );
