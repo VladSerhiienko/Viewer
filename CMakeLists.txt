@@ -10,7 +10,7 @@ message(STATUS "CMAKE_SYSTEM = ${CMAKE_SYSTEM}")
 message(STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
 message(STATUS "CMAKE_BINARY_DIR = ${CMAKE_BINARY_DIR}")
 
-set(BUILD_FOLDER_SUFFIX "build_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}_${CMAKE_CXX_COMPILER_ID}")
+set(BUILD_FOLDER_SUFFIX "build_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}_${CMAKE_CXX_COMPILER_ID}_${CMAKE_GENERATOR}")
 string(TOLOWER  ${BUILD_FOLDER_SUFFIX} BUILD_FOLDER_SUFFIX)
 message(STATUS "BUILD_FOLDER_SUFFIX = ${BUILD_FOLDER_SUFFIX}")
 
@@ -231,6 +231,35 @@ set(flatbuffers_binary_dir ${BINARY_DIR})
 message(STATUS "flatbuffers_source_dir = ${flatbuffers_source_dir}")
 message(STATUS "flatbuffers_binary_dir = ${flatbuffers_binary_dir}")
 
+#
+#
+# json
+#
+#
+
+ExternalProject_Add(
+    json
+    GIT_REPOSITORY "git@github.com:nlohmann/json.git"
+    GIT_TAG "master"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/json"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    LOG_DOWNLOAD ON
+)
+
+ExternalProject_Get_Property(json SOURCE_DIR)
+set(json_source_dir ${SOURCE_DIR})
+message(STATUS "json_source_dir = ${json_source_dir}")
+
+#
+#
+# draco
+#
+#
+
 ExternalProject_Add(
     draco
     GIT_REPOSITORY "git@github.com:google/draco.git"
@@ -291,41 +320,11 @@ ExternalProject_Add(
     UPDATE_COMMAND ""
     PATCH_COMMAND ""
     LOG_DOWNLOAD ON
-    # CMAKE_ARGS ${default_cmake_args}
-    # UPDATE_COMMAND ""
-    # PATCH_COMMAND ""
-    # TEST_COMMAND ""
-    # INSTALL_COMMAND ""
 )
 
 ExternalProject_Get_Property(taskflow SOURCE_DIR)
 set(taskflow_source_dir ${SOURCE_DIR})
 message(STATUS "taskflow_source_dir = ${taskflow_source_dir}")
-
-#
-#
-# TaskScheduler
-#
-#
-
-ExternalProject_Add(
-    TaskScheduler
-    GIT_REPOSITORY "git@github.com:VladSerhiienko/TaskScheduler.git"
-    GIT_TAG "master"
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler"
-    CMAKE_ARGS ${default_cmake_args}
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
-    TEST_COMMAND ""
-    INSTALL_COMMAND ""
-)
-
-ExternalProject_Get_Property(TaskScheduler SOURCE_DIR)
-ExternalProject_Get_Property(TaskScheduler BINARY_DIR)
-set(TaskScheduler_source_dir ${SOURCE_DIR})
-set(TaskScheduler_binary_dir ${BINARY_DIR})
-message(STATUS "TaskScheduler_source_dir = ${TaskScheduler_source_dir}")
-message(STATUS "TaskScheduler_binary_dir = ${TaskScheduler_binary_dir}")
 
 #
 #
@@ -397,6 +396,31 @@ ExternalProject_Add(
 ExternalProject_Get_Property(VulkanMemoryAllocator SOURCE_DIR)
 set(VulkanMemoryAllocator_source_dir ${SOURCE_DIR})
 message(STATUS "VulkanMemoryAllocator_source_dir = ${VulkanMemoryAllocator_source_dir}")
+
+#
+#
+# shaderc
+#
+#
+
+ExternalProject_Add(
+    shaderc
+    GIT_REPOSITORY "git@github.com:google/shaderc.git"
+    GIT_TAG "master"
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/shaderc"
+    CMAKE_ARGS ${default_cmake_args} -DSHADERC_SKIP_TESTS:BOOL=TRUE SHADERC_SKIP_INSTALL:BOOL=TRUE
+    TEST_COMMAND ""
+    INSTALL_COMMAND ""
+)
+
+ExternalProject_Get_Property(shaderc SOURCE_DIR)
+ExternalProject_Get_Property(shaderc BINARY_DIR)
+set(shaderc_source_dir ${SOURCE_DIR})
+set(shaderc_binary_dir ${BINARY_DIR})
+message(STATUS "shaderc_source_dir = ${shaderc_source_dir}")
+message(STATUS "shaderc_binary_dir = ${shaderc_binary_dir}")
 
 if (UNIX)
 add_definitions("-rdynamic")
@@ -610,7 +634,6 @@ if (APPLE)
     set( ApemodePlatform_third_party_libs
          ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
          ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a
-        #  ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/libTaskScheduler.a
          pthread
          )
 
@@ -619,7 +642,6 @@ elseif(WIN32)
     set( ApemodePlatform_third_party_libs
          ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/EASTL.lib
          ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/EAStdC.lib
-        #  ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/TaskScheduler.lib
          )
 
 elseif (UNIX)
@@ -627,7 +649,6 @@ elseif (UNIX)
     set( ApemodePlatform_third_party_libs
          ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
          ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a
-        #  ${TaskScheduler_binary_dir}${CONFIGURATION_SUFFIX}/libTaskScheduler.a
          )
 
 endif()
@@ -655,10 +676,6 @@ add_library( ApemodePlatform
              STATIC
              ${ApemodePlatform_source_files} )
 
-# target_compile_definitions( ApemodePlatform
-#                             PRIVATE
-#                             -DAPEMODE_PLATFORM_DLLEXPORT)
-
 target_include_directories(
     ApemodePlatform
     PUBLIC
@@ -671,7 +688,6 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
-    # ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
     ${CMAKE_SOURCE_DIR}/dependencies/cpp-taskflow
 )
 
@@ -774,7 +790,6 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/argh
     ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
     ${CMAKE_SOURCE_DIR}/dependencies/cpp-taskflow
-    # ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
 )
 
 if (APPLE)
@@ -831,8 +846,80 @@ add_dependencies(
     spdlog
     eastl
     taskflow
-    # TaskScheduler
 )
+
+#
+#
+# Shaderc
+#
+#
+
+add_executable(
+    ShaderPipeline
+    ${CMAKE_SOURCE_DIR}/src/shaderc/ShaderCompiler.Vulkan.h
+    ${CMAKE_SOURCE_DIR}/src/shaderc/ShaderCompiler.Vulkan.cpp
+    ${CMAKE_SOURCE_DIR}/src/shaderc/main.cpp
+    ${ApemodePlatform_source_files}
+    )
+
+target_include_directories(
+    ShaderPipeline
+    PUBLIC
+    ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/src/shaderc
+    ${CMAKE_SOURCE_DIR}/dependencies/argh
+    ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
+    ${CMAKE_SOURCE_DIR}/dependencies/cpp-taskflow
+    ${CMAKE_SOURCE_DIR}/dependencies/json/include
+    ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
+    ${CMAKE_SOURCE_DIR}/dependencies/shaderc/libshaderc/include
+    ${CMAKE_SOURCE_DIR}/dependencies/shaderc/third_party/spirv-cross
+    ${CMAKE_SOURCE_DIR}/dependencies/shaderc/third_party/spirv-cross/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
+    ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
+    )
+
+add_dependencies(
+    ShaderPipeline
+    shaderc
+    json
+)
+
+if (APPLE )
+    target_link_libraries(
+        ShaderPipeline
+        debug ${eastl_binary_dir}/Debug/libEASTL.a
+        debug ${eastl_binary_dir}/test/packages/EAStdC/Release/libEAStdC.a
+        debug ${shaderc_binary_dir}/libshaderc/Debug/libshaderc_combined.a
+        debug ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/${BUILD_FOLDER_SUFFIX}/flatbuffers-prefix/src/flatbuffers-build/Debug/libflatbuffers.a
+        optimized ${eastl_binary_dir}/Release/libEASTL.a
+        optimized ${eastl_binary_dir}/test/packages/EAStdC/Release/libEAStdC.a
+        optimized ${shaderc_binary_dir}/libshaderc/Release/libshaderc_combined.a
+        optimized ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/${BUILD_FOLDER_SUFFIX}/flatbuffers-prefix/src/flatbuffers-build/Release/libflatbuffers.a
+        dl
+        stdc++
+        objc
+        iconv
+        )
+elseif (WIN32)
+    target_link_libraries(
+        ShaderPipeline
+        debug ${shaderc_binary_dir}/libshaderc/Debug/lshaderc_combined.lib
+        optimized ${shaderc_binary_dir}/libshaderc/Release/shaderc_combined.lib
+        )
+elseif (UNIX)
+    target_link_libraries(
+        ShaderPipeline
+        debug ${shaderc_binary_dir}/libshaderc/Debug/libshaderc_combined.a
+        optimized ${shaderc_binary_dir}/libshaderc/Release/libshaderc_combined.a
+        pthread
+        stdc++fs
+        )
+endif ()
 
 #
 #
@@ -874,7 +961,6 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
     ${CMAKE_SOURCE_DIR}/dependencies/sdl2/include
     ${CMAKE_SOURCE_DIR}/dependencies/cpp-taskflow
-    # ${CMAKE_SOURCE_DIR}/dependencies/TaskScheduler/Scheduler/Include
 )
 
 if (APPLE)
@@ -921,7 +1007,9 @@ endif ()
 
 add_dependencies(
     ViewerSdl
+    ShaderPipeline
     Viewer
+    sdl2
 )
 
 message(STATUS "VK_SDK_PATH = $ENV{VK_SDK_PATH}")
@@ -1004,7 +1092,8 @@ set(
 
 if (APPLE)
     # set( glslangValidatorAbsolute "${MOLTENVK_SDK_PATH}/External/glslang/Test/glslangValidator")
-    set( glslangValidatorAbsolute "${MOLTENVK_SDK_PATH}/External/glslang/build/StandAlone/glslangValidator")
+    set( glslangValidatorAbsolute "${CMAKE_SOURCE_DIR}/assets/glslangValidator")
+    # set( glslangValidatorAbsolute "${MOLTENVK_SDK_PATH}/External/glslang/build/StandAlone/glslangValidator")
 else()
     set( glslangValidatorAbsolute "$ENV{VK_SDK_PATH}/bin/glslangValidator")
 endif()

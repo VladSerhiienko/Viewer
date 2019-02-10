@@ -1,0 +1,30 @@
+
+namespace csofb;
+
+enum EVersionFb : ubyte {
+    Value = 1
+}
+
+enum EShaderType : uint {
+	Vert,
+	Frag,
+	Comp,
+	Tesc,
+	Tese,
+}
+
+table CompiledShaderFb {
+    asset : string;
+    macros : string;
+    shader_type : EShaderType;
+    spv : [uint];
+}
+
+table CollectionFb {
+	version : EVersionFb;
+    csos : [CompiledShaderFb];
+}
+
+root_type CollectionFb;
+file_extension "shp";
+file_identifier "SHP ";

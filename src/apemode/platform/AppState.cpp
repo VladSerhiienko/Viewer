@@ -16,9 +16,9 @@
 namespace apemode {
     class ImplementedAppState : public AppState {
     public:
-        std::shared_ptr< spdlog::logger > Logger;        /* Prints to console and file */
-        argh::parser                      Cmdl;          /* User parameters */
-        tf::Taskflow                      Taskflow;      /* Task flow */
+        std::shared_ptr< spdlog::logger > Logger;   /* Prints to console and file */
+        argh::parser                      Cmdl;     /* User parameters */
+        tf::Taskflow                      Taskflow; /* Task flow */
 
         ImplementedAppState( int args, const char** argv );
         virtual ~ImplementedAppState( );
@@ -38,10 +38,6 @@ spdlog::logger* apemode::AppState::GetLogger( ) {
 argh::parser* apemode::AppState::GetArgs( ) {
     return &gState->Cmdl;
 }
-//
-//MT::TaskScheduler* apemode::AppState::GetTaskScheduler( ) {
-//    return &gState->TaskScheduler;
-//}
 
 tf::Taskflow* apemode::AppState::GetDefaultTaskflow( ) {
     return &gState->Taskflow;
@@ -105,13 +101,13 @@ std::shared_ptr< spdlog::logger > CreateLogger( spdlog::level::level_enum lvl, s
     logger->set_level( lvl );
 
     spdlog::set_pattern( "%v" );
-
+    
     logger->info( "" );
-    logger->info( "\t _    ___" );
-    logger->info( "\t| |  / (_)__ _      _____  _____" );
-    logger->info( "\t| | / / / _ \\ | /| / / _ \\/ ___/" );
-    logger->info( "\t| |/ / /  __/ |/ |/ /  __/ /" );
-    logger->info( "\t|___/_/\\___/|__/|__/\\___/_/" );
+    logger->info( "\t   _____ __    ____" );
+    logger->info( "\t  / ___// /_  / __ \\" );
+    logger->info( "\t  \\__ \\/ __ \\/ /_/ /" );
+    logger->info( "\t ___/ / / / / ____/" );
+    logger->info( "\t/____/_/ /_/_/" );
     logger->info( "" );
 
     spdlog::set_pattern( "%c" );

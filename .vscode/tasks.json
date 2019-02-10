@@ -37,6 +37,24 @@
             }
         },
         {
+            "label": "Python/ShaderTool(Darwin/Xcode)",
+            "type": "shell",
+            "command": "python",
+            "args": [
+                "git-sync-deps",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/dependencies/shaderc/utils/"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "dependsOn": [
+                "CMake/Viewer(Darwin/Xcode)"
+            ]
+        },
+        {
             "label": "CMake/Viewer(Linux/Makefile/GNU)",
             "type": "shell",
             "command": "cmake",
@@ -118,18 +136,18 @@
             "command": "xcodebuild",
             "args": [
                 "-project",
-                "${workspaceFolder}/build_darwin_x86_64_appleclang/Viewer.xcodeproj",
+                "${workspaceFolder}/build_darwin_x86_64_appleclang_xcode/Viewer.xcodeproj",
                 "-configuration",
                 "Debug"
             ],
             "options": {
-                "cwd": "${workspaceFolder}/build_darwin_x86_64_appleclang"
+                "cwd": "${workspaceFolder}/build_darwin_x86_64_appleclang_xcode"
             },
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": [ "CMake/Viewer(Darwin/Xcode)"]
+            "dependsOn": [ "Python/ShaderTool(Darwin/Xcode)"]
         },
         {
             "label": "Make/Viewer(Darwin/Xcode/Release)",
@@ -137,18 +155,18 @@
             "command": "xcodebuild",
             "args": [
                 "-project",
-                "${workspaceFolder}/build_darwin_x86_64_appleclang/Viewer.xcodeproj",
+                "${workspaceFolder}/build_darwin_x86_64_appleclang_xcode/Viewer.xcodeproj",
                 "-configuration",
                 "Release"
             ],
             "options": {
-                "cwd": "${workspaceFolder}/build_darwin_x86_64_appleclang"
+                "cwd": "${workspaceFolder}/build_darwin_x86_64_appleclang_xcode"
             },
             "group": {
                 "kind": "build",
                 "isDefault": true
             },
-            "dependsOn": [ "CMake/Viewer(Darwin/Xcode)"]
+            "dependsOn": [ "Python/ShaderTool(Darwin/Xcode)"]
         },
         {
             "label": "Make/Viewer(Linux/Makefile/GNU)",

@@ -1,0 +1,13 @@
+{
+    "output" : "shaders/ViewerCSO.shp",
+
+    "commands" : [
+        {
+            "srcFile" : "shaders/Scene.vert",
+            "shaderType" : "vert",
+            "macros" : [
+                { "name" : "QTANGENTS", "value" : "1" }
+            ]
+        }
+    ]
+}
