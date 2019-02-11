@@ -1,12 +1,111 @@
 {
-    "output" : "shaders/ViewerCSO.shp",
-
-    "commands" : [
+    "output": "shaders/ViewerCSO.shp",
+    "commands": [
         {
-            "srcFile" : "shaders/Scene.vert",
-            "shaderType" : "vert",
-            "macros" : [
-                { "name" : "QTANGENTS", "value" : "1" }
+            "srcFile": "shaders/Skybox.frag",
+            "shaderType": "frag"
+        },
+        {
+            "srcFile": "shaders/Skybox.vert",
+            "shaderType": "vert"
+        },
+
+        {
+            "srcFile": "shaders/Debug.frag",
+            "shaderType": "frag"
+        },
+        {
+            "srcFile": "shaders/Debug.vert",
+            "shaderType": "vert"
+        },
+
+        {
+            "srcFile": "shaders/NuklearUI.frag",
+            "shaderType": "frag"
+        },
+        {
+            "srcFile": "shaders/NuklearUI.vert",
+            "shaderType": "vert"
+        },
+
+        {
+            "srcFile": "shaders/Scene.frag",
+            "shaderType": "frag"
+        },
+        {
+            "srcFile": "shaders/Scene.vert",
+            "shaderType": "vert"
+        },
+        {
+            "srcFile": "shaders/SceneSkinned.vert",
+            "shaderType": "vert"
+        },
+        {
+            "srcFile": "shaders/SceneSkinned8.vert",
+            "shaderType": "vert"
+        },
+
+
+        {
+            "srcFile": "shaders/UScene.frag",
+            "shaderType": "frag"
+        },
+        {
+            "srcFile": "shaders/UScene.vert",
+            "shaderType": "vert",
+            "macros": [
+                {
+                    "name": "QTANGENTS",
+                    "value": "1"
+                }
+            ]
+        },
+        {
+            "srcFile": "shaders/UScene.vert",
+            "shaderType": "vert",
+            "macros": [
+                {
+                    "name": "SKINNING",
+                    "value": "1"
+                }
+            ]
+        },
+        {
+            "srcFile": "shaders/UScene.vert",
+            "shaderType": "vert",
+            "macros": [
+                {
+                    "name": "SKINNING8",
+                    "value": "1"
+                }
+            ]
+        },
+        {
+            "srcFile": "shaders/UScene.vert",
+            "shaderType": "vert",
+            "macros": [
+                {
+                    "name": "QTANGENTS",
+                    "value": "1"
+                },
+                {
+                    "name": "SKINNING",
+                    "value": "1"
+                }
+            ]
+        },
+        {
+            "srcFile": "shaders/UScene.vert",
+            "shaderType": "vert",
+            "macros": [
+                {
+                    "name": "QTANGENTS",
+                    "value": "1"
+                },
+                {
+                    "name": "SKINNING8",
+                    "value": "1"
+                }
             ]
         }
     ]

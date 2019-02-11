@@ -3,20 +3,33 @@
 
 class CompiledShader : public apemode::shp::ICompiledShader {
 public:
-    std::vector< uint32_t >   Dwords;
-    spirv_cross::CompilerGLSL Glsl;
+    apemode::vector< uint32_t > Dwords;
+    apemode::string8 PreprocessedSrc;
+    apemode::string8 AssemblySrc;
+    // spirv_cross::CompilerGLSL Glsl;
 
-    CompiledShader( std::vector< uint32_t > dwords ) : Dwords( dwords ), Glsl( dwords ) {
+    CompiledShader( apemode::vector< uint32_t > && dwords, apemode::string8 && preprocessedSrc, apemode::string8 && assemblySrc )
+        : Dwords( std::move( dwords ) )
+        , PreprocessedSrc( std::move( preprocessedSrc) )
+        , AssemblySrc( std::move( assemblySrc) ) { // , Glsl( dwords ) {
         apemode::LogInfo( "CompiledShader: Created." );
     }
 
-    virtual ~CompiledShader( ) {
+    ~CompiledShader( ) {
         apemode::LogInfo( "CompiledShader: Destroying." );
     }
 
-    const spirv_cross::CompilerGLSL& GetGlsl( ) const override {
-        return Glsl;
+    const char* GetPreprocessedSrc( ) const override {
+        return PreprocessedSrc.c_str();
     }
+
+    const char* GetAssemblySrc( ) const override {
+        return AssemblySrc.c_str();
+    }
+
+    //    const spirv_cross::CompilerGLSL& GetGlsl( ) const override {
+    //        return Glsl;
+    //    }
 
     const uint8_t* GetBytePtr( ) const override {
         return reinterpret_cast< const uint8_t* >( Dwords.data( ) );
@@ -50,7 +63,8 @@ public:
         apemode_memory_allocation_scope;
 
         auto userData = apemode::make_unique< UserData >( );
-        if ( userData && pIncludedFiles && FileReader.ReadShaderTxtFile( pszRequestedSource, userData->Path, userData->Content ) ) {
+        if ( userData && pIncludedFiles &&
+             FileReader.ReadShaderTxtFile( pszRequestedSource, userData->Path, userData->Content ) ) {
             pIncludedFiles->InsertIncludedFile( userData->Path );
 
             auto includeResult                = apemode::make_unique< shaderc_include_result >( );
@@ -95,14 +109,14 @@ void apemode::shp::ShaderCompiler::SetShaderFeedbackWriter( IShaderFeedbackWrite
     /* impl */ pShaderFeedbackWriter = pInShaderFeedbackWriter;
 }
 
-static std::unique_ptr< apemode::shp::ICompiledShader > InternalCompile(
-    const std::string&                                           shaderName,
-    const std::string&                                           shaderContent,
+static apemode::unique_ptr< apemode::shp::ICompiledShader > InternalCompile(
+    const std::string&                                              shaderName,
+    const std::string&                                              shaderContent,
     const apemode::shp::ShaderCompiler::IMacroDefinitionCollection* pMacros,
     const apemode::shp::ShaderCompiler::EShaderType                 eShaderKind,
-    shaderc::CompileOptions&                                     options,
-    const bool                                                   bAssembly,
-    shaderc::Compiler*                                           pCompiler,
+    shaderc::CompileOptions&                                        options,
+    const bool                                                      bAssembly,
+    shaderc::Compiler*                                              pCompiler,
     apemode::shp::ShaderCompiler::IShaderFeedbackWriter*            pShaderFeedbackWriter ) {
     using namespace apemode::shp;
     apemode_memory_allocation_scope;
@@ -115,6 +129,8 @@ static std::unique_ptr< apemode::shp::ICompiledShader > InternalCompile(
         for ( uint32_t i = 0; i < pMacros->GetCount( ); ++i ) {
             const auto macroDefinition = pMacros->GetMacroDefinition( i );
             options.AddMacroDefinition( std::string( macroDefinition.pszKey ), std::string( macroDefinition.pszValue ) );
+
+            apemode::LogInfo( "ShaderCompiler: Adding definition: {}={}", macroDefinition.pszKey, macroDefinition.pszValue );
         }
 
     shaderc::PreprocessedSourceCompilationResult preprocessedSourceCompilationResult =
@@ -123,14 +139,16 @@ static std::unique_ptr< apemode::shp::ICompiledShader > InternalCompile(
     if ( shaderc_compilation_status_success != preprocessedSourceCompilationResult.GetCompilationStatus( ) ) {
         if ( nullptr != pShaderFeedbackWriter ) {
             pShaderFeedbackWriter->WriteFeedback(
-                apemode::shp::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed | preprocessedSourceCompilationResult.GetCompilationStatus( ),
+                apemode::shp::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed |
+                    preprocessedSourceCompilationResult.GetCompilationStatus( ),
                 shaderName,
                 pMacros,
                 preprocessedSourceCompilationResult.GetErrorMessage( ).data( ),
-                preprocessedSourceCompilationResult.GetErrorMessage( ).data( ) + preprocessedSourceCompilationResult.GetErrorMessage( ).size( )  );
+                preprocessedSourceCompilationResult.GetErrorMessage( ).data( ) +
+                    preprocessedSourceCompilationResult.GetErrorMessage( ).size( ) );
         }
 
-        assert(false);
+        assert( false );
         return nullptr;
     }
 
@@ -144,36 +162,36 @@ static std::unique_ptr< apemode::shp::ICompiledShader > InternalCompile(
                                               preprocessedSourceCompilationResult.cend( ) );
     }
 
-    if ( bAssembly ) {
-        shaderc::AssemblyCompilationResult assemblyCompilationResult = pCompiler->CompileGlslToSpvAssembly(
-            preprocessedSourceCompilationResult.begin( ), (shaderc_shader_kind) eShaderKind, shaderName.c_str( ), options );
+    shaderc::AssemblyCompilationResult assemblyCompilationResult = pCompiler->CompileGlslToSpvAssembly(
+        preprocessedSourceCompilationResult.begin( ), (shaderc_shader_kind) eShaderKind, shaderName.c_str( ), options );
 
-        if ( shaderc_compilation_status_success != assemblyCompilationResult.GetCompilationStatus( ) ) {
-             apemode::LogError( "ShaderCompiler: Failed to compile processed GLSL to SPV assembly: {}.",
-                                assemblyCompilationResult.GetErrorMessage( ).c_str( ) );
-
-            if ( nullptr != pShaderFeedbackWriter ) {
-                pShaderFeedbackWriter->WriteFeedback(
-                    ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Assembly | assemblyCompilationResult.GetCompilationStatus( ),
-                    shaderName,
-                    pMacros,
-                    assemblyCompilationResult.GetErrorMessage( ).data( ),
-                    assemblyCompilationResult.GetErrorMessage( ).data( ) + assemblyCompilationResult.GetErrorMessage( ).size( ) );
-            }
-
-            assert(false);
-            return nullptr;
-        }
+    if ( shaderc_compilation_status_success != assemblyCompilationResult.GetCompilationStatus( ) ) {
+        apemode::LogError( "ShaderCompiler: Failed to compile processed GLSL to SPV assembly: {}.",
+                           assemblyCompilationResult.GetErrorMessage( ).c_str( ) );
 
         if ( nullptr != pShaderFeedbackWriter ) {
-            apemode::LogInfo( "ShaderCompiler: Compiled GLSL to SPV assembly." );
-
-            pShaderFeedbackWriter->WriteFeedback( ShaderCompiler::IShaderFeedbackWriter::eFeedback_AssemblySucceeded,
-                                                  shaderName,
-                                                  pMacros,
-                                                  assemblyCompilationResult.cbegin( ),
-                                                  assemblyCompilationResult.cend( ) );
+            pShaderFeedbackWriter->WriteFeedback(
+                ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Assembly |
+                    assemblyCompilationResult.GetCompilationStatus( ),
+                shaderName,
+                pMacros,
+                assemblyCompilationResult.GetErrorMessage( ).data( ),
+                assemblyCompilationResult.GetErrorMessage( ).data( ) +
+                    assemblyCompilationResult.GetErrorMessage( ).size( ) );
         }
+
+        assert( false );
+        return nullptr;
+    }
+
+    if ( nullptr != pShaderFeedbackWriter ) {
+        apemode::LogInfo( "ShaderCompiler: Compiled GLSL to SPV assembly." );
+
+        pShaderFeedbackWriter->WriteFeedback( ShaderCompiler::IShaderFeedbackWriter::eFeedback_AssemblySucceeded,
+                                              shaderName,
+                                              pMacros,
+                                              assemblyCompilationResult.cbegin( ),
+                                              assemblyCompilationResult.cend( ) );
     }
 
     shaderc::SpvCompilationResult spvCompilationResult = pCompiler->CompileGlslToSpv(
@@ -181,14 +199,16 @@ static std::unique_ptr< apemode::shp::ICompiledShader > InternalCompile(
 
     if ( shaderc_compilation_status_success != spvCompilationResult.GetCompilationStatus( ) ) {
         if ( nullptr != pShaderFeedbackWriter ) {
-             apemode::LogInfo( "ShaderCompiler: Failed to compile processed GLSL to SPV: {}.",
-                               spvCompilationResult.GetErrorMessage( ).c_str( ) );
+            apemode::LogInfo( "ShaderCompiler: Failed to compile processed GLSL to SPV: {}.",
+                              spvCompilationResult.GetErrorMessage( ).c_str( ) );
 
-            pShaderFeedbackWriter->WriteFeedback( ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Spv | spvCompilationResult.GetCompilationStatus( ),
-                                                  shaderName,
-                                                  pMacros,
-                                                  spvCompilationResult.GetErrorMessage( ).data( ),
-                                                  spvCompilationResult.GetErrorMessage( ).data( ) + spvCompilationResult.GetErrorMessage( ).size( ) );
+            pShaderFeedbackWriter->WriteFeedback(
+                ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Spv |
+                    spvCompilationResult.GetCompilationStatus( ),
+                shaderName,
+                pMacros,
+                spvCompilationResult.GetErrorMessage( ).data( ),
+                spvCompilationResult.GetErrorMessage( ).data( ) + spvCompilationResult.GetErrorMessage( ).size( ) );
         }
 
         assert( false );
@@ -205,18 +225,23 @@ static std::unique_ptr< apemode::shp::ICompiledShader > InternalCompile(
                                               spvCompilationResult.cend( ) );
     }
 
-    const size_t dwordCount = (size_t) std::distance( spvCompilationResult.cbegin( ), spvCompilationResult.cend( ) );
-    const size_t byteCount  = dwordCount * sizeof( shaderc::SpvCompilationResult::element_type );
+    apemode::vector< uint32_t > dwords( spvCompilationResult.cbegin( ),
+                                        spvCompilationResult.cend( ) );
+    
+    apemode::string8 preprocessedSrc( preprocessedSourceCompilationResult.cbegin( ),
+                                      preprocessedSourceCompilationResult.cend( ) );
+    
+    apemode::string8 assemblySrc( assemblyCompilationResult.cbegin( ),
+                                  assemblyCompilationResult.cend( ) );
 
-    std::vector< uint32_t > dwords;
-    dwords.resize( dwordCount );
-    memcpy( dwords.data( ), spvCompilationResult.cbegin( ), byteCount );
+    ICompiledShader* pCompiledShader = apemode_new CompiledShader( std::move( dwords ),
+                                                                   std::move( preprocessedSrc ),
+                                                                   std::move( assemblySrc ) );
 
-    ICompiledShader* pCompiledShader = apemode_new CompiledShader( dwords );
-    return std::unique_ptr< ICompiledShader >( pCompiledShader );
+    return apemode::unique_ptr< ICompiledShader >( pCompiledShader );
 }
 
-std::unique_ptr< apemode::shp::ICompiledShader > apemode::shp::ShaderCompiler::Compile(
+apemode::unique_ptr< apemode::shp::ICompiledShader > apemode::shp::ShaderCompiler::Compile(
     const std::string&                shaderName,
     const std::string&                shaderContent,
     const IMacroDefinitionCollection* pMacros,
@@ -235,11 +260,11 @@ std::unique_ptr< apemode::shp::ICompiledShader > apemode::shp::ShaderCompiler::C
                             eShaderKind,
                             options,
                             true,
-                            & /* impl */ Compiler,
-                            /* impl */ pShaderFeedbackWriter );
+                            /* impl */ &Compiler,
+                            /* impl */  pShaderFeedbackWriter );
 }
 
-std::unique_ptr< apemode::shp::ICompiledShader > apemode::shp::ShaderCompiler::Compile(
+apemode::unique_ptr< apemode::shp::ICompiledShader > apemode::shp::ShaderCompiler::Compile(
     const std::string&                InFilePath,
     const IMacroDefinitionCollection* pMacros,
     const EShaderType                 eShaderKind,
@@ -262,6 +287,8 @@ std::unique_ptr< apemode::shp::ICompiledShader > apemode::shp::ShaderCompiler::C
     std::string fullPath;
     std::string fileContent;
 
+    apemode::LogInfo( "ShaderCompiler: Compiling {}", InFilePath );
+
     if ( /* impl */ pShaderFileReader->ReadShaderTxtFile( InFilePath, fullPath, fileContent ) ) {
         auto compiledShader = InternalCompile( fullPath,
                                                fileContent,
@@ -270,7 +297,7 @@ std::unique_ptr< apemode::shp::ICompiledShader > apemode::shp::ShaderCompiler::C
                                                options,
                                                true,
                                                /* impl */ &Compiler,
-                                               /* impl */  pShaderFeedbackWriter );
+                                               /* impl */ pShaderFeedbackWriter );
         if ( compiledShader ) {
             pOutIncludedFiles->InsertIncludedFile( fullPath );
             return compiledShader;

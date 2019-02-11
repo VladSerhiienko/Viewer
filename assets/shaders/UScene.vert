@@ -29,7 +29,7 @@ layout( std140, set = 0, binding = 0 ) uniform CameraUBO {
 // layout( set = 1, binding = 7 ) uniform sampler2D RoughnessMap;
 
 layout( std140, set = 1, binding = 0 ) uniform ObjectUBO {
-    mat4 WorldMatrix; // ObjectToWorld
+    mat4 WorldMatrix;  // ObjectToWorld
     mat4 NormalMatrix; // ObjectNormalToWorld
     vec4 PositionOffset;
     vec4 PositionScale;
@@ -73,8 +73,8 @@ layout( location = 3 ) in vec2 inTexcoords;
 layout( location = SKINNING_LAYOUT_LOCATION ) in vec4 inBoneIndicesWeights;
 #else
 #ifdef SKINNING8
-layout( location = SKINNING_LAYOUT_LOCATION ) in vec4 inBoneIndicesWeights_0;
-layout( location = SKINNING_LAYOUT_LOCATION + 1 ) in vec4 inBoneIndicesWeights_1;
+layout( location = SKINNING_LAYOUT_LOCATION ) in vec4 inBoneIndicesWeights0;
+layout( location = SKINNING_LAYOUT_LOCATION + 1 ) in vec4 inBoneIndicesWeights1;
 #endif
 #endif
 
@@ -85,25 +85,13 @@ layout( location = 3 ) out vec3 outWorldBitangent;
 layout( location = 4 ) out vec3 outViewDirection;
 layout( location = 5 ) out vec2 outTexcoords;
 
-
-
-layout( constant_id = 0 ) const int kBoneCount = 128;
-
-layout( std140, set = 2, binding = 0 ) uniform BoneOffsetsUBO {
-    mat4 BoneOffsetMatrices[ kBoneCount ];
-};
-
-layout( std140, set = 2, binding = 1 ) uniform BoneNormalsUBO {
-    mat4 BoneNormalMatrices[ kBoneCount ];
-};
-
 vec3 GetCameraWorldPosition( ) {
     return InvViewMatrix[ 3 ].xyz;
 }
 
 mat4 AccumulatedBoneOffsetTransform( vec4 weights, vec4 indices ) {
     mat4 offsetTransform;
-    offsetTransform  = BoneOffsetMatrices[ int( indices[ 0 ] ) ] * weights[ 0 ];
+    offsetTransform = BoneOffsetMatrices[ int( indices[ 0 ] ) ] * weights[ 0 ];
     offsetTransform += BoneOffsetMatrices[ int( indices[ 1 ] ) ] * weights[ 1 ];
     offsetTransform += BoneOffsetMatrices[ int( indices[ 2 ] ) ] * weights[ 2 ];
     offsetTransform += BoneOffsetMatrices[ int( indices[ 3 ] ) ] * weights[ 3 ];
@@ -112,61 +100,88 @@ mat4 AccumulatedBoneOffsetTransform( vec4 weights, vec4 indices ) {
 
 mat3 AccumulatedBoneNormalTransform( vec4 weights, vec4 indices ) {
     mat3 normalTransfrom;
-    normalTransfrom  = mat3( BoneNormalMatrices[ int( indices[ 0 ] ) ] ) * weights[ 0 ];
+    normalTransfrom = mat3( BoneNormalMatrices[ int( indices[ 0 ] ) ] ) * weights[ 0 ];
     normalTransfrom += mat3( BoneNormalMatrices[ int( indices[ 1 ] ) ] ) * weights[ 1 ];
     normalTransfrom += mat3( BoneNormalMatrices[ int( indices[ 2 ] ) ] ) * weights[ 2 ];
     normalTransfrom += mat3( BoneNormalMatrices[ int( indices[ 3 ] ) ] ) * weights[ 3 ];
     return normalTransfrom;
 }
 
-void UnpackQTangent(vec4 q, out vec3 t, out vec3 n, out float r){
-    float qx2 = q.x + q.x, qy2 = q.y + q.y, qz2 = q.z + q.z, qxqx2 = q.x * qx2, qxqy2 = q.x * qy2, qxqz2 = q.x * qz2,
-          qxqw2 = q.w * qx2, qyqy2 = q.y * qy2, qyqz2 = q.y * qz2, qyqw2 = q.w * qy2, qzqz2 = q.z * qz2, qzqw2 = q.w * qz2;
-   
+void UnpackQTangent( vec4 q, out vec3 t, out vec3 n, out float r ) {
+    float qx2 = q.x + q.x, qy2 = q.y + q.y;
+    float qz2   = q.z + q.z;
+    float qxqx2 = q.x * qx2;
+    float qxqy2 = q.x * qy2;
+    float qxqz2 = q.x * qz2;
+    float qxqw2 = q.w * qx2;
+    float qyqy2 = q.y * qy2;
+    float qyqz2 = q.y * qz2;
+    float qyqw2 = q.w * qy2;
+    float qzqz2 = q.z * qz2;
+    float qzqw2 = q.w * qz2;
+
     t = vec3( 1.0 - ( qyqy2 + qzqz2 ), qxqy2 + qzqw2, qxqz2 - qyqw2 );
     n = vec3( qxqy2 - qzqw2, 1.0 - ( qxqx2 + qzqz2 ), qyqz2 + qxqw2 );
     r = ( q.w < 0.0 ) ? -1.0 : 1.0;
-    return m;
 }
 
 void main( ) {
-
     vec3 modelPosition = inPosition.xyz * PositionScale.xyz + PositionOffset.xyz;
-    vec4 worldPosition = WorldMatrix * vec4( modelPosition, 1.0 );
 
-    outWorldPosition  = worldPosition.xyz;
-    outViewDirection  = normalize( GetCameraWorldPosition( ).xyz - worldPosition.xyz );
+#if defined( SKINNING )
+    vec4 boneWeights = fract( inBoneIndicesWeights );
+    vec4 boneIndices = inBoneIndicesWeights - boneWeights;
+
+    mat4 accumBoneMatrix = AccumulatedBoneOffsetTransform( boneWeights, boneIndices );
+#elif defined( SKINNING8 )
+    vec4 boneWeights0 = fract( inBoneIndicesWeights0 );
+    vec4 boneIndices0 = inBoneIndicesWeights0 - boneWeights0;
+    vec4 boneWeights1 = fract( inBoneIndicesWeights1 );
+    vec4 boneIndices1 = inBoneIndicesWeights1 - boneWeights1;
+
+    mat4 accumBoneMatrix = AccumulatedBoneOffsetTransform( boneWeights1, boneIndices1 ) +
+                           AccumulatedBoneOffsetTransform( boneWeights0, boneIndices0 );
+#endif
+
+#if defined( SKINNING ) || defined( SKINNING8 )
+    vec4 worldPosition = WorldMatrix * accumBoneMatrix * vec4( modelPosition, 1 );
+#else
+    vec4  worldPosition = WorldMatrix * vec4( modelPosition, 1 );
+#endif
+
+    gl_Position = ProjMatrix * ViewMatrix * worldPosition;
+
+    outTexcoords     = inTexcoords * TexcoordOffsetScale.zw + TexcoordOffsetScale.xy;
+    outWorldPosition = worldPosition.xyz;
+    outViewDirection = normalize( GetCameraWorldPosition( ).xyz - worldPosition.xyz );
 
 #ifndef QTANGENTS
-    vec3 normal = inNormal.xyz;
-    vec3 tangent = inTangent.xyz;
+    vec3  normal     = inNormal.xyz;
+    vec3  tangent    = inTangent.xyz;
     float reflection = inTangent.w;
 #else
-    vec3 normal, tangent;
+    vec3  normal;
+    vec3  tangent;
     float reflection;
-    UnpackQTangent(inQTangent, tangent, normal, reflection);
+    UnpackQTangent( inQTangent, tangent, normal, reflection );
 #endif
 
-#if defined(SKINNING)
-    vec4 boneWeights = fract(inBoneIndicesWeights);
-    vec3 boneIndices = inBoneIndicesWeights - boneWeights;
-
+#if defined( SKINNING )
     mat3 accumBoneNormalMatrix = AccumulatedBoneNormalTransform( boneWeights, boneIndices );
-    vec3 worldNormal           = normalize( mat3( NormalMatrix ) * accumBoneNormalMatrix * normal );
-    vec3 worldTangent          = normalize( mat3( NormalMatrix ) * accumBoneNormalMatrix * tangent.xyz );
-#elif defined(SKINNING8)
-
-    mat4 accumBoneMatrix = AccumulatedBoneOffsetTransform( inBoneWeights1, inBoneIndices1 ) +
-                           AccumulatedBoneOffsetTransform( inBoneWeights0, inBoneIndices0 );
-
+#elif defined( SKINNING8 )
+    mat3 accumBoneNormalMatrix = AccumulatedBoneNormalTransform( boneWeights1, boneIndices1 ) +
+                                 AccumulatedBoneNormalTransform( boneWeights0, boneIndices0 );
 #endif
 
+#if defined( SKINNING ) || defined( SKINNING8 )
+    vec3 worldNormal  = normalize( mat3( NormalMatrix ) * accumBoneNormalMatrix * normal );
+    vec3 worldTangent = normalize( mat3( NormalMatrix ) * accumBoneNormalMatrix * tangent.xyz );
+#else
+    vec3 worldNormal  = normalize( mat3( NormalMatrix ) * normal );
+    vec3 worldTangent = normalize( mat3( NormalMatrix ) * tangent.xyz );
+#endif
 
-    vec3 worldNormal    = normalize( mat3( NormalMatrix ) * normal );
-    vec3 worldTangent   = normalize( mat3( NormalMatrix ) * tangent.xyz );
-    vec3 worldBitangent = cross( worldNormal.xyz, worldTangent.xyz ) * reflection;
-
-
-    outTexcoords      = inTexcoords * TexcoordOffsetScale.zw + TexcoordOffsetScale.xy;
-    gl_Position       = ProjMatrix * ViewMatrix * worldPosition;
+    outWorldNormal    = worldNormal;
+    outWorldTangent   = worldTangent;
+    outWorldBitangent = cross( worldNormal.xyz, worldTangent.xyz ) * reflection;
 }

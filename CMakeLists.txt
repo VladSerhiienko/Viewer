@@ -859,13 +859,22 @@ add_executable(
     ${CMAKE_SOURCE_DIR}/src/shaderc/ShaderCompiler.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/shaderc/ShaderCompiler.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/shaderc/main.cpp
-    ${ApemodePlatform_source_files}
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/memory/MemoryManager.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/shared/AssetManager.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/shared/AssetManager.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppState.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/AppState.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/IAssetManager.h
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/CityHash.cpp
+    ${CMAKE_SOURCE_DIR}/src/apemode/platform/CityHash.h
     )
 
 target_include_directories(
     ShaderPipeline
     PUBLIC
     ${CMAKE_SOURCE_DIR}/src
+    ${CMAKE_SOURCE_DIR}/generated
     ${CMAKE_SOURCE_DIR}/src/shaderc
     ${CMAKE_SOURCE_DIR}/dependencies/argh
     ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
@@ -908,14 +917,22 @@ if (APPLE )
 elseif (WIN32)
     target_link_libraries(
         ShaderPipeline
-        debug ${shaderc_binary_dir}/libshaderc/Debug/lshaderc_combined.lib
-        optimized ${shaderc_binary_dir}/libshaderc/Release/shaderc_combined.lib
+        ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/EASTL.lib
+        ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/EAStdC.lib
+        ${shaderc_binary_dir}/libshaderc${CONFIGURATION_SUFFIX}/shaderc_combined.lib
+        ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/flatbuffers.lib
         )
 elseif (UNIX)
     target_link_libraries(
         ShaderPipeline
+        debug ${eastl_binary_dir}/Debug/libEASTL.a
+        debug ${eastl_binary_dir}/test/packages/EAStdC/Release/libEAStdC.a
         debug ${shaderc_binary_dir}/libshaderc/Debug/libshaderc_combined.a
+        debug ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/${BUILD_FOLDER_SUFFIX}/flatbuffers-prefix/src/flatbuffers-build/Debug/libflatbuffers.a
+        optimized ${eastl_binary_dir}/Release/libEASTL.a
+        optimized ${eastl_binary_dir}/test/packages/EAStdC/Release/libEAStdC.a
         optimized ${shaderc_binary_dir}/libshaderc/Release/libshaderc_combined.a
+        optimized ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/${BUILD_FOLDER_SUFFIX}/flatbuffers-prefix/src/flatbuffers-build/Release/libflatbuffers.a
         pthread
         stdc++fs
         )
