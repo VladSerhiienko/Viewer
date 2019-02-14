@@ -87,11 +87,10 @@ public:
     struct PipelineComposite {
         enum FlagBits {
             /* Vertex */
-            kFlag_VertexType_Static         = 1 << 0,
-            kFlag_VertexType_StaticSkinned4 = 1 << 1,
-            kFlag_VertexType_StaticSkinned8 = 1 << 2,
-            kFlag_VertexType_Packed         = 1 << 3,
-            kFlag_VertexType_PackedSkinned  = 1 << 4,
+            kFlag_VertexType_Default = 1 << 0,
+            kFlag_VertexType_Skinned = 1 << 1,
+            kFlag_VertexType_FatSkinned = 1 << 2,
+            
             /* Blend */
             kFlag_BlendType_Disabled = 0,
             kFlag_BlendType_Add      = 1 << 5,

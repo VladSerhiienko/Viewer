@@ -243,6 +243,17 @@ struct DecompressedMeshInfo {
 };
 
 #ifndef APEMODEVK_NO_GOOGLE_DRACO
+
+namespace {
+    constexpr int positionAttributeIndex    = 0;
+    constexpr int uvAttributeIndex          = 1;
+    constexpr int irgbAttributeIndex        = 2;
+    constexpr int alphaAttributeIndex       = 3;
+    constexpr int qtangentAttributeIndex    = 4;
+    constexpr int boneAttributeIndex        = 5;
+    constexpr int extraBoneAttributeIndex   = 6;
+}
+
 template < typename TIndex >
 void TPopulateIndices( const draco::Mesh& decodedMesh, TIndex* pDstIndices ) {
     const uint32_t faceCount = decodedMesh.num_faces( );
@@ -258,115 +269,68 @@ void TPopulateIndices( const draco::Mesh& decodedMesh, TIndex* pDstIndices ) {
 template <typename TVertex>
 void TPopulateVertices( const draco::Mesh& decodedMesh, DecompressedMeshInfo &decompressedMeshInfo );
 
-template <>
-void TPopulateVertices< apemodefb::StaticVertexQTangentFb >( const draco::Mesh&    decodedMesh,
-                                                             DecompressedMeshInfo& decompressedMeshInfo ) {
+
+void PopulateDefaultVertices( const draco::Mesh&    decodedMesh,
+                              DecompressedMeshInfo& decompressedMeshInfo,
+                              const size_t vertexCount,
+                              const size_t vertexStride ) {
     using namespace draco;
     using namespace apemodefb;
     
-    const size_t vertexCount = decodedMesh.num_points();
-
-    decompressedMeshInfo.VertexCount = vertexCount;
-    decompressedMeshInfo.IndexCount = decodedMesh.num_faces() * 3;
-    
-    decompressedMeshInfo.DecompressedVertexBuffer.resize( sizeof( StaticVertexQTangentFb ) * vertexCount );
-    auto pDstVertices = reinterpret_cast< StaticVertexQTangentFb* >( decompressedMeshInfo.DecompressedVertexBuffer.data( ) );
-
-    constexpr int positionAttributeIndex  = 0;
-    constexpr int qtangentAttributeIndex  = 1;
-    constexpr int texCoordsAttributeIndex = 2;
-    assert( decodedMesh.num_attributes( ) == 3 );
-
     const PointAttribute* positionAttribute  = decodedMesh.attribute( positionAttributeIndex );
+    const PointAttribute* uvAttribute = decodedMesh.attribute( uvAttributeIndex );
+    const PointAttribute* irgbAttribute = decodedMesh.attribute( irgbAttributeIndex );
+    const PointAttribute* alphasAttribute = decodedMesh.attribute( alphaAttributeIndex );
     const PointAttribute* qtangentAttribute  = decodedMesh.attribute( qtangentAttributeIndex );
-    const PointAttribute* texCoordsAttribute = decodedMesh.attribute( texCoordsAttributeIndex );
-
-    assert( positionAttribute->attribute_type( ) == GeometryAttribute::Type::POSITION );
-    assert( qtangentAttribute->attribute_type( ) == GeometryAttribute::Type::GENERIC );
-    assert( texCoordsAttribute->attribute_type( ) == GeometryAttribute::Type::TEX_COORD );
-
-    assert( positionAttribute->data_type( ) == DataType::DT_FLOAT32 );
-    assert( qtangentAttribute->data_type( ) == DataType::DT_FLOAT32 );
-    assert( texCoordsAttribute->data_type( ) == DataType::DT_FLOAT32 );
-
-    assert( positionAttribute->num_components( ) == 3 );
-    assert( qtangentAttribute->num_components( ) == 4 );
-    assert( texCoordsAttribute->num_components( ) == 2 );
     
-    assert( positionAttribute->byte_stride( ) == 3 * sizeof(float) );
-    assert( qtangentAttribute->byte_stride( ) == 4 * sizeof(float) );
-    assert( texCoordsAttribute->byte_stride( ) == 2 * sizeof(float) );
-
+    auto vertexData = decompressedMeshInfo.DecompressedVertexBuffer.data();
     for ( uint32_t i = 0; i < vertexCount; ++i ) {
-        const PointIndex typedPointIndex( i );
-        StaticVertexQTangentFb& dstVertex = pDstVertices[ i ];
+        auto dstVertex = reinterpret_cast<apemodefb::DefaultVertexFb*>( vertexData + i * vertexStride );
         
-        positionAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_position( ) );
-        qtangentAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_qtangent( ) );
-        texCoordsAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_uv( ) );
+        uint32_t irgb;
+        float alpha;
+        
+        const PointIndex typedPointIndex( i );
+        positionAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_position( ) );
+        qtangentAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_qtangent( ) );
+        uvAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_uv( ) );
+        irgbAttribute->GetMappedValue( typedPointIndex, &irgb );
+        alphasAttribute->GetMappedValue( typedPointIndex, &alpha );
+        
+        dstVertex->mutate_vertex_index_color_RGB(irgb);
+        dstVertex->mutate_color_alpha(alpha);
     }
 }
 
-template <>
-void TPopulateVertices< apemodefb::StaticVertexFb >( const draco::Mesh&    decodedMesh,
-                                                     DecompressedMeshInfo& decompressedMeshInfo ) {
+void PopulateSkinnedVertices( const draco::Mesh&    decodedMesh,
+                              DecompressedMeshInfo& decompressedMeshInfo,
+                              const size_t vertexCount,
+                              const size_t vertexStride ) {
     using namespace draco;
     using namespace apemodefb;
     
-    const size_t pointCount = decodedMesh.num_points( );
-
-    decompressedMeshInfo.VertexCount = pointCount;
-    decompressedMeshInfo.IndexCount = decodedMesh.num_faces() * 3;
-    decompressedMeshInfo.DecompressedVertexBuffer.resize( sizeof( StaticVertexFb ) * pointCount );
-    auto pDstVertices = reinterpret_cast< StaticVertexFb* >( decompressedMeshInfo.DecompressedVertexBuffer.data( ) );
-
-    constexpr int positionAttributeIndex   = 0;
-    constexpr int normalAttributeIndex     = 1;
-    constexpr int tangentAttributeIndex    = 2;
-    constexpr int reflectionAttributeIndex = 3;
-    constexpr int texCoordsAttributeIndex  = 4;
-    
-    assert( decodedMesh.num_attributes( ) == 5 );
-
-    const PointAttribute* positionAttribute   = decodedMesh.attribute( positionAttributeIndex );
-    const PointAttribute* normalAttribute     = decodedMesh.attribute( normalAttributeIndex );
-    const PointAttribute* tangentAttribute    = decodedMesh.attribute( tangentAttributeIndex );
-    const PointAttribute* reflectionAttribute = decodedMesh.attribute( reflectionAttributeIndex );
-    const PointAttribute* texCoordsAttribute  = decodedMesh.attribute( texCoordsAttributeIndex );
-
-    assert( positionAttribute->attribute_type( ) == GeometryAttribute::Type::POSITION );
-    assert( normalAttribute->attribute_type( ) == GeometryAttribute::Type::NORMAL );
-    assert( tangentAttribute->attribute_type( ) == GeometryAttribute::Type::NORMAL );
-    assert( reflectionAttribute->attribute_type( ) == GeometryAttribute::Type::GENERIC );
-    assert( texCoordsAttribute->attribute_type( ) == GeometryAttribute::Type::TEX_COORD );
-
-    assert( positionAttribute->data_type( ) == DataType::DT_FLOAT32 );
-    assert( normalAttribute->data_type( ) == DataType::DT_FLOAT32 );
-    assert( tangentAttribute->data_type( ) == DataType::DT_FLOAT32 );
-    assert( reflectionAttribute->data_type( ) == DataType::DT_FLOAT32 );
-    assert( texCoordsAttribute->data_type( ) == DataType::DT_FLOAT32 );
-
-    assert( positionAttribute->num_components( ) == 3 );
-    assert( normalAttribute->num_components( ) == 3 );
-    assert( tangentAttribute->num_components( ) == 3 );
-    assert( reflectionAttribute->num_components( ) == 1 );
-    assert( texCoordsAttribute->num_components( ) == 2 );
-    
-    assert( positionAttribute->byte_stride( ) == 3 * sizeof(float) );
-    assert( normalAttribute->byte_stride( ) == 3 * sizeof(float) );
-    assert( tangentAttribute->byte_stride( ) == 3 * sizeof(float) );
-    assert( reflectionAttribute->byte_stride( ) == 1 * sizeof(float) );
-    assert( texCoordsAttribute->byte_stride( ) == 2 * sizeof(float) );
-
-    for ( uint32_t i = 0; i < pointCount; ++i ) {
+    const PointAttribute* boneAttribute  = decodedMesh.attribute( boneAttributeIndex );
+    auto vertexData = decompressedMeshInfo.DecompressedVertexBuffer.data();
+    for ( uint32_t i = 0; i < vertexCount; ++i ) {
         const PointIndex typedPointIndex( i );
-        StaticVertexFb& dstVertex = pDstVertices[ i ];
-        
-        positionAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_position( ) );
-        normalAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_normal( ) );
-        tangentAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_tangent( ) );
-        reflectionAttribute->GetMappedValue( typedPointIndex, (float*)&dstVertex.mutable_tangent( ) + 3 );
-        texCoordsAttribute->GetMappedValue( typedPointIndex, &dstVertex.mutable_uv( ) );
+        auto dstVertex = reinterpret_cast<apemodefb::SkinnedVertexFb*>( vertexData + i * vertexStride );
+        boneAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_bone_indices_weights( ) );
+    }
+}
+
+void PopulateFatSkinnedVertices( const draco::Mesh&    decodedMesh,
+                                 DecompressedMeshInfo& decompressedMeshInfo,
+                                 const size_t vertexCount,
+                                 const size_t vertexStride ) {
+    using namespace draco;
+    using namespace apemodefb;
+    
+    const PointAttribute* boneAttribute  = decodedMesh.attribute( extraBoneAttributeIndex );
+    auto vertexData = decompressedMeshInfo.DecompressedVertexBuffer.data();
+    for ( uint32_t i = 0; i < vertexCount; ++i ) {
+        const PointIndex typedPointIndex( i );
+        auto dstVertex = reinterpret_cast<apemodefb::FatSkinnedVertexFb*>( vertexData + i * vertexStride );
+        boneAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_extra_bone_indices_weights( ) );
     }
 }
 
@@ -387,11 +351,12 @@ DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubme
         assert( false && "Unsupported compression type." );
         return {};
     }
-    
+
     const EVertexFormatFb eVertexFormat = srcSubmesh.GetVertexFormat( );
     switch ( eVertexFormat ) {
-    case EVertexFormatFb_Static:
-    case EVertexFormatFb_StaticQTangent:
+    case apemodefb::EVertexFormatFb_Default:
+    case apemodefb::EVertexFormatFb_Skinned:
+    case apemodefb::EVertexFormatFb_FatSkinned:
         break;
     default:
         assert( false && "Unsupported vertex type." );
@@ -428,24 +393,43 @@ DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubme
         decompressedMeshInfo.DecompressedIndexBuffer.resize( sizeof( uint16_t ) * indexCount );
         TPopulateIndices( decodedMesh, (uint16_t*) decompressedMeshInfo.DecompressedIndexBuffer.data( ) );
     }
-
+    
+    size_t vertexStride = 0;
     switch ( eVertexFormat ) {
-    case EVertexFormatFb_Static:
-        TPopulateVertices< StaticVertexFb >( decodedMesh, decompressedMeshInfo );
+    case apemodefb::EVertexFormatFb_Default:
+        vertexStride = sizeof( apemodefb::DefaultVertexFb );
         break;
-    case EVertexFormatFb_StaticQTangent:
-        TPopulateVertices< StaticVertexQTangentFb >( decodedMesh, decompressedMeshInfo );
+    case apemodefb::EVertexFormatFb_Skinned:
+        vertexStride = sizeof( apemodefb::SkinnedVertexFb );
         break;
-        
+    case apemodefb::EVertexFormatFb_FatSkinned:
+        vertexStride = sizeof( apemodefb::FatSkinnedVertexFb );
+        break;
     default:
-        assert( false );
+        assert( false && "Unsupported vertex type." );
         return {};
     }
     
+    assert( vertexStride && "Unassigned vertex stride value." );
+    decompressedMeshInfo.DecompressedVertexBuffer.resize(vertexCount * vertexStride );
+    PopulateDefaultVertices( decodedMesh, decompressedMeshInfo, vertexCount, vertexStride );
     
+    switch ( eVertexFormat ) {
+    case apemodefb::EVertexFormatFb_Skinned:
+        PopulateSkinnedVertices( decodedMesh, decompressedMeshInfo, vertexCount, vertexStride );
+        break;
+    case apemodefb::EVertexFormatFb_FatSkinned:
+        PopulateSkinnedVertices( decodedMesh, decompressedMeshInfo, vertexCount, vertexStride );
+        break;
+    default:
+        assert( false && "Unsupported vertex type." );
+        return {};
+    }
+
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = end-start;
-    apemode::LogError( "Decoding done: {} vertices, {} indices, {} seconds", vertexCount, indexCount, diff.count() );
+    apemode::LogError( "Decoding done: {} vertices, {} indices, {} seconds",
+                       vertexCount, indexCount, diff.count() );
 
     return decompressedMeshInfo;
 }

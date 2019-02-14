@@ -127,4 +127,4 @@ iOSInjectionProject/
 */DerivedData/*
 projects/Viewer/DerivedData/*
 assets/cso/shaders/*
-assets/shaders/*.shp
+*cso.d

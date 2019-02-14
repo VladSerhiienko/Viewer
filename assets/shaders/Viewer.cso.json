@@ -1,5 +1,4 @@
 {
-    "output": "shaders/ViewerCSO.shp",
     "commands": [
         {
             "srcFile": "shaders/Skybox.frag",
@@ -106,6 +105,21 @@
                     "name": "SKINNING8",
                     "value": "1"
                 }
+            ]
+        },
+        {
+            "srcFile": "shaders/UScene.vert",
+            "shaderType": "vert",
+            "macroGroups": [
+                [
+                    { "name": "" },
+                    { "name": "SKINNING", "value": "1" },
+                    { "name": "SKINNING8", "value": "1" }
+                ],
+                [
+                    { "name": "" },
+                    { "name": "QTANGENTS", "value": "1" }
+                ]
             ]
         }
     ]

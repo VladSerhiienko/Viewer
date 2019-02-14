@@ -46,9 +46,7 @@ enum EVertexType {
     eVertexType_Custom  = 0,
     eVertexType_Default = 1,
     eVertexType_Skinned,
-    eVertexType_Skinned8,
-    eVertexType_Packed,
-    eVertexType_PackedSkinned,
+    eVertexType_FatSkinned,
     eVertexTypeCount,
 };
 
@@ -68,37 +66,40 @@ enum ERotationOrder {
  */
 struct DefaultVertex {
     XMFLOAT3 position;
-    XMFLOAT3 normal;
-    XMFLOAT4 tangent;
     XMFLOAT2 texcoords;
+    
+    union {
+        struct {
+            uint8_t index;
+            uint8_t colorR;
+            uint8_t colorG;
+            uint8_t colorB;
+        };
+        
+        uint32_t indexColorRGB;
+    };
+    
+    float colorAlpha;
+    XMFLOAT4 qtangent;
 };
 
 /* Skinned vertex structure.
  */
 struct SkinnedVertex {
-    XMFLOAT3 position;
-    XMFLOAT3 normal;
-    XMFLOAT4 tangent;
-    XMFLOAT2 texcoords;
-    XMFLOAT4 weights;
-    XMFLOAT4 indices;
+    DefaultVertex defaultVertex;
+    XMFLOAT4 boneIndicesWeights;
 };
 
 /* Skinned vertex structure.
  */
-struct SkinnedVertex8 {
-    XMFLOAT3 position;
-    XMFLOAT3 normal;
-    XMFLOAT4 tangent;
-    XMFLOAT2 texcoords;
-    XMFLOAT4 weights0;
-    XMFLOAT4 weights1;
-    XMFLOAT4 indices0;
-    XMFLOAT4 indices1;
+struct FatSkinnedVertex {
+    SkinnedVertex skinnedVertex;
+    XMFLOAT4 extraBoneIndicesWeights;
 };
 
-static_assert(sizeof(SkinnedVertex) == sizeof(apemodefb::StaticSkinnedVertexFb), "Must match.");
-static_assert(sizeof(SkinnedVertex8) == sizeof(apemodefb::StaticSkinned8VertexFb), "Must match.");
+static_assert(sizeof(DefaultVertex) == sizeof(apemodefb::DefaultVertexFb), "Must match.");
+static_assert(sizeof(SkinnedVertex) == sizeof(apemodefb::SkinnedVertexFb), "Must match.");
+static_assert(sizeof(FatSkinnedVertex) == sizeof(apemodefb::FatSkinnedVertexFb), "Must match.");
 
 /* Default vertex structure with packing.
  */
@@ -162,10 +163,6 @@ struct SceneMesh {
     uint32_t SkinId         = detail::kInvalidId;
     uint32_t BaseSubset     = detail::kInvalidId;
     uint32_t SubsetCount    = 0;
-    XMFLOAT3 PositionOffset = XMFLOAT3{0, 0, 0};
-    XMFLOAT3 PositionScale  = XMFLOAT3{1, 1, 1};
-    XMFLOAT2 TexcoordOffset = XMFLOAT2{0, 0};
-    XMFLOAT2 TexcoordScale  = XMFLOAT2{1, 1};
 
     detail::EVertexType eVertexType = detail::eVertexType_Custom;
 };

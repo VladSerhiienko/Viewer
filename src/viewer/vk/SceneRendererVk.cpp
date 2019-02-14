@@ -21,9 +21,6 @@ using namespace apemodexm;
 struct ObjectUBO {
     XMFLOAT4X4 WorldMatrix;
     XMFLOAT4X4 NormalMatrix;
-    XMFLOAT4   PositionOffset;
-    XMFLOAT4   PositionScale;
-    XMFLOAT4   TexcoordOffsetScale;
 };
 
 struct CameraUBO {
@@ -106,27 +103,17 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
         switch ( mesh.eVertexType ) {
             case apemode::detail::eVertexType_Default:
                 SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >(
-                    uint32_t( PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled ),
+                    uint32_t( PipelineComposite::kFlag_VertexType_Default | PipelineComposite::kFlag_BlendType_Disabled ),
                     uint32_t( node.Id ) ) );
                 break;
             case apemode::detail::eVertexType_Skinned:
                 SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >(
-                    uint32_t( PipelineComposite::kFlag_VertexType_StaticSkinned4 | PipelineComposite::kFlag_BlendType_Disabled ),
+                    uint32_t( PipelineComposite::kFlag_VertexType_Skinned | PipelineComposite::kFlag_BlendType_Disabled ),
                     uint32_t( node.Id ) ) );
                 break;
-            case apemode::detail::eVertexType_Skinned8:
+            case apemode::detail::eVertexType_FatSkinned:
                 SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >(
-                    uint32_t( PipelineComposite::kFlag_VertexType_StaticSkinned8 | PipelineComposite::kFlag_BlendType_Disabled ),
-                    uint32_t( node.Id ) ) );
-                break;
-            case apemode::detail::eVertexType_Packed:
-                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >(
-                    uint32_t( PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled ),
-                    uint32_t( node.Id ) ) );
-                break;
-            case apemode::detail::eVertexType_PackedSkinned:
-                SortedNodeIds.insert( eastl::make_pair< uint32_t, uint32_t >(
-                    uint32_t( PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled ),
+                    uint32_t( PipelineComposite::kFlag_VertexType_FatSkinned | PipelineComposite::kFlag_BlendType_Disabled ),
                     uint32_t( node.Id ) ) );
                 break;
             default:
@@ -137,9 +124,9 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
     for ( PipelineComposite::Flags ePipelineFlags :
           {// PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled,
            // PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_StaticSkinned4 | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_StaticSkinned8 | PipelineComposite::kFlag_BlendType_Disabled} ) {
+           PipelineComposite::kFlag_VertexType_Default | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_Skinned | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_FatSkinned | PipelineComposite::kFlag_BlendType_Disabled} ) {
         auto pipelineCompositeIt = PipelineComposites.find( ePipelineFlags );
         if ( pipelineCompositeIt != PipelineComposites.end( ) ) {
             if ( !RenderScene( pScene, pParams, pipelineCompositeIt->second, pTransformFrame, pSceneAsset ) )
@@ -274,17 +261,6 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
         //
 
         ObjectUBO objectData;
-        objectData.PositionOffset.x      = mesh.PositionOffset.x;
-        objectData.PositionOffset.y      = mesh.PositionOffset.y;
-        objectData.PositionOffset.z      = mesh.PositionOffset.z;
-        objectData.PositionScale.x       = mesh.PositionScale.x;
-        objectData.PositionScale.y       = mesh.PositionScale.y;
-        objectData.PositionScale.z       = mesh.PositionScale.z;
-        objectData.TexcoordOffsetScale.x = mesh.TexcoordOffset.x;
-        objectData.TexcoordOffsetScale.y = mesh.TexcoordOffset.y;
-        objectData.TexcoordOffsetScale.z = mesh.TexcoordScale.x;
-        objectData.TexcoordOffsetScale.w = mesh.TexcoordScale.y;
-
         const XMMATRIX worldMatrix  = pTransformFrame->Transforms[ node.Id ].WorldMatrix;
         const XMMATRIX normalMatrix = XMMatrixTranspose( XMMatrixInverse( nullptr, worldMatrix ) );
 
@@ -312,9 +288,8 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             // Calculate SkinnedObject
             //
 
-            assert( HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned8 ) ||
-                    HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned4 ) ||
-                    HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_PackedSkinned ) );
+            assert( HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_FatSkinned ) ||
+                    HasFlagEq( pipeline.eFlags, PipelineComposite::kFlag_VertexType_Skinned ) );
 
             auto& skin = pScene->Skins[ mesh.SkinId ];
             assert( skin.LinkIds.size( ) <= BoneOffsetMatrices.size( ) );
@@ -625,29 +600,42 @@ void TSetPipelineVertexInputStateCreateInfo< apemode::detail::DefaultVertex >(
     pVertexBindingDescriptions[ 0 ].binding   = 0;
     pVertexBindingDescriptions[ 0 ].stride    = sizeof( V );
     pVertexBindingDescriptions[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    pVertexInputAttributeDescriptions[ 0 ].location = 0;
-    pVertexInputAttributeDescriptions[ 0 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 0 ].offset   = ( size_t )( &( (V*) 0 )->position );
-
-    pVertexInputAttributeDescriptions[ 1 ].location = 1;
-    pVertexInputAttributeDescriptions[ 1 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 1 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 1 ].offset   = ( size_t )( &( (V*) 0 )->normal );
-
-    pVertexInputAttributeDescriptions[ 2 ].location = 2;
-    pVertexInputAttributeDescriptions[ 2 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 2 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 2 ].offset   = ( size_t )( &( (V*) 0 )->tangent );
-
-    pVertexInputAttributeDescriptions[ 3 ].location = 3;
-    pVertexInputAttributeDescriptions[ 3 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 3 ].format   = VK_FORMAT_R32G32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 3 ].offset   = ( size_t )( &( (V*) 0 )->texcoords );
-
     pPipelineVertexInputState->vertexBindingDescriptionCount   = 1;
-    pPipelineVertexInputState->vertexAttributeDescriptionCount = 4;
+    
+    const uint32_t binding = pVertexBindingDescriptions[ 0 ].binding;
+
+    uint8_t location = 0;
+    pVertexInputAttributeDescriptions[ location ].location = location;
+    pVertexInputAttributeDescriptions[ location ].binding  = binding;
+    pVertexInputAttributeDescriptions[ location ].format   = VK_FORMAT_R32G32B32_SFLOAT;
+    pVertexInputAttributeDescriptions[ location ].offset   = ( size_t )( &( (V*) 0 )->position );
+
+    ++location;
+    pVertexInputAttributeDescriptions[ location ].location = location;
+    pVertexInputAttributeDescriptions[ location ].binding  = binding;
+    pVertexInputAttributeDescriptions[ location ].format   = VK_FORMAT_R32G32_SFLOAT;
+    pVertexInputAttributeDescriptions[ location ].offset   = ( size_t )( &( (V*) 0 )->texcoords );
+
+    ++location;
+    pVertexInputAttributeDescriptions[ location ].location = location;
+    pVertexInputAttributeDescriptions[ location ].binding  = binding;
+    pVertexInputAttributeDescriptions[ location ].format   = VK_FORMAT_R32_UINT;
+    pVertexInputAttributeDescriptions[ location ].offset   = ( size_t )( &( (V*) 0 )->indexColorRGB );
+
+    ++location;
+    pVertexInputAttributeDescriptions[ location ].location = location;
+    pVertexInputAttributeDescriptions[ location ].binding  = binding;
+    pVertexInputAttributeDescriptions[ location ].format   = VK_FORMAT_R32_SFLOAT;
+    pVertexInputAttributeDescriptions[ location ].offset   = ( size_t )( &( (V*) 0 )->colorAlpha );
+
+    ++location;
+    pVertexInputAttributeDescriptions[ location ].location = location;
+    pVertexInputAttributeDescriptions[ location ].binding  = binding;
+    pVertexInputAttributeDescriptions[ location ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+    pVertexInputAttributeDescriptions[ location ].offset   = ( size_t )( &( (V*) 0 )->qtangent );
+
+    ++location;
+    pPipelineVertexInputState->vertexAttributeDescriptionCount = location;
 }
 
 template <>
@@ -657,185 +645,57 @@ void TSetPipelineVertexInputStateCreateInfo< apemode::detail::SkinnedVertex >(
     uint32_t                              maxVertexBindingDescriptions,
     VkVertexInputAttributeDescription*    pVertexInputAttributeDescriptions,
     uint32_t                              maxVertexInputAttributeDescriptions ) {
+    
+    TSetPipelineVertexInputStateCreateInfo< apemode::detail::DefaultVertex >(
+        pPipelineVertexInputState,
+        pVertexBindingDescriptions,
+        maxVertexBindingDescriptions,
+        pVertexInputAttributeDescriptions,
+        maxVertexInputAttributeDescriptions);
+    
     using V = apemode::detail::SkinnedVertex;
+    pVertexBindingDescriptions[ 0 ].stride = sizeof( V );
+    
+    const uint32_t binding = pVertexBindingDescriptions[ 0 ].binding;
+    
+    uint8_t location = pPipelineVertexInputState->vertexAttributeDescriptionCount;
+    pVertexInputAttributeDescriptions[ location ].location = location;
+    pVertexInputAttributeDescriptions[ location ].binding  = binding;
+    pVertexInputAttributeDescriptions[ location ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+    pVertexInputAttributeDescriptions[ location ].offset   = ( size_t )( &( (V*) 0 )->boneIndicesWeights );
 
-    pVertexBindingDescriptions[ 0 ].binding   = 0;
-    pVertexBindingDescriptions[ 0 ].stride    = sizeof( V );
-    pVertexBindingDescriptions[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    pVertexInputAttributeDescriptions[ 0 ].location = 0;
-    pVertexInputAttributeDescriptions[ 0 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 0 ].offset   = ( size_t )( &( (V*) 0 )->position );
-
-    pVertexInputAttributeDescriptions[ 1 ].location = 1;
-    pVertexInputAttributeDescriptions[ 1 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 1 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 1 ].offset   = ( size_t )( &( (V*) 0 )->normal );
-
-    pVertexInputAttributeDescriptions[ 2 ].location = 2;
-    pVertexInputAttributeDescriptions[ 2 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 2 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 2 ].offset   = ( size_t )( &( (V*) 0 )->tangent );
-
-    pVertexInputAttributeDescriptions[ 3 ].location = 3;
-    pVertexInputAttributeDescriptions[ 3 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 3 ].format   = VK_FORMAT_R32G32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 3 ].offset   = ( size_t )( &( (V*) 0 )->texcoords );
-
-    pVertexInputAttributeDescriptions[ 4 ].location = 4;
-    pVertexInputAttributeDescriptions[ 4 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 4 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 4 ].offset   = ( size_t )( &( (V*) 0 )->weights );
-
-    pVertexInputAttributeDescriptions[ 5 ].location = 5;
-    pVertexInputAttributeDescriptions[ 5 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 5 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 5 ].offset   = ( size_t )( &( (V*) 0 )->indices );
-
-    pPipelineVertexInputState->vertexBindingDescriptionCount   = 1;
-    pPipelineVertexInputState->vertexAttributeDescriptionCount = 6;
+    ++location;
+    pPipelineVertexInputState->vertexAttributeDescriptionCount = location;
 }
 
 template <>
-void TSetPipelineVertexInputStateCreateInfo< apemode::detail::SkinnedVertex8 >(
+void TSetPipelineVertexInputStateCreateInfo< apemode::detail::FatSkinnedVertex >(
     VkPipelineVertexInputStateCreateInfo* pPipelineVertexInputState,
     VkVertexInputBindingDescription*      pVertexBindingDescriptions,
     uint32_t                              maxVertexBindingDescriptions,
     VkVertexInputAttributeDescription*    pVertexInputAttributeDescriptions,
     uint32_t                              maxVertexInputAttributeDescriptions ) {
-    using V = apemode::detail::SkinnedVertex8;
+    
+    TSetPipelineVertexInputStateCreateInfo< apemode::detail::SkinnedVertex >(
+        pPipelineVertexInputState,
+        pVertexBindingDescriptions,
+        maxVertexBindingDescriptions,
+        pVertexInputAttributeDescriptions,
+        maxVertexInputAttributeDescriptions);
+    
+    using V = apemode::detail::FatSkinnedVertex;
+    pVertexBindingDescriptions[ 0 ].stride = sizeof( V );
+    
+    const uint32_t binding = pVertexBindingDescriptions[ 0 ].binding;
+    
+    uint8_t location = pPipelineVertexInputState->vertexAttributeDescriptionCount;
+    pVertexInputAttributeDescriptions[ location ].location = location;
+    pVertexInputAttributeDescriptions[ location ].binding  = binding;
+    pVertexInputAttributeDescriptions[ location ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+    pVertexInputAttributeDescriptions[ location ].offset   = ( size_t )( &( (V*) 0 )->extraBoneIndicesWeights );
 
-    pVertexBindingDescriptions[ 0 ].binding   = 0;
-    pVertexBindingDescriptions[ 0 ].stride    = sizeof( V );
-    pVertexBindingDescriptions[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    pVertexInputAttributeDescriptions[ 0 ].location = 0;
-    pVertexInputAttributeDescriptions[ 0 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 0 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 0 ].offset   = ( size_t )( &( (V*) 0 )->position );
-
-    pVertexInputAttributeDescriptions[ 1 ].location = 1;
-    pVertexInputAttributeDescriptions[ 1 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 1 ].format   = VK_FORMAT_R32G32B32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 1 ].offset   = ( size_t )( &( (V*) 0 )->normal );
-
-    pVertexInputAttributeDescriptions[ 2 ].location = 2;
-    pVertexInputAttributeDescriptions[ 2 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 2 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 2 ].offset   = ( size_t )( &( (V*) 0 )->tangent );
-
-    pVertexInputAttributeDescriptions[ 3 ].location = 3;
-    pVertexInputAttributeDescriptions[ 3 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 3 ].format   = VK_FORMAT_R32G32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 3 ].offset   = ( size_t )( &( (V*) 0 )->texcoords );
-
-    pVertexInputAttributeDescriptions[ 4 ].location = 4;
-    pVertexInputAttributeDescriptions[ 4 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 4 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 4 ].offset   = ( size_t )( &( (V*) 0 )->weights0 );
-
-    pVertexInputAttributeDescriptions[ 5 ].location = 5;
-    pVertexInputAttributeDescriptions[ 5 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 5 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 5 ].offset   = ( size_t )( &( (V*) 0 )->weights1 );
-
-    pVertexInputAttributeDescriptions[ 6 ].location = 6;
-    pVertexInputAttributeDescriptions[ 6 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 6 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 6 ].offset   = ( size_t )( &( (V*) 0 )->indices0 );
-
-    pVertexInputAttributeDescriptions[ 7 ].location = 7;
-    pVertexInputAttributeDescriptions[ 7 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 7 ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    pVertexInputAttributeDescriptions[ 7 ].offset   = ( size_t )( &( (V*) 0 )->indices1 );
-
-    pPipelineVertexInputState->vertexBindingDescriptionCount   = 1;
-    pPipelineVertexInputState->vertexAttributeDescriptionCount = 8;
-}
-
-template <>
-void TSetPipelineVertexInputStateCreateInfo< apemode::detail::PackedVertex >(
-    VkPipelineVertexInputStateCreateInfo* pPipelineVertexInputState,
-    VkVertexInputBindingDescription*      pVertexBindingDescriptions,
-    uint32_t                              maxVertexBindingDescriptions,
-    VkVertexInputAttributeDescription*    pVertexInputAttributeDescriptions,
-    uint32_t                              maxVertexInputAttributeDescriptions ) {
-    using V = apemode::detail::PackedVertex;
-
-    pVertexBindingDescriptions[ 0 ].binding   = 0;
-    pVertexBindingDescriptions[ 0 ].stride    = sizeof( V );
-    pVertexBindingDescriptions[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    pVertexInputAttributeDescriptions[ 0 ].location = 0;
-    pVertexInputAttributeDescriptions[ 0 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 0 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    pVertexInputAttributeDescriptions[ 0 ].offset   = ( size_t )( &( (V*) 0 )->position );
-
-    pVertexInputAttributeDescriptions[ 1 ].location = 1;
-    pVertexInputAttributeDescriptions[ 1 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 1 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    pVertexInputAttributeDescriptions[ 1 ].offset   = ( size_t )( &( (V*) 0 )->normal );
-
-    pVertexInputAttributeDescriptions[ 2 ].location = 2;
-    pVertexInputAttributeDescriptions[ 2 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 2 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    pVertexInputAttributeDescriptions[ 2 ].offset   = ( size_t )( &( (V*) 0 )->tangent );
-
-    pVertexInputAttributeDescriptions[ 3 ].location = 3;
-    pVertexInputAttributeDescriptions[ 3 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 3 ].format   = VK_FORMAT_R16G16_UNORM;
-    pVertexInputAttributeDescriptions[ 3 ].offset   = ( size_t )( &( (V*) 0 )->texcoords );
-
-    pPipelineVertexInputState->vertexBindingDescriptionCount   = 1;
-    pPipelineVertexInputState->vertexAttributeDescriptionCount = 4;
-}
-
-template <>
-void TSetPipelineVertexInputStateCreateInfo< apemode::detail::PackedSkinnedVertex >(
-    VkPipelineVertexInputStateCreateInfo* pPipelineVertexInputState,
-    VkVertexInputBindingDescription*      pVertexBindingDescriptions,
-    uint32_t                              maxVertexBindingDescriptions,
-    VkVertexInputAttributeDescription*    pVertexInputAttributeDescriptions,
-    uint32_t                              maxVertexInputAttributeDescriptions ) {
-    using V = apemode::detail::PackedSkinnedVertex;
-
-    pVertexBindingDescriptions[ 0 ].binding   = 0;
-    pVertexBindingDescriptions[ 0 ].stride    = sizeof( V );
-    pVertexBindingDescriptions[ 0 ].inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
-
-    pVertexInputAttributeDescriptions[ 0 ].location = 0;
-    pVertexInputAttributeDescriptions[ 0 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 0 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    pVertexInputAttributeDescriptions[ 0 ].offset   = ( size_t )( &( (V*) 0 )->position );
-
-    pVertexInputAttributeDescriptions[ 1 ].location = 1;
-    pVertexInputAttributeDescriptions[ 1 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 1 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    pVertexInputAttributeDescriptions[ 1 ].offset   = ( size_t )( &( (V*) 0 )->normal );
-
-    pVertexInputAttributeDescriptions[ 2 ].location = 2;
-    pVertexInputAttributeDescriptions[ 2 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 2 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    pVertexInputAttributeDescriptions[ 2 ].offset   = ( size_t )( &( (V*) 0 )->tangent );
-
-    pVertexInputAttributeDescriptions[ 3 ].location = 3;
-    pVertexInputAttributeDescriptions[ 3 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 3 ].format   = VK_FORMAT_R16G16_UNORM;
-    pVertexInputAttributeDescriptions[ 3 ].offset   = ( size_t )( &( (V*) 0 )->texcoords );
-
-    pVertexInputAttributeDescriptions[ 4 ].location = 4;
-    pVertexInputAttributeDescriptions[ 4 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 4 ].format   = VK_FORMAT_A2R10G10B10_UNORM_PACK32;
-    pVertexInputAttributeDescriptions[ 4 ].offset   = ( size_t )( &( (V*) 0 )->weights );
-
-    pVertexInputAttributeDescriptions[ 5 ].location = 5;
-    pVertexInputAttributeDescriptions[ 5 ].binding  = pVertexBindingDescriptions[ 0 ].binding;
-    pVertexInputAttributeDescriptions[ 5 ].format   = VK_FORMAT_R8G8B8A8_UNORM;
-    pVertexInputAttributeDescriptions[ 5 ].offset   = ( size_t )( &( (V*) 0 )->indices );
-
-    pPipelineVertexInputState->vertexBindingDescriptionCount   = 1;
-    pPipelineVertexInputState->vertexAttributeDescriptionCount = 6;
+    ++location;
+    pPipelineVertexInputState->vertexAttributeDescriptionCount = location;
 }
 
 apemode::vector< uint8_t > GetPrecompiledShader( const apemode::platform::IAssetManager* pAssetManager,
@@ -903,9 +763,9 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
           {// TODO: MoltenVK struggles to use packed format.
            // PipelineComposite::kFlag_VertexType_Packed | PipelineComposite::kFlag_BlendType_Disabled,
            // PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_Static | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_StaticSkinned4 | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_StaticSkinned8 | PipelineComposite::kFlag_BlendType_Disabled} ) {
+           PipelineComposite::kFlag_VertexType_Default | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_Skinned | PipelineComposite::kFlag_BlendType_Disabled,
+           PipelineComposite::kFlag_VertexType_FatSkinned | PipelineComposite::kFlag_BlendType_Disabled} ) {
         PipelineComposites[ ePipelineFlags ].eFlags = ePipelineFlags;
     }
 
@@ -1070,14 +930,12 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
     }
 
     for ( auto& pipeline : PipelineComposites ) {
-        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Static ) ||
-             HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Packed ) ) {
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Default ) ) {
             assert( !pipeline.second.pPipelineLayout );
             pipeline.second.pPipelineLayout = hPipelineLayouts[ kPipelineLayoutForStatic ];
         }
-        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned4 ) ||
-             HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned8 ) ||
-             HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_PackedSkinned ) ) {
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Skinned ) ||
+             HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_FatSkinned ) ) {
             assert( !pipeline.second.pPipelineLayout );
             pipeline.second.pPipelineLayout = hPipelineLayouts[ kPipelineLayoutForSkinned ];
         }
@@ -1150,24 +1008,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
 
     //
     for ( auto& pipeline : PipelineComposites ) {
-        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Packed ) ) {
-            composite.PipelineShaderStages[ 0 ].module              = hVertexShaderModule;
-            composite.PipelineShaderStages[ 0 ].pSpecializationInfo = nullptr;
-            composite.Pipeline.layout                               = pipeline.second.pPipelineLayout;
-
-            TSetPipelineVertexInputStateCreateInfo< apemode::detail::PackedVertex >(
-                &composite.PipelineVertexInputState,
-                composite.VertexInputBindingDescriptions,
-                GetArraySize( composite.VertexInputBindingDescriptions ),
-                composite.VertexInputAttributeDescriptions,
-                GetArraySize( composite.VertexInputAttributeDescriptions ) );
-
-            assert( pipeline.second.hPipeline.IsNull( ) );
-            if ( !pipeline.second.hPipeline.Recreate( *pNode, pipeline.second.hPipelineCache, composite.Pipeline ) ) {
-                return false;
-            }
-        }
-        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Static ) ) {
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Default ) ) {
             composite.PipelineShaderStages[ 0 ].module              = hVertexShaderModule;
             composite.PipelineShaderStages[ 0 ].pSpecializationInfo = nullptr;
             composite.Pipeline.layout                               = pipeline.second.pPipelineLayout;
@@ -1185,25 +1026,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
             }
         }
 
-        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_PackedSkinned ) ) {
-            composite.PipelineShaderStages[ 0 ].module              = hSkinnedVertexShaderModule;
-            composite.PipelineShaderStages[ 0 ].pSpecializationInfo = nullptr;
-            composite.Pipeline.layout                               = hPipelineLayouts[ kPipelineLayoutForSkinned ];
-
-            TSetPipelineVertexInputStateCreateInfo< apemode::detail::PackedSkinnedVertex >(
-                &composite.PipelineVertexInputState,
-                composite.VertexInputBindingDescriptions,
-                GetArraySize( composite.VertexInputBindingDescriptions ),
-                composite.VertexInputAttributeDescriptions,
-                GetArraySize( composite.VertexInputAttributeDescriptions ) );
-
-            assert( pipeline.second.hPipeline.IsNull( ) );
-            if ( !pipeline.second.hPipeline.Recreate( *pNode, pipeline.second.hPipelineCache, composite.Pipeline ) ) {
-                return false;
-            }
-        }
-
-        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned4 ) ) {
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_Skinned ) ) {
             composite.PipelineShaderStages[ 0 ].module              = hSkinnedVertexShaderModule;
             composite.PipelineShaderStages[ 0 ].pSpecializationInfo = &specializationInfo;
             composite.Pipeline.layout                               = hPipelineLayouts[ kPipelineLayoutForSkinned ];
@@ -1221,12 +1044,12 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
             }
         }
 
-        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_StaticSkinned8 ) ) {
+        if ( HasFlagEq( pipeline.second.eFlags, PipelineComposite::kFlag_VertexType_FatSkinned ) ) {
             composite.PipelineShaderStages[ 0 ].module              = hSkinned8VertexShaderModule;
             composite.PipelineShaderStages[ 0 ].pSpecializationInfo = &specializationInfo;
             composite.Pipeline.layout                               = hPipelineLayouts[ kPipelineLayoutForSkinned ];
 
-            TSetPipelineVertexInputStateCreateInfo< apemode::detail::SkinnedVertex8 >(
+            TSetPipelineVertexInputStateCreateInfo< apemode::detail::FatSkinnedVertex >(
                 &composite.PipelineVertexInputState,
                 composite.VertexInputBindingDescriptions,
                 GetArraySize( composite.VertexInputBindingDescriptions ),

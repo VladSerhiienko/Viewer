@@ -42,17 +42,19 @@ enum EShaderType {
   EShaderType_Vert = 0,
   EShaderType_Frag = 1,
   EShaderType_Comp = 2,
-  EShaderType_Tesc = 3,
-  EShaderType_Tese = 4,
+  EShaderType_Geom = 3,
+  EShaderType_Tesc = 4,
+  EShaderType_Tese = 5,
   EShaderType_MIN = EShaderType_Vert,
   EShaderType_MAX = EShaderType_Tese
 };
 
-inline EShaderType (&EnumValuesEShaderType())[5] {
+inline EShaderType (&EnumValuesEShaderType())[6] {
   static EShaderType values[] = {
     EShaderType_Vert,
     EShaderType_Frag,
     EShaderType_Comp,
+    EShaderType_Geom,
     EShaderType_Tesc,
     EShaderType_Tese
   };
@@ -64,6 +66,7 @@ inline const char **EnumNamesEShaderType() {
     "Vert",
     "Frag",
     "Comp",
+    "Geom",
     "Tesc",
     "Tese",
     nullptr
@@ -86,26 +89,14 @@ struct CompiledShaderFb FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::String *asset() const {
     return GetPointer<const flatbuffers::String *>(VT_ASSET);
   }
-  flatbuffers::String *mutable_asset() {
-    return GetPointer<flatbuffers::String *>(VT_ASSET);
-  }
   const flatbuffers::String *macros() const {
     return GetPointer<const flatbuffers::String *>(VT_MACROS);
-  }
-  flatbuffers::String *mutable_macros() {
-    return GetPointer<flatbuffers::String *>(VT_MACROS);
   }
   EShaderType shader_type() const {
     return static_cast<EShaderType>(GetField<uint32_t>(VT_SHADER_TYPE, 0));
   }
-  bool mutate_shader_type(EShaderType _shader_type) {
-    return SetField<uint32_t>(VT_SHADER_TYPE, static_cast<uint32_t>(_shader_type), 0);
-  }
   const flatbuffers::Vector<uint32_t> *spv() const {
     return GetPointer<const flatbuffers::Vector<uint32_t> *>(VT_SPV);
-  }
-  flatbuffers::Vector<uint32_t> *mutable_spv() {
-    return GetPointer<flatbuffers::Vector<uint32_t> *>(VT_SPV);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -183,14 +174,8 @@ struct CollectionFb FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   EVersionFb version() const {
     return static_cast<EVersionFb>(GetField<uint8_t>(VT_VERSION, 0));
   }
-  bool mutate_version(EVersionFb _version) {
-    return SetField<uint8_t>(VT_VERSION, static_cast<uint8_t>(_version), 0);
-  }
   const flatbuffers::Vector<flatbuffers::Offset<CompiledShaderFb>> *csos() const {
     return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<CompiledShaderFb>> *>(VT_CSOS);
-  }
-  flatbuffers::Vector<flatbuffers::Offset<CompiledShaderFb>> *mutable_csos() {
-    return GetPointer<flatbuffers::Vector<flatbuffers::Offset<CompiledShaderFb>> *>(VT_CSOS);
   }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
@@ -245,10 +230,6 @@ inline flatbuffers::Offset<CollectionFb> CreateCollectionFbDirect(
 
 inline const csofb::CollectionFb *GetCollectionFb(const void *buf) {
   return flatbuffers::GetRoot<csofb::CollectionFb>(buf);
-}
-
-inline CollectionFb *GetMutableCollectionFb(void *buf) {
-  return flatbuffers::GetMutableRoot<CollectionFb>(buf);
 }
 
 inline const char *CollectionFbIdentifier() {
