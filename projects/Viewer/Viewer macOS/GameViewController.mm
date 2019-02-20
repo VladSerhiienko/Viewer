@@ -108,8 +108,8 @@ std::vector< const char* > getProcessArguments( ) {
 }
 
 -(void)scrollWheel:(NSEvent *)e {
-    app.input.Analogs[ apemode::platform::kAnalogInput_MouseHorzScroll ] = e.deltaX;
-    app.input.Analogs[ apemode::platform::kAnalogInput_MouseVertScroll ] = e.deltaY;
+    app.input.Analogs[ apemode::platform::kAnalogInput_MouseHorzScroll ] = e.deltaX / 100.0f;
+    app.input.Analogs[ apemode::platform::kAnalogInput_MouseVertScroll ] = e.deltaY / 100.0f;
 }
 
 -(void)mouseMoved:(NSEvent *)e {
@@ -155,17 +155,45 @@ std::vector< const char* > getProcessArguments( ) {
     app.surface.OverrideHeight   = 0; //(int) self.view.frame.size.height;
     
     app.assetManager.UpdateAssets("/Users/vlad.serhiienko/Projects/Home/Viewer/assets/**", nullptr, 0);
-    app.assetManager.AddAsset( "shared/stesla.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_8/stesla.fbxp" );
-    app.assetManager.AddAsset( "shared/horned_infernal_duke.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/horned_infernal_duke.fbxp" );
-    app.assetManager.AddAsset( "shared/horned_infernal_duke_8.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_8/horned_infernal_duke.fbxp" );
-    app.assetManager.AddAsset( "shared/horned_infernal_duke_16.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_16/horned_infernal_duke.fbxp" );
-    app.assetManager.AddAsset( "shared/0004.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_16/0004.fbxp" );
-    app.assetManager.AddAsset( "shared/0005.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_16/0005.fbxp" );
+    //
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/run-hedgehog-run.fbxp" );
+    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/run-hedgehog-run.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/dji.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/security-cyborg.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/horned_infernal_duke.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/littlest-tokyo.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/plasma-revolver-animation.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/colt-rebel-357.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/mountain-king.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/combat-helmet-k6-3.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/combat-jet-animation.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/bean-bot.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/speedling-realistic.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/security-cyborg.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/littlest-tokyo.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/alien-head.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/super-human.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rainier-ak-3d.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/qutiix-stylised-circus-baby-sister-location.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/sculptjanuary19-day22-jungle.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/tentacle-creature-day-2-sculptjanuary-2016.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/horned_infernal_duke.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/mech-m-6k.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/stesla.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/dji.fbxp" );
+//    app.assetManager.AddAsset( "shared/stesla.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_8/stesla.fbxp" );
+//    app.assetManager.AddAsset( "shared/horned_infernal_duke.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/horned_infernal_duke.fbxp" );
+//    app.assetManager.AddAsset( "shared/horned_infernal_duke_8.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_8/horned_infernal_duke.fbxp" );
+//    app.assetManager.AddAsset( "shared/horned_infernal_duke_16.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_16/horned_infernal_duke.fbxp" );
+//    app.assetManager.AddAsset( "shared/0004.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_16/0004.fbxp" );
+//    app.assetManager.AddAsset( "shared/0005.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_16/0005.fbxp" );
     
-    std::vector< const char* > ppszArgs = getProcessArguments( );
-    ppszArgs.clear();
-    ppszArgs.push_back("--scene");
-    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/horned_infernal_duke.fbxp"); // +
+    _mm_lfence();
+    
+    std::vector< const char* > ppszArgs; // = getProcessArguments( );
+//    ppszArgs.clear();
+//    ppszArgs.push_back("--scene");
+//    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/horned_infernal_duke.fbxp"); // +
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/horned_infernal_duke.fbxp"); // +
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/holotech-bench.fbxp"); // +
 //    ppszArgs.push_back("/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/mech-m-6k.fbxp"); // +

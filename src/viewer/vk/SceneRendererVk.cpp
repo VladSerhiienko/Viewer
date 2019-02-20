@@ -126,7 +126,9 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene* pScene, const SceneRe
            // PipelineComposite::kFlag_VertexType_PackedSkinned | PipelineComposite::kFlag_BlendType_Disabled,
            PipelineComposite::kFlag_VertexType_Default | PipelineComposite::kFlag_BlendType_Disabled,
            PipelineComposite::kFlag_VertexType_Skinned | PipelineComposite::kFlag_BlendType_Disabled,
-           PipelineComposite::kFlag_VertexType_FatSkinned | PipelineComposite::kFlag_BlendType_Disabled} ) {
+           PipelineComposite::kFlag_VertexType_FatSkinned | PipelineComposite::kFlag_BlendType_Disabled
+           
+          } ) {
         auto pipelineCompositeIt = PipelineComposites.find( ePipelineFlags );
         if ( pipelineCompositeIt != PipelineComposites.end( ) ) {
             if ( !RenderScene( pScene, pParams, pipelineCompositeIt->second, pTransformFrame, pSceneAsset ) )
@@ -368,9 +370,9 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             flags |= pMaterialAsset->hBaseColorImgView ? 1 << 0 : 0;
             flags |= pMaterialAsset->hNormalImgView ? 1 << 1 : 0;
             flags |= pMaterialAsset->hEmissiveImgView ? 1 << 2 : 0;
-            flags |= pMaterialAsset->hMetallicImgView ? 1 << 3 : 0;
-            flags |= pMaterialAsset->hRoughnessImgView ? 1 << 4 : 0;
-            flags |= pMaterialAsset->hOcclusionImgView ? 1 << 5 : 0;
+            flags |= pMaterialAsset->hMetallicRoughnessOcclusionImgView ? 1 << 3 : 0;
+            flags |= pMaterialAsset->hMetallicRoughnessOcclusionImgView ? 1 << 4 : 0;
+            flags |= 0; // pMaterialAsset->bHasOcclusionMap ? 1 << 5 : 0;
 
             MaterialUBO materialData;
             /*
@@ -446,27 +448,27 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
 
             descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 5;
             objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
-                                                                    pMaterialAsset->hMetallicImgView,
-                                                                    pMaterialAsset->pMetallicSampler,
+                                                                    pMaterialAsset->hMetallicRoughnessOcclusionImgView,
+                                                                    pMaterialAsset->pMetallicRoughnessOcclusionSampler,
                                                                     VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
                                                                     pSceneAsset->MissingTextureZeros->hImgView,
                                                                     pSceneAsset->pMissingSampler );
 
-            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 6;
-            objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
-                                                                    pMaterialAsset->hRoughnessImgView,
-                                                                    pMaterialAsset->pRoughnessSampler,
-                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                                                    pSceneAsset->MissingTextureZeros->hImgView,
-                                                                    pSceneAsset->pMissingSampler );
-
-            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 7;
-            objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
-                                                                    pMaterialAsset->hOcclusionImgView,
-                                                                    pMaterialAsset->pOcclusionSampler,
-                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                                                                    pSceneAsset->MissingTextureZeros->hImgView,
-                                                                    pSceneAsset->pMissingSampler );
+//            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 6;
+//            objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
+//                                                                    pMaterialAsset->hRoughnessImgView,
+//                                                                    pMaterialAsset->pRoughnessSampler,
+//                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+//                                                                    pSceneAsset->MissingTextureZeros->hImgView,
+//                                                                    pSceneAsset->pMissingSampler );
+//
+//            descriptorSetForObject.pBinding[ objectSetBindingCount ].DstBinding = 7;
+//            objectSetBindingCount += FillCombinedImgSamplerBinding( &descriptorSetForObject.pBinding[ objectSetBindingCount ],
+//                                                                    pMaterialAsset->hOcclusionImgView,
+//                                                                    pMaterialAsset->pOcclusionSampler,
+//                                                                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+//                                                                    pSceneAsset->MissingTextureZeros->hImgView,
+//                                                                    pSceneAsset->pMissingSampler );
 
             descriptorSetForObject.BindingCount = objectSetBindingCount;
 
@@ -619,6 +621,12 @@ void TSetPipelineVertexInputStateCreateInfo< apemode::detail::DefaultVertex >(
     ++location;
     pVertexInputAttributeDescriptions[ location ].location = location;
     pVertexInputAttributeDescriptions[ location ].binding  = binding;
+    pVertexInputAttributeDescriptions[ location ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
+    pVertexInputAttributeDescriptions[ location ].offset   = ( size_t )( &( (V*) 0 )->qtangent );
+
+    ++location;
+    pVertexInputAttributeDescriptions[ location ].location = location;
+    pVertexInputAttributeDescriptions[ location ].binding  = binding;
     pVertexInputAttributeDescriptions[ location ].format   = VK_FORMAT_R32_UINT;
     pVertexInputAttributeDescriptions[ location ].offset   = ( size_t )( &( (V*) 0 )->indexColorRGB );
 
@@ -627,12 +635,6 @@ void TSetPipelineVertexInputStateCreateInfo< apemode::detail::DefaultVertex >(
     pVertexInputAttributeDescriptions[ location ].binding  = binding;
     pVertexInputAttributeDescriptions[ location ].format   = VK_FORMAT_R32_SFLOAT;
     pVertexInputAttributeDescriptions[ location ].offset   = ( size_t )( &( (V*) 0 )->colorAlpha );
-
-    ++location;
-    pVertexInputAttributeDescriptions[ location ].location = location;
-    pVertexInputAttributeDescriptions[ location ].binding  = binding;
-    pVertexInputAttributeDescriptions[ location ].format   = VK_FORMAT_R32G32B32A32_SFLOAT;
-    pVertexInputAttributeDescriptions[ location ].offset   = ( size_t )( &( (V*) 0 )->qtangent );
 
     ++location;
     pPipelineVertexInputState->vertexAttributeDescriptionCount = location;
@@ -774,15 +776,16 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
     // TODO: Remove skinning shader if it is not needed.
     //
 
-    THandle< VkShaderModule > hVertexShaderModule = CompileShader( pNode, pParams->pAssetManager, "shaders/spv/Scene.vert.spv" );
-    THandle< VkShaderModule > hSkinnedVertexShaderModule = CompileShader( pNode, pParams->pAssetManager, "shaders/spv/SceneSkinned.vert.spv" );
-    THandle< VkShaderModule > hSkinned8VertexShaderModule = CompileShader( pNode, pParams->pAssetManager, "shaders/spv/SceneSkinned8.vert.spv" );
-    THandle< VkShaderModule > hFragmentShaderModule = CompileShader( pNode, pParams->pAssetManager, "shaders/spv/Scene.frag.spv" );
+    THandle< VkShaderModule > hVertexShaderModule = CompileShader( pNode, pParams->pAssetManager, "shaders/Viewer.cso.d/UScene.vert.spv" );
+    THandle< VkShaderModule > hSkinnedVertexShaderModule = CompileShader( pNode, pParams->pAssetManager, "shaders/Viewer.cso.d/UScene.vert-defs-SKINNING=1.spv" );
+    THandle< VkShaderModule > hSkinned8VertexShaderModule = CompileShader( pNode, pParams->pAssetManager, "shaders/Viewer.cso.d/UScene.vert-defs-SKINNING8=1.spv" );
+    THandle< VkShaderModule > hFragmentShaderModule = CompileShader( pNode, pParams->pAssetManager, "shaders/Viewer.cso.d/UScene.frag.spv" );
 
     if ( hVertexShaderModule.IsNull( ) ||
          hSkinnedVertexShaderModule.IsNull( ) ||
          hSkinned8VertexShaderModule.IsNull( ) ||
          hFragmentShaderModule.IsNull( ) ) {
+        assert( false );
         return false;
     }
 
@@ -926,6 +929,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
 
     if ( !hPipelineLayouts[ kPipelineLayoutForStatic ].Recreate( *pNode, staticPipelineLayoutCreateInfo ) ||
          !hPipelineLayouts[ kPipelineLayoutForSkinned ].Recreate( *pNode, skinnedPipelineLayoutCreateInfo ) ) {
+        assert( false );
         return false;
     }
 
@@ -1022,6 +1026,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
 
             assert( pipeline.second.hPipeline.IsNull( ) );
             if ( !pipeline.second.hPipeline.Recreate( *pNode, pipeline.second.hPipelineCache, composite.Pipeline ) ) {
+                assert( false );
                 return false;
             }
         }
@@ -1040,6 +1045,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
 
             assert( pipeline.second.hPipeline.IsNull( ) );
             if ( !pipeline.second.hPipeline.Recreate( *pNode, pipeline.second.hPipelineCache, composite.Pipeline ) ) {
+                assert( false );
                 return false;
             }
         }
@@ -1058,6 +1064,7 @@ bool apemode::vk::SceneRenderer::Recreate( const RecreateParametersBase* pParams
 
             assert( pipeline.second.hPipeline.IsNull( ) );
             if ( !pipeline.second.hPipeline.Recreate( *pNode, pipeline.second.hPipelineCache, composite.Pipeline ) ) {
+                assert( false );
                 return false;
             }
         }

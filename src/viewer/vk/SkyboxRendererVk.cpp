@@ -36,7 +36,7 @@ bool apemode::vk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
     THandle< VkShaderModule > hVertexShaderModule;
     THandle< VkShaderModule > hFragmentShaderModule;
     {
-        auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/Skybox.vert.spv" );
+        auto compiledVertexShaderAsset = pParams->pAssetManager->Acquire( "shaders/Viewer.cso.d/Skybox.vert.spv" );
         auto compiledVertexShader = compiledVertexShaderAsset->GetContentAsBinaryBuffer( );
         pParams->pAssetManager->Release( compiledVertexShaderAsset );
         if ( compiledVertexShader.empty( ) ) {
@@ -44,7 +44,7 @@ bool apemode::vk::SkyboxRenderer::Recreate( RecreateParameters* pParams ) {
             return false;
         }
 
-        auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/spv/Skybox.frag.spv" );
+        auto compiledFragmentShaderAsset = pParams->pAssetManager->Acquire( "shaders/Viewer.cso.d/Skybox.frag.spv" );
         auto compiledFragmentShader = compiledFragmentShaderAsset->GetContentAsBinaryBuffer( );
         pParams->pAssetManager->Release( compiledFragmentShaderAsset );
         if ( compiledFragmentShader.empty() ) {

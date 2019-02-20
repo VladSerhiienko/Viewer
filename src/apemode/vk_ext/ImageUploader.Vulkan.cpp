@@ -204,6 +204,10 @@ apemodevk::unique_ptr< apemodevk::UploadedImage > apemodevk::ImageUploader::Uplo
     loadedImage->ImgViewCreateInfo.flags                           = 0;
     loadedImage->ImgViewCreateInfo.format                          = srcImg.GetFormat( );
     loadedImage->ImgViewCreateInfo.viewType                        = srcImg.GetImageViewType( );
+    loadedImage->ImgViewCreateInfo.components.r                    = VK_COMPONENT_SWIZZLE_R;
+    loadedImage->ImgViewCreateInfo.components.g                    = VK_COMPONENT_SWIZZLE_G;
+    loadedImage->ImgViewCreateInfo.components.b                    = VK_COMPONENT_SWIZZLE_B;
+    loadedImage->ImgViewCreateInfo.components.a                    = VK_COMPONENT_SWIZZLE_A;
     loadedImage->ImgViewCreateInfo.subresourceRange.aspectMask     = loadOptions.eImgAspect;
     loadedImage->ImgViewCreateInfo.subresourceRange.levelCount     = srcImg.GetMipLevels( );
     loadedImage->ImgViewCreateInfo.subresourceRange.layerCount     = srcImg.GetFaces( );
@@ -232,8 +236,8 @@ apemodevk::unique_ptr< apemodevk::UploadedImage > apemodevk::ImageUploader::Uplo
         return nullptr;
     }
 
+    loadedImage->ImgViewCreateInfo.image = loadedImage->hImg.Handle.pImg;
     if ( loadOptions.bImgView ) {
-        loadedImage->ImgViewCreateInfo.image = loadedImage->hImg.Handle.pImg;
         if ( false == loadedImage->hImgView.Recreate( *pNode, loadedImage->ImgViewCreateInfo ) ) {
             return nullptr;
         }

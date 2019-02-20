@@ -33,10 +33,8 @@ layout( set = 0, binding = 3 ) uniform samplerCube IrradianceCubeMap;
 // layout( std140, set = 1, binding = 1 ) uniform MaterialUBO;
 // layout( set = 1, binding = 2 ) uniform sampler2D BaseColorMap;
 // layout( set = 1, binding = 3 ) uniform sampler2D NormalMap;
-// layout( set = 1, binding = 4 ) uniform sampler2D OcclusionMap;
-// layout( set = 1, binding = 5 ) uniform sampler2D EmissiveMap;
-// layout( set = 1, binding = 6 ) uniform sampler2D MetallicMap;
-// layout( set = 1, binding = 7 ) uniform sampler2D RoughnessMap;
+// layout( set = 1, binding = 4 ) uniform sampler2D EmissiveMap;
+// layout( set = 1, binding = 5 ) uniform sampler2D MetallicRoughnessOcclusionMap;
 
 layout( std140, set = 1, binding = 1 ) uniform MaterialUBO {
     vec4  BaseColorFactor;
@@ -48,16 +46,25 @@ layout( std140, set = 1, binding = 1 ) uniform MaterialUBO {
 layout( set = 1, binding = 2 ) uniform sampler2D BaseColorMap;
 layout( set = 1, binding = 3 ) uniform sampler2D NormalMap;
 layout( set = 1, binding = 4 ) uniform sampler2D EmissiveMap;
-layout( set = 1, binding = 5 ) uniform sampler2D MetallicMap;
-layout( set = 1, binding = 6 ) uniform sampler2D RoughnessMap;
-layout( set = 1, binding = 7 ) uniform sampler2D OcclusionMap;
+layout( set = 1, binding = 5 ) uniform sampler2D MetallicRoughnessOcclusionMap;
+// layout( set = 1, binding = 6 ) uniform sampler2D RoughnessMap;
+// layout( set = 1, binding = 7 ) uniform sampler2D OcclusionMap;
+
+// layout( location = 0 ) in vec3 WorldPosition;
+// layout( location = 1 ) in vec3 WorldNormal;
+// layout( location = 2 ) in vec3 WorldTangent;
+// layout( location = 3 ) in vec3 WorldBitangent;
+// layout( location = 4 ) in vec3 ViewDirection;
+// layout( location = 5 ) in vec2 Texcoords;
 
 layout( location = 0 ) in vec3 WorldPosition;
-layout( location = 1 ) in vec3 WorldNormal;
-layout( location = 2 ) in vec3 WorldTangent;
-layout( location = 3 ) in vec3 WorldBitangent;
-layout( location = 4 ) in vec3 ViewDirection;
-layout( location = 5 ) in vec2 Texcoords;
+layout( location = 1 ) in vec2 Texcoords;
+layout( location = 2 ) in vec3 WorldNormal;
+layout( location = 3 ) in vec3 WorldTangent;
+layout( location = 4 ) in vec3 WorldBitangent;
+layout( location = 5 ) in vec3 ViewDirection;
+layout( location = 6 ) in vec4 VertexColor;
+layout( location = 7 ) in vec3 Barycoords;
 
 layout( location = 0 ) out vec4 OutColor;
 
@@ -73,19 +80,22 @@ vec4 GetBaseColor( ) {
 
 float GetMetallic( ) {
     if ( IsTextureMapAvailable( Flags.x, 5 ) )
-        return MetallicRoughnessFactor.x * texture( MetallicMap, Texcoords ).x;
+        // return MetallicRoughnessFactor.x * texture( MetallicMap, Texcoords ).x;
+        return MetallicRoughnessFactor.x * texture( MetallicRoughnessOcclusionMap, Texcoords ).r;
     return MetallicRoughnessFactor.x;
 }
 
 float GetRoughness( ) {
     if ( IsTextureMapAvailable( Flags.x, 6 ) )
-        return MetallicRoughnessFactor.y * texture( RoughnessMap, Texcoords ).x;
+        // return MetallicRoughnessFactor.y * texture( RoughnessMap, Texcoords ).x;
+        return MetallicRoughnessFactor.y * texture( MetallicRoughnessOcclusionMap, Texcoords ).g;
     return MetallicRoughnessFactor.y;
 }
 
 float GetAO( ) {
     if ( IsTextureMapAvailable( Flags.x, 7 ) )
-        return texture( OcclusionMap, Texcoords ).x;
+        // return texture( OcclusionMap, Texcoords ).x;
+        return texture( MetallicRoughnessOcclusionMap, Texcoords ).b;
     return 1.0;
 }
 
@@ -150,11 +160,25 @@ float GetRadianceMipLevelCount() {
 }
 
 void main( ) {
+    vec3  d     = fwidth( Barycoords );
+    vec3  a3    = smoothstep( vec3( 0.0 ), d, Barycoords );
+    float edge  = min( min( a3.x, a3.y ), a3.z );
+
+    vec3 nnn = CalculateWorldNormal( );
+    vec3 nn = nnn * 0.5 + vec3( 0.5 );
+    // vec3 cc = mix( vec3( 0.0 ), vec3( 0.8 ), edge );
+    vec3 cc = mix( vec3( 0.0 ), nn, edge );
+
+    // OutColor.rgb = nn;
+    OutColor.rgb = cc;
+    OutColor.a   = 1;
+    return;
 
     vec3 L          = normalize( LightDirection.xyz );
     vec3 lightColor = LightColor.xyz;
 
     vec3 N = CalculateWorldNormal( );
+
     vec3 V = ViewDirection.xyz;
     vec3 R = reflect( -V, N );
     vec3 H = normalize( V + L );

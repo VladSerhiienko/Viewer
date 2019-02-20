@@ -551,7 +551,7 @@ namespace apemodevk
 
         bool Reset( bool bRecycleResources ) {
             assert( IsNotNull( ) );
-            apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
+            apemode_assert( Deleter.hLogicalDevice != VK_NULL_HANDLE, "Device is required." );
             const auto ResetFlags = bRecycleResources ? VK_COMMAND_POOL_RESET_RELEASE_RESOURCES_BIT : 0u;
             return VK_SUCCESS == CheckedResult( vkResetCommandPool( Deleter.hLogicalDevice, Handle, ResetFlags ) );
         }
@@ -695,6 +695,13 @@ namespace apemodevk
     struct THandle< VkImageView > : public THandleBase< VkImageView > {
         bool Recreate( VkDevice InLogicalDeviceHandle, VkImageViewCreateInfo const &CreateInfo ) {
             apemode_assert( InLogicalDeviceHandle != VK_NULL_HANDLE, "Device is required." );
+            
+//            if (CreateInfo.subresourceRange.aspectMask & VK_IMAGE_ASPECT_COLOR_BIT) {
+//                assert( CreateInfo.components.r != VK_COMPONENT_SWIZZLE_IDENTITY &&
+//                        CreateInfo.components.g != VK_COMPONENT_SWIZZLE_IDENTITY &&
+//                        CreateInfo.components.b != VK_COMPONENT_SWIZZLE_IDENTITY &&
+//                        CreateInfo.components.a != VK_COMPONENT_SWIZZLE_IDENTITY );
+//            }
 
             Deleter( Handle );
             Deleter.hLogicalDevice = InLogicalDeviceHandle;

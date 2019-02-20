@@ -72,39 +72,6 @@ void UploadImage( ImageUploadInfo* pUploadInfo ) {
     }
 }
 
-//struct ImageUploadTask {
-//    MT_DECLARE_TASK( ImageUploadTask, MT::StackRequirements::STANDARD, MT::TaskPriority::HIGH, MT::Color::Blue );
-//
-//    ImageUploadInfo* pUploadInfo = nullptr;
-//
-//    ImageUploadTask( ImageUploadInfo* pUploadInfo ) : pUploadInfo( pUploadInfo ) {
-//    }
-//
-//    void Do( MT::FiberContext& ctx ) {
-//
-//        const uint32_t fiberIndex        = ctx.fiberIndex;
-//        const uint32_t threadWorkedIndex = ctx.GetThreadContext( )->workerIndex;
-//
-//        apemode::Log( apemode::LogLevel::Trace,
-//                      "Executing task @{}: Fb#{} <- Th#{}, "
-//                      "file: \"{}\"",
-//                      (void*) this,
-//                      fiberIndex,
-//                      threadWorkedIndex,
-//                      (const char*) pUploadInfo->pszFileName );
-//
-//        UploadImage( pUploadInfo );
-//
-//        apemode::Log( apemode::LogLevel::Trace,
-//                      "Done task execution @{}: Fb#{} <- Th#{}, "
-//                      "file: \"{}\"",
-//                      (void*) this,
-//                      fiberIndex,
-//                      threadWorkedIndex,
-//                      (const char*) pUploadInfo->pszFileName );
-//    }
-//};
-
 // Something to consider adding: An eastl sort which uses qsort underneath.
 // The primary purpose of this is to have an eastl interface for sorting which
 // results in very little code generation, since all instances map to the
@@ -150,11 +117,11 @@ const apemodevk::UploadedImage** GetLoadedImageSlotForPropertyName(
     } else if ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) {
         return &pMaterialAsset->pNormalImg;
     } else if ( strcmp( "occlusionTexture", pszTexturePropName ) == 0 ) {
-        return &pMaterialAsset->pOcclusionImg;
-    } else if ( strcmp( "specularGlossinessTexture", pszTexturePropName ) == 0 ) {
-        return &pMaterialAsset->pMetallicRoughnessImg;
+        return &pMaterialAsset->pMetallicRoughnessOcclusionImg;
+    // } else if ( strcmp( "specularGlossinessTexture", pszTexturePropName ) == 0 ) {
+    //    return &pMaterialAsset->pMetallicRoughnessOcclusionImg;
     } else if ( strcmp( "metallicRoughnessTexture", pszTexturePropName ) == 0 ) {
-        return &pMaterialAsset->pMetallicRoughnessImg;
+        return &pMaterialAsset->pMetallicRoughnessOcclusionImg;
     } else if ( strcmp( "emissiveTexture", pszTexturePropName ) == 0 ) {
         return &pMaterialAsset->pEmissiveImg;
     }
@@ -167,7 +134,7 @@ bool ShouldGenerateMipMapsForPropertyName(  const char* pszTexturePropName ) {
          ( strcmp( "diffuseTexture", pszTexturePropName ) == 0 ) ||
          ( strcmp( "normalTexture", pszTexturePropName ) == 0 ) ||
          ( strcmp( "metallicRoughnessTexture", pszTexturePropName ) == 0 ) ||
-         ( strcmp( "specularGlossinessTexture", pszTexturePropName ) == 0 ) ||
+         // ( strcmp( "specularGlossinessTexture", pszTexturePropName ) == 0 ) ||
          ( strcmp( "emissiveTexture", pszTexturePropName ) == 0 ) ) {
         return true;
     }
@@ -231,6 +198,7 @@ namespace {
 struct DecompressedMeshInfo {
     apemodevk::vector< uint8_t > DecompressedVertexBuffer = {};
     apemodevk::vector< uint8_t > DecompressedIndexBuffer  = {};
+    apemodevk::vector< uint8_t > RenderableVertexBuffer = {};
     VkDeviceSize VertexCount = 0;
     VkDeviceSize IndexCount = 0;
     VkIndexType eIndexType = VK_INDEX_TYPE_MAX_ENUM;
@@ -245,13 +213,6 @@ struct DecompressedMeshInfo {
 #ifndef APEMODEVK_NO_GOOGLE_DRACO
 
 namespace {
-    constexpr int positionAttributeIndex    = 0;
-    constexpr int uvAttributeIndex          = 1;
-    constexpr int irgbAttributeIndex        = 2;
-    constexpr int alphaAttributeIndex       = 3;
-    constexpr int qtangentAttributeIndex    = 4;
-    constexpr int boneAttributeIndex        = 5;
-    constexpr int extraBoneAttributeIndex   = 6;
 }
 
 template < typename TIndex >
@@ -267,70 +228,293 @@ void TPopulateIndices( const draco::Mesh& decodedMesh, TIndex* pDstIndices ) {
 }
 
 template <typename TVertex>
-void TPopulateVertices( const draco::Mesh& decodedMesh, DecompressedMeshInfo &decompressedMeshInfo );
+void TDecompressVertices( const draco::Mesh&    decodedMesh,
+                        DecompressedMeshInfo& decompressedMeshInfo,
+                        const size_t vertexCount,
+                        const size_t vertexStride );
 
-
-void PopulateDefaultVertices( const draco::Mesh&    decodedMesh,
-                              DecompressedMeshInfo& decompressedMeshInfo,
-                              const size_t vertexCount,
-                              const size_t vertexStride ) {
+template <>
+void TDecompressVertices< apemodefb::DecompressedVertexFb >( const draco::Mesh&    decodedMesh,
+                                                             DecompressedMeshInfo& decompressedMeshInfo,
+                                                             const size_t          vertexCount,
+                                                             const size_t          vertexStride ) {
     using namespace draco;
     using namespace apemodefb;
-    
-    const PointAttribute* positionAttribute  = decodedMesh.attribute( positionAttributeIndex );
-    const PointAttribute* uvAttribute = decodedMesh.attribute( uvAttributeIndex );
-    const PointAttribute* irgbAttribute = decodedMesh.attribute( irgbAttributeIndex );
-    const PointAttribute* alphasAttribute = decodedMesh.attribute( alphaAttributeIndex );
-    const PointAttribute* qtangentAttribute  = decodedMesh.attribute( qtangentAttributeIndex );
-    
-    auto vertexData = decompressedMeshInfo.DecompressedVertexBuffer.data();
+
+    constexpr int positionAttributeIndex        = 0;
+    constexpr int uvAttributeIndex              = 1;
+    constexpr int normalAttributeIndex          = 2;
+    constexpr int tangentAttributeIndex         = 3;
+    constexpr int colorAttributeIndex           = 4;
+    constexpr int reflectionIndexAttributeIndex = 5;
+
+    const PointAttribute* positionAttribute        = decodedMesh.attribute( positionAttributeIndex );
+    const PointAttribute* uvAttribute              = decodedMesh.attribute( uvAttributeIndex );
+    const PointAttribute* normalAttribute          = decodedMesh.attribute( normalAttributeIndex );
+    const PointAttribute* tangentAttribute         = decodedMesh.attribute( tangentAttributeIndex );
+    const PointAttribute* colorAttribute           = decodedMesh.attribute( colorAttributeIndex );
+    const PointAttribute* reflectionIndexAttribute = decodedMesh.attribute( reflectionIndexAttributeIndex );
+
+    auto vertexData = decompressedMeshInfo.DecompressedVertexBuffer.data( );
     for ( uint32_t i = 0; i < vertexCount; ++i ) {
-        auto dstVertex = reinterpret_cast<apemodefb::DefaultVertexFb*>( vertexData + i * vertexStride );
-        
-        uint32_t irgb;
-        float alpha;
-        
+        auto             dstVertex = reinterpret_cast< apemodefb::DecompressedVertexFb* >( vertexData + i * vertexStride );
         const PointIndex typedPointIndex( i );
+
         positionAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_position( ) );
-        qtangentAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_qtangent( ) );
         uvAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_uv( ) );
-        irgbAttribute->GetMappedValue( typedPointIndex, &irgb );
-        alphasAttribute->GetMappedValue( typedPointIndex, &alpha );
+        normalAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_normal( ) );
+        tangentAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_tangent( ) );
+        colorAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_color( ) );
+
+        uint32_t reflectionIndex = 0;
+        reflectionIndexAttribute->GetMappedValue( typedPointIndex, &reflectionIndex );
+        dstVertex->mutate_reflection_index_packed( reflectionIndex );
+    }
+}
+
+template <>
+void TDecompressVertices< apemodefb::DecompressedSkinnedVertexFb >( const draco::Mesh&    decodedMesh,
+                                                                    DecompressedMeshInfo& decompressedMeshInfo,
+                                                                    const size_t          vertexCount,
+                                                                    const size_t          vertexStride ) {
+    TDecompressVertices< apemodefb::DecompressedVertexFb >( decodedMesh, decompressedMeshInfo, vertexCount, vertexStride );
+
+    using namespace draco;
+    using namespace apemodefb;
+
+    constexpr int jointIndicesAttributeIndex = 6;
+    constexpr int jointWeightsAttributeIndex = 7;
+
+    const PointAttribute* jointIndicesAttribute = decodedMesh.attribute( jointIndicesAttributeIndex );
+    const PointAttribute* jointWeightsAttribute = decodedMesh.attribute( jointWeightsAttributeIndex );
+
+    auto vertexData = decompressedMeshInfo.DecompressedVertexBuffer.data( );
+    for ( uint32_t i = 0; i < vertexCount; ++i ) {
+        auto dstVertex = reinterpret_cast< apemodefb::DecompressedSkinnedVertexFb* >( vertexData + i * vertexStride );
+        const PointIndex typedPointIndex( i );
+
+        uint32_t jointIndices = 0;
+        jointIndicesAttribute->GetMappedValue( typedPointIndex, &jointIndices );
+        dstVertex->mutate_joint_indices( jointIndices );
+        jointWeightsAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_joint_weights( ) );
+    }
+}
+
+template <>
+void TDecompressVertices< apemodefb::DecompressedFatSkinnedVertexFb >( const draco::Mesh&    decodedMesh,
+                                                                       DecompressedMeshInfo& decompressedMeshInfo,
+                                                                       const size_t          vertexCount,
+                                                                       const size_t          vertexStride ) {
+    TDecompressVertices< apemodefb::DecompressedSkinnedVertexFb >(
+        decodedMesh, decompressedMeshInfo, vertexCount, vertexStride );
+
+    using namespace draco;
+    using namespace apemodefb;
+
+    constexpr int extraJointIndicesAttributeIndex = 8;
+    constexpr int extraJointWeightsAttributeIndex = 9;
+
+    const PointAttribute* extraJointIndicesAttribute = decodedMesh.attribute( extraJointIndicesAttributeIndex );
+    const PointAttribute* extraJointWeightsAttribute = decodedMesh.attribute( extraJointWeightsAttributeIndex );
+
+    auto vertexData = decompressedMeshInfo.DecompressedVertexBuffer.data( );
+    for ( uint32_t i = 0; i < vertexCount; ++i ) {
+        auto dstVertex = reinterpret_cast< apemodefb::DecompressedFatSkinnedVertexFb* >( vertexData + i * vertexStride );
+        const PointIndex typedPointIndex( i );
+
+        uint32_t jointIndices = 0;
+        extraJointIndicesAttribute->GetMappedValue( typedPointIndex, &jointIndices );
+        dstVertex->mutate_extra_joint_indices( jointIndices );
+        extraJointWeightsAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_extra_joint_weights( ) );
+    }
+}
+
+apemodefb::QuatFb GetQTangent( const apemodefb::Vec3Fb normalFb, const apemodefb::Vec3Fb tangentFb, float reflection ) {
+    assert( reflection != 0.0 );
+    using namespace apemode;
+    XMFLOAT4 qd;
+
+    XMVECTOR n = XMLoadFloat3( (const XMFLOAT3*) &normalFb );
+    XMVECTOR t = XMLoadFloat3( (const XMFLOAT3*) &tangentFb );
+    XMVECTOR b = XMVector3Cross( n, t );
+    b          = XMVector3Normalize( b );
+
+    XMMATRIX tangentFrame( n, t, b, g_XMIdentityR3 );
+    XMVECTOR q = XMQuaternionRotationMatrix( tangentFrame );
+    q          = XMQuaternionNormalize( q );
+
+    // https://bitbucket.org/sinbad/ogre/src/18ebdbed2edc61d30927869c7fb0cf3ae5697f0a/OgreMain/src/OgreSubMesh2.cpp?at=v2-1&fileviewer=file-view-default#OgreSubMesh2.cpp-988
+    if ( XMVectorGetW( q ) < 0.0f ) {
+        q = XMVectorNegate( q );
+    }
+
+    // TODO: Should be in use for packing it into ints
+    //       because the "-" sign will be lost.
+    const float bias = 1.0f / 32767.0f; // ( pow( 2.0, 15.0 ) - 1.0 );
+    if ( XMVectorGetW( q ) < bias ) {
+        const float normFactor = sqrtf( 1.0f - bias * bias );
+
+        XMStoreFloat4( &qd, q );
+        qd.w = normFactor;
+        qd.x *= normFactor;
+        qd.y *= normFactor;
+        qd.z *= normFactor;
+
+        q = XMLoadFloat4( &qd );
+    }
+
+    if ( reflection < 0.0 ) {
+        q = XMVectorNegate( q );
+    }
+
+    XMStoreFloat4( &qd, q );
+
+    apemodefb::QuatFb qq;
+    qq.mutate_nx( qd.x );
+    qq.mutate_ny( qd.y );
+    qq.mutate_nz( qd.z );
+    qq.mutate_s( qd.w );
+
+    return qq;
+}
+
+template < typename TVertex >
+void TConvertVertices( DecompressedMeshInfo& decompressedMeshInfo,
+                       const size_t          vertexCount,
+                       const size_t          decompressedStride,
+                       const size_t          renderableStride );
+
+template <>
+void TConvertVertices< apemodefb::DecompressedVertexFb >( DecompressedMeshInfo& decompressedMeshInfo,
+                                                          const size_t          vertexCount,
+                                                          const size_t          decompressedStride,
+                                                          const size_t          renderableStride ) {
+    const auto decompressedData = decompressedMeshInfo.DecompressedVertexBuffer.data( );
+    auto renderableData = decompressedMeshInfo.RenderableVertexBuffer.data( );
+
+    for ( uint32_t i = 0; i < vertexCount; ++i ) {
+        auto srcVertex = reinterpret_cast< const apemodefb::DecompressedVertexFb* >( decompressedData + i * decompressedStride );
+        auto dstVertex = reinterpret_cast< apemodefb::DefaultVertexFb* >( renderableData + i * renderableStride );
+
+        union {
+            struct {
+                uint8_t reflection : 4;
+                uint8_t index : 4;
+            };
+
+            uint8_t reflection_index;
+        } reflection_index_unpacker;
+
+        reflection_index_unpacker.reflection_index = uint8_t( srcVertex->reflection_index_packed( ) );
+
+        union {
+            struct {
+                uint8_t i;
+                uint8_t r;
+                uint8_t g;
+                uint8_t b;
+            };
+
+            uint32_t irgb;
+        } irgb_packer;
+
+        irgb_packer.i = reflection_index_unpacker.index;
+        irgb_packer.r = uint8_t( srcVertex->color( ).x( ) * 255 );
+        irgb_packer.g = uint8_t( srcVertex->color( ).y( ) * 255 );
+        irgb_packer.b = uint8_t( srcVertex->color( ).z( ) * 255 );
+
+        const float             reflection = reflection_index_unpacker.reflection_index ? 1 : -1;
+        const apemodefb::QuatFb qtangent   = GetQTangent( srcVertex->normal( ), srcVertex->tangent( ), reflection );
+
+        dstVertex->mutable_position( ) = srcVertex->position( );
+        dstVertex->mutable_uv( )       = srcVertex->uv( );
+        dstVertex->mutable_qtangent( ) = qtangent;
+        dstVertex->mutate_index_color_RGB( irgb_packer.irgb );
+        dstVertex->mutate_color_alpha( srcVertex->color( ).w( ) );
+    }
+}
+
+template <>
+void TConvertVertices< apemodefb::DecompressedSkinnedVertexFb >( DecompressedMeshInfo& decompressedMeshInfo,
+                                                                 const size_t          vertexCount,
+                                                                 const size_t          decompressedStride,
+                                                                 const size_t          renderableStride ) {
+    TConvertVertices< apemodefb::DecompressedVertexFb >(
+        decompressedMeshInfo, vertexCount, decompressedStride, renderableStride );
+
+    auto renderableData   = decompressedMeshInfo.RenderableVertexBuffer.data( );
+    const auto decompressedData = decompressedMeshInfo.DecompressedVertexBuffer.data( );
+    for ( uint32_t i = 0; i < vertexCount; ++i ) {
+        auto srcVertex = reinterpret_cast< const apemodefb::DecompressedSkinnedVertexFb* >( decompressedData + i * decompressedStride );
+        auto dstVertex = reinterpret_cast< apemodefb::SkinnedVertexFb* >( renderableData + i * renderableStride );
+
+        auto indices = srcVertex->joint_indices( );
+        auto weights = srcVertex->joint_weights( );
+
+        union {
+            struct {
+                uint8_t _0;
+                uint8_t _1;
+                uint8_t _2;
+                uint8_t _3;
+            };
+
+            uint32_t _0123;
+        } joint_index_unpacker;
+        joint_index_unpacker._0123 = indices;
         
-        dstVertex->mutate_vertex_index_color_RGB(irgb);
-        dstVertex->mutate_color_alpha(alpha);
+        if (weights.x( ) >= 0.99f) {
+            weights.mutate_x( weights.x( ) * 0.5f + float( joint_index_unpacker._0 ) );
+            weights.mutate_y( weights.x( ) );
+            weights.mutate_z( 0 ); // weights.y( ) + float( joint_index_unpacker._1 ));
+            weights.mutate_w( 0 ); // weights.z( ) + float( joint_index_unpacker._2 ) );
+        } else {
+            weights.mutate_x( weights.x( ) + float( joint_index_unpacker._0 ) );
+            weights.mutate_y( weights.y( ) + float( joint_index_unpacker._1 ) );
+            weights.mutate_z( weights.z( ) + float( joint_index_unpacker._2 ) );
+            weights.mutate_w( weights.w( ) + float( joint_index_unpacker._3 ) );
+        }
+
+        dstVertex->mutable_joint_indices_weights( ) = weights;
     }
 }
 
-void PopulateSkinnedVertices( const draco::Mesh&    decodedMesh,
-                              DecompressedMeshInfo& decompressedMeshInfo,
-                              const size_t vertexCount,
-                              const size_t vertexStride ) {
-    using namespace draco;
-    using namespace apemodefb;
-    
-    const PointAttribute* boneAttribute  = decodedMesh.attribute( boneAttributeIndex );
-    auto vertexData = decompressedMeshInfo.DecompressedVertexBuffer.data();
-    for ( uint32_t i = 0; i < vertexCount; ++i ) {
-        const PointIndex typedPointIndex( i );
-        auto dstVertex = reinterpret_cast<apemodefb::SkinnedVertexFb*>( vertexData + i * vertexStride );
-        boneAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_bone_indices_weights( ) );
-    }
-}
+template <>
+void TConvertVertices< apemodefb::DecompressedFatSkinnedVertexFb >( DecompressedMeshInfo& decompressedMeshInfo,
+                                                                    const size_t          vertexCount,
+                                                                    const size_t          decompressedStride,
+                                                                    const size_t          renderableStride ) {
+    TConvertVertices< apemodefb::DecompressedSkinnedVertexFb >(
+        decompressedMeshInfo, vertexCount, decompressedStride, renderableStride );
 
-void PopulateFatSkinnedVertices( const draco::Mesh&    decodedMesh,
-                                 DecompressedMeshInfo& decompressedMeshInfo,
-                                 const size_t vertexCount,
-                                 const size_t vertexStride ) {
-    using namespace draco;
-    using namespace apemodefb;
-    
-    const PointAttribute* boneAttribute  = decodedMesh.attribute( extraBoneAttributeIndex );
-    auto vertexData = decompressedMeshInfo.DecompressedVertexBuffer.data();
+    const auto decompressedData = decompressedMeshInfo.DecompressedVertexBuffer.data( );
+    auto renderableData = decompressedMeshInfo.RenderableVertexBuffer.data( );
+
     for ( uint32_t i = 0; i < vertexCount; ++i ) {
-        const PointIndex typedPointIndex( i );
-        auto dstVertex = reinterpret_cast<apemodefb::FatSkinnedVertexFb*>( vertexData + i * vertexStride );
-        boneAttribute->GetMappedValue( typedPointIndex, &dstVertex->mutable_extra_bone_indices_weights( ) );
+        auto srcVertex = reinterpret_cast< const apemodefb::DecompressedFatSkinnedVertexFb* >( decompressedData + i * decompressedStride );
+        auto dstVertex = reinterpret_cast< apemodefb::FatSkinnedVertexFb* >( renderableData + i * renderableStride );
+
+        auto indices = srcVertex->extra_joint_indices( );
+        auto weights = srcVertex->extra_joint_weights( );
+
+        union {
+            struct {
+                uint8_t _0;
+                uint8_t _1;
+                uint8_t _2;
+                uint8_t _3;
+            };
+
+            uint32_t _0123;
+        } joint_index_unpacker;
+        joint_index_unpacker._0123 = indices;
+
+        weights.mutate_x( weights.x( ) + float( joint_index_unpacker._0 ) );
+        weights.mutate_y( weights.y( ) + float( joint_index_unpacker._1 ) );
+        weights.mutate_z( weights.z( ) + float( joint_index_unpacker._2 ) );
+        weights.mutate_w( weights.w( ) + float( joint_index_unpacker._3 ) );
+
+        dstVertex->mutable_extra_joint_indices_weights( ) = weights;
     }
 }
 
@@ -343,7 +527,7 @@ DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubme
         return {};
     }
     
-    const ECompressionTypeFb eCompression = srcSubmesh.GetCompressionType();
+    const ECompressionTypeFb eCompression = srcSubmesh.GetCompressionType( );
     switch ( eCompression ) {
     case apemodefb::ECompressionTypeFb_GoogleDraco3D:
         break;
@@ -354,9 +538,9 @@ DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubme
 
     const EVertexFormatFb eVertexFormat = srcSubmesh.GetVertexFormat( );
     switch ( eVertexFormat ) {
-    case apemodefb::EVertexFormatFb_Default:
-    case apemodefb::EVertexFormatFb_Skinned:
-    case apemodefb::EVertexFormatFb_FatSkinned:
+    case apemodefb::EVertexFormatFb_Decompressed:
+    case apemodefb::EVertexFormatFb_DecompressedSkinned:
+    case apemodefb::EVertexFormatFb_DecompressedFatSkinned:
         break;
     default:
         assert( false && "Unsupported vertex type." );
@@ -372,11 +556,13 @@ DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubme
     Decoder decoder;
     Mesh decodedMesh;
 
-    if ( Status::OK != decoder.DecodeBufferToGeometry( &decoderBuffer, &decodedMesh ).code( ) ) {
+    const Status decoderStatus = decoder.DecodeBufferToGeometry( &decoderBuffer, &decodedMesh );
+    if ( Status::OK != decoderStatus.code( ) ) {
+        assert( false );
         return {};
     }
-    
-    DecompressedMeshInfo decompressedMeshInfo = {};
+
+    DecompressedMeshInfo decompressedMeshInfo{};
 
     const size_t vertexCount = decodedMesh.num_points( );
     const size_t faceCount   = decodedMesh.num_faces( );
@@ -393,42 +579,61 @@ DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubme
         decompressedMeshInfo.DecompressedIndexBuffer.resize( sizeof( uint16_t ) * indexCount );
         TPopulateIndices( decodedMesh, (uint16_t*) decompressedMeshInfo.DecompressedIndexBuffer.data( ) );
     }
-    
-    size_t vertexStride = 0;
+
+    size_t decompressedStride = 0;
+    size_t renderableStride   = 0;
+
     switch ( eVertexFormat ) {
-    case apemodefb::EVertexFormatFb_Default:
-        vertexStride = sizeof( apemodefb::DefaultVertexFb );
-        break;
-    case apemodefb::EVertexFormatFb_Skinned:
-        vertexStride = sizeof( apemodefb::SkinnedVertexFb );
-        break;
-    case apemodefb::EVertexFormatFb_FatSkinned:
-        vertexStride = sizeof( apemodefb::FatSkinnedVertexFb );
-        break;
-    default:
-        assert( false && "Unsupported vertex type." );
-        return {};
+        case apemodefb::EVertexFormatFb_Decompressed:
+            decompressedStride = sizeof( apemodefb::DecompressedVertexFb );
+            renderableStride   = sizeof( apemodefb::DefaultVertexFb );
+            break;
+        case apemodefb::EVertexFormatFb_DecompressedSkinned:
+            decompressedStride = sizeof( apemodefb::DecompressedSkinnedVertexFb );
+            renderableStride   = sizeof( apemodefb::SkinnedVertexFb );
+            break;
+        case apemodefb::EVertexFormatFb_DecompressedFatSkinned:
+            decompressedStride = sizeof( apemodefb::DecompressedFatSkinnedVertexFb );
+            renderableStride   = sizeof( apemodefb::FatSkinnedVertexFb );
+            break;
+        default:
+            assert( false && "Unsupported vertex type." );
+            return {};
     }
-    
-    assert( vertexStride && "Unassigned vertex stride value." );
-    decompressedMeshInfo.DecompressedVertexBuffer.resize(vertexCount * vertexStride );
-    PopulateDefaultVertices( decodedMesh, decompressedMeshInfo, vertexCount, vertexStride );
-    
+
+    assert( decompressedStride && renderableStride && "Unassigned vertex stride value." );
+    decompressedMeshInfo.DecompressedVertexBuffer.resize( vertexCount * decompressedStride );
+    decompressedMeshInfo.RenderableVertexBuffer.resize( vertexCount * renderableStride );
+    decompressedMeshInfo.VertexCount = vertexCount;
+    decompressedMeshInfo.IndexCount  = indexCount;
+
     switch ( eVertexFormat ) {
-    case apemodefb::EVertexFormatFb_Skinned:
-        PopulateSkinnedVertices( decodedMesh, decompressedMeshInfo, vertexCount, vertexStride );
-        break;
-    case apemodefb::EVertexFormatFb_FatSkinned:
-        PopulateSkinnedVertices( decodedMesh, decompressedMeshInfo, vertexCount, vertexStride );
-        break;
-    default:
-        assert( false && "Unsupported vertex type." );
-        return {};
+        case apemodefb::EVertexFormatFb_Decompressed:
+            TDecompressVertices< apemodefb::DecompressedVertexFb >(
+                decodedMesh, decompressedMeshInfo, vertexCount, decompressedStride );
+            TConvertVertices< apemodefb::DecompressedVertexFb >(
+                decompressedMeshInfo, vertexCount, decompressedStride, renderableStride );
+            break;
+        case apemodefb::EVertexFormatFb_DecompressedSkinned:
+            TDecompressVertices< apemodefb::DecompressedSkinnedVertexFb >(
+                decodedMesh, decompressedMeshInfo, vertexCount, decompressedStride );
+            TConvertVertices< apemodefb::DecompressedSkinnedVertexFb >(
+                decompressedMeshInfo, vertexCount, decompressedStride, renderableStride );
+            break;
+        case apemodefb::EVertexFormatFb_DecompressedFatSkinned:
+            TDecompressVertices< apemodefb::DecompressedFatSkinnedVertexFb >(
+                decodedMesh, decompressedMeshInfo, vertexCount, decompressedStride );
+            TConvertVertices< apemodefb::DecompressedFatSkinnedVertexFb >(
+                decompressedMeshInfo, vertexCount, decompressedStride, renderableStride );
+            break;
+        default:
+            assert( false && "Unsupported vertex type." );
+            return {};
     }
 
     auto end = std::chrono::high_resolution_clock::now();
     std::chrono::duration<double> diff = end-start;
-    apemode::LogError( "Decoding done: {} vertices, {} indices, {} seconds",
+    apemode::LogInfo( "Decoding done: {} vertices, {} indices, {} seconds",
                        vertexCount, indexCount, diff.count() );
 
     return decompressedMeshInfo;
@@ -488,14 +693,17 @@ InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                         
 
         assert( !decompressedMeshInfo.DecompressedVertexBuffer.empty( ) );
         assert( !decompressedMeshInfo.DecompressedIndexBuffer.empty( ) );
+        assert( !decompressedMeshInfo.RenderableVertexBuffer.empty( ) );
+        
         if ( decompressedMeshInfo.DecompressedVertexBuffer.empty( ) ||
-             decompressedMeshInfo.DecompressedIndexBuffer.empty( ) ) {
+             decompressedMeshInfo.DecompressedIndexBuffer.empty( ) ||
+             decompressedMeshInfo.RenderableVertexBuffer.empty( ) ) {
             assert( false );
             return {};
         }
 
-        initializedMeshInfo.VertexUploadInfo.pSrcBufferData = decompressedMeshInfo.DecompressedVertexBuffer.data( );
-        initializedMeshInfo.VertexUploadInfo.SrcBufferSize  = decompressedMeshInfo.DecompressedVertexBuffer.size( );
+        initializedMeshInfo.VertexUploadInfo.pSrcBufferData = decompressedMeshInfo.RenderableVertexBuffer.data( );
+        initializedMeshInfo.VertexUploadInfo.SrcBufferSize  = decompressedMeshInfo.RenderableVertexBuffer.size( );
         initializedMeshInfo.VertexCount                     = decompressedMeshInfo.VertexCount;
 
         initializedMeshInfo.IndexUploadInfo.pSrcBufferData = decompressedMeshInfo.DecompressedIndexBuffer.data( );
@@ -507,6 +715,21 @@ InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                         
         
         pScene->Subsets[ mesh.BaseSubset ].IndexCount = (uint32_t)initializedMeshInfo.IndexCount;
         assert( mesh.SubsetCount == 1 );
+        
+        switch ( srcSubmesh.GetVertexFormat( ) ) {
+        case apemodefb::EVertexFormatFb_Decompressed:
+            mesh.eVertexType = apemode::detail::eVertexType_Default;
+            break;
+        case apemodefb::EVertexFormatFb_DecompressedSkinned:
+            mesh.eVertexType = apemode::detail::eVertexType_Skinned;
+            break;
+        case apemodefb::EVertexFormatFb_DecompressedFatSkinned:
+            mesh.eVertexType = apemode::detail::eVertexType_FatSkinned;
+            break;
+        default:
+            assert( false && "Unsupported vertex type." );
+            return {};
+        }
         
         #else
         
@@ -523,6 +746,21 @@ InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                         
         initializedMeshInfo.IndexUploadInfo.SrcBufferSize  = srcSubmesh.pSrcMesh->indices( )->size( );
         initializedMeshInfo.IndexCount                     = srcSubmesh.pSrcSubmesh->vertex_count( );
         initializedMeshInfo.eIndexType                     = srcSubmesh.GetIndexType();
+        
+        switch ( srcSubmesh.GetVertexFormat( ) ) {
+        case apemodefb::EVertexFormatFb_Default:
+            mesh.eVertexType = apemode::detail::eVertexType_Default;
+            break;
+        case apemodefb::EVertexFormatFb_Skinned:
+            mesh.eVertexType = apemode::detail::eVertexType_Skinned;
+            break;
+        case apemodefb::EVertexFormatFb_FatSkinned:
+            mesh.eVertexType = apemode::detail::eVertexType_FatSkinned;
+            break;
+        default:
+            assert( false && "Unsupported vertex type." );
+            return {};
+        }
     }
     
     initializedMeshInfo.VertexUploadInfo.eDstAccessFlags = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
@@ -583,9 +821,9 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
     initializedMeshInfos.reserve( pMeshesFb->size( ) );
     bufferUploads.reserve( pMeshesFb->size( ) << 1 );
 
-    for ( auto & mesh : pScene->Meshes ) {
+    for ( auto& mesh : pScene->Meshes ) {
         InitializedMeshInfo initializedMeshInfo = InitializeMesh( mesh, pScene, pParams );
-        if ( initializedMeshInfo.IsOk() ) {
+        if ( initializedMeshInfo.IsOk( ) ) {
             auto& emplacedInitializedMeshInfo = initializedMeshInfos.emplace_back( eastl::move( initializedMeshInfo ) );
             bufferUploads.push_back( emplacedInitializedMeshInfo.VertexUploadInfo );
             bufferUploads.push_back( emplacedInitializedMeshInfo.IndexUploadInfo );
@@ -595,7 +833,7 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
     }
 
     { /* Sort by size in descending order. */
-        BufferUploadInfo* pMeshUploadIt = bufferUploads.data( );
+        BufferUploadInfo* pMeshUploadIt     = bufferUploads.data( );
         BufferUploadInfo* pMeshUploadItLast = pMeshUploadIt + ( bufferUploads.size( ) - 1 );
         TQSort< BufferUploadInfo, BufferUploadCmpOpGreaterBySizeOrByAccessFlags >( pMeshUploadIt, pMeshUploadItLast );
     }
@@ -756,6 +994,7 @@ bool InitializeMaterials( apemode::Scene* pScene, const apemode::vk::SceneUpload
     pSceneAsset->MissingTextureZeros = imgUploader.UploadImage( pParams->pNode, *srcImgZeros, loadOptions );
     if ( !pSceneAsset->MissingTextureZeros ) {
         apemode::LogError( "Failed to create texture for missing slot." );
+        assert(false);
         return false;
     }
 
@@ -768,6 +1007,7 @@ bool InitializeMaterials( apemode::Scene* pScene, const apemode::vk::SceneUpload
     pSceneAsset->MissingTextureOnes = imgUploader.UploadImage( pParams->pNode, *srcImgOnes, loadOptions );
     if ( !pSceneAsset->MissingTextureOnes ) {
         apemode::LogError( "Failed to create texture for missing slot." );
+        assert(false);
         return false;
     }
 
@@ -817,58 +1057,19 @@ bool FinalizeMaterial( apemode::vk::SceneUploader::MaterialDeviceAsset*    pMate
         }
 
     } /* pEmissiveImg */
+    
+    if ( pMaterialAsset->pMetallicRoughnessOcclusionImg ) {
+        const float maxLod = float( pMaterialAsset->pMetallicRoughnessOcclusionImg->ImgCreateInfo.mipLevels );
+        pMaterialAsset->pMetallicRoughnessOcclusionSampler = pParams->pSamplerManager->GetSampler( GetDefaultSamplerCreateInfo( maxLod ) );
 
-    if ( pMaterialAsset->pMetallicRoughnessImg ) {
-        const float maxLod = float( pMaterialAsset->pMetallicRoughnessImg->ImgCreateInfo.mipLevels );
-        pMaterialAsset->pMetallicSampler = pParams->pSamplerManager->GetSampler( GetDefaultSamplerCreateInfo( maxLod ) );
-        pMaterialAsset->pRoughnessSampler = pParams->pSamplerManager->GetSampler( GetDefaultSamplerCreateInfo( maxLod ) );
-
-        VkImageViewCreateInfo metallicImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessImg->ImgViewCreateInfo;
-        metallicImgViewCreateInfo.image                 = pMaterialAsset->pMetallicRoughnessImg->hImg;
-        metallicImgViewCreateInfo.components.r          = VK_COMPONENT_SWIZZLE_R;
-        metallicImgViewCreateInfo.components.g          = VK_COMPONENT_SWIZZLE_G;
-        metallicImgViewCreateInfo.components.b          = VK_COMPONENT_SWIZZLE_B;
-        metallicImgViewCreateInfo.components.a          = VK_COMPONENT_SWIZZLE_A;
-//        metallicImgViewCreateInfo.components.g          = VK_COMPONENT_SWIZZLE_ONE;
-//        metallicImgViewCreateInfo.components.b          = VK_COMPONENT_SWIZZLE_ONE;
-//        metallicImgViewCreateInfo.components.a          = VK_COMPONENT_SWIZZLE_ONE;
-
-        VkImageViewCreateInfo roughnessImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessImg->ImgViewCreateInfo;
-        roughnessImgViewCreateInfo.image                 = pMaterialAsset->pMetallicRoughnessImg->hImg;
-        roughnessImgViewCreateInfo.components.r          = VK_COMPONENT_SWIZZLE_R;
-        roughnessImgViewCreateInfo.components.g          = VK_COMPONENT_SWIZZLE_G;
-        roughnessImgViewCreateInfo.components.b          = VK_COMPONENT_SWIZZLE_B;
-        roughnessImgViewCreateInfo.components.a          = VK_COMPONENT_SWIZZLE_A;
-//        roughnessImgViewCreateInfo.components.r          = VK_COMPONENT_SWIZZLE_G;
-//        roughnessImgViewCreateInfo.components.g          = VK_COMPONENT_SWIZZLE_ONE;
-//        roughnessImgViewCreateInfo.components.b          = VK_COMPONENT_SWIZZLE_ONE;
-//        roughnessImgViewCreateInfo.components.a          = VK_COMPONENT_SWIZZLE_ONE;
-
-        if ( !pMaterialAsset->hMetallicImgView.Recreate( pParams->pNode->hLogicalDevice, metallicImgViewCreateInfo ) ) {
+        VkImageViewCreateInfo metallicRoughnessOcclusionImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessOcclusionImg->ImgViewCreateInfo;
+        metallicRoughnessOcclusionImgViewCreateInfo.image                 = pMaterialAsset->pMetallicRoughnessOcclusionImg->hImg;
+        
+        if ( !pMaterialAsset->hMetallicRoughnessOcclusionImgView.Recreate( pParams->pNode->hLogicalDevice, metallicRoughnessOcclusionImgViewCreateInfo ) ) {
+            assert(false);
             return false;
         }
-
-        if ( !pMaterialAsset->hRoughnessImgView.Recreate( pParams->pNode->hLogicalDevice, roughnessImgViewCreateInfo ) ) {
-            return false;
-        }
-
-    } /* pMetallicRoughnessImg */
-
-    if ( pMaterialAsset->pOcclusionImg ) {
-        const float maxLod = float( pMaterialAsset->pOcclusionImg->ImgCreateInfo.mipLevels );
-        pMaterialAsset->pOcclusionSampler = pParams->pSamplerManager->GetSampler( GetDefaultSamplerCreateInfo( maxLod ) );
-
-        VkImageViewCreateInfo occlusionImgViewCreateInfo = pMaterialAsset->pOcclusionImg->ImgViewCreateInfo;
-        occlusionImgViewCreateInfo.image                 = pMaterialAsset->pOcclusionImg->hImg;
-        occlusionImgViewCreateInfo.components.r          = VK_COMPONENT_SWIZZLE_B;
-        occlusionImgViewCreateInfo.components.g          = VK_COMPONENT_SWIZZLE_ZERO;
-        occlusionImgViewCreateInfo.components.b          = VK_COMPONENT_SWIZZLE_ZERO;
-        occlusionImgViewCreateInfo.components.a          = VK_COMPONENT_SWIZZLE_ZERO;
-
-        if ( !pMaterialAsset->hOcclusionImgView.Recreate( pParams->pNode->hLogicalDevice, occlusionImgViewCreateInfo ) ) {
-            return false;
-        }
-    } /* pOcclusionImg */
+    }
 
     return true;
 }
@@ -881,7 +1082,7 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::
     }
 
     
-    auto pTaskflow =  apemode::AppState::Get( )->GetDefaultTaskflow( );
+    // auto pTaskflow =  apemode::AppState::Get( )->GetDefaultTaskflow( );
     // MT::TaskScheduler* pTaskScheduler = apemode::AppState::Get( )->GetTaskScheduler( );
 
     auto pMaterialsFb = pParams->pSrcScene->materials( );

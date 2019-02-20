@@ -3,6 +3,10 @@
 #include <NativeHandles.Vulkan.h>
 #include <TInfoStruct.Vulkan.h>
 
+#ifdef __APPLE__
+#include <MoltenVK/vk_mvk_moltenvk.h>
+#endif
+
 #include <stdlib.h>
 
 apemodevk::GraphicsManager::APIVersion::APIVersion( )
@@ -351,6 +355,15 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                eFlags,
         platform::LogFmt( platform::LogLevel::Err, "Failed to create instance." );
         return false;
     }
+    
+    #if defined(__APPLE__) // && false
+    MVKConfiguration mvkConfiguration = {};
+    size_t mvkConfigurationSize = sizeof(mvkConfiguration);
+    vkGetMoltenVKConfigurationMVK(hInstance, &mvkConfiguration, &mvkConfigurationSize);
+    mvkConfiguration.fullImageViewSwizzle = true;
+    vkSetMoltenVKConfigurationMVK(hInstance, &mvkConfiguration, &mvkConfigurationSize);
+    #endif
+    
 
     // clang-format off
     Ext.GetDeviceProcAddr                         = (PFN_vkGetDeviceProcAddr)                         vkGetInstanceProcAddr( hInstance, "vkGetDeviceProcAddr" );

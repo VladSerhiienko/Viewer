@@ -31,9 +31,6 @@ layout( std140, set = 0, binding = 0 ) uniform CameraUBO {
 layout( std140, set = 1, binding = 0 ) uniform ObjectUBO {
     mat4 WorldMatrix;  // ObjectToWorld
     mat4 NormalMatrix; // ObjectNormalToWorld
-    vec4 PositionOffset;
-    vec4 PositionScale;
-    vec4 TexcoordOffsetScale;
 };
 
 //
@@ -43,7 +40,7 @@ layout( std140, set = 1, binding = 0 ) uniform ObjectUBO {
 // layout( std140, set = 2, binding = 1 ) uniform BoneNormalsUBO;
 
 #ifndef DEFAULT_BONE_COUNT
-#define DEFAULT_BONE_COUNT 64
+#define DEFAULT_BONE_COUNT 128
 #endif
 
 layout( constant_id = 0 ) const int kBoneCount = DEFAULT_BONE_COUNT;
@@ -56,34 +53,31 @@ layout( std140, set = 2, binding = 1 ) uniform BoneNormalsUBO {
     mat4 BoneNormalMatrices[ kBoneCount ];
 };
 
-#ifdef QTANGENTS
 layout( location = 0 ) in vec3 inPosition;
-layout( location = 1 ) in vec4 inQTangent;
-layout( location = 2 ) in vec2 inTexcoords;
-#define SKINNING_LAYOUT_LOCATION 3
-#else
-layout( location = 0 ) in vec3 inPosition;
-layout( location = 1 ) in vec3 inNormal;
-layout( location = 2 ) in vec4 inTangent;
-layout( location = 3 ) in vec2 inTexcoords;
-#define SKINNING_LAYOUT_LOCATION 4
-#endif
+layout( location = 1 ) in vec2 inTexcoords;
+layout( location = 2 ) in vec4 inQTangent;
+layout( location = 3 ) in uint inIndexColorRGB;
+layout( location = 4 ) in float inColorAlpha;
+#define SKINNING_LAYOUT_LOCATION_0 5
+#define SKINNING_LAYOUT_LOCATION_1 6
 
 #ifdef SKINNING
-layout( location = SKINNING_LAYOUT_LOCATION ) in vec4 inBoneIndicesWeights;
+layout( location = SKINNING_LAYOUT_LOCATION_0 ) in vec4 inBoneIndicesWeights;
 #else
 #ifdef SKINNING8
-layout( location = SKINNING_LAYOUT_LOCATION ) in vec4 inBoneIndicesWeights0;
-layout( location = SKINNING_LAYOUT_LOCATION + 1 ) in vec4 inBoneIndicesWeights1;
+layout( location = SKINNING_LAYOUT_LOCATION_0 ) in vec4 inBoneIndicesWeights0;
+layout( location = SKINNING_LAYOUT_LOCATION_1 ) in vec4 inBoneIndicesWeights1;
 #endif
 #endif
 
 layout( location = 0 ) out vec3 outWorldPosition;
-layout( location = 1 ) out vec3 outWorldNormal;
-layout( location = 2 ) out vec3 outWorldTangent;
-layout( location = 3 ) out vec3 outWorldBitangent;
-layout( location = 4 ) out vec3 outViewDirection;
-layout( location = 5 ) out vec2 outTexcoords;
+layout( location = 1 ) out vec2 outTexcoords;
+layout( location = 2 ) out vec3 outWorldNormal;
+layout( location = 3 ) out vec3 outWorldTangent;
+layout( location = 4 ) out vec3 outWorldBitangent;
+layout( location = 5 ) out vec3 outViewDirection;
+layout( location = 6 ) out vec4 outVertexColor;
+layout( location = 7 ) out vec3 outBarycoords;
 
 vec3 GetCameraWorldPosition( ) {
     return InvViewMatrix[ 3 ].xyz;
@@ -107,26 +101,37 @@ mat3 AccumulatedBoneNormalTransform( vec4 weights, vec4 indices ) {
     return normalTransfrom;
 }
 
-void UnpackQTangent( vec4 q, out vec3 t, out vec3 n, out float r ) {
-    float qx2 = q.x + q.x, qy2 = q.y + q.y;
-    float qz2   = q.z + q.z;
-    float qxqx2 = q.x * qx2;
-    float qxqy2 = q.x * qy2;
-    float qxqz2 = q.x * qz2;
-    float qxqw2 = q.w * qx2;
-    float qyqy2 = q.y * qy2;
-    float qyqz2 = q.y * qz2;
-    float qyqw2 = q.w * qy2;
-    float qzqz2 = q.z * qz2;
-    float qzqw2 = q.w * qz2;
+// https://github.com/KhronosGroup/glTF/issues/812
+// https://bitbucket.org/sinbad/ogre/src/18ebdbed2edc61d30927869c7fb0cf3ae5697f0a/Samples/Media/Hlms/Common/GLSL/QuaternionCode_piece_all.glsl?at=v2-1&fileviewer=file-view-default
+void UnpackQTangentAxes( vec4 q, out vec3 x, out vec3 y ) {
+    float fTx  = 2.0 * q.x;
+    float fTy  = 2.0 * q.y;
+    float fTz  = 2.0 * q.z;
+    float fTxx = fTx * q.x;
+    float fTxy = fTy * q.x;
+    float fTxz = fTz * q.x;
+    float fTwx = fTx * q.w;
+    float fTwy = fTy * q.w;
+    float fTwz = fTz * q.w;
+    float fTyy = fTy * q.y;
+    float fTyz = fTz * q.y;
+    float fTzz = fTz * q.z;
 
-    t = vec3( 1.0 - ( qyqy2 + qzqz2 ), qxqy2 + qzqw2, qxqz2 - qyqw2 );
-    n = vec3( qxqy2 - qzqw2, 1.0 - ( qxqx2 + qzqz2 ), qyqz2 + qxqw2 );
+    x = vec3( 1.0 - ( fTyy + fTzz ), fTxy + fTwz, fTxz - fTwy );
+    y = vec3( fTxy - fTwz, 1.0 - ( fTxx + fTzz ), fTyz + fTwx );
+}
+
+void UnpackQTangent( vec4 q, out vec3 t, out vec3 n, out float r ) {
+    UnpackQTangentAxes( q, n, t );
     r = ( q.w < 0.0 ) ? -1.0 : 1.0;
 }
 
+vec3 kBaryCoords[ 3 ] = {
+    vec3( 1, 0, 0 ), vec3( 0, 1, 0 ), vec3( 0, 0, 1 ),
+};
+
 void main( ) {
-    vec3 modelPosition = inPosition.xyz * PositionScale.xyz + PositionOffset.xyz;
+    vec3 modelPosition = inPosition.xyz;
 
 #if defined( SKINNING )
     vec4 boneWeights = fract( inBoneIndicesWeights );
@@ -151,20 +156,23 @@ void main( ) {
 
     gl_Position = ProjMatrix * ViewMatrix * worldPosition;
 
-    outTexcoords     = inTexcoords * TexcoordOffsetScale.zw + TexcoordOffsetScale.xy;
-    outWorldPosition = worldPosition.xyz;
-    outViewDirection = normalize( GetCameraWorldPosition( ).xyz - worldPosition.xyz );
+    uint baryIndex = ( inIndexColorRGB ) & 0xFF;
 
-#ifndef QTANGENTS
-    vec3  normal     = inNormal.xyz;
-    vec3  tangent    = inTangent.xyz;
-    float reflection = inTangent.w;
-#else
+    vec3 colorRGB = vec3( float( ( inIndexColorRGB >> 8 ) & 0xFF ),
+                          float( ( inIndexColorRGB >> 16 ) & 0xFF ),
+                          float( ( inIndexColorRGB >> 24 ) & 0xFF ) ) / 255.0;
+
+    outWorldPosition   = worldPosition.xyz;
+    outTexcoords       = inTexcoords;
+    outVertexColor.rgb = colorRGB;
+    outVertexColor.a   = inColorAlpha;
+    outBarycoords      = kBaryCoords[ baryIndex ];
+    outViewDirection   = normalize( GetCameraWorldPosition( ).xyz - worldPosition.xyz );
+
     vec3  normal;
     vec3  tangent;
     float reflection;
     UnpackQTangent( inQTangent, tangent, normal, reflection );
-#endif
 
 #if defined( SKINNING )
     mat3 accumBoneNormalMatrix = AccumulatedBoneNormalTransform( boneWeights, boneIndices );

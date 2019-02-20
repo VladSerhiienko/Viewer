@@ -28,23 +28,23 @@ public:
 
         const apemodevk::UploadedImage* pBaseColorImg         = nullptr;
         const apemodevk::UploadedImage* pNormalImg            = nullptr;
-        const apemodevk::UploadedImage* pOcclusionImg         = nullptr;
         const apemodevk::UploadedImage* pEmissiveImg          = nullptr;
-        const apemodevk::UploadedImage* pMetallicRoughnessImg = nullptr;
+        const apemodevk::UploadedImage* pMetallicRoughnessOcclusionImg = nullptr;
 
         VkSampler pBaseColorSampler = VK_NULL_HANDLE;
         VkSampler pNormalSampler    = VK_NULL_HANDLE;
-        VkSampler pOcclusionSampler = VK_NULL_HANDLE;
         VkSampler pEmissiveSampler  = VK_NULL_HANDLE;
-        VkSampler pMetallicSampler  = VK_NULL_HANDLE;
-        VkSampler pRoughnessSampler = VK_NULL_HANDLE;
+        VkSampler pMetallicRoughnessOcclusionSampler  = VK_NULL_HANDLE;
 
         apemodevk::THandle< VkImageView > hBaseColorImgView;
         apemodevk::THandle< VkImageView > hNormalImgView;
-        apemodevk::THandle< VkImageView > hOcclusionImgView;
         apemodevk::THandle< VkImageView > hEmissiveImgView;
-        apemodevk::THandle< VkImageView > hMetallicImgView;
-        apemodevk::THandle< VkImageView > hRoughnessImgView;
+        apemodevk::THandle< VkImageView > hImgView;
+        apemodevk::THandle< VkImageView > hMetallicRoughnessOcclusionImgView;
+        
+        bool bHasMetallicMap  = false;
+        bool bHasRoughnessMap = false;
+        bool bHasOcclusionMap = false;
     };
 
     struct DeviceAsset : apemode::detail::SceneDeviceAsset {

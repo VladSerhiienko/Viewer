@@ -3,6 +3,8 @@
 #include <apemode/platform/AppState.h>
 #include <apemode/platform/memory/MemoryManager.h>
 
+#include <draco/animation/keyframe_animation_decoder.h>
+
 #ifndef PI
 #define PI 3.14159265358979323846264338327950288
 #endif
@@ -715,24 +717,59 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
 
             assert( IsNotNullAndNotEmpty( pAnimCurveFb->keys( ) ) );
             animCurve.Keys.reserve( pAnimCurveFb->keys( )->size( ) );
+            
+            if ( pAnimCurveFb->compression_type() == apemodefb::ECompressionTypeFb_None ) {
+                auto keys = (const apemodefb::AnimCurveCubicKeyFb*) pAnimCurveFb->keys( )->data( );
+                auto keysEnd = keys + pAnimCurveFb->keys( )->size( ) / sizeof( apemodefb::AnimCurveCubicKeyFb );
 
-            auto keys = (const apemodefb::AnimCurveCubicKeyFb*) pAnimCurveFb->keys( )->data( );
-            auto keysEnd = keys + pAnimCurveFb->keys( )->size( ) / sizeof( apemodefb::AnimCurveCubicKeyFb );
-
-            eastl::transform( keys,
-                              keysEnd,
-                              eastl::inserter( animCurve.Keys, animCurve.Keys.begin( ) ),
-                              []( const apemodefb::AnimCurveCubicKeyFb &keyFb ) {
-                                  auto pKeyFb = &keyFb;
-                                  return eastl::make_pair< float, SceneAnimCurveKey >( pKeyFb->time( ),
-                                                                                       SceneAnimCurveKey{
-                                                                                           SceneAnimCurveKey::EInterpolationMode(pKeyFb->interpolation_mode()),
-                                                                                           pKeyFb->time( ),
-                                                                                           pKeyFb->value_bez0_bez3( ),
-                                                                                           pKeyFb->bez1( ),
-                                                                                           pKeyFb->bez2( ),
-                                                                                       } );
-                              } );
+                eastl::transform( keys,
+                                  keysEnd,
+                                  eastl::inserter( animCurve.Keys, animCurve.Keys.begin( ) ),
+                                  []( const apemodefb::AnimCurveCubicKeyFb &keyFb ) {
+                                      auto pKeyFb = &keyFb;
+                                      return eastl::make_pair< float, SceneAnimCurveKey >( pKeyFb->time( ),
+                                                                                           SceneAnimCurveKey{
+                                                                                               SceneAnimCurveKey::EInterpolationMode(pKeyFb->interpolation_mode()),
+                                                                                               pKeyFb->time( ),
+                                                                                               pKeyFb->value_bez0_bez3( ),
+                                                                                               pKeyFb->bez1( ),
+                                                                                               pKeyFb->bez2( ),
+                                                                                           } );
+                                  } );
+            
+            } else {
+                draco::DecoderBuffer decoderBuffer;
+                decoderBuffer.Init( (const char *)pAnimCurveFb->keys( )->data( ), pAnimCurveFb->keys( )->size( ) );
+                
+                draco::KeyframeAnimationDecoder keyframeAnimationDecoder;
+                draco::DecoderOptions options;
+                draco::KeyframeAnimation keyframeAnimation;
+                
+                keyframeAnimationDecoder.Decode(options, &decoderBuffer, &keyframeAnimation);
+                
+                const size_t numFrames = keyframeAnimation.num_frames();
+                const auto timestamps = keyframeAnimation.timestamps();
+                const auto * values = keyframeAnimation.keyframes(1);
+                const auto * interpolationTypes = keyframeAnimation.keyframes(2);
+                
+                animCurve.Keys.reserve(numFrames);
+                for (uint32_t i = 0; i < numFrames; ++i) {
+                    float mappedTimestamp {};
+                    XMFLOAT3 mappedValues {};
+                    uint8_t mappedInterpolationType {};
+                    
+                    timestamps->GetMappedValue(draco::PointIndex(i), &mappedTimestamp);
+                    values->GetMappedValue(draco::PointIndex(i), &mappedValues);
+                    interpolationTypes->GetMappedValue(draco::PointIndex(i), &mappedInterpolationType);
+                    
+                    auto &key = animCurve.Keys[mappedTimestamp];
+                    key.Time = mappedTimestamp;
+                    key.Value = mappedValues.x;
+                    key.Bez1 = mappedValues.y;
+                    key.Bez2 = mappedValues.z;
+                    key.eInterpMode = SceneAnimCurveKey::EInterpolationMode(mappedInterpolationType);
+                }
+            }
 
             animCurve.TimeMinMaxTotal.x = animCurve.Keys.cbegin( )->second.Time;
             animCurve.TimeMinMaxTotal.y = animCurve.Keys.crbegin( )->second.Time;
@@ -808,26 +845,26 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
 
             pScene->Meshes.emplace_back( );
             auto &mesh = pScene->Meshes.back( );
-            auto pSubmeshesFb = pMeshFb->submeshes( );
-            auto pSubmeshFb   = pSubmeshesFb->Get( 0 );
 
             mesh.SubsetCount = static_cast< uint32_t >( pMeshFb->subsets( )->size( ) );
             mesh.BaseSubset  = static_cast< uint32_t >( pScene->Subsets.size( ) );
+            mesh.eVertexType = detail::eVertexType_Custom;
 
-            switch ( pSubmeshFb->vertex_format( ) ) {
-                case apemodefb::EVertexFormatFb_Default:
-                    mesh.eVertexType = detail::eVertexType_Default;
-                    break;
-                case apemodefb::EVertexFormatFb_Skinned:
-                    mesh.eVertexType = detail::eVertexType_Skinned;
-                    break;
-                case apemodefb::EVertexFormatFb_FatSkinned:
-                    mesh.eVertexType = detail::eVertexType_FatSkinned;
-                    break;
-                default:
-                    mesh.eVertexType = detail::eVertexType_Custom;
-                    break;
-            }
+//            auto pSubmeshesFb = pMeshFb->submeshes( );
+//            auto pSubmeshFb   = pSubmeshesFb->Get( 0 );
+//            switch ( pSubmeshFb->vertex_format( ) ) {
+//                case apemodefb::EVertexFormatFb_Default:
+//                    mesh.eVertexType = detail::eVertexType_Default;
+//                    break;
+//                case apemodefb::EVertexFormatFb_Skinned:
+//                    mesh.eVertexType = detail::eVertexType_Skinned;
+//                    break;
+//                case apemodefb::EVertexFormatFb_FatSkinned:
+//                    mesh.eVertexType = detail::eVertexType_FatSkinned;
+//                    break;
+//                default:
+//                    break;
+//            }
 
             std::transform( pMeshFb->subsets( )->begin( ),
                             pMeshFb->subsets( )->end( ),

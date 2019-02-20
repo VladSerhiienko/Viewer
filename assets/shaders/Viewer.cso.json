@@ -51,13 +51,7 @@
         },
         {
             "srcFile": "shaders/UScene.vert",
-            "shaderType": "vert",
-            "macros": [
-                {
-                    "name": "QTANGENTS",
-                    "value": "1"
-                }
-            ]
+            "shaderType": "vert"
         },
         {
             "srcFile": "shaders/UScene.vert",
@@ -73,34 +67,6 @@
             "srcFile": "shaders/UScene.vert",
             "shaderType": "vert",
             "macros": [
-                {
-                    "name": "SKINNING8",
-                    "value": "1"
-                }
-            ]
-        },
-        {
-            "srcFile": "shaders/UScene.vert",
-            "shaderType": "vert",
-            "macros": [
-                {
-                    "name": "QTANGENTS",
-                    "value": "1"
-                },
-                {
-                    "name": "SKINNING",
-                    "value": "1"
-                }
-            ]
-        },
-        {
-            "srcFile": "shaders/UScene.vert",
-            "shaderType": "vert",
-            "macros": [
-                {
-                    "name": "QTANGENTS",
-                    "value": "1"
-                },
                 {
                     "name": "SKINNING8",
                     "value": "1"

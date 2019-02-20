@@ -99,22 +99,23 @@ ViewerShell::ViewerShell( ) {
     float position = 350;
     float destPosition = 100;
 
-    pModelViewCameraController->Target.x = 0;
-    pModelViewCameraController->Target.y = 0;
-    pModelViewCameraController->Target.z = 0;
-    pModelViewCameraController->TargetDst.x = 0;
-    pModelViewCameraController->TargetDst.y = 28;
-    pModelViewCameraController->TargetDst.z = 0;
+//    pModelViewCameraController->Target.x = 0;
+//    pModelViewCameraController->Target.y = 0;
+//    pModelViewCameraController->Target.z = 0;
+//    pModelViewCameraController->TargetDst.x = 0;
+//    pModelViewCameraController->TargetDst.y = 28;
+//    pModelViewCameraController->TargetDst.z = 0;
 
     pModelViewCameraController->Position.x = position;
     pModelViewCameraController->Position.y = position;
     pModelViewCameraController->Position.z = position;
-//    pModelViewCameraController->PositionDst.x = destPosition;
-//    pModelViewCameraController->PositionDst.y = destPosition;
-//    pModelViewCameraController->PositionDst.z = destPosition;
-    pModelViewCameraController->PositionDst.x = 4;
-    pModelViewCameraController->PositionDst.y = 60;
-    pModelViewCameraController->PositionDst.z = -40;
+    pModelViewCameraController->PositionDst.x = destPosition;
+    pModelViewCameraController->PositionDst.y = destPosition;
+    pModelViewCameraController->PositionDst.z = destPosition;
+    
+//    pModelViewCameraController->PositionDst.x = 4;
+//    pModelViewCameraController->PositionDst.y = 60;
+//    pModelViewCameraController->PositionDst.z = -40;
 
     //*/
 #endif
@@ -384,7 +385,7 @@ bool ViewerShell::Initialize( const apemode::PlatformSurface* pPlatformSurface )
         // const std::string sceneFile = "shared/0004_16.fbxp";
         // const std::string sceneFile = "shared/0004.fbxp";
         // const std::string sceneFile = "shared/0005.fbxp";
-        const std::string sceneFile = "shared/horned_infernal_duke.fbxp";
+        const std::string sceneFile = "shared/scene.fbxp";
         // TGetOption< std::string >( "scene", "" );
         auto pSceneAsset = pAssetManager->Acquire( sceneFile.c_str() );
         mLoadedScene = LoadSceneFromBin( pSceneAsset->GetContentAsBinaryBuffer() );
@@ -873,12 +874,12 @@ void ViewerShell::Populate( const apemode::SceneNodeTransformFrame* pTransformFr
         debugRenderSceneParameters.pTransformFrame    = &mLoadedScene.pScene->BindPoseFrame;
         debugRenderSceneParameters.SceneColorOverride = XMFLOAT4{1, 1, 0, 1};
         debugRenderSceneParameters.LineWidth          = 4;
-        // pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
+        pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
 
         debugRenderSceneParameters.pTransformFrame    = pTransformFrame;
         debugRenderSceneParameters.SceneColorOverride = XMFLOAT4{0, 1, 1, 1};
         debugRenderSceneParameters.LineWidth          = 2;
-        // pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
+        pDebugRenderer->Render( mLoadedScene.pScene.get( ), &debugRenderSceneParameters );
     }
 
     apemode::vk::NuklearRenderer::RenderParameters renderParamsNk;

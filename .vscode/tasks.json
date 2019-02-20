@@ -37,6 +37,23 @@
             }
         },
         {
+            "label": "ShaderPipeline/CSO(Darwin/Xcode)",
+            "type": "shell",
+            "command": "./ShaderPipeline",
+            "args": [
+                "--assets-folder", "\"../../assets/**\"",
+                "--cso-json-file", "../../assets/shaders/Viewer.cso.json",
+                "--cso-file", "../../assets/shaders/Viewer.cso"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build_darwin_x86_64_appleclang_xcode/Release"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
             "label": "Python/ShaderTool(Darwin/Xcode)",
             "type": "shell",
             "command": "python",

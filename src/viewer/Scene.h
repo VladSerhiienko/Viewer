@@ -67,6 +67,7 @@ enum ERotationOrder {
 struct DefaultVertex {
     XMFLOAT3 position;
     XMFLOAT2 texcoords;
+    XMFLOAT4 qtangent;
     
     union {
         struct {
@@ -80,7 +81,6 @@ struct DefaultVertex {
     };
     
     float colorAlpha;
-    XMFLOAT4 qtangent;
 };
 
 /* Skinned vertex structure.

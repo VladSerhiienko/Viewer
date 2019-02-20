@@ -141,7 +141,7 @@ flatbuffers::Offset< csofb::CompiledShaderFb > CompileShader( flatbuffers::FlatB
         std::string cachedAssembly     = cachedCSO + "-assembly.txt";
 
         flatbuffers::SaveFile(
-            cachedCSO.c_str( ), (const char*) compiledShader->GetDwordPtr( ), compiledShader->GetDwordCount( ), true );
+            cachedCSO.c_str( ), (const char*) compiledShader->GetBytePtr( ), compiledShader->GetByteCount( ), true );
 
         flatbuffers::SaveFile( cachedPreprocessed.c_str( ),
                                compiledShader->GetPreprocessedSrc( ),

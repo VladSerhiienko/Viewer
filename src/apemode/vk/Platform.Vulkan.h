@@ -315,7 +315,7 @@ namespace apemodevk {
 
 #define apemode_likely EASTL_LIKELY
 #define apemode_unlikely EASTL_UNLIKELY
-#define apemode_assert( ... ) // assert(__VA_ARGS__)
+#define apemode_assert( bValue, ... ) assert(bValue)
 #define apemode_error( ... )
 #define apemode_halt( ... )
 
