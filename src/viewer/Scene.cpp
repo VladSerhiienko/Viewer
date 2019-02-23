@@ -3,7 +3,11 @@
 #include <apemode/platform/AppState.h>
 #include <apemode/platform/memory/MemoryManager.h>
 
+//#define APEMODEVK_NO_GOOGLE_DRACO
+#ifndef APEMODEVK_NO_GOOGLE_DRACO
+#include <draco/compression/decode.h>
 #include <draco/animation/keyframe_animation_decoder.h>
+#endif
 
 #ifndef PI
 #define PI 3.14159265358979323846264338327950288
@@ -19,13 +23,13 @@ inline bool IsNotNullAndNotEmpty( const flatbuffers::Vector< T > *pVector ) {
 bool IsValid( const float a ) {
     return !isnan( a ) && !isinf( a );
 }
-bool IsIdentity( const apemode::XMFLOAT4X4 m ) {
-    using namespace apemodexm;
-    return IsNearlyEqual( m._11, 1 ) && IsNearlyEqual( m._12, 0 ) && IsNearlyEqual( m._13, 0 ) && IsNearlyEqual( m._14, 0 ) &&
-           IsNearlyEqual( m._21, 0 ) && IsNearlyEqual( m._22, 1 ) && IsNearlyEqual( m._23, 0 ) && IsNearlyEqual( m._24, 0 ) &&
-           IsNearlyEqual( m._31, 0 ) && IsNearlyEqual( m._32, 0 ) && IsNearlyEqual( m._33, 1 ) && IsNearlyEqual( m._34, 0 ) &&
-           IsNearlyEqual( m._41, 0 ) && IsNearlyEqual( m._42, 0 ) && IsNearlyEqual( m._43, 0 ) && IsNearlyEqual( m._44, 1 );
-}
+//bool IsIdentity( const apemode::XMFLOAT4X4 m ) {
+//    using namespace apemodexm;
+//    return IsNearlyEqual( m._11, 1 ) && IsNearlyEqual( m._12, 0 ) && IsNearlyEqual( m._13, 0 ) && IsNearlyEqual( m._14, 0 ) &&
+//           IsNearlyEqual( m._21, 0 ) && IsNearlyEqual( m._22, 1 ) && IsNearlyEqual( m._23, 0 ) && IsNearlyEqual( m._24, 0 ) &&
+//           IsNearlyEqual( m._31, 0 ) && IsNearlyEqual( m._32, 0 ) && IsNearlyEqual( m._33, 1 ) && IsNearlyEqual( m._34, 0 ) &&
+//           IsNearlyEqual( m._41, 0 ) && IsNearlyEqual( m._42, 0 ) && IsNearlyEqual( m._43, 0 ) && IsNearlyEqual( m._44, 1 );
+//}
 bool IsValid( const apemode::XMFLOAT4X4 m ) {
     using namespace apemodexm;
     return /*!IsNearlyEqual( m._11, 0 ) && */ IsValid( m._12 ) && IsValid( m._13 ) && IsValid( m._14 ) && IsValid( m._21 ) &&
@@ -741,6 +745,36 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                 draco::DecoderBuffer decoderBuffer;
                 decoderBuffer.Init( (const char *)pAnimCurveFb->keys( )->data( ), pAnimCurveFb->keys( )->size( ) );
                 
+                draco::DecoderOptions options;
+                draco::Decoder decoder;
+                draco::PointCloud animPointCloud;
+                
+                draco::Status status = decoder.DecodeBufferToGeometry( &decoderBuffer, &animPointCloud );
+                if (status.code() == draco::Status::OK) {
+                    constexpr int keyValuesAttributeIndex = 0;
+                    constexpr int keyTimeAttributeIndex = 1;
+                    constexpr int keyTypeAttributeIndex = 2;
+                    
+                    const draco::PointAttribute* keyValuesAttribute = animPointCloud.attribute( keyValuesAttributeIndex );
+                    const draco::PointAttribute* keyTimeAttribute = animPointCloud.attribute( keyTimeAttributeIndex );
+                    const draco::PointAttribute* keyTypeAttribute = animPointCloud.attribute( keyTypeAttributeIndex );
+                    
+                    animCurve.Keys.reserve( animPointCloud.num_points( ) );
+                    for (uint32_t i = 0; i < animPointCloud.num_points( ); ++i) {
+                        const draco::PointIndex pointIndex {i};
+                    
+                        float mappedTime = 0;
+                        keyTimeAttribute->GetMappedValue( pointIndex, &mappedTime );
+                        
+                        auto &key = animCurve.Keys[mappedTime];
+                        key.Time = mappedTime;
+                        
+                        keyValuesAttribute->GetMappedValue( pointIndex, &key.Value );
+                        keyTypeAttribute->GetMappedValue( pointIndex, &key.eInterpMode );
+                    }
+                }
+
+                #if 0
                 draco::KeyframeAnimationDecoder keyframeAnimationDecoder;
                 draco::DecoderOptions options;
                 draco::KeyframeAnimation keyframeAnimation;
@@ -769,17 +803,19 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                     key.Bez2 = mappedValues.z;
                     key.eInterpMode = SceneAnimCurveKey::EInterpolationMode(mappedInterpolationType);
                 }
+                #endif
             }
-
+            
             animCurve.TimeMinMaxTotal.x = animCurve.Keys.cbegin( )->second.Time;
             animCurve.TimeMinMaxTotal.y = animCurve.Keys.crbegin( )->second.Time;
             animCurve.TimeMinMaxTotal.z = animCurve.TimeMinMaxTotal.y - animCurve.TimeMinMaxTotal.x;
-
+            
             LogInfo( "\tStart: {} -> End: {} (Duration: {})",
                      animCurve.TimeMinMaxTotal.x,
                      animCurve.TimeMinMaxTotal.y,
                      animCurve.TimeMinMaxTotal.z );
         }
+        
 
         pScene->AnimNodeIdToAnimCurveIds.reserve( pAnimCurvesFb->size( ) );
         for ( auto &node : pScene->Nodes ) {

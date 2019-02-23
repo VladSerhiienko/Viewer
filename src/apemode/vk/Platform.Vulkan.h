@@ -203,6 +203,12 @@ namespace apemodevk {
                 EndMemoryAllocationScope( pszSourceFile, SourceLine, pszSourceFunc );
             }
         };
+        
+        template <typename TContainer>
+        void TWipeContainer( TContainer& c) {
+            TContainer( ).swap( c );
+        }
+        
     } // namespace platform
 
     template < typename T >

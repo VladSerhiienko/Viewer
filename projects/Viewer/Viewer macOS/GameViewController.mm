@@ -55,17 +55,17 @@ CVReturn DisplayLinkCallback( CVDisplayLinkRef   displayLink,
     return result.bSucceeded ? kCVReturnSuccess : kCVReturnError;
 }
 
-std::vector< const char* > getProcessArguments( ) {
-    std::vector< const char* > ppszArgs;
-    
-    NSArray* args = [[NSProcessInfo processInfo] arguments];
-    ppszArgs.reserve( ( size_t )[ args count ] );
-
-    for ( NSString* arg in args )
-        ppszArgs.push_back( [arg UTF8String] );
-
-    return ppszArgs;
-}
+//std::vector< const char* > getProcessArguments( ) {
+//    std::vector< const char* > ppszArgs;
+//
+//    NSArray* args = [[NSProcessInfo processInfo] arguments];
+//    ppszArgs.reserve( ( size_t )[ args count ] );
+//
+//    for ( NSString* arg in args )
+//        ppszArgs.push_back( [arg UTF8String] );
+//
+//    return ppszArgs;
+//}
 }
 
 #pragma mark -
@@ -156,8 +156,15 @@ std::vector< const char* > getProcessArguments( ) {
     
     app.assetManager.UpdateAssets("/Users/vlad.serhiienko/Projects/Home/Viewer/assets/**", nullptr, 0);
     //
-//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/run-hedgehog-run.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/run-hedgehog-run.fbxp" ); //
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/helicopter-ec135-special-forces.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/izzy-animated-female-character-free-download.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/early-medieval-nasal-helmet.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/sniper.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/1972-datsun-240k-gt-non-commercial-use-only.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/mq-9-reaper.fbxp" );
     app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/run-hedgehog-run.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/stesla.fbxp" );
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/dji.fbxp" );
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/security-cyborg.fbxp" );
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/horned_infernal_duke.fbxp" );
@@ -170,7 +177,7 @@ std::vector< const char* > getProcessArguments( ) {
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/bean-bot.fbxp" );
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/speedling-realistic.fbxp" );
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/security-cyborg.fbxp" );
-//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/littlest-tokyo.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/littlest-tokyo.fbxp" );
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/alien-head.fbxp" );
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/super-human.fbxp" );
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/rainier-ak-3d.fbxp" );
@@ -178,7 +185,7 @@ std::vector< const char* > getProcessArguments( ) {
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/sculptjanuary19-day22-jungle.fbxp" );
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/tentacle-creature-day-2-sculptjanuary-2016.fbxp" );
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/horned_infernal_duke.fbxp" );
-//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/mech-m-6k.fbxp" );
+//    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc/mech-m-6k.fbxp" );
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/stesla.fbxp" );
 //    app.assetManager.AddAsset( "shared/scene.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipeline/dji.fbxp" );
 //    app.assetManager.AddAsset( "shared/stesla.fbxp", "/Users/vlad.serhiienko/Projects/Home/Models/FbxPipelineDrc_8/stesla.fbxp" );
