@@ -15,6 +15,9 @@
 
 //#define APEMODEVK_NO_GOOGLE_DRACO
 #ifndef APEMODEVK_NO_GOOGLE_DRACO
+#ifdef ERROR
+#undef ERROR
+#endif
 #include <draco/compression/decode.h>
 #endif
 
@@ -39,7 +42,7 @@ struct BufferUploadCmpOpGreaterBySizeOrByAccessFlags {
                 return ( +1 );
             return 0;
         }
-    
+
         if ( a.SrcBufferSize > b.SrcBufferSize )
             return ( -1 );
         if ( a.SrcBufferSize < b.SrcBufferSize )
@@ -150,12 +153,12 @@ struct SourceSubmeshInfo {
     bool IsOk( ) const {
         return pSrcMesh && pSrcSubmesh;
     }
-    
+
     bool IsIndexTypeUInt32( ) const {
         assert( IsOk( ) );
         return pSrcMesh && pSrcMesh->index_type( ) == apemodefb::EIndexTypeFb_UInt32;
     }
-    
+
     VkIndexType GetIndexType( ) const {
         return IsIndexTypeUInt32( ) ? VK_INDEX_TYPE_UINT32 : VK_INDEX_TYPE_UINT16;
     }
@@ -164,11 +167,11 @@ struct SourceSubmeshInfo {
         assert( IsOk( ) );
         return pSrcSubmesh && pSrcSubmesh->compression_type( ) != apemodefb::ECompressionTypeFb_None;
     }
-    
+
     apemodefb::ECompressionTypeFb GetCompressionType( ) const {
         return pSrcSubmesh->compression_type( );
     }
-    
+
     const apemodefb::EVertexFormatFb GetVertexFormat( ) const {
         assert( IsOk( ) );
         return pSrcSubmesh->vertex_format( );
@@ -204,7 +207,7 @@ struct DecompressedMeshInfo {
     VkDeviceSize VertexCount = 0;
     VkDeviceSize IndexCount = 0;
     VkIndexType eIndexType = VK_INDEX_TYPE_MAX_ENUM;
-    
+
     bool IsUsed( ) const {
         return eIndexType != VK_INDEX_TYPE_MAX_ENUM && VertexCount && IndexCount &&
                !DecompressedVertexData.empty() &&
@@ -467,7 +470,7 @@ void TConvertVertices< apemodefb::DecompressedSkinnedVertexFb >( DecompressedMes
             uint32_t _0123;
         } joint_index_unpacker;
         joint_index_unpacker._0123 = indices;
-        
+
         if (weights.x( ) >= 0.99f) {
             weights.mutate_x( weights.x( ) * 0.5f + float( joint_index_unpacker._0 ) );
             weights.mutate_y( weights.x( ) );
@@ -526,12 +529,12 @@ void TConvertVertices< apemodefb::DecompressedFatSkinnedVertexFb >( Decompressed
 DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubmeshInfo& srcSubmesh ) {
     using namespace draco;
     using namespace apemodefb;
-    
+
     if ( !srcSubmesh.IsCompressedMesh( ) ) {
         assert( false && "The mesh buffers are uncompressed." );
         return {};
     }
-    
+
     const ECompressionTypeFb eCompression = srcSubmesh.GetCompressionType( );
     switch ( eCompression ) {
     case apemodefb::ECompressionTypeFb_GoogleDraco3D:
@@ -551,7 +554,7 @@ DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubme
         assert( false && "Unsupported vertex type." );
         return {};
     }
-    
+
     auto start = std::chrono::high_resolution_clock::now();
 
     DecoderBuffer decoderBuffer;
@@ -635,7 +638,7 @@ DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubme
             assert( false && "Unsupported vertex type." );
             return {};
     }
-    
+
     apemodevk::platform::TWipeContainer( decompressedMeshInfo.DecompressedVertexData );
 
     auto end = std::chrono::high_resolution_clock::now();
@@ -675,7 +678,7 @@ InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                         
                                     const apemode::vk::SceneUploader::UploadParameters* pParams ) {
     using namespace apemodevk;
     using namespace eastl;
-    
+
     InitializedMeshInfo initializedMeshInfo;
 
     auto srcSubmesh = GetSrcSubmesh( mesh, pScene, pParams );
@@ -683,12 +686,12 @@ InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                         
         assert( false );
         return {};
     }
-    
+
     VkBufferCreateInfo vertexBufferCreateInfo;
     VmaAllocationCreateInfo vertexAllocationCreateInfo;
     InitializeStruct( vertexBufferCreateInfo );
     InitializeStruct( vertexAllocationCreateInfo );
-    
+
     VkBufferCreateInfo indexBufferCreateInfo;
     VmaAllocationCreateInfo indexAllocationCreateInfo;
     InitializeStruct( indexBufferCreateInfo );
@@ -700,7 +703,7 @@ InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                         
 
         assert( !decompressedMeshInfo.SrcIndexData.empty( ) );
         assert( !decompressedMeshInfo.SrcVertexData.empty( ) );
-        
+
         if ( decompressedMeshInfo.SrcIndexData.empty( ) ||
              decompressedMeshInfo.SrcVertexData.empty( ) ) {
             assert( false );
@@ -717,10 +720,10 @@ InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                         
         initializedMeshInfo.eIndexType                     = decompressedMeshInfo.eIndexType;
 
         initializedMeshInfo.OptionalDecompressedMesh.emplace( eastl::move( decompressedMeshInfo ) );
-        
+
         pScene->Subsets[ mesh.BaseSubset ].IndexCount = (uint32_t)initializedMeshInfo.IndexCount;
         assert( mesh.SubsetCount == 1 );
-        
+
         switch ( srcSubmesh.GetVertexFormat( ) ) {
         case apemodefb::EVertexFormatFb_Decompressed:
             mesh.eVertexType = apemode::detail::eVertexType_Default;
@@ -735,12 +738,12 @@ InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                         
             assert( false && "Unsupported vertex type." );
             return {};
         }
-        
+
         #else
-        
+
         assert( false );
         return {};
-        
+
         #endif
     } else {
         initializedMeshInfo.VertexUploadInfo.pSrcBufferData = srcSubmesh.pSrcMesh->vertices( )->data( );
@@ -751,7 +754,7 @@ InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                         
         initializedMeshInfo.IndexUploadInfo.SrcBufferSize  = srcSubmesh.pSrcMesh->indices( )->size( );
         initializedMeshInfo.IndexCount                     = srcSubmesh.pSrcSubmesh->vertex_count( );
         initializedMeshInfo.eIndexType                     = srcSubmesh.GetIndexType();
-        
+
         switch ( srcSubmesh.GetVertexFormat( ) ) {
         case apemodefb::EVertexFormatFb_Default:
             mesh.eVertexType = apemode::detail::eVertexType_Default;
@@ -767,7 +770,7 @@ InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                         
             return {};
         }
     }
-    
+
     initializedMeshInfo.VertexUploadInfo.eDstAccessFlags = VK_ACCESS_VERTEX_ATTRIBUTE_READ_BIT;
     initializedMeshInfo.IndexUploadInfo.eDstAccessFlags  = VK_ACCESS_INDEX_READ_BIT;
 
@@ -789,7 +792,7 @@ InitializedMeshInfo InitializeMesh( apemode::SceneMesh&                         
     pMeshAsset->VertexCount = initializedMeshInfo.VertexCount;
     pMeshAsset->IndexCount  = initializedMeshInfo.IndexCount;
     pMeshAsset->eIndexType  = initializedMeshInfo.eIndexType;
-    
+
     initializedMeshInfo.pMeshAsset = pMeshAsset;
 
     if ( !pMeshAsset->hVertexBuffer.Recreate( pParams->pNode->hAllocator, vertexBufferCreateInfo, vertexAllocationCreateInfo ) ||
@@ -822,7 +825,7 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
 
     apemode::vector< InitializedMeshInfo > initializedMeshInfos;
     apemode::vector< BufferUploadInfo > bufferUploads;
-    
+
     initializedMeshInfos.reserve( pMeshesFb->size( ) );
     bufferUploads.reserve( pMeshesFb->size( ) << 1 );
 
@@ -1062,14 +1065,14 @@ bool FinalizeMaterial( apemode::vk::SceneUploader::MaterialDeviceAsset*    pMate
         }
 
     } /* pEmissiveImg */
-    
+
     if ( pMaterialAsset->pMetallicRoughnessOcclusionImg ) {
         const float maxLod = float( pMaterialAsset->pMetallicRoughnessOcclusionImg->ImgCreateInfo.mipLevels );
         pMaterialAsset->pMetallicRoughnessOcclusionSampler = pParams->pSamplerManager->GetSampler( GetDefaultSamplerCreateInfo( maxLod ) );
 
         VkImageViewCreateInfo metallicRoughnessOcclusionImgViewCreateInfo = pMaterialAsset->pMetallicRoughnessOcclusionImg->ImgViewCreateInfo;
         metallicRoughnessOcclusionImgViewCreateInfo.image                 = pMaterialAsset->pMetallicRoughnessOcclusionImg->hImg;
-        
+
         if ( !pMaterialAsset->hMetallicRoughnessOcclusionImgView.Recreate( pParams->pNode->hLogicalDevice, metallicRoughnessOcclusionImgViewCreateInfo ) ) {
             assert(false);
             return false;
@@ -1086,7 +1089,7 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::
         return false;
     }
 
-    
+
     // auto pTaskflow =  apemode::AppState::Get( )->GetDefaultTaskflow( );
     // MT::TaskScheduler* pTaskScheduler = apemode::AppState::Get( )->GetTaskScheduler( );
 
@@ -1175,15 +1178,15 @@ bool UploadMaterials( apemode::Scene* pScene, const apemode::vk::SceneUploader::
 //        for ( auto& imgUpload : imgUploads ) {
 //            imageUploadTasks.emplace_back( &imgUpload.second );
 //        }
-        
+
         for ( auto& imgUpload : imgUploads ) {
             //pTaskflow->silent_emplace([&imgUpload] () {
-                
+
             // apemode::Log( apemode::LogLevel::Trace, "Starting loading image: \"{}\"", (const char*) imgUpload.second.pszFileName );
             UploadImage(&imgUpload.second); // });
             // apemode::Log( apemode::LogLevel::Trace, "Done loading image: \"{}\"", (const char*) imgUpload.second.pszFileName );
         }
-        
+
         // pTaskflow->wait_for_all();
     }
 
@@ -1255,7 +1258,7 @@ bool apemode::vk::SceneUploader::UploadScene( apemode::Scene* pScene, const apem
     if ( !UploadMeshes( pScene, pParams ) ) {
         return false;
     }
-    
+
     if ( !UploadMaterials( pScene, pParams ) ) {
         return false;
     }

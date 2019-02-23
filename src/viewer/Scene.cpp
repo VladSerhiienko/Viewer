@@ -5,6 +5,9 @@
 
 //#define APEMODEVK_NO_GOOGLE_DRACO
 #ifndef APEMODEVK_NO_GOOGLE_DRACO
+#ifdef ERROR
+#undef ERROR
+#endif
 #include <draco/compression/decode.h>
 #include <draco/animation/keyframe_animation_decoder.h>
 #endif
@@ -721,7 +724,7 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
 
             assert( IsNotNullAndNotEmpty( pAnimCurveFb->keys( ) ) );
             animCurve.Keys.reserve( pAnimCurveFb->keys( )->size( ) );
-            
+
             if ( pAnimCurveFb->compression_type() == apemodefb::ECompressionTypeFb_None ) {
                 auto keys = (const apemodefb::AnimCurveCubicKeyFb*) pAnimCurveFb->keys( )->data( );
                 auto keysEnd = keys + pAnimCurveFb->keys( )->size( ) / sizeof( apemodefb::AnimCurveCubicKeyFb );
@@ -740,35 +743,35 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                                                                                                pKeyFb->bez2( ),
                                                                                            } );
                                   } );
-            
+
             } else {
                 draco::DecoderBuffer decoderBuffer;
                 decoderBuffer.Init( (const char *)pAnimCurveFb->keys( )->data( ), pAnimCurveFb->keys( )->size( ) );
-                
+
                 draco::DecoderOptions options;
                 draco::Decoder decoder;
                 draco::PointCloud animPointCloud;
-                
+
                 draco::Status status = decoder.DecodeBufferToGeometry( &decoderBuffer, &animPointCloud );
                 if (status.code() == draco::Status::OK) {
                     constexpr int keyValuesAttributeIndex = 0;
                     constexpr int keyTimeAttributeIndex = 1;
                     constexpr int keyTypeAttributeIndex = 2;
-                    
+
                     const draco::PointAttribute* keyValuesAttribute = animPointCloud.attribute( keyValuesAttributeIndex );
                     const draco::PointAttribute* keyTimeAttribute = animPointCloud.attribute( keyTimeAttributeIndex );
                     const draco::PointAttribute* keyTypeAttribute = animPointCloud.attribute( keyTypeAttributeIndex );
-                    
+
                     animCurve.Keys.reserve( animPointCloud.num_points( ) );
                     for (uint32_t i = 0; i < animPointCloud.num_points( ); ++i) {
                         const draco::PointIndex pointIndex {i};
-                    
+
                         float mappedTime = 0;
                         keyTimeAttribute->GetMappedValue( pointIndex, &mappedTime );
-                        
+
                         auto &key = animCurve.Keys[mappedTime];
                         key.Time = mappedTime;
-                        
+
                         keyValuesAttribute->GetMappedValue( pointIndex, &key.Value );
                         keyTypeAttribute->GetMappedValue( pointIndex, &key.eInterpMode );
                     }
@@ -778,24 +781,24 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                 draco::KeyframeAnimationDecoder keyframeAnimationDecoder;
                 draco::DecoderOptions options;
                 draco::KeyframeAnimation keyframeAnimation;
-                
+
                 keyframeAnimationDecoder.Decode(options, &decoderBuffer, &keyframeAnimation);
-                
+
                 const size_t numFrames = keyframeAnimation.num_frames();
                 const auto timestamps = keyframeAnimation.timestamps();
                 const auto * values = keyframeAnimation.keyframes(1);
                 const auto * interpolationTypes = keyframeAnimation.keyframes(2);
-                
+
                 animCurve.Keys.reserve(numFrames);
                 for (uint32_t i = 0; i < numFrames; ++i) {
                     float mappedTimestamp {};
                     XMFLOAT3 mappedValues {};
                     uint8_t mappedInterpolationType {};
-                    
+
                     timestamps->GetMappedValue(draco::PointIndex(i), &mappedTimestamp);
                     values->GetMappedValue(draco::PointIndex(i), &mappedValues);
                     interpolationTypes->GetMappedValue(draco::PointIndex(i), &mappedInterpolationType);
-                    
+
                     auto &key = animCurve.Keys[mappedTimestamp];
                     key.Time = mappedTimestamp;
                     key.Value = mappedValues.x;
@@ -805,17 +808,17 @@ apemode::LoadedScene apemode::LoadSceneFromBin( apemode::vector< uint8_t > && fi
                 }
                 #endif
             }
-            
+
             animCurve.TimeMinMaxTotal.x = animCurve.Keys.cbegin( )->second.Time;
             animCurve.TimeMinMaxTotal.y = animCurve.Keys.crbegin( )->second.Time;
             animCurve.TimeMinMaxTotal.z = animCurve.TimeMinMaxTotal.y - animCurve.TimeMinMaxTotal.x;
-            
+
             LogInfo( "\tStart: {} -> End: {} (Duration: {})",
                      animCurve.TimeMinMaxTotal.x,
                      animCurve.TimeMinMaxTotal.y,
                      animCurve.TimeMinMaxTotal.z );
         }
-        
+
 
         pScene->AnimNodeIdToAnimCurveIds.reserve( pAnimCurvesFb->size( ) );
         for ( auto &node : pScene->Nodes ) {

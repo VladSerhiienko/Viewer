@@ -5,9 +5,6 @@
 		},
 		{
 			"path": "dependencies/FbxPipeline"
-		},
-		{
-			"path": "dependencies/TaskScheduler"
 		}
 	],
 	"settings": {

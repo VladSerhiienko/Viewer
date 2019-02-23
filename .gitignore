@@ -32,9 +32,6 @@
 *.app
 /dependencies/
 /third_party/SDL2-2.0.7
-/build_darwin_*
-/build_linux_*
-/build_windows_*
 /FbxSdk
 .vscode/*.bat
 assets/images/*
@@ -44,6 +41,13 @@ assets/shaders/.msl/*
 assets/shaders/spv/*
 assets/shaders/msl/*
 .vscode/db*
+
+build_*/
+*/DerivedData/*
+projects/Viewer/DerivedData/*
+assets/cso/shaders/*
+*cso.d
+
 
 # Xcode
 #
@@ -123,8 +127,3 @@ fastlane/test_output
 # https://github.com/johnno1962/injectionforxcode
 
 iOSInjectionProject/
-
-*/DerivedData/*
-projects/Viewer/DerivedData/*
-assets/cso/shaders/*
-*cso.d

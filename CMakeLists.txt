@@ -10,8 +10,11 @@ message(STATUS "CMAKE_SYSTEM = ${CMAKE_SYSTEM}")
 message(STATUS "CMAKE_SOURCE_DIR = ${CMAKE_SOURCE_DIR}")
 message(STATUS "CMAKE_BINARY_DIR = ${CMAKE_BINARY_DIR}")
 
-set(BUILD_FOLDER_SUFFIX "build_${CMAKE_SYSTEM_NAME}_${CMAKE_SYSTEM_PROCESSOR}_${CMAKE_CXX_COMPILER_ID}_${CMAKE_GENERATOR}")
-string(TOLOWER  ${BUILD_FOLDER_SUFFIX} BUILD_FOLDER_SUFFIX)
+if (NOT BUILD_FOLDER_SUFFIX)
+    set(BUILD_FOLDER_SUFFIX "build_${CMAKE_CXX_COMPILER_ID}_${CMAKE_GENERATOR}")
+    string(TOLOWER  ${BUILD_FOLDER_SUFFIX} BUILD_FOLDER_SUFFIX)
+    string(REPLACE " " "_" BUILD_FOLDER_SUFFIX ${BUILD_FOLDER_SUFFIX} )
+endif()
 message(STATUS "BUILD_FOLDER_SUFFIX = ${BUILD_FOLDER_SUFFIX}")
 
 if (WIN32)
@@ -408,9 +411,9 @@ ExternalProject_Add(
     GIT_REPOSITORY "git@github.com:google/shaderc.git"
     GIT_TAG "master"
     UPDATE_COMMAND ""
-    PATCH_COMMAND ""
+    PATCH_COMMAND "" #"python utils/git-sync-deps"
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/shaderc"
-    CMAKE_ARGS ${default_cmake_args} -DSHADERC_SKIP_TESTS:BOOL=TRUE SHADERC_SKIP_INSTALL:BOOL=TRUE
+    CMAKE_ARGS ${default_cmake_args} -DSHADERC_SKIP_TESTS:BOOL=TRUE -DSHADERC_SKIP_INSTALL:BOOL=TRUE -DSHADERC_ENABLE_SHARED_CRT:BOOL=TRUE
     TEST_COMMAND ""
     INSTALL_COMMAND ""
 )
@@ -1024,7 +1027,6 @@ endif ()
 
 add_dependencies(
     ViewerSdl
-    ShaderPipeline
     Viewer
     sdl2
 )
@@ -1065,7 +1067,7 @@ endif()
 foreach( viewer_dependencies_dll_pdb ${viewer_dependencies_dlls_pdbs} )
     add_custom_command(
         TARGET
-        Viewer
+        ViewerSdl
         POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${viewer_dependencies_dll_pdb}
