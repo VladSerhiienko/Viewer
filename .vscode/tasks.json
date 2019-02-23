@@ -55,6 +55,23 @@
             }
         },
         {
+            "label": "ShaderPipeline/CSO(VS2017)",
+            "type": "shell",
+            "command": "./ShaderPipeline.exe",
+            "args": [
+                "--assets-folder", "\"../../assets/**\"",
+                "--cso-json-file", "../../assets/shaders/Viewer.cso.json",
+                "--cso-file", "../../assets/shaders/Viewer.cso"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}/build_msvc/Debug"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
             "label": "Python/ShaderTool(Darwin/Xcode)",
             "type": "shell",
             "command": "python",

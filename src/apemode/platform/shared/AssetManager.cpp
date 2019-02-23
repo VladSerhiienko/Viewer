@@ -168,12 +168,12 @@ void apemode::platform::shared::AssetManager::AddAsset( const char* pszAssetName
     if ( std::atomic_exchange_explicit( &InUse, true, std::memory_order_acquire ) == true ) {
         return;
     }
-    
+
     auto& file = AssetFiles[ pszAssetName ];
     file.Asset.SetName( pszAssetName );
     file.Asset.SetId( pszAssetPath );
     file.Asset.SetCurrentVersion( 0 );
-    
+
     /* Unlock. */
     std::atomic_exchange( &InUse, false );
 }

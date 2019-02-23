@@ -44,7 +44,7 @@ public:
         if ( IsCmdOfType( pCmd, "Initialize" ) ) {
             auto pSurfaceArg = pCmd->FindArgumentByName( "Surface" );
             AssertIsValidPtrArgument( pSurfaceArg );
-           
+
             auto pAppSurface = (const AppSurface*) pSurfaceArg->GetValue( )->GetPtrValue( );
             apemode::platform::AppShellCommandResult result;
             result.bSucceeded = Initialize( pAppSurface );
@@ -52,7 +52,7 @@ public:
         } else if ( IsCmdOfType( pCmd, "SetAssetManager" ) ) {
             auto pAssetManagerArg = pCmd->FindArgumentByName( "AssetManager" );
             AssertIsValidPtrArgument( pAssetManagerArg );
-            
+
             auto pAssetManager = (IAssetManager*) pAssetManagerArg->GetValue( )->GetPtrValue( );
             apemode::platform::AppShellCommandResult result;
             result.bSucceeded = nullptr != pAssetManager;
@@ -66,12 +66,12 @@ public:
 
             auto pAppSurface = (const AppSurface*) pSurfaceArg->GetValue( )->GetPtrValue( );
             auto pAppInput   = (const AppInput*) pInputArg->GetValue( )->GetPtrValue( );
-            
+
             apemode::platform::AppShellCommandResult result;
             result.bSucceeded = Update( pAppSurface, pAppInput );
             return result;
         }
-    
+
         apemode::LogWarn( "Unprocessed command:" );
         DumpCmd( pCmd );
 
@@ -114,7 +114,7 @@ private:
 
 } // namespace vk
 } // namespace viewer
-} // namespace apemode 
+} // namespace apemode
 
 namespace std {
 template <>
