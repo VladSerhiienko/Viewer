@@ -69,8 +69,13 @@
 #include <iostream>
 #include <memory>
 
+#ifndef VK_NO_PROTOTYPES
+#define VK_NO_PROTOTYPES
+#endif
+
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
+#include <volk.h>
 
 #undef min
 #undef max

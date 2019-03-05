@@ -890,6 +890,34 @@
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
+				USER_HEADER_SEARCH_PATHS = (
+					$SRCROOT/../../src,
+					$SRCROOT/../../src/apemode/vk_ext,
+					$SRCROOT/../../src/apemode/vk,
+					$SRCROOT/../../dependencies/argh,
+					$SRCROOT/../../dependencies/spdlog/include,
+					$SRCROOT/../../dependencies/eastl/include,
+					$SRCROOT/../../dependencies/eastl/test/packages/EAAssert/include,
+					$SRCROOT/../../dependencies/eastl/test/packages/EABase/include,
+					$SRCROOT/../../dependencies/eastl/test/packages/EABase/include/Common,
+					$SRCROOT/../../dependencies/eastl/test/packages/EAMain/include,
+					$SRCROOT/../../dependencies/eastl/test/packages/EAStdC/include,
+					$SRCROOT/../../dependencies/TaskScheduler/Scheduler/Include,
+					$SRCROOT/../../dependencies/MoltenVK/MoltenVK/include,
+					$SRCROOT/../../dependencies/VulkanMemoryAllocator/src,
+					$SRCROOT/../../dependencies/gli,
+					$SRCROOT/../../dependencies/gli/external,
+					$SRCROOT/../../dependencies/gli/external/glm,
+					$SRCROOT/../../dependencies/flatbuffers/include,
+					$SRCROOT/../../dependencies/FbxPipeline/FbxPipeline/generated,
+					$SRCROOT/../../dependencies/DirectXMath,
+					$SRCROOT/../../dependencies/DirectXMath/Inc,
+					$SRCROOT/../../dependencies/nuklear,
+					$SRCROOT/../../dependencies/draco/src,
+					"$SRCROOT/../../build_appleclang_xcode/draco-prefix/src/draco-build",
+					"$SRCROOT/../../dependencies/cpp-taskflow",
+					$SRCROOT/../../dependencies/volk,
+				);
 			};
 			name = Debug;
 		};
@@ -938,6 +966,34 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				MTL_ENABLE_DEBUG_INFO = NO;
+				USER_HEADER_SEARCH_PATHS = (
+					$SRCROOT/../../src,
+					$SRCROOT/../../src/apemode/vk_ext,
+					$SRCROOT/../../src/apemode/vk,
+					$SRCROOT/../../dependencies/argh,
+					$SRCROOT/../../dependencies/spdlog/include,
+					$SRCROOT/../../dependencies/eastl/include,
+					$SRCROOT/../../dependencies/eastl/test/packages/EAAssert/include,
+					$SRCROOT/../../dependencies/eastl/test/packages/EABase/include,
+					$SRCROOT/../../dependencies/eastl/test/packages/EABase/include/Common,
+					$SRCROOT/../../dependencies/eastl/test/packages/EAMain/include,
+					$SRCROOT/../../dependencies/eastl/test/packages/EAStdC/include,
+					$SRCROOT/../../dependencies/TaskScheduler/Scheduler/Include,
+					$SRCROOT/../../dependencies/MoltenVK/MoltenVK/include,
+					$SRCROOT/../../dependencies/VulkanMemoryAllocator/src,
+					$SRCROOT/../../dependencies/gli,
+					$SRCROOT/../../dependencies/gli/external,
+					$SRCROOT/../../dependencies/gli/external/glm,
+					$SRCROOT/../../dependencies/flatbuffers/include,
+					$SRCROOT/../../dependencies/FbxPipeline/FbxPipeline/generated,
+					$SRCROOT/../../dependencies/DirectXMath,
+					$SRCROOT/../../dependencies/DirectXMath/Inc,
+					$SRCROOT/../../dependencies/nuklear,
+					$SRCROOT/../../dependencies/draco/src,
+					"$SRCROOT/../../build_appleclang_xcode/draco-prefix/src/draco-build",
+					"$SRCROOT/../../dependencies/cpp-taskflow",
+					$SRCROOT/../../dependencies/volk,
+				);
 			};
 			name = Release;
 		};
@@ -964,33 +1020,7 @@
 				PRODUCT_NAME = Viewer;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				USER_HEADER_SEARCH_PATHS = (
-					$SRCROOT/../../src,
-					$SRCROOT/../../src/apemode/vk_ext,
-					$SRCROOT/../../src/apemode/vk,
-					$SRCROOT/../../dependencies/argh,
-					$SRCROOT/../../dependencies/spdlog/include,
-					$SRCROOT/../../dependencies/eastl/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EAAssert/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EABase/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EABase/include/Common,
-					$SRCROOT/../../dependencies/eastl/test/packages/EAMain/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EAStdC/include,
-					$SRCROOT/../../dependencies/TaskScheduler/Scheduler/Include,
-					$SRCROOT/../../dependencies/MoltenVK/MoltenVK/include,
-					$SRCROOT/../../dependencies/VulkanMemoryAllocator/src,
-					$SRCROOT/../../dependencies/gli,
-					$SRCROOT/../../dependencies/gli/external,
-					$SRCROOT/../../dependencies/gli/external/glm,
-					$SRCROOT/../../dependencies/flatbuffers/include,
-					$SRCROOT/../../dependencies/FbxPipeline/FbxPipeline/generated,
-					$SRCROOT/../../dependencies/DirectXMath,
-					$SRCROOT/../../dependencies/DirectXMath/Inc,
-					$SRCROOT/../../dependencies/nuklear,
-					$SRCROOT/../../dependencies/draco/src,
-					"$SRCROOT/../../build_appleclang_xcode/draco-prefix/src/draco-build",
-					"$SRCROOT/../../dependencies/cpp-taskflow",
-				);
+				USER_HEADER_SEARCH_PATHS = $inherited;
 			};
 			name = Debug;
 		};
@@ -1017,33 +1047,7 @@
 				PRODUCT_NAME = Viewer;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
-				USER_HEADER_SEARCH_PATHS = (
-					$SRCROOT/../../src,
-					$SRCROOT/../../src/apemode/vk_ext,
-					$SRCROOT/../../src/apemode/vk,
-					$SRCROOT/../../dependencies/argh,
-					$SRCROOT/../../dependencies/spdlog/include,
-					$SRCROOT/../../dependencies/eastl/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EAAssert/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EABase/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EABase/include/Common,
-					$SRCROOT/../../dependencies/eastl/test/packages/EAMain/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EAStdC/include,
-					$SRCROOT/../../dependencies/TaskScheduler/Scheduler/Include,
-					$SRCROOT/../../dependencies/MoltenVK/MoltenVK/include,
-					$SRCROOT/../../dependencies/VulkanMemoryAllocator/src,
-					$SRCROOT/../../dependencies/gli,
-					$SRCROOT/../../dependencies/gli/external,
-					$SRCROOT/../../dependencies/gli/external/glm,
-					$SRCROOT/../../dependencies/flatbuffers/include,
-					$SRCROOT/../../dependencies/FbxPipeline/FbxPipeline/generated,
-					$SRCROOT/../../dependencies/DirectXMath,
-					$SRCROOT/../../dependencies/DirectXMath/Inc,
-					$SRCROOT/../../dependencies/nuklear,
-					$SRCROOT/../../dependencies/draco/src,
-					"$SRCROOT/../../build_appleclang_xcode/draco-prefix/src/draco-build",
-					"$SRCROOT/../../dependencies/cpp-taskflow",
-				);
+				USER_HEADER_SEARCH_PATHS = $inherited;
 				VALIDATE_PRODUCT = YES;
 			};
 			name = Release;
@@ -1069,33 +1073,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = apemode.Viewer;
 				PRODUCT_NAME = Viewer;
 				SDKROOT = macosx;
-				USER_HEADER_SEARCH_PATHS = (
-					$SRCROOT/../../src,
-					$SRCROOT/../../src/apemode/vk_ext,
-					$SRCROOT/../../src/apemode/vk,
-					$SRCROOT/../../dependencies/argh,
-					$SRCROOT/../../dependencies/spdlog/include,
-					$SRCROOT/../../dependencies/eastl/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EAAssert/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EABase/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EABase/include/Common,
-					$SRCROOT/../../dependencies/eastl/test/packages/EAMain/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EAStdC/include,
-					$SRCROOT/../../dependencies/TaskScheduler/Scheduler/Include,
-					$SRCROOT/../../dependencies/MoltenVK/MoltenVK/include,
-					$SRCROOT/../../dependencies/VulkanMemoryAllocator/src,
-					$SRCROOT/../../dependencies/gli,
-					$SRCROOT/../../dependencies/gli/external,
-					$SRCROOT/../../dependencies/gli/external/glm,
-					$SRCROOT/../../dependencies/flatbuffers/include,
-					$SRCROOT/../../dependencies/FbxPipeline/FbxPipeline/generated,
-					$SRCROOT/../../dependencies/DirectXMath,
-					$SRCROOT/../../dependencies/DirectXMath/Inc,
-					$SRCROOT/../../dependencies/nuklear,
-					$SRCROOT/../../dependencies/draco/src,
-					"$SRCROOT/../../build_appleclang_xcode/draco-prefix/src/draco-build",
-					"$SRCROOT/../../dependencies/cpp-taskflow",
-				);
+				USER_HEADER_SEARCH_PATHS = $inherited;
 			};
 			name = Debug;
 		};
@@ -1120,33 +1098,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = apemode.Viewer;
 				PRODUCT_NAME = Viewer;
 				SDKROOT = macosx;
-				USER_HEADER_SEARCH_PATHS = (
-					$SRCROOT/../../src,
-					$SRCROOT/../../src/apemode/vk_ext,
-					$SRCROOT/../../src/apemode/vk,
-					$SRCROOT/../../dependencies/argh,
-					$SRCROOT/../../dependencies/spdlog/include,
-					$SRCROOT/../../dependencies/eastl/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EAAssert/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EABase/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EABase/include/Common,
-					$SRCROOT/../../dependencies/eastl/test/packages/EAMain/include,
-					$SRCROOT/../../dependencies/eastl/test/packages/EAStdC/include,
-					$SRCROOT/../../dependencies/TaskScheduler/Scheduler/Include,
-					$SRCROOT/../../dependencies/MoltenVK/MoltenVK/include,
-					$SRCROOT/../../dependencies/VulkanMemoryAllocator/src,
-					$SRCROOT/../../dependencies/gli,
-					$SRCROOT/../../dependencies/gli/external,
-					$SRCROOT/../../dependencies/gli/external/glm,
-					$SRCROOT/../../dependencies/flatbuffers/include,
-					$SRCROOT/../../dependencies/FbxPipeline/FbxPipeline/generated,
-					$SRCROOT/../../dependencies/DirectXMath,
-					$SRCROOT/../../dependencies/DirectXMath/Inc,
-					$SRCROOT/../../dependencies/nuklear,
-					$SRCROOT/../../dependencies/draco/src,
-					"$SRCROOT/../../build_appleclang_xcode/draco-prefix/src/draco-build",
-					"$SRCROOT/../../dependencies/cpp-taskflow",
-				);
+				USER_HEADER_SEARCH_PATHS = $inherited;
 			};
 			name = Release;
 		};

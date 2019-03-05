@@ -10,7 +10,7 @@ namespace apemodevk {
 
     class ShaderCompiler;
 
-    class APEMODEVK_API GraphicsDevice : public NoCopyAssignPolicy {
+    class APEMODEVK_API GraphicsDevice : public VolkDeviceTable, public NoCopyAssignPolicy {
     public:
         friend Swapchain;
         friend GraphicsManager;
@@ -57,15 +57,8 @@ namespace apemodevk {
         CommandBufferPool                CmdBuffers;
 
         struct {
-            PFN_vkCreateSwapchainKHR              CreateSwapchainKHR              = nullptr;
-            PFN_vkDestroySwapchainKHR             DestroySwapchainKHR             = nullptr;
-            PFN_vkGetSwapchainImagesKHR           GetSwapchainImagesKHR           = nullptr;
-            PFN_vkAcquireNextImageKHR             AcquireNextImageKHR             = nullptr;
-            PFN_vkQueuePresentKHR                 QueuePresentKHR                 = nullptr;
-            PFN_vkGetRefreshCycleDurationGOOGLE   GetRefreshCycleDurationGOOGLE   = nullptr;
-            PFN_vkGetPastPresentationTimingGOOGLE GetPastPresentationTimingGOOGLE = nullptr;
-            bool                                  bIncrementalPresentKHR          = false;
-            bool                                  bDisplayTimingGOOGLE            = false;
+            bool bIncrementalPresentKHR = false;
+            bool bDisplayTimingGOOGLE   = false;
         } Ext;
 
     };

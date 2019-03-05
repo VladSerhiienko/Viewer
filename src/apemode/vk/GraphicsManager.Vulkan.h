@@ -97,21 +97,9 @@ namespace apemodevk {
         VkAllocationCallbacks      AllocCallbacks;
 
         struct {
-            PFN_vkGetDeviceProcAddr                       GetDeviceProcAddr                            = nullptr;
-            PFN_vkGetPhysicalDeviceSurfaceSupportKHR      GetPhysicalDeviceSurfaceSupportKHR           = nullptr;
-            PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR GetPhysicalDeviceSurfaceCapabilitiesKHR      = nullptr;
-            PFN_vkGetPhysicalDeviceSurfaceFormatsKHR      GetPhysicalDeviceSurfaceFormatsKHR           = nullptr;
-            PFN_vkGetPhysicalDeviceSurfacePresentModesKHR GetPhysicalDeviceSurfacePresentModesKHR      = nullptr;
-            PFN_vkCreateDebugUtilsMessengerEXT            CreateDebugUtilsMessengerEXT                 = nullptr;
-            PFN_vkDestroyDebugUtilsMessengerEXT           DestroyDebugUtilsMessengerEXT                = nullptr;
-            PFN_vkSubmitDebugUtilsMessageEXT              SubmitDebugUtilsMessageEXT                   = nullptr;
-            PFN_vkCmdBeginDebugUtilsLabelEXT              CmdBeginDebugUtilsLabelEXT                   = nullptr;
-            PFN_vkCmdEndDebugUtilsLabelEXT                CmdEndDebugUtilsLabelEXT                     = nullptr;
-            PFN_vkCmdInsertDebugUtilsLabelEXT             CmdInsertDebugUtilsLabelEXT                  = nullptr;
-            PFN_vkSetDebugUtilsObjectNameEXT              SetDebugUtilsObjectNameEXT                   = nullptr;
-            VkDebugUtilsMessengerEXT                      DebugUtilsMessengerEXT                       = nullptr;
-            bool                                          bDebugReport                                 = false;
-            bool                                          bDebugMessenger                              = false;
+            bool bDebugReport = false;
+            bool bDebugMessenger = false;
+            VkDebugUtilsMessengerEXT DebugUtilsMessengerEXT = nullptr;
         } Ext;
 
         /* Initializes and returns GraphicsManager instance. */

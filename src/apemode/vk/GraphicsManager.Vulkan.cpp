@@ -261,8 +261,11 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                eFlags,
                                              size_t                  layerCount,
                                              const char**            ppszExtensions,
                                              size_t                  extensionCount ) {
-    pAllocator             = pInAlloc;
-    pLogger                = pInLogger;
+    pAllocator  = pInAlloc;
+    pLogger     = pInLogger;
+    
+    if ( VK_SUCCESS != CheckedResult( volkInitialize( ) ) )
+        return false;
 
     AllocCallbacks = VkAllocationCallbacks{this, /* pUserData */
                                            &AllocationCallbacks::AllocationFunction,
@@ -356,47 +359,29 @@ bool apemodevk::GraphicsManager::Initialize( uint32_t                eFlags,
         return false;
     }
     
-    #if defined(__APPLE__) // && false
+    volkLoadInstance(hInstance);
+    
+    #if defined(__APPLE__) && false
     MVKConfiguration mvkConfiguration = {};
     size_t mvkConfigurationSize = sizeof(mvkConfiguration);
     vkGetMoltenVKConfigurationMVK(hInstance, &mvkConfiguration, &mvkConfigurationSize);
     mvkConfiguration.fullImageViewSwizzle = true;
     vkSetMoltenVKConfigurationMVK(hInstance, &mvkConfiguration, &mvkConfigurationSize);
     #endif
-    
 
-    // clang-format off
-    Ext.GetDeviceProcAddr                         = (PFN_vkGetDeviceProcAddr)                         vkGetInstanceProcAddr( hInstance, "vkGetDeviceProcAddr" );
-    Ext.GetPhysicalDeviceSurfaceSupportKHR        = (PFN_vkGetPhysicalDeviceSurfaceSupportKHR)        vkGetInstanceProcAddr( hInstance, "vkGetPhysicalDeviceSurfaceSupportKHR" );
-    Ext.GetPhysicalDeviceSurfaceCapabilitiesKHR   = (PFN_vkGetPhysicalDeviceSurfaceCapabilitiesKHR)   vkGetInstanceProcAddr( hInstance, "vkGetPhysicalDeviceSurfaceCapabilitiesKHR" );
-    Ext.GetPhysicalDeviceSurfaceFormatsKHR        = (PFN_vkGetPhysicalDeviceSurfaceFormatsKHR)        vkGetInstanceProcAddr( hInstance, "vkGetPhysicalDeviceSurfaceFormatsKHR" );
-    Ext.GetPhysicalDeviceSurfacePresentModesKHR   = (PFN_vkGetPhysicalDeviceSurfacePresentModesKHR)   vkGetInstanceProcAddr( hInstance, "vkGetPhysicalDeviceSurfacePresentModesKHR" );
-    // clang-format on
-
-    if ( NULL == Ext.GetPhysicalDeviceSurfaceSupportKHR || NULL == Ext.GetPhysicalDeviceSurfaceCapabilitiesKHR ||
-         NULL == Ext.GetPhysicalDeviceSurfaceFormatsKHR || NULL == Ext.GetPhysicalDeviceSurfacePresentModesKHR ||
-         NULL == Ext.GetDeviceProcAddr ) {
+    if ( NULL == vkGetPhysicalDeviceSurfaceSupportKHR || NULL == vkGetPhysicalDeviceSurfaceCapabilitiesKHR ||
+         NULL == vkGetPhysicalDeviceSurfaceFormatsKHR || NULL == vkGetPhysicalDeviceSurfacePresentModesKHR ||
+         NULL == vkGetDeviceProcAddr ) {
         return false;
     }
 
     if ( bValidate && Ext.bDebugMessenger ) {
 
-        // clang-format off
-        // VK_EXT_debug_utils
-        Ext.CreateDebugUtilsMessengerEXT  = (PFN_vkCreateDebugUtilsMessengerEXT)  vkGetInstanceProcAddr( hInstance, "vkCreateDebugUtilsMessengerEXT" );
-        Ext.DestroyDebugUtilsMessengerEXT = (PFN_vkDestroyDebugUtilsMessengerEXT) vkGetInstanceProcAddr( hInstance, "vkDestroyDebugUtilsMessengerEXT" );
-        Ext.SubmitDebugUtilsMessageEXT    = (PFN_vkSubmitDebugUtilsMessageEXT)    vkGetInstanceProcAddr( hInstance, "vkSubmitDebugUtilsMessageEXT" );
-        Ext.CmdBeginDebugUtilsLabelEXT    = (PFN_vkCmdBeginDebugUtilsLabelEXT)    vkGetInstanceProcAddr( hInstance, "vkCmdBeginDebugUtilsLabelEXT" );
-        Ext.CmdEndDebugUtilsLabelEXT      = (PFN_vkCmdEndDebugUtilsLabelEXT)      vkGetInstanceProcAddr( hInstance, "vkCmdEndDebugUtilsLabelEXT" );
-        Ext.CmdInsertDebugUtilsLabelEXT   = (PFN_vkCmdInsertDebugUtilsLabelEXT)   vkGetInstanceProcAddr( hInstance, "vkCmdInsertDebugUtilsLabelEXT" );
-        Ext.SetDebugUtilsObjectNameEXT    = (PFN_vkSetDebugUtilsObjectNameEXT)    vkGetInstanceProcAddr( hInstance, "vkSetDebugUtilsObjectNameEXT" );
-        // clang-format on
+        if ( vkCreateDebugUtilsMessengerEXT && vkDestroyDebugUtilsMessengerEXT && vkSubmitDebugUtilsMessageEXT &&
+             vkCmdBeginDebugUtilsLabelEXT && vkCmdEndDebugUtilsLabelEXT && vkCmdInsertDebugUtilsLabelEXT &&
+             vkSetDebugUtilsObjectNameEXT ) {
 
-        if ( Ext.CreateDebugUtilsMessengerEXT && Ext.DestroyDebugUtilsMessengerEXT && Ext.SubmitDebugUtilsMessageEXT &&
-             Ext.CmdBeginDebugUtilsLabelEXT && Ext.CmdEndDebugUtilsLabelEXT && Ext.CmdInsertDebugUtilsLabelEXT &&
-             Ext.SetDebugUtilsObjectNameEXT ) {
-
-            if ( VK_SUCCESS != CheckedResult( Ext.CreateDebugUtilsMessengerEXT( hInstance, &debugUtilsMessengerCreateInfoEXT, NULL, &Ext.DebugUtilsMessengerEXT ) ) ) {
+            if ( VK_SUCCESS != CheckedResult( vkCreateDebugUtilsMessengerEXT( hInstance, &debugUtilsMessengerCreateInfoEXT, NULL, &Ext.DebugUtilsMessengerEXT ) ) ) {
                 return false;
             }
         }

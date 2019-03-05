@@ -235,19 +235,7 @@ bool apemodevk::GraphicsDevice::RecreateResourcesFor( uint32_t         flags,
             deviceCreateInfo.ppEnabledExtensionNames = deviceExtensions.data( );
 
             if ( hLogicalDevice.Recreate( pPhysicalDevice, deviceCreateInfo ) ) {
-
-                PFN_vkGetDeviceProcAddr GetDeviceProcAddr = GetGraphicsManager()->Ext.GetDeviceProcAddr;
-
-                Ext.CreateSwapchainKHR    = (PFN_vkCreateSwapchainKHR)    GetDeviceProcAddr( hLogicalDevice, "vkCreateSwapchainKHR" );
-                Ext.DestroySwapchainKHR   = (PFN_vkDestroySwapchainKHR)   GetDeviceProcAddr( hLogicalDevice, "vkDestroySwapchainKHR" );
-                Ext.GetSwapchainImagesKHR = (PFN_vkGetSwapchainImagesKHR) GetDeviceProcAddr( hLogicalDevice, "vkGetSwapchainImagesKHR" );
-                Ext.AcquireNextImageKHR   = (PFN_vkAcquireNextImageKHR)   GetDeviceProcAddr( hLogicalDevice, "vkAcquireNextImageKHR" );
-                Ext.QueuePresentKHR       = (PFN_vkQueuePresentKHR)       GetDeviceProcAddr( hLogicalDevice, "vkQueuePresentKHR" );
-
-                if ( Ext.bDisplayTimingGOOGLE ) {
-                    Ext.GetRefreshCycleDurationGOOGLE     = (PFN_vkGetRefreshCycleDurationGOOGLE)     GetDeviceProcAddr( hLogicalDevice, "vkGetRefreshCycleDurationGOOGLE" );
-                    Ext.GetPastPresentationTimingGOOGLE   = (PFN_vkGetPastPresentationTimingGOOGLE)   GetDeviceProcAddr( hLogicalDevice, "vkGetPastPresentationTimingGOOGLE" );
-                }
+                volkLoadDeviceTable(this, hLogicalDevice);
 
                 VmaAllocatorCreateInfo allocatorCreateInfo = TNewInitializedStruct< VmaAllocatorCreateInfo >( );
                 allocatorCreateInfo.physicalDevice         = pPhysicalDevice;
@@ -338,3 +326,5 @@ const apemodevk::CommandBufferPool* apemodevk::GraphicsDevice::GetCommandBufferP
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 #pragma warning(pop)
+
+#include <volk.c>
