@@ -329,31 +329,6 @@ ExternalProject_Get_Property(taskflow SOURCE_DIR)
 set(taskflow_source_dir ${SOURCE_DIR})
 message(STATUS "taskflow_source_dir = ${taskflow_source_dir}")
 
-#
-#
-# zlib
-#
-#
-
-ExternalProject_Add(
-    zlib
-    GIT_REPOSITORY "git@github.com:madler/zlib.git"
-    GIT_TAG "master"
-    UPDATE_COMMAND ""
-    PATCH_COMMAND ""
-    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/zlib"
-    CMAKE_ARGS ${default_cmake_args}
-    TEST_COMMAND ""
-    INSTALL_COMMAND ""
-)
-
-ExternalProject_Get_Property(zlib SOURCE_DIR)
-ExternalProject_Get_Property(zlib BINARY_DIR)
-set(zlib_source_dir ${SOURCE_DIR})
-set(zlib_binary_dir ${BINARY_DIR})
-message(STATUS "zlib_source_dir = ${zlib_source_dir}")
-message(STATUS "zlib_binary_dir = ${zlib_binary_dir}")
-
 if (APPLE)
 
 ExternalProject_Add(
@@ -388,6 +363,29 @@ ExternalProject_Add(
     GIT_REPOSITORY "git@github.com:GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator.git"
     GIT_TAG "master"
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    LOG_DOWNLOAD ON
+)
+
+ExternalProject_Get_Property(VulkanMemoryAllocator SOURCE_DIR)
+set(VulkanMemoryAllocator_source_dir ${SOURCE_DIR})
+message(STATUS "VulkanMemoryAllocator_source_dir = ${VulkanMemoryAllocator_source_dir}")
+
+#
+#
+# git@github.com:zeux/volk.git
+#
+#
+
+ExternalProject_Add(
+    volk
+    GIT_REPOSITORY "git@github.com:zeux/volk.git"
+    GIT_TAG "master"
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/volk"
     CONFIGURE_COMMAND ""
     BUILD_COMMAND ""
     INSTALL_COMMAND ""
@@ -510,8 +508,7 @@ endif()
 #
 #
 
-set(
-    ApemodeVulkan_vk_source_files
+set(ApemodeVulkan_vk_source_files
     ${CMAKE_SOURCE_DIR}/src/apemode/vk/CityHash.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/vk/CityHash.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/apemode/vk/Image.Vulkan.h
@@ -534,8 +531,7 @@ set(
     ${CMAKE_SOURCE_DIR}/src/apemode/vk/Swapchain.Vulkan.h
 )
 
-set(
-    ApemodeVulkan_vk_ext_source_files
+set(ApemodeVulkan_vk_ext_source_files
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/AppSurface.Vulkan.h
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/AppSurface.Vulkan.cpp
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/ImageUploader.Vulkan.h
@@ -544,20 +540,16 @@ set(
     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext/SamplerManager.Vulkan.cpp
 )
 
-# add_library(
-#     ApemodeVulkan
-#     STATIC
-#     ${ApemodeVulkan_vk_source_files}
-#     ${ApemodeVulkan_vk_ext_source_files}
-# )
-
 if (APPLE)
 
     set( Vulkan_include_dirs ${MOLTENVK_SDK_PATH}/MoltenVK/include )
     set( Vulkan_third_party_libs
-         ${MOLTENVK_SDK_PATH}/Package${CONFIGURATION_SUFFIX}/MoltenVK/macOS/dynamic/libMoltenVK.dylib
-         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
-         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a )
+         debug ${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVK/macOS/dynamic/libMoltenVK.dylib
+         optimized ${MOLTENVK_SDK_PATH}/Package/Release/MoltenVK/macOS/dynamic/libMoltenVK.dylib
+         debug ${eastl_binary_dir}/Debug/libEASTL.a
+         debug ${eastl_binary_dir}/test/packages/EAStdC/Debug/libEAStdC.a
+         optimized ${eastl_binary_dir}/Release/libEASTL.a
+         optimized ${eastl_binary_dir}/test/packages/EAStdC/Release/libEAStdC.a )
 
 elseif(WIN32)
 
@@ -577,53 +569,6 @@ elseif (UNIX)
 
 endif()
 
-# target_compile_definitions(ApemodeVulkan PRIVATE -DAPEMODE_VULKAN_DLLEXPORT)
-
-# target_include_directories(
-#     ApemodeVulkan
-#     PUBLIC
-#     ${Vulkan_include_dirs}
-#     ${CMAKE_SOURCE_DIR}/src
-#     ${CMAKE_SOURCE_DIR}/src/apemode/vk
-#     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext
-#     ${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator/src
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/gli
-#     ${CMAKE_SOURCE_DIR}/dependencies/gli/external
-#     ${CMAKE_SOURCE_DIR}/dependencies/gli/external/glm
-# )
-
-# target_link_libraries(
-#     ApemodeVulkan
-#     ${Vulkan_third_party_libs}
-# )
-                       
-# set_target_properties( ApemodeVulkan
-#                        PROPERTIES
-#                        WINDOWS_EXPORT_ALL_SYMBOLS ON )
-
-# if (APPLE)
-#     add_dependencies(
-#         ApemodeVulkan
-#         eastl
-#         gli
-#         VulkanMemoryAllocator
-#         MoltenVK
-#         )
-# else ()
-#     add_dependencies(
-#         ApemodeVulkan
-#         eastl
-#         gli
-#         VulkanMemoryAllocator
-#         )
-# endif ()
-
 #
 #
 # ApemodePlatform
@@ -632,11 +577,13 @@ endif()
 
 if (APPLE)
 
-    set( ApemodePlatform_third_party_libs
-         ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
-         ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a
-         pthread
-         )
+    set(ApemodePlatform_third_party_libs
+        debug ${eastl_binary_dir}/Debug/libEASTL.a
+        debug ${eastl_binary_dir}/test/packages/EAStdC/Debug/libEAStdC.a
+        optimized ${eastl_binary_dir}/Release/libEASTL.a
+        optimized ${eastl_binary_dir}/test/packages/EAStdC/Release/libEAStdC.a
+        pthread
+        )
 
 elseif(WIN32)
 
@@ -673,40 +620,6 @@ set(
     ${CMAKE_SOURCE_DIR}/src/apemode/platform/Stopwatch.h
 )
 
-# add_library( ApemodePlatform
-#              STATIC
-#              ${ApemodePlatform_source_files} )
-
-# target_include_directories(
-#     ApemodePlatform
-#     PUBLIC
-#     ${CMAKE_SOURCE_DIR}/src
-#     ${CMAKE_SOURCE_DIR}/dependencies/argh
-#     ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/cpp-taskflow
-# )
-
-# target_link_libraries( ApemodePlatform
-#                        ${ApemodePlatform_third_party_libs} )
-                       
-# set_target_properties( ApemodePlatform
-#                        PROPERTIES
-#                        WINDOWS_EXPORT_ALL_SYMBOLS ON )
-
-# add_dependencies(
-#     ApemodePlatform
-#     argh
-#     spdlog
-#     eastl
-#     taskflow
-# )
-
 #
 #
 # ViewerSdl
@@ -735,119 +648,6 @@ set(
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/NuklearRendererVk.cpp
     ${CMAKE_SOURCE_DIR}/src/viewer/vk/NuklearRendererVk.h
 )
-
-file(
-    GLOB
-    Viewer_shader_source_files
-    # Headers
-    "${CMAKE_SOURCE_DIR}/assets/shaders/*.h"
-    "${CMAKE_SOURCE_DIR}/assets/shaders/*.inc"
-    "${CMAKE_SOURCE_DIR}/assets/shaders/*.inl"
-    "${CMAKE_SOURCE_DIR}/assets/shaders/*.fx"
-    # Sources
-    "${CMAKE_SOURCE_DIR}/assets/shaders/*.vert"
-    "${CMAKE_SOURCE_DIR}/assets/shaders/*.frag"
-    "${CMAKE_SOURCE_DIR}/assets/shaders/*.tesc"
-    "${CMAKE_SOURCE_DIR}/assets/shaders/*.tese"
-    "${CMAKE_SOURCE_DIR}/assets/shaders/*.comp"
-    "${CMAKE_SOURCE_DIR}/assets/shaders/*.geom"
-)
-
-# add_library( ViewerSdl
-#              SHARED
-#              ${Viewer_source_files}
-#              ${Viewer_shader_source_files} )
-
-# target_compile_definitions(ViewerSdl PRIVATE -DAPEMODE_VIEWER_DLLEXPORT)
-
-# target_include_directories(
-#     ViewerSdl
-#     PUBLIC
-#     ${CMAKE_SOURCE_DIR}/src
-#     ${CMAKE_SOURCE_DIR}/src/viewer
-#     ${CMAKE_SOURCE_DIR}/src/viewer/vk
-#     ${CMAKE_SOURCE_DIR}/dependencies/Math
-#     ${CMAKE_SOURCE_DIR}/dependencies/nuklear
-#     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath
-#     ${CMAKE_SOURCE_DIR}/dependencies/DirectXMath/Inc
-#     ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/draco/src
-#     ${draco_binary_dir}
-#     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/include/utils
-#     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
-#     ${Vulkan_include_dirs}
-#     ${CMAKE_SOURCE_DIR}/src/apemode/vk
-#     ${CMAKE_SOURCE_DIR}/src/apemode/vk_ext
-#     ${CMAKE_SOURCE_DIR}/dependencies/gli
-#     ${CMAKE_SOURCE_DIR}/dependencies/gli/external
-#     ${CMAKE_SOURCE_DIR}/dependencies/gli/external/glm
-#     ${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator/src
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/argh
-#     ${CMAKE_SOURCE_DIR}/dependencies/spdlog/include
-#     ${CMAKE_SOURCE_DIR}/dependencies/cpp-taskflow
-# )
-
-# if (APPLE)
-
-#     target_link_libraries(
-#         ViewerSdl
-#         ${draco_binary_dir}${CONFIGURATION_SUFFIX}/libdraco.a
-#         ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/libflatbuffers.a
-#         ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/libApemodePlatform.a
-#         ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/libApemodeVulkan.a
-#         ${Vulkan_third_party_libs}
-#         ${ApemodePlatform_third_party_libs}
-#         )
-
-# elseif (WIN32)
-
-#     # target_link_libraries(
-#     #     ViewerSdl
-#     #     ${draco_binary_dir}${CONFIGURATION_SUFFIX}/draco.lib
-#     #     ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/flatbuffers.lib
-#     #     ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/ApemodeVulkan.lib
-#     #     ${Vulkan_third_party_libs}
-#     #     # ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/ApemodePlatform.lib
-#     #     # ${ApemodePlatform_third_party_libs}
-#     #     )
-
-# elseif (UNIX)
-
-#     target_link_libraries(
-#         ViewerSdl
-#         ${draco_binary_dir}${CONFIGURATION_SUFFIX}/libdraco.a
-#         ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/libflatbuffers.a
-#         ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/libApemodePlatform.a
-#         ${CMAKE_BINARY_DIR}${CONFIGURATION_SUFFIX}/libApemodeVulkan.a
-#         ${Vulkan_third_party_libs}
-#         ${ApemodePlatform_third_party_libs}
-#         )
-
-# endif ()
-                       
-# add_dependencies(
-#     ViewerSdl
-#     ApemodePlatform
-#     ApemodeVulkan
-#     nuklear
-#     draco
-#     flatbuffers
-#     DirectXMath
-#     FbxPipeline
-#     eastl
-#     gli
-#     VulkanMemoryAllocator
-#     argh
-#     spdlog
-#     eastl
-#     taskflow
-# )
 
 #
 #
@@ -903,7 +703,7 @@ if (APPLE )
     target_link_libraries(
         ShaderPipeline
         debug ${eastl_binary_dir}/Debug/libEASTL.a
-        debug ${eastl_binary_dir}/test/packages/EAStdC/Release/libEAStdC.a
+        debug ${eastl_binary_dir}/test/packages/EAStdC/Debug/libEAStdC.a
         debug ${shaderc_binary_dir}/libshaderc/Debug/libshaderc_combined.a
         debug ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/${BUILD_FOLDER_SUFFIX}/flatbuffers-prefix/src/flatbuffers-build/Debug/libflatbuffers.a
         optimized ${eastl_binary_dir}/Release/libEASTL.a
@@ -1012,6 +812,9 @@ if (APPLE)
         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/libSDL2.a
         ${draco_binary_dir}${CONFIGURATION_SUFFIX}/libdraco.a
         ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/libflatbuffers.a
+        ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/libSDL2.a
+        ${draco_binary_dir}${CONFIGURATION_SUFFIX}/libdraco.a
+        ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/libflatbuffers.a
         ${Vulkan_third_party_libs}
         ${ApemodePlatform_third_party_libs}
         dl
@@ -1068,6 +871,7 @@ add_dependencies(
     eastl
     gli
     VulkanMemoryAllocator
+    volk
     argh
     spdlog
     taskflow
@@ -1126,97 +930,3 @@ set_target_properties(
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set(PREDEFINED_TARGETS_FOLDER "CustomTargets")
-
-#
-# Shaders
-#
-
-# Shader source files
-# Source directory for the shaders
-# set(
-#     shader_directory
-#     ${CMAKE_SOURCE_DIR}/assets/shaders
-# )
-# set(
-#     shader_files
-#     ${shader_directory}/Debug.vert
-#     ${shader_directory}/Debug.frag
-#     ${shader_directory}/NuklearUI.vert
-#     ${shader_directory}/NuklearUI.frag
-#     ${shader_directory}/Skybox.vert
-#     ${shader_directory}/Skybox.frag
-#     ${shader_directory}/Scene.vert
-#     ${shader_directory}/SceneSkinned.vert
-#     ${shader_directory}/SceneSkinned8.vert
-#     ${shader_directory}/Scene.frag
-# )
-
-# if (APPLE)
-#     # set( glslangValidatorAbsolute "${MOLTENVK_SDK_PATH}/External/glslang/Test/glslangValidator")
-#     set( glslangValidatorAbsolute "${CMAKE_SOURCE_DIR}/assets/glslangValidator")
-#     # set( glslangValidatorAbsolute "${MOLTENVK_SDK_PATH}/External/glslang/build/StandAlone/glslangValidator")
-# else()
-#     set( glslangValidatorAbsolute "$ENV{VK_SDK_PATH}/bin/glslangValidator")
-# endif()
-
-# message(STATUS "glslangValidator = ${glslangValidatorAbsolute}")
-
-# # Shaders
-# set( spirv_directory ${CMAKE_SOURCE_DIR}/assets/shaders/spv )
-# add_custom_command( TARGET ViewerSdl PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}")
-# add_custom_command( TARGET ViewerSdl PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}/.preprocessed")
-# add_custom_command( TARGET ViewerSdl PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${spirv_directory}/.reflection")
-
-# # Shader compilation routine
-# foreach(shader_file ${shader_files})
-
-#     get_filename_component( shader_file_name ${shader_file} NAME )
-
-#     string(LENGTH ${shader_file_name} shader_file_name_length)
-#     math(EXPR shader_file_name_ext_begin "${shader_file_name_length} - 4")
-#     string(SUBSTRING ${shader_file_name} ${shader_file_name_ext_begin} 4 shader_file_name_ext)
-
-#     set( shader_file_preprocessed "${spirv_directory}/.preprocessed/${shader_file_name}.txt" )
-#     set( shader_file_reflection "${spirv_directory}/.reflection/${shader_file_name}.txt" )
-#     set( shader_file_spv "${spirv_directory}/${shader_file_name}.spv" )
-
-#     message(STATUS "${shader_file} > ${shader_file_spv}")
-#     message(STATUS "${shader_file} + ${shader_file_preprocessed}")
-#     message(STATUS "${shader_file} + ${shader_file_reflection}")
-
-#     add_custom_command(
-#         TARGET ViewerSdl PRE_BUILD
-#         COMMAND ${glslangValidatorAbsolute} -S ${shader_file_name_ext} -E ${shader_file} > ${shader_file_preprocessed}
-#         COMMAND ${glslangValidatorAbsolute} -S ${shader_file_name_ext} -V -q ${shader_file} -o ${shader_file_spv} > ${shader_file_reflection}
-#     )
-
-# endforeach()
-
-# if (APPLE)
-
-#     set( MoltenVKShaderConverterAbsolute "${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVKShaderConverter/Tools/MoltenVKShaderConverter")
-
-#     # Output directory for the shaders
-#     set( msl_directory ${CMAKE_SOURCE_DIR}/assets/shaders/msl )
-#     add_custom_command( TARGET ViewerSdl PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${msl_directory}")
-#     add_custom_command( TARGET ViewerSdl PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${msl_directory}/.logs")
-
-#     # Shader compilation routine
-#     foreach(shader_file ${shader_files})
-#         get_filename_component( shader_file_name ${shader_file} NAME )
-#         set( shader_file_spv "${spirv_directory}/${shader_file_name}.spv" )
-
-#         string(LENGTH ${shader_file_name} shader_file_name_length)
-#         math(EXPR shader_file_name_ext_begin "${shader_file_name_length} - 4")
-#         string(SUBSTRING ${shader_file_name} ${shader_file_name_ext_begin} 1 shader_file_name_ext)
-
-#         set( shader_file_msl "${msl_directory}/${shader_file_name}.metal" )
-#         message(STATUS "${shader_file} > ${shader_file_msl}")
-
-#         add_custom_command(
-#             TARGET ViewerSdl PRE_BUILD
-#             COMMAND ${MoltenVKShaderConverterAbsolute} -t ${shader_file_name_ext} -si ${shader_file_spv} -mo ${shader_file_msl} -l > "${msl_directory}/.logs/${shader_file_name}.txt"
-#         )
-#     endforeach()
-
-# endif()

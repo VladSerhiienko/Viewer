@@ -26,7 +26,7 @@
             "command": "cmake",
             "args": [
                 "-G", "Xcode",
-                "-H.", "-Bbuild_darwin_x86_64_appleclang_xcode",
+                "-H.", "-Bbuild_appleclang_xcode",
                 "-DMOLTENVK_SDK_PATH=${workspaceFolder}/dependencies/MoltenVK",
             ],
             "options": {
@@ -47,7 +47,7 @@
                 "--cso-file", "../../assets/shaders/Viewer.cso"
             ],
             "options": {
-                "cwd": "${workspaceFolder}/build_darwin_x86_64_appleclang_xcode/Release"
+                "cwd": "${workspaceFolder}/build_appleclang_xcode/Release"
             },
             "group": {
                 "kind": "build",
@@ -171,12 +171,12 @@
             "command": "xcodebuild",
             "args": [
                 "-project",
-                "${workspaceFolder}/build_darwin_x86_64_appleclang_xcode/Viewer.xcodeproj",
+                "${workspaceFolder}/build_appleclang_xcode/ViewerSdl.xcodeproj",
                 "-configuration",
                 "Debug"
             ],
             "options": {
-                "cwd": "${workspaceFolder}/build_darwin_x86_64_appleclang_xcode"
+                "cwd": "${workspaceFolder}/build_appleclang_xcode"
             },
             "group": {
                 "kind": "build",
@@ -190,12 +190,12 @@
             "command": "xcodebuild",
             "args": [
                 "-project",
-                "${workspaceFolder}/build_darwin_x86_64_appleclang_xcode/Viewer.xcodeproj",
+                "${workspaceFolder}/build_appleclang_xcode/ViewerSdl.xcodeproj",
                 "-configuration",
                 "Release"
             ],
             "options": {
-                "cwd": "${workspaceFolder}/build_darwin_x86_64_appleclang_xcode"
+                "cwd": "${workspaceFolder}/build_appleclang_xcode"
             },
             "group": {
                 "kind": "build",

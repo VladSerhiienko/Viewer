@@ -988,7 +988,7 @@
 					$SRCROOT/../../dependencies/DirectXMath/Inc,
 					$SRCROOT/../../dependencies/nuklear,
 					$SRCROOT/../../dependencies/draco/src,
-					"$SRCROOT/../../build_darwin_x86_64_appleclang_xcode/draco-prefix/src/draco-build",
+					"$SRCROOT/../../build_appleclang_xcode/draco-prefix/src/draco-build",
 					"$SRCROOT/../../dependencies/cpp-taskflow",
 				);
 			};
@@ -1041,7 +1041,7 @@
 					$SRCROOT/../../dependencies/DirectXMath/Inc,
 					$SRCROOT/../../dependencies/nuklear,
 					$SRCROOT/../../dependencies/draco/src,
-					"$SRCROOT/../../build_darwin_x86_64_appleclang_xcode/draco-prefix/src/draco-build",
+					"$SRCROOT/../../build_appleclang_xcode/draco-prefix/src/draco-build",
 					"$SRCROOT/../../dependencies/cpp-taskflow",
 				);
 				VALIDATE_PRODUCT = YES;
@@ -1093,7 +1093,7 @@
 					$SRCROOT/../../dependencies/DirectXMath/Inc,
 					$SRCROOT/../../dependencies/nuklear,
 					$SRCROOT/../../dependencies/draco/src,
-					"$SRCROOT/../../build_darwin_x86_64_appleclang_xcode/draco-prefix/src/draco-build",
+					"$SRCROOT/../../build_appleclang_xcode/draco-prefix/src/draco-build",
 					"$SRCROOT/../../dependencies/cpp-taskflow",
 				);
 			};
@@ -1144,7 +1144,7 @@
 					$SRCROOT/../../dependencies/DirectXMath/Inc,
 					$SRCROOT/../../dependencies/nuklear,
 					$SRCROOT/../../dependencies/draco/src,
-					"$SRCROOT/../../build_darwin_x86_64_appleclang_xcode/draco-prefix/src/draco-build",
+					"$SRCROOT/../../build_appleclang_xcode/draco-prefix/src/draco-build",
 					"$SRCROOT/../../dependencies/cpp-taskflow",
 				);
 			};
