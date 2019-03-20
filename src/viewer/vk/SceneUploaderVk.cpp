@@ -471,7 +471,7 @@ void TConvertVertices< apemodefb::DecompressedSkinnedVertexFb >( DecompressedMes
         } joint_index_unpacker;
         joint_index_unpacker._0123 = indices;
 
-        if (weights.x( ) >= 0.99f) {
+        if ( weights.x( ) >= 0.99f ) {
             weights.mutate_x( weights.x( ) * 0.5f + float( joint_index_unpacker._0 ) );
             weights.mutate_y( weights.x( ) );
             weights.mutate_z( 0 ); // weights.y( ) + float( joint_index_unpacker._1 ));
@@ -859,7 +859,7 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
         transform( bufferUploads.begin( ),
                    bufferUploads.end( ),
                    back_inserter( bufferBarriers ),
-                   []( const BufferUploadInfo & currMeshUpload ) {
+                   []( const BufferUploadInfo& currMeshUpload ) {
                        VkBufferMemoryBarrier bufferMemoryBarrier;
                        apemodevk::InitializeStruct( bufferMemoryBarrier );
 
@@ -873,16 +873,16 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
                    } );
 
         /* Stage buffers. */
-        vkCmdPipelineBarrier( pCmdBuffer,                         /* Cmd */
-                              VK_PIPELINE_STAGE_TRANSFER_BIT,     /* Src stage */
-                              VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, /* Dst stage */
-                              0,                                  /* Dependency flags */
-                              0,                                  /* Memory barrier count */
-                              nullptr,                            /* Memory barriers */
-                              uint32_t( bufferBarriers.size( ) ), /* Buffer barrier count */
-                              bufferBarriers.data( ),             /* Buffer barriers */
-                              0,                                  /* Img barrier count */
-                              nullptr );                          /* Img barriers */
+        pNode->vkCmdPipelineBarrier( pCmdBuffer,                         /* Cmd */
+                                     VK_PIPELINE_STAGE_TRANSFER_BIT,     /* Src stage */
+                                     VK_PIPELINE_STAGE_VERTEX_INPUT_BIT, /* Dst stage */
+                                     0,                                  /* Dependency flags */
+                                     0,                                  /* Memory barrier count */
+                                     nullptr,                            /* Memory barriers */
+                                     uint32_t( bufferBarriers.size( ) ), /* Buffer barrier count */
+                                     bufferBarriers.data( ),             /* Buffer barriers */
+                                     0,                                  /* Img barrier count */
+                                     nullptr );                          /* Img barriers */
 
         return true;
     } );
@@ -950,13 +950,12 @@ bool UploadMeshes( apemode::Scene* pScene, const apemode::vk::SceneUploader::Upl
              * Allocate a command buffer and give it to the lambda that pushes copy commands into it.
              */
             TOneTimeCmdBufferSubmit( pNode, 0, true, [&]( VkCommandBuffer pCmdBuffer ) {
-
                 /* Add the copy command. */
-                vkCmdCopyBuffer( pCmdBuffer,                /* Cmd */
-                                 hStagingBuffer,            /* Src */
-                                 pCurrFillInfo->pDstBuffer, /* Dst */
-                                 1,                         /* RegionCount*/
-                                 &bufferCopy );             /* Regions */
+                pNode->vkCmdCopyBuffer( pCmdBuffer,                /* Cmd */
+                                        hStagingBuffer,            /* Src */
+                                        pCurrFillInfo->pDstBuffer, /* Dst */
+                                        1,                         /* RegionCount*/
+                                        &bufferCopy );             /* Regions */
 
                 /* End command buffer.
                  * Submit and sync.

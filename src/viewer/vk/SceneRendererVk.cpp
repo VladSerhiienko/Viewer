@@ -153,7 +153,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
     if ( !nodeCount )
         return true;
 
-    vkCmdBindPipeline( pParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.hPipeline );
+    pNode->vkCmdBindPipeline( pParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.hPipeline );
 
     VkViewport viewport;
     InitializeStruct( viewport );
@@ -164,7 +164,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
-    vkCmdSetViewport( pParams->pCmdBuffer, 0, 1, &viewport );
+    pNode->vkCmdSetViewport( pParams->pCmdBuffer, 0, 1, &viewport );
 
     VkRect2D scissor;
     InitializeStruct( scissor );
@@ -173,7 +173,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
     scissor.extent.width  = ( uint32_t )( pParams->Dims.x * pParams->Scale.x );
     scissor.extent.height = ( uint32_t )( pParams->Dims.y * pParams->Scale.y );
 
-    vkCmdSetScissor( pParams->pCmdBuffer, 0, 1, &scissor );
+    pNode->vkCmdSetScissor( pParams->pCmdBuffer, 0, 1, &scissor );
 
     const uint32_t frameIndex = pParams->FrameIndex;
     auto& frame = Frames[ frameIndex ];
@@ -475,7 +475,7 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             ppDescriptorSets[ kDescriptorSetForObj ] =
                 frame.DescriptorSetPools[ kDescriptorSetForObj ].GetDescriptorSet( &descriptorSetForObject );
 
-            vkCmdBindDescriptorSets(
+            pNode->vkCmdBindDescriptorSets(
                 pParams->pCmdBuffer,             /* Cmd */
                 VK_PIPELINE_BIND_POINT_GRAPHICS, /* BindPoint */
                 pipeline.pPipelineLayout,        /* PipelineLayout */
@@ -488,18 +488,18 @@ bool apemode::vk::SceneRenderer::RenderScene( const Scene*                      
             VkBuffer     ppVertexBuffers[ 1 ] = {pMeshAsset->hVertexBuffer.Handle.pBuffer};
             VkDeviceSize pVertexOffsets[ 1 ]  = {0};
 
-            vkCmdBindVertexBuffers( pParams->pCmdBuffer, /* Cmd */
+            pNode->vkCmdBindVertexBuffers( pParams->pCmdBuffer, /* Cmd */
                                     0,                   /* FirstBinding */
                                     1,                   /* BindingCount */
                                     ppVertexBuffers,     /* Buffers */
                                     pVertexOffsets );    /* Offsets */
 
-            vkCmdBindIndexBuffer( pParams->pCmdBuffer,                     /* Cmd */
+            pNode->vkCmdBindIndexBuffer( pParams->pCmdBuffer,                     /* Cmd */
                                   pMeshAsset->hIndexBuffer.Handle.pBuffer, /* IndexBuffer */
                                   pMeshAsset->IndexOffset,                 /* Offset */
                                   pMeshAsset->eIndexType );                 /* UInt16/Uint32 */
 
-            vkCmdDrawIndexed( pParams->pCmdBuffer,   /* Cmd */
+            pNode->vkCmdDrawIndexed( pParams->pCmdBuffer,   /* Cmd */
                               pSubsetIt->IndexCount, /* IndexCount */
                               1,                     /* InstanceCount */
                               pSubsetIt->BaseIndex,  /* FirstIndex */

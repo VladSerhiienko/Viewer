@@ -175,7 +175,7 @@ void apemodevk::QueueFamilyPool::Destroy( ) {
             if ( queueInPool.hFence ) {
                 platform::LogFmt( platform::LogLevel::Info, "Destroying queue fence." );
                 WaitForFence( pNode, queueInPool.hFence );
-                vkDestroyFence( pNode->hLogicalDevice, queueInPool.hFence, GetAllocationCallbacks( ) );
+                pNode->vkDestroyFence( pNode->hLogicalDevice, queueInPool.hFence, GetAllocationCallbacks( ) );
                 queueInPool.hFence = nullptr;
             }
 
@@ -269,7 +269,7 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
 
             /* Get device queue, return DEVICE_LOST if failed. */
             if ( VK_NULL_HANDLE == queue.hQueue ) {
-                vkGetDeviceQueue( *pNode, QueueFamilyId, i, &queue.hQueue );
+                pNode->vkGetDeviceQueue( *pNode, QueueFamilyId, i, &queue.hQueue );
                 assert( queue.hQueue );
 
                 if ( !queue.hQueue ) {
@@ -291,7 +291,7 @@ apemodevk::AcquiredQueue apemodevk::QueueFamilyPool::Acquire( bool bIgnoreFence 
                 /* @note Must be reset before usage. */
                 fenceCreateInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-                const VkResult eCreateFenceResult = vkCreateFence( *pNode, &fenceCreateInfo, GetAllocationCallbacks( ), &queue.hFence );
+                const VkResult eCreateFenceResult = pNode->vkCreateFence( *pNode, &fenceCreateInfo, GetAllocationCallbacks( ), &queue.hFence );
                 if ( ( VK_SUCCESS != CheckedResult( eCreateFenceResult ) ) || !queue.hFence ) {
                     /* Move back to unused state */
                     queue.bInUse.exchange( false, std::memory_order_release );
@@ -641,7 +641,7 @@ VkResult apemodevk::GetFenceStatus( GraphicsDevice* pNode, VkFence pFence ) {
     apemodevk_memory_allocation_scope;
 
     VkResult err;
-    switch ( err = CheckedResult( vkGetFenceStatus( pNode->hLogicalDevice, pFence ) ) ) {
+    switch ( err = CheckedResult( pNode->vkGetFenceStatus( pNode->hLogicalDevice, pFence ) ) ) {
         case VK_SUCCESS: {
             OnFenceSucceeded( pNode, pFence );
         } break;
@@ -656,9 +656,9 @@ VkResult apemodevk::WaitForFence( GraphicsDevice* pNode, VkFence pFence, uint64_
     apemodevk_memory_allocation_scope;
 
     VkResult err;
-    switch ( err = CheckedResult( vkGetFenceStatus( pNode->hLogicalDevice, pFence ) ) ) {
+    switch ( err = CheckedResult( pNode->vkGetFenceStatus( pNode->hLogicalDevice, pFence ) ) ) {
         case VK_NOT_READY:
-            err = CheckedResult( vkWaitForFences( pNode->hLogicalDevice, 1, &pFence, true, timeout ) );
+            err = CheckedResult( pNode->vkWaitForFences( pNode->hLogicalDevice, 1, &pFence, true, timeout ) );
             // case VK_ERROR_OUT_OF_HOST_MEMORY:
             // case VK_ERROR_OUT_OF_DEVICE_MEMORY:
             // case VK_ERROR_DEVICE_LOST:

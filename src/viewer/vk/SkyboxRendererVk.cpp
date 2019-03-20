@@ -282,8 +282,8 @@ bool apemode::vk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPa
     descriptorSet[ 0 ]  = Frames[ FrameIndex ].DescriptorSetPool.GetDescriptorSet( &descSet );
     dynamicOffsets[ 0 ] = suballocResult.DynamicOffset;
 
-    vkCmdBindPipeline( pParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipeline );
-    vkCmdBindDescriptorSets( pParams->pCmdBuffer,
+    pNode->vkCmdBindPipeline( pParams->pCmdBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, hPipeline );
+    pNode->vkCmdBindDescriptorSets( pParams->pCmdBuffer,
                              VK_PIPELINE_BIND_POINT_GRAPHICS,
                              hPipelineLayout,
                              0,
@@ -295,7 +295,7 @@ bool apemode::vk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPa
 //#if 1
 //    VkBuffer     vertexBuffers[ 1 ] = {hVertexBuffer};
 //    VkDeviceSize vertexOffsets[ 1 ] = {0};
-//    vkCmdBindVertexBuffers( pParams->pCmdBuffer, 0, 1, vertexBuffers, vertexOffsets );
+//    pNode->vkCmdBindVertexBuffers( pParams->pCmdBuffer, 0, 1, vertexBuffers, vertexOffsets );
 //#endif
 
     VkViewport viewport;
@@ -307,7 +307,7 @@ bool apemode::vk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPa
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
-    vkCmdSetViewport( pParams->pCmdBuffer, 0, 1, &viewport );
+    pNode->vkCmdSetViewport( pParams->pCmdBuffer, 0, 1, &viewport );
 
     VkRect2D scissor;
     InitializeStruct( scissor );
@@ -316,8 +316,8 @@ bool apemode::vk::SkyboxRenderer::Render( Skybox* pSkybox, RenderParameters* pPa
     scissor.extent.width  = ( uint32_t )( pParams->Dims.x * pParams->Scale.x );
     scissor.extent.height = ( uint32_t )( pParams->Dims.y * pParams->Scale.y );
 
-    vkCmdSetScissor( pParams->pCmdBuffer, 0, 1, &scissor );
-    vkCmdDraw( pParams->pCmdBuffer, 3, 1, 0, 0 );
+    pNode->vkCmdSetScissor( pParams->pCmdBuffer, 0, 1, &scissor );
+    pNode->vkCmdDraw( pParams->pCmdBuffer, 3, 1, 0, 0 );
 
     return true;
 }

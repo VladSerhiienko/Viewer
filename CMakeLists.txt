@@ -778,6 +778,7 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/generated
     ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/FbxPipeline/include/utils
     ${CMAKE_SOURCE_DIR}/dependencies/Math
+    ${CMAKE_SOURCE_DIR}/dependencies/volk
     ${CMAKE_SOURCE_DIR}/dependencies/VulkanMemoryAllocator/src
     ${CMAKE_SOURCE_DIR}/dependencies/argh
     ${CMAKE_SOURCE_DIR}/dependencies/cpp-taskflow
