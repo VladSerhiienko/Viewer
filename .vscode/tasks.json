@@ -21,6 +21,24 @@
             }
         },
         {
+            "label": "CMake/Viewer(Darwin/Xcode/Vk)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "-G", "Xcode",
+                "-H.", "-Bbuild_appleclang_xcode",
+                "-DVIEWER_DOWNLOAD_AND_USE_VULKAN_SDK:BOOL=TRUE",
+                // "-DMOLTENVK_SDK_PATH=${workspaceFolder}/dependencies/MoltenVK",
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
+        },
+        {
             "label": "CMake/Viewer(Darwin/Xcode)",
             "type": "shell",
             "command": "cmake",

@@ -54,14 +54,14 @@ install:
     pip install --user future;
     ls
 
-  - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
-    git clone https://github.com/KhronosGroup/MoltenVK.git;
-    cd MoltenVK;
-    travis_wait 60 ./fetchDependencies;
-    travis_wait 60 xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Release)" build;
-    cd ..;
-    export MOLTENVK_SDK_PATH=$TRAVIS_BUILD_DIR/MoltenVK;
-    fi
+  # - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
+  #   git clone https://github.com/KhronosGroup/MoltenVK.git;
+  #   cd MoltenVK;
+  #   travis_wait 60 ./fetchDependencies;
+  #   travis_wait 60 xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Release)" build;
+  #   cd ..;
+  #   export MOLTENVK_SDK_PATH=$TRAVIS_BUILD_DIR/MoltenVK;
+  #   fi
 
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
     wget -O vulkansdk.run https://sdk.lunarg.com/sdk/download/1.1.73.0/linux/vulkansdk-linux-x86_64-1.1.73.0.run;
@@ -76,7 +76,7 @@ script:
 
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
     sed -i '' "s,git@github.com:,https://github.com/,g" CMakeLists.txt;
-    cmake -G Xcode -H. -Bbuild -DBUILD_FOLDER_SUFFIX:STRING=build -DMOLTENVK_SDK_PATH=$MOLTENVK_SDK_PATH;
+    cmake -G Xcode -H. -Bbuild -DBUILD_FOLDER_SUFFIX:STRING=build -DVIEWER_DOWNLOAD_AND_USE_VULKAN_SDK:BOOL=TRUE;
     xcodebuild -project build/ViewerSdl.xcodeproj -configuration Release;
     fi
 

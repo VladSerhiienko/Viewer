@@ -2,7 +2,7 @@
 #pragma once
 
 #include <memory.h>
-#include <cassert>
+#include <assert.h>
 #include <cstdlib>
 #include <ctime>
 #include <memory>

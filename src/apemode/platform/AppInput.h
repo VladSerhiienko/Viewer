@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <algorithm>
 #include <type_traits>
+#include <cstring>
 
 namespace apemode {
 namespace platform {

@@ -330,25 +330,32 @@ set(taskflow_source_dir ${SOURCE_DIR})
 message(STATUS "taskflow_source_dir = ${taskflow_source_dir}")
 
 if (APPLE)
-# if (USE_VULKAN_SDK)
+if (VIEWER_DOWNLOAD_AND_USE_VULKAN_SDK)
 
-# ExternalProject_Add(
-#     json
-#     URL "https://vulkan.lunarg.com/sdk/home#sdk/downloadConfirm/1.1.101.0/mac/vulkansdk-macos-1.1.101.0.tar.gz"
-#     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/vulkansdk"
-#     CONFIGURE_COMMAND ""
-#     BUILD_COMMAND ""
-#     INSTALL_COMMAND ""
-#     UPDATE_COMMAND ""
-#     PATCH_COMMAND ""
-#     LOG_DOWNLOAD ON
-# )
+ExternalProject_Add(
+    vulkansdk
+    
+    URL "https://sdk.lunarg.com/sdk/download/1.1.101.0/mac/vulkansdk-macos-1.1.101.0.tar.gz?u="
+    SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/vulkansdk"
+    CONFIGURE_COMMAND ""
+    BUILD_COMMAND ""
+    INSTALL_COMMAND ""
+    UPDATE_COMMAND ""
+    PATCH_COMMAND ""
+    LOG_DOWNLOAD ON
+)
 
-# ExternalProject_Get_Property(vulkansdk SOURCE_DIR)
-# set(vulkansdk_source_dir ${SOURCE_DIR})
-# message(STATUS "vulkansdk_source_dir = ${vulkansdk_source_dir}")
+ExternalProject_Get_Property(vulkansdk SOURCE_DIR)
+set(vulkansdk_source_dir ${SOURCE_DIR})
+message(STATUS "vulkansdk_source_dir = ${vulkansdk_source_dir}")
 
-# else()
+set(VulkanSdk_DependencyProject vulkansdk)
+set(VulkanSdk_IncludeDir ${vulkansdk_source_dir}/macOS/include)
+set(VulkanSdk_DebugLibrary ${vulkansdk_source_dir}/macOS/lib/libvulkan.1.1.101.dylib)
+set(VulkanSdk_ReleaseLibrary ${vulkansdk_source_dir}/macOS/lib/libvulkan.1.1.101.dylib)
+message(STATUS "VK_SDK_PATH = ${vulkansdk_source_dir}")
+
+else()
 
 ExternalProject_Add(
     MoltenVK
@@ -368,8 +375,15 @@ ExternalProject_Add(
                     xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (macOS only)" build
                     # xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Debug) (macOS only)" build &&
 )
+
+set(VulkanSdk_DependencyProject MoltenVK)
+set(VulkanSdk_UseMoltenVK TRUE)
+set(VulkanSdk_IncludeDir ${MOLTENVK_SDK_PATH}/MoltenVK/include)
+set(VulkanSdk_DebugLibrary ${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVK/macOS/dynamic/libMoltenVK.dylib)
+set(VulkanSdk_ReleaseLibrary ${MOLTENVK_SDK_PATH}/Package/Release/MoltenVK/macOS/dynamic/libMoltenVK.dylib)
+message(STATUS "MOLTENVK_SDK_PATH = ${MOLTENVK_SDK_PATH}")
  
-# endif()
+endif()
 endif()
 
 #
@@ -563,10 +577,10 @@ set(ApemodeVulkan_vk_ext_source_files
 
 if (APPLE)
 
-    set( Vulkan_include_dirs ${MOLTENVK_SDK_PATH}/MoltenVK/include )
+    set( Vulkan_include_dirs ${VulkanSdk_IncludeDir} )
     set( Vulkan_third_party_libs
-         debug ${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVK/macOS/dynamic/libMoltenVK.dylib
-         optimized ${MOLTENVK_SDK_PATH}/Package/Release/MoltenVK/macOS/dynamic/libMoltenVK.dylib
+         debug ${VulkanSdk_DebugLibrary}
+         optimized ${VulkanSdk_ReleaseLibrary}
          debug ${eastl_binary_dir}/Debug/libEASTL.a
          debug ${eastl_binary_dir}/test/packages/EAStdC/Debug/libEAStdC.a
          optimized ${eastl_binary_dir}/Release/libEASTL.a
@@ -839,7 +853,7 @@ target_include_directories(
 set(ViewerSdl_AdditionalDependencies)
 
 if (APPLE)
-    set(ViewerSdl_AdditionalDependencies MoltenVK)
+    set(ViewerSdl_AdditionalDependencies ${VulkanSdk_DependencyProject})
     target_link_libraries(
         ViewerSdl
         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/libSDL2.a
@@ -912,7 +926,6 @@ add_dependencies(
 )
 
 message(STATUS "VK_SDK_PATH = $ENV{VK_SDK_PATH}")
-message(STATUS "MOLTENVK_SDK_PATH = ${MOLTENVK_SDK_PATH}")
 
 if (APPLE)
     add_custom_command( TARGET ViewerSdl PRE_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/Debug")
@@ -921,14 +934,14 @@ if (APPLE)
     add_custom_command(
         TARGET ViewerSdl POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${MOLTENVK_SDK_PATH}/Package/Debug/MoltenVK/macOS/dynamic/libMoltenVK.dylib
+        ${VulkanSdk_DebugLibrary}
         ${CMAKE_BINARY_DIR}/Debug
     )
 
     add_custom_command(
         TARGET ViewerSdl POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        ${MOLTENVK_SDK_PATH}/Package/Release/MoltenVK/macOS/dynamic/libMoltenVK.dylib
+        ${VulkanSdk_ReleaseLibrary}
         ${CMAKE_BINARY_DIR}/Release
     )
 endif()
