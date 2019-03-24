@@ -35,9 +35,6 @@ matrix:
           - clang-7
           - boost1.67
           - cmake
-cache:
-    directories:
-     - /Users/travis/build/VladSerhiienko/Viewer/MoltenVK
 
 before_script:
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
@@ -58,13 +55,11 @@ install:
     ls
 
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
-    if [ ! -d MoltenVK ]; then 
-      git clone https://github.com/KhronosGroup/MoltenVK.git;
-      cd MoltenVK;
-      travis_wait 60 ./fetchDependencies;
-      travis_wait 60 xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Release)" build;
-      cd ..;
-    fi
+    git clone https://github.com/KhronosGroup/MoltenVK.git;
+    cd MoltenVK;
+    travis_wait 60 ./fetchDependencies;
+    travis_wait 60 xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Release)" build;
+    cd ..;
     export MOLTENVK_SDK_PATH=$TRAVIS_BUILD_DIR/MoltenVK;
     fi
 
