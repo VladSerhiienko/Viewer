@@ -88,12 +88,6 @@ script:
     export CXX=${COMPILER_CC};
     sed -i 's,git@github.com:,https://github.com/,g' CMakeLists.txt;
     cmake -H. -Bbuild -DBUILD_FOLDER_SUFFIX:STRING=build;
-    cd dependencies;
-    git clone https://github.com/google/shaderc.git;
-    cd shaderc/utils;
-    python git-sync-deps;
-    cd ../../..;
-    cmake -H. -Bbuild -DBUILD_FOLDER_SUFFIX:STRING=build;
     make -C build;
     fi
 

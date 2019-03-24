@@ -409,7 +409,7 @@ ExternalProject_Add(
     GIT_REPOSITORY "git@github.com:google/shaderc.git"
     GIT_TAG "master"
     UPDATE_COMMAND ""
-    PATCH_COMMAND "" #"python utils/git-sync-deps"
+    PATCH_COMMAND python "${CMAKE_SOURCE_DIR}/dependencies/shaderc/utils/git-sync-deps"
     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/shaderc"
     CMAKE_ARGS ${default_cmake_args} -DSHADERC_SKIP_TESTS:BOOL=TRUE -DSHADERC_SKIP_INSTALL:BOOL=TRUE -DSHADERC_ENABLE_SHARED_CRT:BOOL=TRUE
     TEST_COMMAND ""
@@ -697,19 +697,29 @@ add_dependencies(
     ShaderPipeline
     shaderc
     json
+    flatbuffers
+    DirectXMath
+    eastl
+    gli
+    argh
+    spdlog
+    taskflow
 )
 
 if (APPLE )
     target_link_libraries(
         ShaderPipeline
+
         debug ${eastl_binary_dir}/Debug/libEASTL.a
         debug ${eastl_binary_dir}/test/packages/EAStdC/Debug/libEAStdC.a
         debug ${shaderc_binary_dir}/libshaderc/Debug/libshaderc_combined.a
-        debug ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/${BUILD_FOLDER_SUFFIX}/flatbuffers-prefix/src/flatbuffers-build/Debug/libflatbuffers.a
+        debug ${flatbuffers_binary_dir}/Debug/libflatbuffers.a
+
         optimized ${eastl_binary_dir}/Release/libEASTL.a
         optimized ${eastl_binary_dir}/test/packages/EAStdC/Release/libEAStdC.a
         optimized ${shaderc_binary_dir}/libshaderc/Release/libshaderc_combined.a
-        optimized ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/${BUILD_FOLDER_SUFFIX}/flatbuffers-prefix/src/flatbuffers-build/Release/libflatbuffers.a
+        optimized ${flatbuffers_binary_dir}/Release/libflatbuffers.a
+        
         dl
         stdc++
         objc
@@ -726,14 +736,17 @@ elseif (WIN32)
 elseif (UNIX)
     target_link_libraries(
         ShaderPipeline
+
         debug ${eastl_binary_dir}/Debug/libEASTL.a
         debug ${eastl_binary_dir}/test/packages/EAStdC/Release/libEAStdC.a
         debug ${shaderc_binary_dir}/libshaderc/Debug/libshaderc_combined.a
-        debug ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/${BUILD_FOLDER_SUFFIX}/flatbuffers-prefix/src/flatbuffers-build/Debug/libflatbuffers.a
+        debug ${flatbuffers_binary_dir}/libflatbuffers.a
+
         optimized ${eastl_binary_dir}/Release/libEASTL.a
         optimized ${eastl_binary_dir}/test/packages/EAStdC/Release/libEAStdC.a
         optimized ${shaderc_binary_dir}/libshaderc/Release/libshaderc_combined.a
-        optimized ${CMAKE_SOURCE_DIR}/dependencies/FbxPipeline/${BUILD_FOLDER_SUFFIX}/flatbuffers-prefix/src/flatbuffers-build/Release/libflatbuffers.a
+        optimized ${flatbuffers_binary_dir}/libflatbuffers.a
+       
         pthread
         stdc++fs
         )
