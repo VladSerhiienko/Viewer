@@ -5,20 +5,35 @@ sudo: required
 matrix:
   include:
   - os: osx
-    osx_image: xcode9.4
+    osx_image: xcode10.1
   - os: linux
+    env: COMPILER_C=gcc-7 COMPILER_CC=g++-7
     compiler:
       - gcc
+    addons:
+      apt:
+        update: true
+        sources:
+          - sourceline: 'ppa:mhier/libboost-latest'
+          - ubuntu-toolchain-r-test
+        packages:
+          - g++-7
+          - cmake
+          - boost1.67
+  - os: linux
+    env: COMPILER_C=clang-7 COMPILER_CC=clang++-7
+    compiler:
       - clang
     addons:
       apt:
+        update: true
         sources:
+          - sourceline: 'ppa:mhier/libboost-latest'
           - ubuntu-toolchain-r-test
-          - llvm-toolchain-trusty-5.0
+          - llvm-toolchain-trusty-7
         packages:
-          - clang-5.0
-          - gcc-6
-          - g++-6
+          - clang-7
+          - boost1.67
           - cmake
 
 before_script:
@@ -36,7 +51,7 @@ install:
     git clone https://github.com/KhronosGroup/MoltenVK.git;
     cd MoltenVK;
     ./fetchDependencies;
-    xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Release)" build;
+    travis_wait xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Release)" build;
     cd ..;
     export MOLTENVK_SDK_PATH=$TRAVIS_BUILD_DIR/MoltenVK;
     fi
@@ -52,19 +67,16 @@ script:
   - cmake --version
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
     sed -i '' "s,git@github.com:,https://github.com/,g" CMakeLists.txt;
-    cmake -G Xcode -H. -Bbuild_darwin_x86_64_appleclang -DMOLTENVK_SDK_PATH=$MOLTENVK_SDK_PATH;
-    cd build_darwin_x86_64_appleclang;
-    xcodebuild -project Viewer.xcodeproj -configuration Release;
+    cmake -G Xcode -H. -Bbuild -DBUILD_FOLDER_SUFFIX:STRING=build -DMOLTENVK_SDK_PATH=$MOLTENVK_SDK_PATH;
+    xcodebuild -project build/ViewerSdl.xcodeproj -configuration Release;
     cd ..;
     fi
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
-    export CC=/usr/bin/gcc-6;
-    export CXX=/usr/bin/g++-6;
+    export CC=${COMPILER_C};
+    export CXX=${COMPILER_CC};
     sed -i 's,git@github.com:,https://github.com/,g' CMakeLists.txt;
-    cmake -H. -Bbuild_linux_x86_64_gnu;
-    cd build_linux_x86_64_gnu;
-    make;
-    cd ..;
+    cmake -H. -Bbuild -DBUILD_FOLDER_SUFFIX:STRING=build;
+    make -C build;
     fi
 
 notifications:
