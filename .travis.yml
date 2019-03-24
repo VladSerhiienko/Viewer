@@ -60,7 +60,7 @@ install:
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
     git clone https://github.com/KhronosGroup/MoltenVK.git;
     cd MoltenVK;
-    ./fetchDependencies;
+    travis_wait 60 ./fetchDependencies;
     travis_wait 60 xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Release)" build;
     cd ..;
     export MOLTENVK_SDK_PATH=$TRAVIS_BUILD_DIR/MoltenVK;
