@@ -53,15 +53,9 @@ install:
   - ls;
     rm -rf dependencies;
     rm -rf build;
-    ls;
     python --version;
     pip install --user future;
-    mkdir dependencies;
-    cd dependencies;
-    git clone https://github.com/google/shaderc.git;
-    cd shaderc/utils;
-    python git-sync-deps;
-    cd ../../..;
+    ls
 
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
     git clone https://github.com/KhronosGroup/MoltenVK.git;
@@ -71,6 +65,7 @@ install:
     cd ..;
     export MOLTENVK_SDK_PATH=$TRAVIS_BUILD_DIR/MoltenVK;
     fi
+
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
     wget -O vulkansdk.run https://sdk.lunarg.com/sdk/download/1.1.73.0/linux/vulkansdk-linux-x86_64-1.1.73.0.run;
     chmod ugo+x vulkansdk.run;
@@ -81,16 +76,23 @@ install:
 
 script:
   - cmake --version
+
   - if [[ $TRAVIS_OS_NAME == "osx" ]]; then
     sed -i '' "s,git@github.com:,https://github.com/,g" CMakeLists.txt;
     cmake -G Xcode -H. -Bbuild -DBUILD_FOLDER_SUFFIX:STRING=build -DMOLTENVK_SDK_PATH=$MOLTENVK_SDK_PATH;
     xcodebuild -project build/ViewerSdl.xcodeproj -configuration Release;
-    cd ..;
     fi
+
   - if [[ $TRAVIS_OS_NAME == "linux" ]]; then
     export CC=${COMPILER_C};
     export CXX=${COMPILER_CC};
     sed -i 's,git@github.com:,https://github.com/,g' CMakeLists.txt;
+    cmake -H. -Bbuild -DBUILD_FOLDER_SUFFIX:STRING=build;
+    cd dependencies;
+    git clone https://github.com/google/shaderc.git;
+    cd shaderc/utils;
+    python git-sync-deps;
+    cd ../../..;
     cmake -H. -Bbuild -DBUILD_FOLDER_SUFFIX:STRING=build;
     make -C build;
     fi
