@@ -330,6 +330,25 @@ set(taskflow_source_dir ${SOURCE_DIR})
 message(STATUS "taskflow_source_dir = ${taskflow_source_dir}")
 
 if (APPLE)
+# if (USE_VULKAN_SDK)
+
+# ExternalProject_Add(
+#     json
+#     URL "https://vulkan.lunarg.com/sdk/home#sdk/downloadConfirm/1.1.101.0/mac/vulkansdk-macos-1.1.101.0.tar.gz"
+#     SOURCE_DIR "${CMAKE_SOURCE_DIR}/dependencies/vulkansdk"
+#     CONFIGURE_COMMAND ""
+#     BUILD_COMMAND ""
+#     INSTALL_COMMAND ""
+#     UPDATE_COMMAND ""
+#     PATCH_COMMAND ""
+#     LOG_DOWNLOAD ON
+# )
+
+# ExternalProject_Get_Property(vulkansdk SOURCE_DIR)
+# set(vulkansdk_source_dir ${SOURCE_DIR})
+# message(STATUS "vulkansdk_source_dir = ${vulkansdk_source_dir}")
+
+# else()
 
 ExternalProject_Add(
     MoltenVK
@@ -350,7 +369,8 @@ ExternalProject_Add(
                     # xcodebuild -project MoltenVKPackaging.xcodeproj -scheme "MoltenVK Package (Debug) (macOS only)" build &&
 )
  
-endif ()
+# endif()
+endif()
 
 #
 #
@@ -820,7 +840,10 @@ target_include_directories(
     ${draco_binary_dir}
 )
 
+set(ViewerSdl_AdditionalDependencies)
+
 if (APPLE)
+    set(ViewerSdl_AdditionalDependencies MoltenVK)
     target_link_libraries(
         ViewerSdl
         ${sdl2_binary_dir}${CONFIGURATION_SUFFIX}/libSDL2.a
@@ -889,6 +912,7 @@ add_dependencies(
     argh
     spdlog
     taskflow
+    ${ViewerSdl_AdditionalDependencies}
 )
 
 message(STATUS "VK_SDK_PATH = $ENV{VK_SDK_PATH}")
