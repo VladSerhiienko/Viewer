@@ -23,7 +23,7 @@ environment:
 before_build:
   - cmake -G "Visual Studio 15 2017 Win64" -Bbuild_msvc -H. -DBUILD_FOLDER_SUFFIX:STRING=build_msvc
 build_script:
-  - ps: msbuild build_msvc/Viewer.sln /t:ViewerSdl /p:Configuration="Release"
+  - ps: msbuild build_msvc/ViewerSdl.sln /t:ViewerSdl /p:Configuration="Release"
   # - ps: cd dependencies/shaderc
   # - ps: python.exe utils/git-sync-deps
   # - ps: cd ../..
