@@ -55,7 +55,7 @@ install:
     rm -rf build;
     ls;
     python --version;
-    pip install future;
+    pip install --user future;
     mkdir dependencies;
     cd dependencies;
     git clone https://github.com/google/shaderc.git;
