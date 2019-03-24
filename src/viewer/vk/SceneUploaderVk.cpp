@@ -18,6 +18,9 @@
 #ifdef ERROR
 #undef ERROR
 #endif
+#ifdef Status
+#undef Status
+#endif
 #include <draco/compression/decode.h>
 #endif
 
@@ -527,7 +530,6 @@ void TConvertVertices< apemodefb::DecompressedFatSkinnedVertexFb >( Decompressed
 }
 
 DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubmeshInfo& srcSubmesh ) {
-    using namespace draco;
     using namespace apemodefb;
 
     if ( !srcSubmesh.IsCompressedMesh( ) ) {
@@ -557,15 +559,15 @@ DecompressedMeshInfo DecompressMesh( apemode::SceneMesh& mesh, const SourceSubme
 
     auto start = std::chrono::high_resolution_clock::now();
 
-    DecoderBuffer decoderBuffer;
+    draco::DecoderBuffer decoderBuffer;
     decoderBuffer.Init( (const char*) srcSubmesh.pSrcMesh->vertices( )->data( ),
                         (size_t) srcSubmesh.pSrcMesh->vertices( )->size( ) );
 
-    Decoder decoder;
-    Mesh decodedMesh;
+    draco::Decoder decoder;
+    draco::Mesh decodedMesh;
 
-    const Status decoderStatus = decoder.DecodeBufferToGeometry( &decoderBuffer, &decodedMesh );
-    if ( Status::OK != decoderStatus.code( ) ) {
+    const draco::Status decoderStatus = decoder.DecodeBufferToGeometry( &decoderBuffer, &decodedMesh );
+    if ( draco::Status::OK != decoderStatus.code( ) ) {
         assert( false );
         return {};
     }
