@@ -457,6 +457,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 
     # using Clang
     add_definitions("-g")
+    add_definitions("-stdlib=libc++")
     add_definitions( "-DHAVE_PTHREAD" )
     set( CONFIGURATION_SUFFIX "" )
 
@@ -757,15 +758,10 @@ elseif (UNIX)
     target_link_libraries(
         ShaderPipeline
 
-        debug ${eastl_binary_dir}/Debug/libEASTL.a
-        debug ${eastl_binary_dir}/test/packages/EAStdC/Release/libEAStdC.a
-        debug ${shaderc_binary_dir}/libshaderc/Debug/libshaderc_combined.a
-        debug ${flatbuffers_binary_dir}/libflatbuffers.a
-
-        optimized ${eastl_binary_dir}/Release/libEASTL.a
-        optimized ${eastl_binary_dir}/test/packages/EAStdC/Release/libEAStdC.a
-        optimized ${shaderc_binary_dir}/libshaderc/Release/libshaderc_combined.a
-        optimized ${flatbuffers_binary_dir}/libflatbuffers.a
+        ${eastl_binary_dir}${CONFIGURATION_SUFFIX}/libEASTL.a
+        ${eastl_binary_dir}/test/packages/EAStdC${CONFIGURATION_SUFFIX}/libEAStdC.a
+        ${shaderc_binary_dir}/libshaderc${CONFIGURATION_SUFFIX}/libshaderc_combined.a
+        ${flatbuffers_binary_dir}${CONFIGURATION_SUFFIX}/libflatbuffers.a
        
         pthread
         stdc++fs
