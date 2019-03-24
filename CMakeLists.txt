@@ -350,7 +350,7 @@ set(vulkansdk_source_dir ${SOURCE_DIR})
 message(STATUS "vulkansdk_source_dir = ${vulkansdk_source_dir}")
 
 set(VulkanSdk_DependencyProject vulkansdk)
-set(VulkanSdk_IncludeDir ${vulkansdk_source_dir}/macOS/include)
+set(VulkanSdk_IncludeDir ${vulkansdk_source_dir}/macOS/include ${vulkansdk_source_dir}/MoltenVK/include)
 set(VulkanSdk_DebugLibrary ${vulkansdk_source_dir}/macOS/lib/libvulkan.1.1.101.dylib)
 set(VulkanSdk_ReleaseLibrary ${vulkansdk_source_dir}/macOS/lib/libvulkan.1.1.101.dylib)
 message(STATUS "VK_SDK_PATH = ${vulkansdk_source_dir}")
@@ -438,6 +438,14 @@ message(STATUS "VulkanMemoryAllocator_source_dir = ${VulkanMemoryAllocator_sourc
 #
 #
 
+# if (APPLE AND VIEWER_DOWNLOAD_AND_USE_VULKAN_SDK)
+
+# set(Shaderc_IncludeDir)
+# set(Shaderc_DebugCombinedLibrary)
+# set(Shaderc_ReleaseCombinedLibrary)
+
+# else()
+
 ExternalProject_Add(
     shaderc
     GIT_REPOSITORY "git@github.com:google/shaderc.git"
@@ -457,6 +465,12 @@ set(shaderc_binary_dir ${BINARY_DIR})
 message(STATUS "shaderc_source_dir = ${shaderc_source_dir}")
 message(STATUS "shaderc_binary_dir = ${shaderc_binary_dir}")
 
+set(Shaderc_IncludeDir ${shaderc_source_dir}/libshaderc/include)
+set(Shaderc_DebugCombinedLibrary ${shaderc_binary_dir}/libshaderc/Debug/libshaderc_combined.a)
+set(Shaderc_ReleaseCombinedLibrary ${shaderc_binary_dir}/libshaderc/Release/libshaderc_combined.a)
+
+# endif()
+
 if (UNIX)
 add_definitions("-rdynamic")
 endif()
@@ -470,8 +484,8 @@ endif()
 if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 
     # using Clang
+    # add_definitions("-stdlib=libc++")
     add_definitions("-g")
-    add_definitions("-stdlib=libc++")
     add_definitions( "-DHAVE_PTHREAD" )
     set( CONFIGURATION_SUFFIX "" )
 
@@ -717,15 +731,16 @@ target_include_directories(
     ${CMAKE_SOURCE_DIR}/dependencies/cpp-taskflow
     ${CMAKE_SOURCE_DIR}/dependencies/json/include
     ${CMAKE_SOURCE_DIR}/dependencies/flatbuffers/include
-    ${CMAKE_SOURCE_DIR}/dependencies/shaderc/libshaderc/include
-    ${CMAKE_SOURCE_DIR}/dependencies/shaderc/third_party/spirv-cross
-    ${CMAKE_SOURCE_DIR}/dependencies/shaderc/third_party/spirv-cross/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAAssert/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EABase/include/Common
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAMain/include
     ${CMAKE_SOURCE_DIR}/dependencies/eastl/test/packages/EAStdC/include
+    ${Shaderc_IncludeDir}
+    # ${CMAKE_SOURCE_DIR}/dependencies/shaderc/libshaderc/include
+    # ${CMAKE_SOURCE_DIR}/dependencies/shaderc/third_party/spirv-cross
+    # ${CMAKE_SOURCE_DIR}/dependencies/shaderc/third_party/spirv-cross/include
     )
 
 add_dependencies(
@@ -747,13 +762,15 @@ if (APPLE )
 
         debug ${eastl_binary_dir}/Debug/libEASTL.a
         debug ${eastl_binary_dir}/test/packages/EAStdC/Debug/libEAStdC.a
-        debug ${shaderc_binary_dir}/libshaderc/Debug/libshaderc_combined.a
         debug ${flatbuffers_binary_dir}/Debug/libflatbuffers.a
+        debug ${Shaderc_DebugCombinedLibrary}
+        # debug ${shaderc_binary_dir}/libshaderc/Debug/libshaderc_combined.a
 
         optimized ${eastl_binary_dir}/Release/libEASTL.a
         optimized ${eastl_binary_dir}/test/packages/EAStdC/Release/libEAStdC.a
-        optimized ${shaderc_binary_dir}/libshaderc/Release/libshaderc_combined.a
         optimized ${flatbuffers_binary_dir}/Release/libflatbuffers.a
+        optimized ${Shaderc_ReleaseCombinedLibrary}
+        # optimized ${shaderc_binary_dir}/libshaderc/Release/libshaderc_combined.a
         
         dl
         stdc++
