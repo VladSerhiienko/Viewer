@@ -796,6 +796,7 @@ elseif (UNIX)
        
         pthread
         stdc++fs
+        dl
         )
 endif ()
 
@@ -921,6 +922,7 @@ elseif (UNIX)
         Xrandr
         pthread
         stdc++fs
+        dl
         )
 endif ()
 
