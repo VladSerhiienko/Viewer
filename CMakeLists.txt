@@ -3,6 +3,17 @@ cmake_minimum_required(VERSION 3.4.1)
 include(ExternalProject)
 project (ViewerSdl)
 
+#
+#
+# platform decisions
+#
+#
+
+set( CMAKE_CXX_STANDARD 17 )
+set( CMAKE_CXX_STANDARD_REQUIRED ON )
+set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG" )
+set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG" )
+
 message(STATUS "CMAKE_SYSTEM_INFO_FILE = ${CMAKE_SYSTEM_INFO_FILE}")
 message(STATUS "CMAKE_SYSTEM_NAME = ${CMAKE_SYSTEM_NAME}")
 message(STATUS "CMAKE_SYSTEM_PROCESSOR = ${CMAKE_SYSTEM_PROCESSOR}")
@@ -35,16 +46,6 @@ else()
         -B${BUILD_FOLDER_SUFFIX} -H.
     )
 endif()
-
-#
-#
-# platform decisions
-#
-#
-
-set( CMAKE_CXX_STANDARD 17 )
-set( CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -D_DEBUG" )
-set( CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DNDEBUG" )
 
 #
 #
@@ -485,6 +486,7 @@ if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
 
     # using Clang
     # add_definitions("-stdlib=libc++")
+    add_definitions("-std=c++17")
     add_definitions("-g")
     add_definitions( "-DHAVE_PTHREAD" )
     set( CONFIGURATION_SUFFIX "" )
@@ -503,6 +505,7 @@ elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "AppleClang")
 
     # using AppleClang
     add_definitions( "-g" )
+    add_definitions("-std=c++17")
     add_definitions( "-DHAVE_PTHREAD" )
     add_definitions( "-D_XOPEN_SOURCE=600" )
     add_definitions( "-D_DARWIN_C_SOURCE=600" )
