@@ -73,6 +73,10 @@
 #define VK_NO_PROTOTYPES
 #endif
 
+#ifndef VMA_STATIC_VULKAN_FUNCTIONS
+#define VMA_STATIC_VULKAN_FUNCTIONS 1
+#endif
+
 #include <vulkan/vulkan.h>
 #include <vk_mem_alloc.h>
 #include <volk.h>
