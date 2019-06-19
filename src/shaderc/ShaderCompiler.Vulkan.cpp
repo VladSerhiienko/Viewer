@@ -1,17 +1,19 @@
 #include "ShaderCompiler.Vulkan.h"
 #include <apemode/platform/AppState.h>
 
-class CompiledShader : public apemode::shp::ICompiledShader {
+using namespace apemode::shp;
+
+class CompiledShader : public ICompiledShader {
 public:
     apemode::vector< uint32_t > Dwords;
-    apemode::string8 PreprocessedSrc;
-    apemode::string8 AssemblySrc;
+    apemode::string8            PreprocessedSrc;
+    apemode::string8            AssemblySrc;
     // spirv_cross::CompilerGLSL Glsl;
 
-    CompiledShader( apemode::vector< uint32_t > && dwords, apemode::string8 && preprocessedSrc, apemode::string8 && assemblySrc )
+    CompiledShader( apemode::vector< uint32_t >&& dwords, apemode::string8&& preprocessedSrc, apemode::string8&& assemblySrc )
         : Dwords( std::move( dwords ) )
-        , PreprocessedSrc( std::move( preprocessedSrc) )
-        , AssemblySrc( std::move( assemblySrc) ) { // , Glsl( dwords ) {
+        , PreprocessedSrc( std::move( preprocessedSrc ) )
+        , AssemblySrc( std::move( assemblySrc ) ) { // , Glsl( dwords ) {
         apemode::LogInfo( "CompiledShader: Created." );
     }
 
@@ -20,11 +22,11 @@ public:
     }
 
     const char* GetPreprocessedSrc( ) const override {
-        return PreprocessedSrc.c_str();
+        return PreprocessedSrc.c_str( );
     }
 
     const char* GetAssemblySrc( ) const override {
-        return AssemblySrc.c_str();
+        return AssemblySrc.c_str( );
     }
 
     //    const spirv_cross::CompilerGLSL& GetGlsl( ) const override {
@@ -47,12 +49,11 @@ public:
         std::string Path;
     };
 
-    apemode::shp::ShaderCompiler::IShaderFileReader& FileReader;
-    apemode::shp::ShaderCompiler::IIncludedFileSet*  pIncludedFiles;
+    IShaderCompiler::IShaderFileReader& FileReader;
+    IShaderCompiler::IIncludedFileSet*  pIncludedFiles;
 
-    Includer( apemode::shp::ShaderCompiler::IShaderFileReader& FileReader,
-              apemode::shp::ShaderCompiler::IIncludedFileSet*  pIncludedFiles )
-        : FileReader( FileReader ), pIncludedFiles( pIncludedFiles ) {
+    Includer( IShaderCompiler::IShaderFileReader& fileReader, IShaderCompiler::IIncludedFileSet* pIncludedFiles )
+        : FileReader( fileReader ), pIncludedFiles( pIncludedFiles ) {
     }
 
     // Handles shaderc_include_resolver_fn callbacks.
@@ -87,37 +88,73 @@ public:
     }
 };
 
-apemode::shp::ShaderCompiler::ShaderCompiler( ) {
+namespace {
+/* Wrapper for shaderc lib */
+class ShaderCompiler : public apemode::shp::IShaderCompiler {
+public:
+public:
+    ShaderCompiler( );
+    virtual ~ShaderCompiler( );
+
+    /* @note No files, only ready to compile shader sources */
+
+    apemode::unique_ptr< ICompiledShader > Compile( const std::string&                ShaderName,
+                                                    const std::string&                ShaderCode,
+                                                    const IMacroDefinitionCollection* pMacros,
+                                                    EShaderType                       eShaderKind,
+                                                    EShaderOptimizationType           eShaderOptimization ) const override;
+
+    /* @note Compiling from source files */
+
+    IShaderFileReader*     GetShaderFileReader( ) override;
+    IShaderFeedbackWriter* GetShaderFeedbackWriter( ) override;
+    void                   SetShaderFileReader( IShaderFileReader* pShaderFileReader ) override;
+    void                   SetShaderFeedbackWriter( IShaderFeedbackWriter* pShaderFeedbackWriter ) override;
+
+    apemode::unique_ptr< ICompiledShader > Compile( const std::string&                FilePath,
+                                                    const IMacroDefinitionCollection* pMacros,
+                                                    EShaderType                       eShaderKind,
+                                                    EShaderOptimizationType           eShaderOptimization,
+                                                    IIncludedFileSet*                 pOutIncludedFiles ) const override;
+
+private:
+    shaderc::Compiler      Compiler;
+    IShaderFileReader*     pShaderFileReader     = nullptr;
+    IShaderFeedbackWriter* pShaderFeedbackWriter = nullptr;
+};
+} // namespace
+
+ShaderCompiler::ShaderCompiler( ) {
 }
 
-apemode::shp::ShaderCompiler::~ShaderCompiler( ) {
+ShaderCompiler::~ShaderCompiler( ) {
 }
 
-apemode::shp::ShaderCompiler::IShaderFileReader* apemode::shp::ShaderCompiler::GetShaderFileReader( ) {
-    return /* impl */ pShaderFileReader;
+ShaderCompiler::IShaderFileReader* ShaderCompiler::GetShaderFileReader( ) {
+    return pShaderFileReader;
 }
 
-apemode::shp::ShaderCompiler::IShaderFeedbackWriter* apemode::shp::ShaderCompiler::GetShaderFeedbackWriter( ) {
-    return /* impl */ pShaderFeedbackWriter;
+ShaderCompiler::IShaderFeedbackWriter* ShaderCompiler::GetShaderFeedbackWriter( ) {
+    return pShaderFeedbackWriter;
 }
 
-void apemode::shp::ShaderCompiler::SetShaderFileReader( IShaderFileReader* pInShaderFileReader ) {
-    /* impl */ pShaderFileReader = pInShaderFileReader;
+void ShaderCompiler::SetShaderFileReader( IShaderFileReader* pInShaderFileReader ) {
+    pShaderFileReader = pInShaderFileReader;
 }
 
-void apemode::shp::ShaderCompiler::SetShaderFeedbackWriter( IShaderFeedbackWriter* pInShaderFeedbackWriter ) {
-    /* impl */ pShaderFeedbackWriter = pInShaderFeedbackWriter;
+void ShaderCompiler::SetShaderFeedbackWriter( IShaderFeedbackWriter* pInShaderFeedbackWriter ) {
+    pShaderFeedbackWriter = pInShaderFeedbackWriter;
 }
 
 static apemode::unique_ptr< apemode::shp::ICompiledShader > InternalCompile(
-    const std::string&                                              shaderName,
-    const std::string&                                              shaderContent,
-    const apemode::shp::ShaderCompiler::IMacroDefinitionCollection* pMacros,
-    const apemode::shp::ShaderCompiler::EShaderType                 eShaderKind,
-    shaderc::CompileOptions&                                        options,
-    const bool                                                      bAssembly,
-    shaderc::Compiler*                                              pCompiler,
-    apemode::shp::ShaderCompiler::IShaderFeedbackWriter*            pShaderFeedbackWriter ) {
+    const std::string&                                 shaderName,
+    const std::string&                                 shaderContent,
+    const IShaderCompiler::IMacroDefinitionCollection* pMacros,
+    const IShaderCompiler::EShaderType                 eShaderKind,
+    shaderc::CompileOptions&                           options,
+    const bool                                         bAssembly,
+    const shaderc::Compiler*                           pCompiler,
+    ShaderCompiler::IShaderFeedbackWriter*             pShaderFeedbackWriter ) {
     using namespace apemode::shp;
     apemode_memory_allocation_scope;
 
@@ -139,7 +176,7 @@ static apemode::unique_ptr< apemode::shp::ICompiledShader > InternalCompile(
     if ( shaderc_compilation_status_success != preprocessedSourceCompilationResult.GetCompilationStatus( ) ) {
         if ( nullptr != pShaderFeedbackWriter ) {
             pShaderFeedbackWriter->WriteFeedback(
-                apemode::shp::ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed |
+                ShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed |
                     preprocessedSourceCompilationResult.GetCompilationStatus( ),
                 shaderName,
                 pMacros,
@@ -176,8 +213,7 @@ static apemode::unique_ptr< apemode::shp::ICompiledShader > InternalCompile(
                 shaderName,
                 pMacros,
                 assemblyCompilationResult.GetErrorMessage( ).data( ),
-                assemblyCompilationResult.GetErrorMessage( ).data( ) +
-                    assemblyCompilationResult.GetErrorMessage( ).size( ) );
+                assemblyCompilationResult.GetErrorMessage( ).data( ) + assemblyCompilationResult.GetErrorMessage( ).size( ) );
         }
 
         assert( false );
@@ -225,28 +261,25 @@ static apemode::unique_ptr< apemode::shp::ICompiledShader > InternalCompile(
                                               spvCompilationResult.cend( ) );
     }
 
-    apemode::vector< uint32_t > dwords( spvCompilationResult.cbegin( ),
-                                        spvCompilationResult.cend( ) );
-    
+    apemode::vector< uint32_t > dwords( spvCompilationResult.cbegin( ), spvCompilationResult.cend( ) );
+
     apemode::string8 preprocessedSrc( preprocessedSourceCompilationResult.cbegin( ),
                                       preprocessedSourceCompilationResult.cend( ) );
-    
-    apemode::string8 assemblySrc( assemblyCompilationResult.cbegin( ),
-                                  assemblyCompilationResult.cend( ) );
 
-    ICompiledShader* pCompiledShader = apemode_new CompiledShader( std::move( dwords ),
-                                                                   std::move( preprocessedSrc ),
-                                                                   std::move( assemblySrc ) );
+    apemode::string8 assemblySrc( assemblyCompilationResult.cbegin( ), assemblyCompilationResult.cend( ) );
+
+    ICompiledShader* pCompiledShader =
+        apemode_new  CompiledShader( std::move( dwords ), std::move( preprocessedSrc ), std::move( assemblySrc ) );
 
     return apemode::unique_ptr< ICompiledShader >( pCompiledShader );
 }
 
-apemode::unique_ptr< apemode::shp::ICompiledShader > apemode::shp::ShaderCompiler::Compile(
+apemode::unique_ptr< apemode::shp::ICompiledShader > ShaderCompiler::Compile(
     const std::string&                shaderName,
     const std::string&                shaderContent,
     const IMacroDefinitionCollection* pMacros,
     const EShaderType                 eShaderKind,
-    const EShaderOptimizationType     eShaderOptimization ) {
+    const EShaderOptimizationType     eShaderOptimization ) const {
     apemode_memory_allocation_scope;
 
     shaderc::CompileOptions options;
@@ -261,15 +294,14 @@ apemode::unique_ptr< apemode::shp::ICompiledShader > apemode::shp::ShaderCompile
                             options,
                             true,
                             /* impl */ &Compiler,
-                            /* impl */  pShaderFeedbackWriter );
+                            /* impl */ pShaderFeedbackWriter );
 }
 
-apemode::unique_ptr< apemode::shp::ICompiledShader > apemode::shp::ShaderCompiler::Compile(
-    const std::string&                InFilePath,
-    const IMacroDefinitionCollection* pMacros,
-    const EShaderType                 eShaderKind,
-    const EShaderOptimizationType     eShaderOptimization,
-    IIncludedFileSet*                 pOutIncludedFiles ) {
+apemode::unique_ptr< apemode::shp::ICompiledShader > ShaderCompiler::Compile( const std::string&                InFilePath,
+                                                                              const IMacroDefinitionCollection* pMacros,
+                                                                              const EShaderType                 eShaderKind,
+                                                                              const EShaderOptimizationType eShaderOptimization,
+                                                                              IIncludedFileSet* pOutIncludedFiles ) const {
     apemode_memory_allocation_scope;
 
     if ( nullptr == /* impl */ pShaderFileReader ) {
@@ -305,4 +337,8 @@ apemode::unique_ptr< apemode::shp::ICompiledShader > apemode::shp::ShaderCompile
     }
 
     return nullptr;
+}
+
+apemode::unique_ptr< IShaderCompiler > apemode::shp::NewShaderCompiler( ) {
+    return apemode::unique_ptr< IShaderCompiler >( apemode_new ShaderCompiler{} );
 }

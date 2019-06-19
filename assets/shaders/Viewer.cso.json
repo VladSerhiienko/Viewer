@@ -28,55 +28,14 @@
         },
 
         {
-            "srcFile": "shaders/Scene.frag",
-            "shaderType": "frag"
-        },
-        {
-            "srcFile": "shaders/Scene.vert",
-            "shaderType": "vert"
-        },
-        {
-            "srcFile": "shaders/SceneSkinned.vert",
-            "shaderType": "vert"
-        },
-        {
-            "srcFile": "shaders/SceneSkinned8.vert",
-            "shaderType": "vert"
-        },
-
-
-        {
             "srcFile": "shaders/UScene.frag",
             "shaderType": "frag"
         },
-        {
-            "srcFile": "shaders/UScene.vert",
-            "shaderType": "vert"
-        },
+        
         {
             "srcFile": "shaders/UScene.vert",
             "shaderType": "vert",
-            "macros": [
-                {
-                    "name": "SKINNING",
-                    "value": "1"
-                }
-            ]
-        },
-        {
-            "srcFile": "shaders/UScene.vert",
-            "shaderType": "vert",
-            "macros": [
-                {
-                    "name": "SKINNING8",
-                    "value": "1"
-                }
-            ]
-        },
-        {
-            "srcFile": "shaders/UScene.vert",
-            "shaderType": "vert",
-            "macroGroups": [
+            "definitionGroups": [
                 [
                     { "name": "" },
                     { "name": "SKINNING", "value": "1" },

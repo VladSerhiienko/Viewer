@@ -53,6 +53,13 @@ namespace apemode {
         argh::parser*      GetArgs( );
         tf::Taskflow*      GetDefaultTaskflow( );
     };
+    
+    struct AppStateExitGuard {
+        ~AppStateExitGuard() {
+            AppState::OnExit();
+        }
+    };
+    
 
     /**
      * @return Command line option of specified type.
