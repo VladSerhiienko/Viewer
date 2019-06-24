@@ -21,12 +21,14 @@ public:
         apemode::LogInfo( "CompiledShader: Destroying." );
     }
 
-    const char* GetPreprocessedSrc( ) const override {
-        return PreprocessedSrc.c_str( );
+    std::string_view GetPreprocessedSrc( ) const override {
+        std::string_view sv{PreprocessedSrc.c_str(), PreprocessedSrc.size()};
+        return sv;
     }
 
-    const char* GetAssemblySrc( ) const override {
-        return AssemblySrc.c_str( );
+    std::string_view GetAssemblySrc( ) const override {
+        std::string_view sv{AssemblySrc.c_str(), AssemblySrc.size()};
+        return sv;
     }
 
     //    const spirv_cross::CompilerGLSL& GetGlsl( ) const override {

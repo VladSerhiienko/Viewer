@@ -24,8 +24,8 @@ class ShaderCompilerMacroDefinitionCollection : public apemode::shp::IShaderComp
 public:
     std::map< std::string, std::string > Macros;
 
-    void Init( const std::map< std::string, std::string >& macros ) {
-        Macros = macros;
+    void Init( std::map< std::string, std::string >&& macros ) {
+        Macros = std::move(macros);
     }
 
     size_t GetCount( ) const override {
@@ -71,17 +71,18 @@ struct EFeedbackTypeWithOStream {
     // clang-format off
     template < typename OStream >
     inline friend OStream& operator<<( OStream& os, const EFeedbackTypeWithOStream& feedbackType ) {
+        using e = apemode::shp::IShaderCompiler::IShaderFeedbackWriter;
         switch ( feedbackType.e ) {
-        case apemode::shp::IShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Assembly:                 return os << "Assembly";
-        case apemode::shp::IShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Preprocessed:             return os << "Preprocessed";
-        case apemode::shp::IShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_PreprocessedOptimized:    return os << "PreprocessedOptimized";
-        case apemode::shp::IShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStage_Spv:                      return os << "Spv";
-        case apemode::shp::IShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_CompilationError:        return os << "CompilationError";
-        case apemode::shp::IShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_InternalError:           return os << "InternalError";
-        case apemode::shp::IShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_InvalidAssembly:         return os << "InvalidAssembly";
-        case apemode::shp::IShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_InvalidStage:            return os << "InvalidStage";
-        case apemode::shp::IShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_NullResultObject:        return os << "NullResultObject";
-        case apemode::shp::IShaderCompiler::IShaderFeedbackWriter::eFeedbackType_CompilationStatus_Success:                 return os << "Success";
+        case e::eFeedbackType_CompilationStage_Assembly:                 return os << "Assembly";
+        case e::eFeedbackType_CompilationStage_Preprocessed:             return os << "Preprocessed";
+        case e::eFeedbackType_CompilationStage_PreprocessedOptimized:    return os << "PreprocessedOptimized";
+        case e::eFeedbackType_CompilationStage_Spv:                      return os << "Spv";
+        case e::eFeedbackType_CompilationStatus_CompilationError:        return os << "CompilationError";
+        case e::eFeedbackType_CompilationStatus_InternalError:           return os << "InternalError";
+        case e::eFeedbackType_CompilationStatus_InvalidAssembly:         return os << "InvalidAssembly";
+        case e::eFeedbackType_CompilationStatus_InvalidStage:            return os << "InvalidStage";
+        case e::eFeedbackType_CompilationStatus_NullResultObject:        return os << "NullResultObject";
+        case e::eFeedbackType_CompilationStatus_Success:                 return os << "Success";
         default:                                                                                                            return os;
         }
     }
@@ -101,14 +102,14 @@ public:
         const auto feedbackCompilationError = eType & eFeedbackType_CompilationStatusMask;
 
         if ( eFeedbackType_CompilationStatus_Success != feedbackCompilationError ) {
-            apemode::LogError( "ShaderCompiler: {} / {}", // / {}",
+            apemode::LogError( "ShaderCompiler: {}/{}: {}",
                                EFeedbackTypeWithOStream( feedbackStage ),
                                EFeedbackTypeWithOStream( feedbackCompilationError ),
                                FullFilePath );
             apemode::LogError( " Msg: {}", (const char*) pContent );
             assert( false );
         } else {
-            apemode::LogInfo( "ShaderCompiler: {} / {}", // / {}",
+            apemode::LogInfo( "ShaderCompiler: {}/{}: {}",
                               EFeedbackTypeWithOStream( feedbackStage ),
                               EFeedbackTypeWithOStream( feedbackCompilationError ),
                               FullFilePath );
@@ -163,7 +164,7 @@ std::string GetMacrosString( const std::map< std::string, std::string >& macros 
     return macrosString;
 }
 
-void ReplaceAll( std::string& data, std::string toSearch, std::string replaceStr ) {
+void ReplaceAll( std::string& data, const std::string& toSearch, const std::string& replaceStr ) {
     size_t pos = data.find( toSearch );
     while ( pos != std::string::npos ) {
         data.replace( pos, toSearch.size( ), replaceStr );
@@ -196,7 +197,7 @@ std::map< std::string, std::string > GetMacroDefinitions( const json& macrosJson
         assert( macroJson.is_object( ) );
         assert( macroJson[ "name" ].is_string( ) );
 
-        std::string macroName         = macroJson[ "name" ].get< std::string >( );
+        const std::string macroName = macroJson[ "name" ].get< std::string >( );
         macroDefinitions[ macroName ] = "1";
 
         auto valueJsonIt = macroJson.find( "value" );
@@ -222,7 +223,7 @@ ShaderCompilerMacroDefinitionCollection GetMacroGroup( const json& groupJson ) {
         assert( macroJson.is_object( ) );
         assert( macroJson[ "name" ].is_string( ) );
 
-        std::string macroName         = macroJson[ "name" ].get< std::string >( );
+        const std::string macroName = macroJson[ "name" ].get< std::string >( );
         macroDefinitions[ macroName ] = "1";
 
         auto valueJsonIt = macroJson.find( "value" );
@@ -242,33 +243,30 @@ ShaderCompilerMacroDefinitionCollection GetMacroGroup( const json& groupJson ) {
     }
 
     ShaderCompilerMacroDefinitionCollection group;
-    group.Init( macroDefinitions );
+    group.Init( std::move( macroDefinitions ) );
     return group;
 }
 
-flatbuffers::Offset< csofb::CompiledShaderFb > CompileShader( flatbuffers::FlatBufferBuilder&             builder,
-                                                              const apemode::shp::IShaderCompiler&        shaderCompiler,
-                                                              const std::map< std::string, std::string >& macroDefinitions,
-                                                              const std::string&                          shaderType,
-                                                              std::string                                 srcFile,
-                                                              const std::string&                          outputFolder ) {
+flatbuffers::Offset< csofb::CompiledShaderFb > CompileShaderVariant(
+    flatbuffers::FlatBufferBuilder&             builder,
+    const apemode::shp::IShaderCompiler&        shaderCompiler,
+    std::map< std::string, std::string >        macroDefinitions,
+    const std::string&                          shaderType,
+    std::string                                 srcFile,
+    const std::string&                          outputFolder ) {
     flatbuffers::Offset< csofb::CompiledShaderFb > csoOffset{};
 
     std::string macrosString = GetMacrosString( macroDefinitions );
 
-    ShaderCompilerMacroDefinitionCollection                    concreteMacros;
-    apemode::shp::IShaderCompiler::IMacroDefinitionCollection* opaqueMacros = nullptr;
-    if ( !macroDefinitions.empty( ) ) {
-        concreteMacros.Init( macroDefinitions );
-        opaqueMacros = &concreteMacros;
-    }
+    ShaderCompilerMacroDefinitionCollection concreteMacros;
+    concreteMacros.Init( std::move( macroDefinitions ) );
 
     apemode::shp::IShaderCompiler::EShaderType eShaderType   = GetShaderType( shaderType );
     csofb::EShaderType                         eShaderTypeFb = csofb::EShaderType( eShaderType );
 
     ShaderCompilerIncludedFileSet includedFileSet;
     if ( auto compiledShader = shaderCompiler.Compile( srcFile,
-                                                       opaqueMacros,
+                                                       &concreteMacros,
                                                        eShaderType,
                                                        apemode::shp::IShaderCompiler::eShaderOptimization_Performance,
                                                        &includedFileSet ) ) {
@@ -279,7 +277,7 @@ flatbuffers::Offset< csofb::CompiledShaderFb > CompileShader( flatbuffers::FlatB
         assetOffsetFb = builder.CreateString( srcFile );
 
         flatbuffers::Offset< flatbuffers::String > macrosOffsetFb{};
-        if ( macrosString.size( ) ) {
+        if ( !macrosString.empty( ) ) {
             macrosOffsetFb = builder.CreateString( macrosString );
         }
 
@@ -310,26 +308,28 @@ flatbuffers::Offset< csofb::CompiledShaderFb > CompileShader( flatbuffers::FlatB
             cachedCSO.c_str( ), (const char*) compiledShader->GetBytePtr( ), compiledShader->GetByteCount( ), true );
 
         flatbuffers::SaveFile( cachedPreprocessed.c_str( ),
-                               compiledShader->GetPreprocessedSrc( ),
-                               strlen( compiledShader->GetPreprocessedSrc( ) ),
+                               compiledShader->GetPreprocessedSrc( ).data( ),
+                               compiledShader->GetPreprocessedSrc( ).size( ),
                                false );
 
-        flatbuffers::SaveFile(
-            cachedAssembly.c_str( ), compiledShader->GetAssemblySrc( ), strlen( compiledShader->GetAssemblySrc( ) ), false );
+        flatbuffers::SaveFile( cachedAssembly.c_str( ),
+                               compiledShader->GetAssemblySrc( ).data( ),
+                               compiledShader->GetAssemblySrc( ).size( ),
+                               false );
     }
 
     return csoOffset;
 }
 
-void CompileShaders( std::vector< flatbuffers::Offset< csofb::CompiledShaderFb > > csoOffsets,
-                     flatbuffers::FlatBufferBuilder&                               builder,
-                     const apemode::shp::IShaderCompiler&                          shaderCompiler,
-                     const ShaderCompilerMacroGroupCollection&                     macroGroups,
-                     const size_t                                                  macroGroupIndex,
-                     const std::string&                                            shaderType,
-                     std::string                                                   srcFile,
-                     const std::string&                                            outputFolder,
-                     std::vector< size_t >&                                        macroIndices ) {
+void CompileShaderVariantsRecursively( std::vector< flatbuffers::Offset< csofb::CompiledShaderFb > > csoOffsets,
+                                       flatbuffers::FlatBufferBuilder&                               builder,
+                                       const apemode::shp::IShaderCompiler&                          shaderCompiler,
+                                       const ShaderCompilerMacroGroupCollection&                     macroGroups,
+                                       const size_t                                                  macroGroupIndex,
+                                       const std::string&                                            shaderType,
+                                       std::string                                                   srcFile,
+                                       const std::string&                                            outputFolder,
+                                       std::vector< size_t >&                                        macroIndices ) {
     assert( macroIndices.size( ) == macroGroups.MacroGroups.size( ) );
     if ( macroGroupIndex >= macroGroups.MacroGroups.size( ) ) {
         std::map< std::string, std::string > macroDefinitions;
@@ -350,34 +350,36 @@ void CompileShaders( std::vector< flatbuffers::Offset< csofb::CompiledShaderFb >
         }
 
         apemode::LogInfo( "Sending to compiler ..." );
-        csoOffsets.push_back( CompileShader( builder, shaderCompiler, macroDefinitions, shaderType, srcFile, outputFolder ) );
+        csoOffsets.push_back(
+            CompileShaderVariant( builder, shaderCompiler, std::move( macroDefinitions ), shaderType, srcFile, outputFolder ) );
         return;
     }
 
     auto& group = macroGroups.MacroGroups[ macroGroupIndex ];
     for ( size_t i = 0; i < group.GetCount( ); ++i ) {
         macroIndices[ macroGroupIndex ] = i;
-        CompileShaders( csoOffsets,
-                        builder,
-                        shaderCompiler,
-                        macroGroups,
-                        macroGroupIndex + 1,
-                        shaderType,
-                        srcFile,
-                        outputFolder,
-                        macroIndices );
+        CompileShaderVariantsRecursively( csoOffsets,
+                                          builder,
+                                          shaderCompiler,
+                                          macroGroups,
+                                          macroGroupIndex + 1,
+                                          shaderType,
+                                          srcFile,
+                                          outputFolder,
+                                          macroIndices );
     }
 }
 
-void CompileShaders( std::vector< flatbuffers::Offset< csofb::CompiledShaderFb > > csoOffsets,
-                     flatbuffers::FlatBufferBuilder&                               builder,
-                     const apemode::shp::IShaderCompiler&                          shaderCompiler,
-                     const ShaderCompilerMacroGroupCollection&                     macroGroups,
-                     const std::string&                                            shaderType,
-                     std::string                                                   srcFile,
-                     const std::string&                                            outputFolder ) {
+void CompileShaderVariantsRecursively( std::vector< flatbuffers::Offset< csofb::CompiledShaderFb > > csoOffsets,
+                                       flatbuffers::FlatBufferBuilder&                               builder,
+                                       const apemode::shp::IShaderCompiler&                          shaderCompiler,
+                                       const ShaderCompilerMacroGroupCollection&                     macroGroups,
+                                       const std::string&                                            shaderType,
+                                       std::string                                                   srcFile,
+                                       const std::string&                                            outputFolder ) {
     std::vector< size_t > macroIndices( macroGroups.GetCount( ) );
-    CompileShaders( csoOffsets, builder, shaderCompiler, macroGroups, 0, shaderType, srcFile, outputFolder, macroIndices );
+    CompileShaderVariantsRecursively(
+        csoOffsets, builder, shaderCompiler, macroGroups, 0, shaderType, srcFile, outputFolder, macroIndices );
 }
 
 std::vector< flatbuffers::Offset< csofb::CompiledShaderFb > > CompileShader(
@@ -408,20 +410,19 @@ std::vector< flatbuffers::Offset< csofb::CompiledShaderFb > > CompileShader(
             assert( commandJson[ "shaderType" ].is_string( ) );
             const std::string shaderType = commandJson[ "shaderType" ].get< std::string >( );
 
-            CompileShaders( csoOffsets, builder, shaderCompiler, macroGroups, shaderType, srcFile, outputFolder );
+            CompileShaderVariantsRecursively(
+                csoOffsets, builder, shaderCompiler, macroGroups, shaderType, srcFile, outputFolder );
         } else {
-            std::map< std::string, std::string >                       macroDefinitions;
-            ShaderCompilerMacroDefinitionCollection                    concreteMacros;
-            apemode::shp::IShaderCompiler::IMacroDefinitionCollection* opaqueMacros = nullptr;
+            std::map< std::string, std::string > macroDefinitions;
+            ShaderCompilerMacroDefinitionCollection macros;
 
             auto macrosJsonIt = commandJson.find( "macros" );
             if ( macrosJsonIt != commandJson.end( ) && macrosJsonIt->is_array( ) ) {
                 const json& macrosJson = *macrosJsonIt;
-                macroDefinitions       = GetMacroDefinitions( macrosJson );
+                macroDefinitions = GetMacroDefinitions( macrosJson );
 
                 if ( !macroDefinitions.empty( ) ) {
-                    concreteMacros.Init( macroDefinitions );
-                    opaqueMacros = &concreteMacros;
+                    macros.Init( std::move( macroDefinitions ) );
                 }
             }
 
@@ -429,7 +430,7 @@ std::vector< flatbuffers::Offset< csofb::CompiledShaderFb > > CompileShader(
             const std::string shaderType = commandJson[ "shaderType" ].get< std::string >( );
 
             csoOffsets.push_back(
-                CompileShader( builder, shaderCompiler, macroDefinitions, shaderType, srcFile, outputFolder ) );
+                CompileShaderVariant( builder, shaderCompiler, macroDefinitions, shaderType, srcFile, outputFolder ) );
         }
 
         return csoOffsets;
@@ -499,8 +500,6 @@ int main( int argc, char** argv ) {
     }
 
     const json csoJson = json::parse( (const char*) csoJsonContents.data( ) );
-    apemode::LogInfo( "CSO JSON dump: {}", csoJson.dump( ).c_str( ) );
-
     if ( !csoJson.is_object( ) ) {
         apemode::LogError( "Parsing error." );
         return 1;
@@ -521,7 +520,7 @@ int main( int argc, char** argv ) {
     shaderCompiler->SetShaderFileReader( &shaderCompilerFileReader );
     shaderCompiler->SetShaderFeedbackWriter( &shaderFeedbackWriter );
 
-    flatbuffers::FlatBufferBuilder                                builder;
+    flatbuffers::FlatBufferBuilder builder;
     std::vector< flatbuffers::Offset< csofb::CompiledShaderFb > > csoOffsets;
 
     const json& commandsJson = csoJson[ "commands" ];
