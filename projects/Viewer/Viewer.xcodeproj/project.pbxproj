@@ -119,6 +119,8 @@
 		CA4E253C2205E85F005190FB /* shaders in Resources */ = {isa = PBXBuildFile; fileRef = CA4E25372205E85F005190FB /* shaders */; };
 		CA4E253D2205E85F005190FB /* images in Resources */ = {isa = PBXBuildFile; fileRef = CA4E25382205E85F005190FB /* images */; };
 		CA4E253E2205E85F005190FB /* images in Resources */ = {isa = PBXBuildFile; fileRef = CA4E25382205E85F005190FB /* images */; };
+		CA533A2422CE232B001994A1 /* AssetManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA533A2222CE232B001994A1 /* AssetManager.cpp */; };
+		CA533A2522CE232B001994A1 /* AssetManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CA533A2222CE232B001994A1 /* AssetManager.cpp */; };
 		CA676D04217A2E8F0098A888 /* AppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = CA676D03217A2E8F0098A888 /* AppDelegate.m */; };
 		CA676D07217A2E8F0098A888 /* GameViewController.mm in Sources */ = {isa = PBXBuildFile; fileRef = CA676D06217A2E8F0098A888 /* GameViewController.mm */; };
 		CA676D0A217A2E8F0098A888 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = CA676D08217A2E8F0098A888 /* Main.storyboard */; };
@@ -159,8 +161,6 @@
 		CABD242B217B3E030056A686 /* BufferPools.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2421217B3E030056A686 /* BufferPools.Vulkan.cpp */; };
 		CABD242C217B3E030056A686 /* GraphicsManager.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2422217B3E030056A686 /* GraphicsManager.Vulkan.cpp */; };
 		CABD242D217B3E030056A686 /* GraphicsManager.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2422217B3E030056A686 /* GraphicsManager.Vulkan.cpp */; };
-		CABD242E217B3E030056A686 /* AssetManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2423217B3E030056A686 /* AssetManager.cpp */; };
-		CABD242F217B3E030056A686 /* AssetManager.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2423217B3E030056A686 /* AssetManager.cpp */; };
 		CABD2430217B3E030056A686 /* CityHash.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2424217B3E030056A686 /* CityHash.Vulkan.cpp */; };
 		CABD2431217B3E030056A686 /* CityHash.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2424217B3E030056A686 /* CityHash.Vulkan.cpp */; };
 		CABD2432217B3E030056A686 /* GraphicsDevice.Vulkan.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CABD2425217B3E030056A686 /* GraphicsDevice.Vulkan.cpp */; };
@@ -243,6 +243,12 @@
 		CA4E25362205E85F005190FB /* fonts */ = {isa = PBXFileReference; lastKnownFileType = folder; name = fonts; path = ../../../../assets/fonts; sourceTree = "<group>"; };
 		CA4E25372205E85F005190FB /* shaders */ = {isa = PBXFileReference; lastKnownFileType = folder; name = shaders; path = ../../../../assets/shaders; sourceTree = "<group>"; };
 		CA4E25382205E85F005190FB /* images */ = {isa = PBXFileReference; lastKnownFileType = folder; name = images; path = ../../../../assets/images; sourceTree = "<group>"; };
+		CA533A2122CE232B001994A1 /* AssetManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AssetManager.h; path = ../../../../src/apemode/platform/shared/AssetManager.h; sourceTree = "<group>"; };
+		CA533A2222CE232B001994A1 /* AssetManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AssetManager.cpp; path = ../../../../src/apemode/platform/shared/AssetManager.cpp; sourceTree = "<group>"; };
+		CA533A2322CE232B001994A1 /* tinydir.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = tinydir.h; path = ../../../../src/apemode/platform/shared/tinydir.h; sourceTree = "<group>"; };
+		CA533A2622CE2383001994A1 /* AppState.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = AppState.h; path = ../../../../src/apemode/platform/AppState.h; sourceTree = "<group>"; };
+		CA533A2722CE2383001994A1 /* CityHash.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = CityHash.h; path = ../../../../src/apemode/platform/CityHash.h; sourceTree = "<group>"; };
+		CA533A2822CE2383001994A1 /* MemoryManager.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = MemoryManager.h; path = ../../../../src/apemode/platform/memory/MemoryManager.h; sourceTree = "<group>"; };
 		CA676CFA217A2E8F0098A888 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		CA676CFF217A2E8F0098A888 /* Viewer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Viewer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		CA676D02217A2E8F0098A888 /* AppDelegate.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = AppDelegate.h; sourceTree = "<group>"; };
@@ -283,7 +289,6 @@
 		CABD2420217B3E030056A686 /* DescriptorPool.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = DescriptorPool.Vulkan.cpp; path = ../../src/apemode/vk/DescriptorPool.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
 		CABD2421217B3E030056A686 /* BufferPools.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = BufferPools.Vulkan.cpp; path = ../../src/apemode/vk/BufferPools.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
 		CABD2422217B3E030056A686 /* GraphicsManager.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GraphicsManager.Vulkan.cpp; path = ../../src/apemode/vk/GraphicsManager.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
-		CABD2423217B3E030056A686 /* AssetManager.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AssetManager.cpp; path = ../../src/apemode/platform/shared/AssetManager.cpp; sourceTree = SOURCE_ROOT; };
 		CABD2424217B3E030056A686 /* CityHash.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CityHash.Vulkan.cpp; path = ../../src/apemode/vk/CityHash.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
 		CABD2425217B3E030056A686 /* GraphicsDevice.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = GraphicsDevice.Vulkan.cpp; path = ../../src/apemode/vk/GraphicsDevice.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
 		CABD2434217B3F440056A686 /* AppSurface.Vulkan.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = AppSurface.Vulkan.cpp; path = ../../src/apemode/vk_ext/AppSurface.Vulkan.cpp; sourceTree = SOURCE_ROOT; };
@@ -461,6 +466,12 @@
 		CABD23E4217B0B9F0056A686 /* ApemodePlatform */ = {
 			isa = PBXGroup;
 			children = (
+				CA533A2622CE2383001994A1 /* AppState.h */,
+				CA533A2722CE2383001994A1 /* CityHash.h */,
+				CA533A2822CE2383001994A1 /* MemoryManager.h */,
+				CA533A2222CE232B001994A1 /* AssetManager.cpp */,
+				CA533A2122CE232B001994A1 /* AssetManager.h */,
+				CA533A2322CE232B001994A1 /* tinydir.h */,
 				CABD23EE217B0F180056A686 /* MemoryManager.cpp */,
 				CABD23E6217B0BF20056A686 /* AppState.cpp */,
 				CABD23E7217B0BF20056A686 /* CityHash.cpp */,
@@ -500,7 +511,6 @@
 				CABD2420217B3E030056A686 /* DescriptorPool.Vulkan.cpp */,
 				CABD2425217B3E030056A686 /* GraphicsDevice.Vulkan.cpp */,
 				CABD2422217B3E030056A686 /* GraphicsManager.Vulkan.cpp */,
-				CABD2423217B3E030056A686 /* AssetManager.cpp */,
 				CABD241F217B3E030056A686 /* Swapchain.Vulkan.cpp */,
 			);
 			name = ApemodeVulkan;
@@ -696,7 +706,6 @@
 				CA16762D220B0453006672C4 /* quantization_utils.cc in Sources */,
 				CABD2426217B3E030056A686 /* Swapchain.Vulkan.cpp in Sources */,
 				CABD2449217B43A60056A686 /* SceneRendererVk.cpp in Sources */,
-				CABD242E217B3E030056A686 /* AssetManager.cpp in Sources */,
 				CA16760C220B0453006672C4 /* adaptive_rans_bit_decoder.cc in Sources */,
 				CABD2432217B3E030056A686 /* GraphicsDevice.Vulkan.cpp in Sources */,
 				CA167631220B0453006672C4 /* sequential_integer_attribute_decoder.cc in Sources */,
@@ -716,6 +725,7 @@
 				CA167616220B0453006672C4 /* divide.cc in Sources */,
 				CA167627220B0453006672C4 /* metadata.cc in Sources */,
 				CABD2437217B3F450056A686 /* AppSurface.Vulkan.cpp in Sources */,
+				CA533A2422CE232B001994A1 /* AssetManager.cpp in Sources */,
 				CA167623220B0453006672C4 /* mesh_sequential_decoder.cc in Sources */,
 				CA167638220B0453006672C4 /* geometry_attribute.cc in Sources */,
 				CA167617220B0453006672C4 /* draco_types.cc in Sources */,
@@ -782,7 +792,6 @@
 				CA1675F9220B0452006672C4 /* quantization_utils.cc in Sources */,
 				CABD2427217B3E030056A686 /* Swapchain.Vulkan.cpp in Sources */,
 				CABD244A217B43A60056A686 /* SceneRendererVk.cpp in Sources */,
-				CABD242F217B3E030056A686 /* AssetManager.cpp in Sources */,
 				CA1675D8220B0452006672C4 /* adaptive_rans_bit_decoder.cc in Sources */,
 				CABD2433217B3E030056A686 /* GraphicsDevice.Vulkan.cpp in Sources */,
 				CA1675FD220B0452006672C4 /* sequential_integer_attribute_decoder.cc in Sources */,
@@ -802,6 +811,7 @@
 				CA1675E2220B0452006672C4 /* divide.cc in Sources */,
 				CA1675F3220B0452006672C4 /* metadata.cc in Sources */,
 				CABD2438217B3F450056A686 /* AppSurface.Vulkan.cpp in Sources */,
+				CA533A2522CE232B001994A1 /* AssetManager.cpp in Sources */,
 				CA1675EF220B0452006672C4 /* mesh_sequential_decoder.cc in Sources */,
 				CA167604220B0452006672C4 /* geometry_attribute.cc in Sources */,
 				CA1675E3220B0452006672C4 /* draco_types.cc in Sources */,

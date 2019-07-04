@@ -193,7 +193,7 @@ static uint64 HashLen33to64(const char *s, size_t len) {
     return ShiftMix(r * k0 + vs) * k2;
 }
 
-unsigned long long apemodevk::CityHash64(const char * s, unsigned long long len)
+uint64_t apemodevk::CityHash64(const char * s, uint64_t len)
 {
     if (len <= 32) {
         if (len <= 16) {
@@ -236,7 +236,7 @@ unsigned long long apemodevk::CityHash64(const char * s, unsigned long long len)
 
 // Hash 128 input bits down to 64 bits of output.
 // This is intended to be a reasonably good hash function.
-unsigned long long apemodevk::CityHash128to64(unsigned long long a, unsigned long long b) {
+uint64_t apemodevk::CityHash128to64(uint64_t a, uint64_t b) {
 
     if (a && b)
         // Murmur-inspired hashing.

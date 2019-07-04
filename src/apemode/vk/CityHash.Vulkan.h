@@ -6,7 +6,7 @@
 namespace apemodevk
 {
     // Hash function for a byte array.
-    unsigned long long CityHash64( const char *buf, unsigned long long len );
+    uint64_t CityHash64( const char *buf, uint64_t len );
 
     template < bool IsIntegral >
     struct TCityHash;
@@ -14,7 +14,7 @@ namespace apemodevk
     template <>
     struct TCityHash< false > {
         template < typename T >
-        static unsigned long long CityHash64( T const &Obj ) {
+        static uint64_t CityHash64( T const &Obj ) {
             return apemodevk::CityHash64( reinterpret_cast< const char * >( &Obj ), sizeof( T ) );
         }
     };
@@ -22,25 +22,25 @@ namespace apemodevk
     template <>
     struct TCityHash< true > {
         template < typename T >
-        static unsigned long long CityHash64( T const &Obj ) {
-            return (unsigned long long) Obj;
+        static uint64_t CityHash64( T const &Obj ) {
+            return static_cast< uint64_t >( Obj );
         }
     };
 
     // Hash function for a byte array.
     template < typename T, bool IsIntegral = std::is_integral< T >::value >
-    unsigned long long CityHash64( T const &Obj ) {
+    uint64_t CityHash64( T const &Obj ) {
         return TCityHash< IsIntegral >::CityHash64( Obj );
     }
 
     // Hash 128 input bits down to 64 bits of output.
     // This is intended to be a reasonably good hash function.
-    unsigned long long CityHash128to64( unsigned long long a, unsigned long long b );
+    uint64_t CityHash128to64( uint64_t a, uint64_t b );
 
     // Hash 128 input bits down to 64 bits of output.
     // This is intended to be a reasonably good hash function.
     template < typename T, bool IsIntegral = std::is_integral< T >::value >
-    unsigned long long CityHash128to64( unsigned long long a, T const &Obj ) {
+    uint64_t CityHash128to64( uint64_t a, T const &Obj ) {
         if ( a )
             return CityHash128to64( a, TCityHash< IsIntegral >::CityHash64( Obj ) );
         else
@@ -49,31 +49,29 @@ namespace apemodevk
 
     // Hash 128 input bits down to 64 bits of output.
     // This is intended to be a reasonably good hash function.
-    // unsigned long long Hash128to64(const uint128& x);
+    // uint64_t Hash128to64(const uint128& x);
 
-    struct CityHash64Wrapper {
-        typedef uint64_t ValueType;
+    struct CityHashBuilder64 {
+        uint64_t Value;
 
-        ValueType Value;
-
-        CityHash64Wrapper( ) : Value( 0xc949d7c7509e6557 ) {
+        CityHashBuilder64( ) : Value( 0xc949d7c7509e6557 ) {
         }
 
-        CityHash64Wrapper( ValueType OtherHash ) : Value( OtherHash ) {
+        CityHashBuilder64( uint64_t OtherHash ) : Value( OtherHash ) {
         }
 
-        CityHash64Wrapper( CityHash64Wrapper const &Other ) : Value( Other.Value ) {
+        CityHashBuilder64( const CityHashBuilder64 &Other ) : Value( Other.Value ) {
         }
 
-        CityHash64Wrapper( void const *pBuffer, size_t BufferByteSize )
+        CityHashBuilder64( const void *pBuffer, const size_t BufferByteSize )
             : Value( CityHash64( reinterpret_cast< char const * >( pBuffer ), BufferByteSize ) ) {
         }
 
         template < typename TPlainStructure >
-        explicit CityHash64Wrapper( TPlainStructure const &Pod ) : Value( CityHash64( Pod ) ) {
+        explicit CityHashBuilder64( TPlainStructure const &Pod ) : Value( CityHash64( Pod ) ) {
         }
 
-        void CombineWith( CityHash64Wrapper const &Other ) {
+        void CombineWith( CityHashBuilder64 const &Other ) {
             Value = CityHash128to64( Value, Other.Value );
         }
 
@@ -82,38 +80,38 @@ namespace apemodevk
             Value = CityHash128to64( Value, Pod );
         }
 
-        void CombineWithBuffer( void const *pBuffer, size_t BufferByteSize ) {
-            auto const pBytes     = reinterpret_cast< char const * >( pBuffer );
-            auto const BufferHash = CityHash64( pBytes, BufferByteSize );
+        void CombineWithBuffer( const void *pBuffer, const size_t BufferByteSize ) {
+            const auto pBytes     = reinterpret_cast< char const * >( pBuffer );
+            const auto BufferHash = CityHash64( pBytes, BufferByteSize );
             Value                 = CityHash128to64( Value, BufferHash );
         }
 
         template < typename TPlainStructure >
-        void CombineWithArray( TPlainStructure const *pStructs, size_t StructCount ) {
-            static size_t const StructStride = sizeof( TPlainStructure );
+        void CombineWithArray( const TPlainStructure *pStructs, const size_t StructCount ) {
+            constexpr size_t const StructStride = sizeof( TPlainStructure );
 
-            auto const pBytes     = reinterpret_cast< char const * >( pStructs );
-            auto const ByteCount  = StructCount * StructStride;
-            auto const BufferHash = CityHash64( pBytes, ByteCount );
+            const auto pBytes     = reinterpret_cast< char const * >( pStructs );
+            const auto ByteCount  = StructCount * StructStride;
+            const auto BufferHash = CityHash64( pBytes, ByteCount );
             Value                 = CityHash128to64( Value, BufferHash );
         }
 
         template < typename TPlainStructure >
         void CombineWithArray( TPlainStructure const *pStructsIt, TPlainStructure const *pStructsItEnd ) {
-            static size_t const StructStride = sizeof( TPlainStructure );
+            constexpr size_t StructStride = sizeof( TPlainStructure );
 
-            size_t const StructCount = static_cast< size_t >( std::distance( pStructsIt, pStructsItEnd ) );
-            uint64_t const BufferHash = CityHash64( reinterpret_cast< char const * >( pStructsIt ), StructCount * StructStride );
+            const size_t StructCount = static_cast< size_t >( std::distance( pStructsIt, pStructsItEnd ) );
+            const uint64_t BufferHash = CityHash64( reinterpret_cast< char const * >( pStructsIt ), StructCount * StructStride );
             Value = CityHash128to64( Value, BufferHash );
         }
 
-        CityHash64Wrapper &operator<<( CityHash64Wrapper const &Other ) {
+        CityHashBuilder64 &operator<<( CityHashBuilder64 const &Other ) {
             CombineWith( Other );
             return *this;
         }
 
         template < typename TPlainStructure >
-        CityHash64Wrapper &operator<<( TPlainStructure const &Pod ) {
+        CityHashBuilder64 &operator<<( TPlainStructure const &Pod ) {
             CombineWith( Pod );
             return *this;
         }
@@ -123,22 +121,22 @@ namespace apemodevk
         }
 
         struct CmpOpLess {
-            bool operator( )( ValueType HashA, ValueType HashB ) const {
+            bool operator( )( uint64_t HashA, uint64_t HashB ) const {
                 return HashA < HashB;
             }
         };
         struct CmpOpGreater {
-            bool operator( )( ValueType HashA, ValueType HashB ) const {
+            bool operator( )( uint64_t HashA, uint64_t HashB ) const {
                 return HashA > HashB;
             }
         };
         struct CmpOpGreaterEqual {
-            bool operator( )( ValueType HashA, ValueType HashB ) const {
+            bool operator( )( uint64_t HashA, uint64_t HashB ) const {
                 return HashA >= HashB;
             }
         };
         struct CmpOpEqual {
-            bool operator( )( ValueType HashA, ValueType HashB ) const {
+            bool operator( )( uint64_t HashA, uint64_t HashB ) const {
                 return HashA == HashB;
             }
         };
@@ -146,7 +144,7 @@ namespace apemodevk
         template < typename THashmapKey = size_t >
         struct HashOp : protected std::hash< THashmapKey > {
             typedef std::hash< size_t > Base;
-            THashmapKey operator( )( ValueType const &Hashed ) const {
+            THashmapKey operator( )( uint64_t const &Hashed ) const {
                 return Base::operator( )( Hashed );
             }
         };

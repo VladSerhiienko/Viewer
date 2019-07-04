@@ -62,7 +62,7 @@ bool apemodevk::DescriptorSetPool::Recreate( VkDevice              pInLogicalDev
 VkDescriptorSet apemodevk::DescriptorSetPool::GetDescriptorSet( const DescriptorSetBindingsBase* pDescriptorSetBase ) {
     apemodevk_memory_allocation_scope;
 
-    apemodevk::CityHash64Wrapper cityHashBuilder;
+    apemodevk::CityHashBuilder64 cityHashBuilder;
     for ( uint32_t i = 0; i < pDescriptorSetBase->BindingCount; ++i ) {
         cityHashBuilder.CombineWith( pDescriptorSetBase->pBinding[ i ] );
     }
